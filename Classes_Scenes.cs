@@ -700,13 +700,16 @@ namespace Pachyderm_Acoustic
                             {
                                 Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[1], P[2] });
                                 Brep_ids.Add(q);
-                                //ReflectionData.Add(Reflection);
-                                AbsorptionData.Add(Mat_Obj[q]);
-                                ScatteringData.Add(Scat_Obj[q]);
-                                TransmissionData.Add(Trans_Obj[q]);
-                                Transmissive.Add(Trans);
-                                //PhaseData.Add(phase);
-                                if (P.Length > 3) Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
+                                if (P.Length > 3)
+                                {//ReflectionData.Add(Reflection);
+                                    AbsorptionData.Add(Mat_Obj[q]);
+                                    ScatteringData.Add(Scat_Obj[q]);
+                                    TransmissionData.Add(Trans_Obj[q]);
+                                    Transmissive.Add(Trans);
+                                    //PhaseData.Add(phase);
+                                    Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
+                                    Brep_ids.Add(q);
+                                }
                             }
                         }
                     }
@@ -747,9 +750,7 @@ namespace Pachyderm_Acoustic
                 IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
                 ////////////////////////////////////////////////////
                 Valid = true;
-
                 Rhino.RhinoDoc.ActiveDoc.Objects.Add(Utilities.PachTools.Hare_to_RhinoMesh(Topo[0]));
-
             }
 
             private void Construct(List<Rhino.DocObjects.RhinoObject> ObjectList)
@@ -757,10 +758,7 @@ namespace Pachyderm_Acoustic
                 BoundingBox Box = ObjectList[0].Geometry.GetBoundingBox(true);
                 for (int i = 1; i < ObjectList.Count; i++) Box.Union(ObjectList[i].Geometry.GetBoundingBox(true));
 
-                //List<Hare.Geometry.Point[]> FaceList = new List<Hare.Geometry.Point[]>();
-                //int p = -1;
                 List<GeometryBase> BList = new List<GeometryBase>();
-                //List<string> AcousticsData = new List<string>();
 
                 Brep_ids = new List<int>();
 
@@ -1014,7 +1012,6 @@ namespace Pachyderm_Acoustic
                                     P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
                                 }
 
-                                //ReflectionData.Add(Reflection);
                                 if (Finite_Obj[q])
                                 {
                                     if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
@@ -1024,7 +1021,6 @@ namespace Pachyderm_Acoustic
                                 else AbsorptionData.Add(Mat_Obj[q]);
                                 ScatteringData.Add(Scat_Obj[q]);
                                 TransmissionData.Add(Trans_Obj[q]);
-                                //PhaseData.Add(phase);
 
                                 bool Trans = false;
                                 for (int t_oct = 0; t_oct < 8; t_oct++)
@@ -1045,19 +1041,22 @@ namespace Pachyderm_Acoustic
                                 {
                                     Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[1], P[2] });
                                     Brep_ids.Add(BrepList.Count - 1);
-                                    //ReflectionData.Add(Reflection);
-                                    if (Finite_Obj[q])
+                                    if (P.Length > 3)
                                     {
-                                        if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
-                                        Smart_Material mat = Mat_Obj[q] as Smart_Material;
-                                        AbsorptionData.Add(new Finite_Material(mat, BrepList[q], meshes[t], u, Env_Prop));
+                                        //break this quad into two polygons in order to avoid warping...
+                                        if (Finite_Obj[q])
+                                        {
+                                            if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
+                                            Smart_Material mat = Mat_Obj[q] as Smart_Material;
+                                            AbsorptionData.Add(new Finite_Material(mat, BrepList[q], meshes[t], u, Env_Prop));
+                                        }
+                                        else AbsorptionData.Add(Mat_Obj[q]);
+                                        ScatteringData.Add(Scat_Obj[q]);
+                                        TransmissionData.Add(Trans_Obj[q]);
+                                        Transmissive.Add(Trans);
+                                        Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
+                                        Brep_ids.Add(BrepList.Count - 1);
                                     }
-                                    else AbsorptionData.Add(Mat_Obj[q]);
-                                    ScatteringData.Add(Scat_Obj[q]);
-                                    TransmissionData.Add(Trans_Obj[q]);
-                                    Transmissive.Add(Trans);
-                                    //PhaseData.Add(phase);
-                                    if (P.Length > 3) Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
                                 }
                             }
                         }
