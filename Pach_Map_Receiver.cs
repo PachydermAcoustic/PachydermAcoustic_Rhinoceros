@@ -68,8 +68,6 @@ namespace Pachyderm_Acoustic
             /// </summary>
             public PachMapReceiver(Brep[] Map_Srf, Source Src_Pt, int SampleRate_in, double Increment_in, Scene Sc, int RCT, double Cutoff_time, bool Z_displacementIn, bool Time_1Pt, bool DirectionalIn, bool RecOnVertex, bool Offset_Mesh)
             {
-                int unused;
-                //System.Threading.ThreadPool.GetMaxThreads(out workers, out unused);
                 Map_Mesh = Utilities.PachTools.Create_Map_Mesh(Map_Srf, Increment_in);
                 Fill_in(Src_Pt, SampleRate_in, Increment_in, Sc, RCT, Cutoff_time, Time_1Pt, Z_displacementIn, DirectionalIn, RecOnVertex, Offset_Mesh);
                 Partition(Src_Pt, true);
@@ -80,8 +78,6 @@ namespace Pachyderm_Acoustic
             /// </summary>
             public PachMapReceiver(Mesh Map_MeshIn, Source Src_Pt, int SampleRate_in, double Increment_in, Scene Sc, int RCT, double Cutoff_time, bool Time1Pt, bool Z_displacementIn, bool DirectionalIn, bool VerticesMapped, bool RecOnVertex, bool Offset_Mesh)
             {
-                int unused;
-                //System.Threading.ThreadPool.GetMaxThreads(out workers, out unused);
                 Map_Mesh = Map_MeshIn;
                 Fill_in(Src_Pt, SampleRate_in, Increment_in, Sc, RCT, Cutoff_time, Time1Pt, Z_displacementIn, DirectionalIn, RecOnVertex, Offset_Mesh);
                 Partition(Src_Pt, !VerticesMapped);
@@ -92,7 +88,6 @@ namespace Pachyderm_Acoustic
                 _Sc = Sc;
                 Src = Src_Pt.Origin();
                 SrcType = Src_Pt.Type();
-                //RayCount = RCT;
                 CutOffTime = Cutoff_time;
                 SampleRate = SampleRate_in;
                 increment = Increment_in;
@@ -165,7 +160,6 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < Map_Mesh.Vertices.Count; i++)
                             {
-                                //int[] faces = Map_Mesh.TopologyVertices.ConnectedFaces(i);
                                 Vector3f V = new Vector3f((float)(Map_Mesh.Normals[i].X * increment * .5), (float)(Map_Mesh.Normals[i].Y * increment * .5), (float)(Map_Mesh.Normals[i].Z * increment * .5));
 
                                 p = new Hare.Geometry.Point(Map_Mesh.Vertices[i].X+ V.X, Map_Mesh.Vertices[i].Y + V.Y, Map_Mesh.Vertices[i].Z+ V.Z);

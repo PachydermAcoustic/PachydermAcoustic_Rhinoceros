@@ -129,7 +129,7 @@ namespace Pachyderm_Acoustic
             {
                 SourceConduit m_source_conduit = SourceConduit.Instance;
 
-                Rhino.DocObjects.ObjRef location;
+                //Rhino.DocObjects.ObjRef location;
 
                 string type = "custom";
 
@@ -279,8 +279,6 @@ namespace Pachyderm_Acoustic
             protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
             {
                 SourceConduit m_source_conduit = SourceConduit.Instance;
-
-                Rhino.DocObjects.ObjRef location;
 
                 Rhino.Geometry.Point3d Pt;
 
