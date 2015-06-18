@@ -155,11 +155,12 @@ namespace Pachyderm_Acoustic
                         for (int p = 0; p < Rays[i].Count(); p++)
                         {
                             Point3d N;
-                            double SPL;
-                            if (Rays[i].RayPt(p, Increment * q, 4, out SPL, out N, out Point))
+                            double energy;
+                            if (Rays[i].RayPt(p, Increment * q, 4, out energy, out N, out Point))
                             {
                                 Vector3d V = new Vector3d(N - Point);
                                 V.Unitize();
+                                double SPL = AcousticalMath.SPL_Intensity(energy);
                                 System.Drawing.Color C = scale.GetValue(SPL, PMin, PMax);
                                 Mesh M = P.Generate(Point, V);
                                 M.Scale((SPL - PMin) / PRange);
@@ -247,7 +248,7 @@ namespace Pachyderm_Acoustic
                     RTParticles[j].Begin();
                 }
 
-                PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value });
+                PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_Mesh_Scene);
                 Loop.Text = "Stop";
                 FC = new ForCall(Forw_proc);
                 System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)); });
@@ -285,7 +286,7 @@ namespace Pachyderm_Acoustic
                 {
                     Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
                 });
-                PreviewDisplay.Populate((double)CO_TIME.Value * C_Sound() / (max * 1000));
+                PreviewDisplay.Populate((double)CO_TIME.Value * C_Sound() / (max * 1000), SmartParticles);
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
@@ -308,7 +309,7 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000));
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), SmartParticles);
                 }
                 ////////////////////////
                 if (Folder_Status.Text != "")
@@ -391,16 +392,13 @@ namespace Pachyderm_Acoustic
                 //T.Resume();
             }
 
-            bool MeshWave = true;
+            bool MeshWave = false;
+            bool SmartParticles = true;
 
             private void SourceSelect_SelectedIndexChanged(object sender, EventArgs e)
             {
                 MeshWave = (SourceSelection.Text == "Mesh Wave");
-            }
-
-            private void PlotMesh_Click(object sender, EventArgs e)
-            {
-                //PreviewDisplay.TryPlotMesh();
+                SmartParticles = (SourceSelection.Text == "Smart Particle Wave");
             }
         }
 
@@ -526,11 +524,10 @@ namespace Pachyderm_Acoustic
                 return RayList.Count;
             }
 
-            public bool RayPt(int Index, double u, int oct, out double SPL, out Point3d Next, out Point3d Result)
+            public bool RayPt(int Index, double u, int oct, out double energy, out Point3d Next, out Point3d Result)
             {
                 ///TODO: Use new protocol here.
 
-                SPL = 0;
                 //double energy = 1.0;
                 double S_Length = 0;
                 for (int q = 0; q < RayList[Index].Count - 1; q++)
@@ -542,8 +539,7 @@ namespace Pachyderm_Acoustic
                     {
                         //energy *= Math.Pow(10,-.1 * Room.Attenuation[oct] * u) / (4 * Math.PI * u * u);
                         Point3d Point = RayList[Index].PointAt(q + ((u - (S_Length - Modifier)) / Modifier));
-                        double energy = Power[Index][q] * Math.Pow(10,-.1 * Room.Attenuation(Utilities.PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier)  / (4*Math.PI * u * u);
-                        SPL = AcousticalMath.SPL_Intensity(energy);
+                        energy = Power[Index][q] * Math.Pow(10,-.1 * Room.Attenuation(Utilities.PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier)  / (4*Math.PI * u * u);
                         Next = RayList[Index][q + 1];
                         Result = Point;
                         return true;
@@ -551,6 +547,7 @@ namespace Pachyderm_Acoustic
                     if (q >= RayList[Index].SegmentCount) break;
                     //energy *= Room.ReflectionValue[Poly_ID[Index][q]][oct];
                 }
+                energy = 0;
                 Next = default(Point3d);
                 Result = default(Point3d);
                 return false;

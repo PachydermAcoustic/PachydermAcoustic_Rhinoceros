@@ -53,12 +53,12 @@ namespace Pachyderm_Acoustic
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
-                if (P == null) P = new WaveConduit(scale, new double[2]{(double) this.Param_Min.Value, (double)this.Param_Max.Value});
                 FC = new ForCall(Forw_proc);
                 
                 Polygon_Scene Rm = PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double) Air_Temp.Value, (double) Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                 if (!Rm.Complete) return;
 
+                if (P == null) P = new WaveConduit(scale, new double[2] { (double)this.Param_Min.Value, (double)this.Param_Max.Value }, Rm);
                 Rhino.Geometry.Point3d[] Src = PachTools.GetSource();
                 Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");

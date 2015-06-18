@@ -40,7 +40,6 @@ namespace Pachyderm_Acoustic
                 Create_Map(false);
                 Update_Scale();
                 Octave.SelectedIndex = 0;
-                WC = new WaveConduit(c_scale, new double[]{Current_SPLMin, Current_SPLMax});
                 Instance = this;
                 FC = new ForCall(Step_Forward);
                 TC = new T_Call(Update_T);
@@ -99,6 +98,8 @@ namespace Pachyderm_Acoustic
                     Calculate.Enabled = true;
                     return;
                 }
+                WC = new WaveConduit(c_scale, new double[] { Current_SPLMin, Current_SPLMax }, PScene);
+
                 PScene.partition(P);
                 Scene Flex_Scene;
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) 
@@ -522,7 +523,7 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
-                WC.SetColorScale(c_scale, new double[2]{(double)Param_Min.Value, (double)Param_Max.Value});
+                if(WC != null) WC.SetColorScale(c_scale, new double[2]{(double)Param_Min.Value, (double)Param_Max.Value});
             }
 
             private void Calculate_Map_Click(object sender, EventArgs e)
@@ -727,6 +728,7 @@ namespace Pachyderm_Acoustic
                 this.Invoke((MethodInvoker)delegate { Update_T(); });
 
                 Mesh Mesh_Map = PachMapReceiver.Get_SPL_Map(Map, new double[] { Current_SPLMin, Current_SPLMax }, new double[] { t_hi, t_lo }, c_scale, oct, SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked, false);
+                if (WC == null) return;
                 WC.Populate(Mesh_Map);
                 
                 //////////////////////////////

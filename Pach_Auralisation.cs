@@ -635,7 +635,7 @@ namespace Pachyderm_Acoustic
                         if (UI.Pach_Mapping_Control.Instance.Auralisation_Ready())
                         {
                             UI.Pach_Mapping_Control.Instance.GetSims(ref Maps);
-                            CutoffTime = Maps[0].CutOffTime;
+                            CutoffTime = Maps[0].CutOffTime/1000;
                             SampleRate = Maps[0].SampleRate;
                         }
                         if (Maps != null)

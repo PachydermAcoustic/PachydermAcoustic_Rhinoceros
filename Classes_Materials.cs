@@ -496,7 +496,7 @@ namespace Pachyderm_Acoustic
                 if (Layers.Count < 1) return;
 
                 //the current version...
-                Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, 10000, 343, Layers, ref frequency, ref Angles);
+                Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, 44100, 343, Layers, ref frequency, ref Angles);
                 //the goal...
                 //Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Alpha(false, true, 44100, 343, Layers, ref frequency, ref Angles);
                 

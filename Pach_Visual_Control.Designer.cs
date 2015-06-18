@@ -480,18 +480,16 @@ namespace Pachyderm_Acoustic
             // 
             this.SourceSelect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.SourceSelect.AutoCompleteCustomSource.AddRange(new string[] {
-            "Geodesic Directional Distribution",
-            "Pseudo-Random Directional Distribution"});
             this.SourceSelect.FormattingEnabled = true;
             this.SourceSelect.Items.AddRange(new object[] {
+            "Smart Particle Wave",
             "Particle Wave",
             "Mesh Wave"});
             this.SourceSelect.Location = new System.Drawing.Point(9, 13);
             this.SourceSelect.Name = "SourceSelect";
             this.SourceSelect.Size = new System.Drawing.Size(289, 21);
             this.SourceSelect.TabIndex = 27;
-            this.SourceSelect.Text = "Mesh Wave";
+            this.SourceSelect.Text = "Smart Particle Wave";
             this.SourceSelect.SelectedIndexChanged += new System.EventHandler(this.SourceSelect_SelectedIndexChanged);
             // 
             // groupBox1

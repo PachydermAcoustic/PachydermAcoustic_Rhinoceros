@@ -107,7 +107,7 @@ namespace Pachyderm_Acoustic
             {
                 string SavePath = null;
 
-                CutoffTime = (double)this.CO_TIME.Value;
+                CutoffTime = (double)this.CO_TIME.Value / 1000;
 
                 if (plugin.Save_Results())
                 {
@@ -1030,7 +1030,7 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    for (int oct = 0; oct < 8; oct++) ETC[oct] = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
+                    for (int oct = 0; oct < 8; oct++) ETC[oct] = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
                     pressure = false;
                 }
 

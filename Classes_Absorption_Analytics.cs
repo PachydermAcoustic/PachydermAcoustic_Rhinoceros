@@ -1434,8 +1434,8 @@ namespace Pachyderm_Acoustic
                 {
                     //Linear frequency scale
                     frequency = new double[2048];
-                    double step = (sample_Freq/2) / 2048;
-                    for (int i = 0; i < frequency.Length; i++) frequency[i] = (i+.5) * step;
+                    double step = ((double)sample_Freq) / 2048d;
+                    for (int i = 0; i < frequency.Length; i++) frequency[i] = ((double)i+.5) * step;
                 }
 
                 if (anglesdeg == null)
