@@ -233,7 +233,7 @@ namespace Pachyderm_Acoustic
             C_Sound = Room_in.Sound_speed(0);
             SampleFreq = Rec_in.SampleRate;
             Src = Src_in;
-            this.CO_Time = Rec_in.CO_Time*1000;
+            this.CO_Time = Rec_in.CO_Time;
             Receiver = new List<Point>();
             Rho_C = new double[Rec_in.Count];
             for(int i = 0; i < Rec_in.Count; i++)

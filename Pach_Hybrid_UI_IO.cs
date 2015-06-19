@@ -122,7 +122,7 @@ namespace Pachyderm_Acoustic
                         SrcTypeList.Add(Direct_Data[DDCT].type);
                     }
 
-                    CutoffTime = Direct_Data[0].Cutoff_Time/1000;
+                    CutoffTime = Direct_Data[0].Cutoff_Time;
                     SampleRate = (int)Direct_Data[0].SampleRate;
 
                     for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].H_Origin;

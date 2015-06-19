@@ -257,7 +257,7 @@ namespace Pachyderm_Acoustic
                     return SPLTCurve_Pressure(ArrDirect, ArrIS, ArrRT, CO_Time, samplerate, Octave, Rec_ID, 0, StartAtZero);
                 }
 
-                public static double[] ETCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero)
+                public static double[] ETCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero)
                 {
                     //TODO: Make provisions for specifying source delays...
                     //double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency)];
@@ -270,11 +270,11 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[] IR = ETCurve(Direct, ISData, RTData, CO_Time, Sampling_Frequency, Octave, Rec_ID, s, StartAtZero);
+                        double[] IR = ETCurve(Direct, ISData, RTData, CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, s, StartAtZero);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
@@ -285,7 +285,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] PTCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero)
+                public static double[] PTCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero)
                 {
                     //TODO: Make provisions for specifying source delays...
                     //double[] Ptotal = new double[(int)(CO_Time * Sampling_Frequency)];
@@ -299,12 +299,12 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
                         double[] P;
-                        PTCurve(Direct, ISData, RTData, CO_Time, Sampling_Frequency, Rec_ID, s, StartAtZero, out P);
+                        PTCurve(Direct, ISData, RTData, CO_Time_ms, Sampling_Frequency, Rec_ID, s, StartAtZero, out P);
                         //Array.Resize(ref P, P.Length + (int)Math.Ceiling(maxdelay));
                         //if (P.Length > Ptotal.Length) Array.Resize(ref Ptotal, P.Length);
                         for (int i = 0; i < P.Length; i++)
@@ -315,7 +315,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] ETCurve(Direct_Sound Direct, ImageSourceData ISData, Environment.Receiver_Bank RTData, double CO_Time, int samplerate, int Octave, int Rec_ID, bool StartAtZero)
+                public static double[] ETCurve(Direct_Sound Direct, ImageSourceData ISData, Environment.Receiver_Bank RTData, double CO_Time_ms, int samplerate, int Octave, int Rec_ID, bool StartAtZero)
                 {
                     Direct_Sound[] ArrDirect = new Direct_Sound[1];
                     ArrDirect[0] = Direct;
@@ -323,10 +323,10 @@ namespace Pachyderm_Acoustic
                     ArrIS[0] = ISData;
                     Environment.Receiver_Bank[] ArrRT = new Environment.Receiver_Bank[1];
                     ArrRT[0] = RTData;
-                    return ETCurve(ArrDirect, ArrIS, ArrRT, CO_Time, samplerate, Octave, Rec_ID, 0, StartAtZero);
+                    return ETCurve(ArrDirect, ArrIS, ArrRT, CO_Time_ms, samplerate, Octave, Rec_ID, 0, StartAtZero);
                 }
 
-                public static double[] PTCurve(Direct_Sound Direct, ImageSourceData ISData, Environment.Receiver_Bank RTData, double CO_Time, int samplerate, int Octave, int Rec_ID, bool StartAtZero, Numerics.ComplexComponent Output_Type)
+                public static double[] PTCurve(Direct_Sound Direct, ImageSourceData ISData, Environment.Receiver_Bank RTData, double CO_Time_ms, int samplerate, int Octave, int Rec_ID, bool StartAtZero, Numerics.ComplexComponent Output_Type)
                 {
                     Direct_Sound[] ArrDirect = new Direct_Sound[1];
                     ArrDirect[0] = Direct;
@@ -334,9 +334,9 @@ namespace Pachyderm_Acoustic
                     ArrIS[0] = ISData;
                     Environment.Receiver_Bank[] ArrRT = new Environment.Receiver_Bank[1];
                     ArrRT[0] = RTData;
-
+                    
                     double[] P;
-                    PTCurve(ArrDirect, ArrIS, ArrRT, CO_Time, samplerate, Rec_ID, 0, StartAtZero, out P);
+                    PTCurve(ArrDirect, ArrIS, ArrRT, CO_Time_ms*0.001, samplerate, Rec_ID, 0, StartAtZero, out P);
                     
                     double[] Pressure = new double[P.Length];
                     for (int i = 0; i < Pressure.Length; i++) Pressure[i] = P[i];
@@ -354,7 +354,7 @@ namespace Pachyderm_Acoustic
                 /// <param name="Octave">the chosen octave band.</param>
                 /// <param name="Rec_ID">the id of the selected receiver.</param>
                 /// <returns></returns>
-                public static double[] ETCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, int Src_ID, bool Start_at_Zero)
+                public static double[] ETCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, int Src_ID, bool Start_at_Zero)
                 {
                     double[] Histogram = null;
                     if (RTData[Src_ID] != null)
@@ -363,7 +363,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram = new double[(int)(CO_Time * Sampling_Frequency)];
+                        Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
                     }
 
                     if (Direct[Src_ID] != null && Direct[Src_ID].IsOccluded(Rec_ID))
@@ -429,7 +429,7 @@ namespace Pachyderm_Acoustic
                 /// <param name="Octave">the chosen octave band.</param>
                 /// <param name="Rec_ID">the id of the selected receiver.</param>
                 /// <returns></returns>
-                public static void PTCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, int Src_ID, bool Start_at_Zero, out double[] P)
+                public static void PTCurve(Direct_Sound[] Direct, ImageSourceData[] ISData, Environment.Receiver_Bank[] RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, int Src_ID, bool Start_at_Zero, out double[] P)
                 {
                     if (RTData[Src_ID] != null)
                     {
@@ -437,7 +437,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        P = new double[(int)(CO_Time * Sampling_Frequency)];
+                        P = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
                     }
 
                     if (Direct[Src_ID] != null && Direct[Src_ID].IsOccluded(Rec_ID))
@@ -464,7 +464,7 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                public static double[][] ETCurve_1d(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[][] ETCurve_1d(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     double[][] Histogram = new double[3][];
@@ -480,13 +480,13 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[][] IR = ETCurve_1d(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[][] IR = ETCurve_1d(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int d = 0; d < 3; d++)
@@ -500,12 +500,12 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] ETCurve_1d(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
+                public static double[][] ETCurve_1d(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
                 {
                     double[][] Histogram = new double[3][];
-                    Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency)];
-                    Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency)];
-                    Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency)];
+                    Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
+                    Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
+                    Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
                     if (RTData != null)
                     {
                         for (int i = 0; i < Histogram[0].Length; i++)
@@ -587,7 +587,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] ETCurve_Directional(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[] ETCurve_Directional(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     //double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency)];
@@ -600,11 +600,11 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[] IR = ETCurve_Directional(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[] IR = ETCurve_Directional(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
@@ -615,9 +615,9 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] ETCurve_Directional(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
+                public static double[] ETCurve_Directional(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
                 {
-                    double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
                     if (RTData != null)
                     {
                         for (int i = 0; i < Histogram.Length; i++)
@@ -704,7 +704,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] PTCurve_Ambisonics2(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[][] PTCurve_Ambisonics2(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     double[][] Histogram = new double[5][];
@@ -722,15 +722,15 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[3] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[4] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[3] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[][] IR = PTCurve_Ambisonics2(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[][] IR = PTCurve_Ambisonics2(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int d = 0; d < IR.Length; d++)
@@ -744,7 +744,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] PTCurve_Ambisonics3(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[][] PTCurve_Ambisonics3(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     double[][] Histogram = new double[7][];
@@ -764,17 +764,17 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[3] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[4] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[5] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[6] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[3] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[6] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[][] IR = PTCurve_Ambisonics3(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[][] IR = PTCurve_Ambisonics3(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int d = 0; d < IR.Length; d++)
@@ -805,7 +805,7 @@ namespace Pachyderm_Acoustic
             /// <param name="degrees"></param>
             /// <returns></returns>
 
-                public static double[][] PTCurve_Ambisonics2(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
+                public static double[][] PTCurve_Ambisonics2(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
                 {
                     double[][] Histogram = new double[5][];
                     if (RTData != null)
@@ -842,11 +842,11 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[4] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[5] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -907,7 +907,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-            public static double[][] PTCurve_Ambisonics3(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
+            public static double[][] PTCurve_Ambisonics3(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
                 {
                     double[][] Histogram = new double[7][];
                     if (RTData != null)
@@ -953,13 +953,13 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[3] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[4] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[5] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[6] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[3] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[6] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -1030,7 +1030,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] PTCurve_Fig8_3Axis(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[][] PTCurve_Fig8_3Axis(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     double[][] Histogram = new double[3][];
@@ -1046,13 +1046,13 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
-                    Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[][] IR = PTCurve_Fig8_3Axis(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[][] IR = PTCurve_Fig8_3Axis(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int d = 0; d < 3; d++)
@@ -1066,7 +1066,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] PTCurve_Fig8_3Axis(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
+                public static double[][] PTCurve_Fig8_3Axis(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Rec_ID, bool Start_at_Zero, double xpos_alt, double xpos_azi, bool degrees)
                 {
                     double[][] Histogram = new double[3][];
                     if (RTData != null)
@@ -1085,9 +1085,9 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -1128,7 +1128,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] PTCurve_Directional(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[] PTCurve_Directional(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     if (Direct == null) Direct = new Direct_Sound[SrcIDs[SrcIDs.Count - 1] + 1];
                     if (ISData == null) ISData = new ImageSourceData[SrcIDs[SrcIDs.Count - 1] + 1];
@@ -1138,11 +1138,11 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    double[] Histogram = new double[(int)(CO_Time * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
-                        double[] IR = PTCurve_Directional(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[] IR = PTCurve_Directional(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref Histogram, Histogram.Length + (int)Math.Ceiling(maxdelay));
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
@@ -1153,7 +1153,7 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[] PTCurve_Directional(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
+                public static double[] PTCurve_Directional(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
                 {
                     double[] Histogram;
                     if (RTData != null)
@@ -1172,7 +1172,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram = new double[(int)(CO_Time * Sampling_Frequency) + 2048];
+                        Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))

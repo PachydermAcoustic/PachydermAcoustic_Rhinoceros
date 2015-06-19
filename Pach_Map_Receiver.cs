@@ -802,7 +802,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Rec_List[0].Rec_List.Length; i++)
                     {
-                        C_Values[i] = AcousticalMath.Clarity(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime / 1000, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, C_Cutoff / 1000, 0, false);
+                        C_Values[i] = AcousticalMath.Clarity(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, C_Cutoff / 1000, 0, false);
                     }
                 }
                 //Create the output...
@@ -884,7 +884,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Rec_List[0].Rec_List.Length; i++)
                     {
-                        D_Values[i] = AcousticalMath.Definition(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime / 1000, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, 0.05, 0, false);
+                        D_Values[i] = AcousticalMath.Definition(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, 0.05, 0, false);
                     }
                 }
                 if (plotNumbers)

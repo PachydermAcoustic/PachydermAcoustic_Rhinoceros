@@ -168,24 +168,24 @@ namespace Pachyderm_Acoustic
                     {
                         case "Monaural":
                             Response = new double[1][];
-                            Response[0] = (AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, (double)CutoffTime / 1000.0, SampleRate, REC_ID, SrcIDs, false));
+                            Response[0] = (AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false));
                             break;
                         case "First Order Ambisonics":
                             Response = new double[4][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
-                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, (double)CutoffTime / 1000.0, SampleRate, REC_ID, SrcIDs, false);
+                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
                             break;
                         case "Second Order Ambisonics":
                             Response = new double[9][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
-                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, (double)CutoffTime / 1000.0, SampleRate, REC_ID, SrcIDs, false);
+                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
-                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[4] = Temp[0];
                             Response[5] = Temp[1];
                             Response[6] = Temp[2];
@@ -194,18 +194,18 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Third Order Ambisonics":
                             Response = new double[16][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
-                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, (double)CutoffTime / 1000.0, SampleRate, REC_ID, SrcIDs, false);
+                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
-                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[4] = Temp[0];
                             Response[5] = Temp[1];
                             Response[6] = Temp[2];
                             Response[7] = Temp[3];
                             Response[8] = Temp[4];
-                            Temp = AcousticalMath.PTCurve_Ambisonics3(Direct_Data, IS_Data, Receiver, (double)(CutoffTime / 1000), SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.PTCurve_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[9] = Temp[0];
                             Response[10] = Temp[1];
                             Response[11] = Temp[2];
@@ -224,7 +224,7 @@ namespace Pachyderm_Acoustic
                                 if (alt < -90) alt += 180;
                                 if (azi > 360) azi -= 360;
                                 if (azi < 0) azi += 360;
-                                Response[i] = AcousticalMath.PTCurve_Directional(Direct_Data, IS_Data, Receiver, (double)CutoffTime / 1000.0, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, alt, azi, true);
+                                Response[i] = AcousticalMath.PTCurve_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, alt, azi, true);
                             }
                             break;
                     }
