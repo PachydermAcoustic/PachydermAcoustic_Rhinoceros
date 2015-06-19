@@ -113,18 +113,7 @@ namespace Pachyderm_Acoustic
 
                     Source = new Source[Direct_Data.Length];
                     Recs = new Hare.Geometry.Point[Receiver[0].Count];
-                    //for (int i = 0; i < Direct_Data.Length; i++)
-                    //{
-                    //    if(Direct_Data[i].type == "PseudoRandom")
-                    //    {
-                    //        Source[i] = new RandomSource(Utilities.PachTools.RPttoHPt(Direct_Data[i].Src_Origin), i);
-                    //    }
-                    //    else if (Direct_Data[i].type == "Geodesic")
-                    //    {
-                    //        Source[i] = new GeodesicSource(Direct_Data[i].SWL, new double[0,0,0,0,0,0,0,0], Direct_Data[i].Src_Origin())
-                    //    }
-                    //    else if(Direct_Data[i].type == "Geodesic")
-                    //}
+
                     for (int DDCT = 0; DDCT < Direct_Data.Length; DDCT++)
                     {
                         Source[DDCT] = Direct_Data[DDCT].Src;
@@ -133,7 +122,7 @@ namespace Pachyderm_Acoustic
                         SrcTypeList.Add(Direct_Data[DDCT].type);
                     }
 
-                    CutoffTime = Direct_Data[0].Cutoff_Time;
+                    CutoffTime = Direct_Data[0].Cutoff_Time/1000;
                     SampleRate = (int)Direct_Data[0].SampleRate;
 
                     for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].H_Origin;
