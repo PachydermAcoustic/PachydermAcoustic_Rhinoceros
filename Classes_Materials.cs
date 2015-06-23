@@ -765,7 +765,7 @@ namespace Pachyderm_Acoustic
                     u1 = 2.0 * Math.PI * rand.NextDouble();
                     // random azimuth
                     double Scat_Mod = rand.NextDouble();
-                    u2 = Math.Acos(Math.Sqrt(Scat_Mod));
+                    u2 = Math.Acos(Scat_Mod);
                     // random zenith (elevation)
                     x = Math.Cos(u1) * Math.Sin(u2);
                     y = Math.Sin(u1) * Math.Sin(u2);
@@ -818,7 +818,7 @@ namespace Pachyderm_Acoustic
                     u1 = 2.0 * Math.PI * rand.NextDouble();
                     // random azimuth
                     double Scat_Mod = rand.NextDouble();
-                    u2 = Math.Acos(Math.Sqrt(Scat_Mod));
+                    u2 = Math.Acos(Scat_Mod);
                     // random zenith (elevation)
                     x = Math.Cos(u1) * Math.Sin(u2);
                     y = Math.Sin(u1) * Math.Sin(u2);
@@ -891,7 +891,7 @@ namespace Pachyderm_Acoustic
                 u1 = 2.0 * Math.PI * rand.NextDouble();
                 // random azimuth
                 double Scat_Mod = rand.NextDouble();
-                u2 = Math.Acos(Math.Sqrt(Scat_Mod));
+                u2 = Math.Acos(Scat_Mod);
                 // random zenith (elevation)
                 x = Math.Cos(u1) * Math.Sin(u2);
                 y = Math.Sin(u1) * Math.Sin(u2);

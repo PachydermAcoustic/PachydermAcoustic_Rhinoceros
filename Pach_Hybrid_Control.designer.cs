@@ -2507,7 +2507,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 21F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 111F));
             this.tableLayoutPanel3.Controls.Add(this.IS_Path_Box, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.Analysis_View, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.Normalize_Graph, 2, 2);
@@ -2570,7 +2570,7 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.AutoSize = true;
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Normalize_Graph.Location = new System.Drawing.Point(146, 128);
+            this.Normalize_Graph.Location = new System.Drawing.Point(145, 128);
             this.Normalize_Graph.Name = "Normalize_Graph";
             this.Normalize_Graph.Size = new System.Drawing.Size(117, 17);
             this.Normalize_Graph.TabIndex = 43;
@@ -2605,9 +2605,9 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(146, 103);
+            this.Graph_Octave.Location = new System.Drawing.Point(145, 103);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(228, 21);
+            this.Graph_Octave.Size = new System.Drawing.Size(229, 21);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -2629,7 +2629,7 @@ namespace Pachyderm_Acoustic
             "Fore-Aft PTC"});
             this.Graph_Type.Location = new System.Drawing.Point(3, 103);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(137, 21);
+            this.Graph_Type.Size = new System.Drawing.Size(136, 21);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);

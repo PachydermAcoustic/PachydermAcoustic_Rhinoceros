@@ -216,11 +216,11 @@ namespace Pachyderm_Acoustic
             {
                 if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.Text != "Sabine RT" && Parameter_Choice.Text != "Eyring RT") { return; }
                 double[] Schroeder;
-                string[] paramtype = new string [] {"T30/s","EDT/s", "D/%", "C/dB", "TS/ms", "G/dB"};//LF/% LFC/% IACC
+                string[] paramtype = new string [] {"T30/s","EDT/s", "D/%", "C/dB", "TS/ms", "G/dB", "LF%", "LFC%", "IACC"};//LF/% LFC/% IACC
                 string ReceiverLine = "Receiver{0};";
                 double[, , ,] ParamValues = new double[SourceList.Items.Count, Recs.Length, 8, paramtype.Length];
 
-                for (int s = 0; s < Recs.Length; s++)
+                for (int s = 0; s < Direct_Data.Length; s++)
                 {
                     for (int r = 0; r < Recs.Length; r++)
                     {
@@ -235,6 +235,10 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 3] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
                             ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
+                            double azi, alt;
+                            PachTools.World_Angles(Direct_Data[s].Src.Origin(), Utilities.PachTools.HPttoRPt(Recs[r]), true, out alt, out azi);
+                            double[][] Lateral_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
+                            ParamValues[s, r, oct, 6] = AcousticalMath.Lateral_Fraction(ETC, Lateral_ETC, SampleRate, Direct_Data[s].Min_Time(r), false);
                         }
                     }
                 }
@@ -252,21 +256,19 @@ namespace Pachyderm_Acoustic
                         SW.WriteLine("Pachyderm Acoustic Simulation Results");
                         SW.WriteLine("Saved {0}", System.DateTime.Now.ToString());
                         SW.WriteLine("Filename:{0}", Rhino.RhinoDoc.ActiveDoc.Name);
-                        for (int i = 0; i < Recs.Length; i++)
-                        {
-                            SW.WriteLine("Source {0};", i);
-                            for (int oct = 0; oct < 8; oct++)
-                            {
-                                SW.WriteLine(string.Format(ReceiverLine, oct));
-                                for (int param = 0; param < paramtype.Length; param++)
-                                {
-                                    SW.Write(paramtype[param] + ";");
 
+                        for (int oct = 0; oct < 8; oct++)
+                        {
+                            SW.WriteLine(string.Format(ReceiverLine, oct));
+                            for (int param = 0; param < paramtype.Length; param++)
+                            {
+                                SW.Write(paramtype[param] + ";");
+                                for (int i = 0; i < Direct_Data.Length; i++)
+                                {
                                     for (int q = 0; q < Recs.Length; q++)
                                     {
                                         SW.Write(ParamValues[i, q, oct, param].ToString() + ";");
                                     }
-                                    SW.WriteLine("");
                                 }
                                 SW.WriteLine("");
                             }

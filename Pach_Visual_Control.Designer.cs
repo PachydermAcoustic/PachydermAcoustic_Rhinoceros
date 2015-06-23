@@ -78,7 +78,7 @@ namespace Pachyderm_Acoustic
             this.Param_Scale = new System.Windows.Forms.PictureBox();
             this.Preview = new System.Windows.Forms.Button();
             this.Loop = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
+            this.BackButton = new System.Windows.Forms.Button();
             this.GroupBox2 = new System.Windows.Forms.GroupBox();
             this.SourceSelect = new System.Windows.Forms.ComboBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -100,7 +100,7 @@ namespace Pachyderm_Acoustic
             this.Calculate = new System.Windows.Forms.Button();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.label5 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
+            this.ForwButton = new System.Windows.Forms.Button();
             this.groupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Param_Max)).BeginInit();
@@ -443,6 +443,7 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.Loop, 2);
+            this.Loop.Enabled = false;
             this.Loop.Location = new System.Drawing.Point(79, 3);
             this.Loop.Name = "Loop";
             this.Loop.Size = new System.Drawing.Size(146, 24);
@@ -451,18 +452,19 @@ namespace Pachyderm_Acoustic
             this.Loop.UseVisualStyleBackColor = true;
             this.Loop.Click += new System.EventHandler(this.Loop_Click);
             // 
-            // button3
+            // BackButton
             // 
-            this.button3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.BackButton.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.button3.Location = new System.Drawing.Point(3, 3);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(70, 24);
-            this.button3.TabIndex = 33;
-            this.button3.Text = "<<";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.Rev_Click);
+            this.BackButton.Enabled = false;
+            this.BackButton.Location = new System.Drawing.Point(3, 3);
+            this.BackButton.Name = "BackButton";
+            this.BackButton.Size = new System.Drawing.Size(70, 24);
+            this.BackButton.TabIndex = 33;
+            this.BackButton.Text = "<<";
+            this.BackButton.UseVisualStyleBackColor = true;
+            this.BackButton.Click += new System.EventHandler(this.Rev_Click);
             // 
             // GroupBox2
             // 
@@ -788,9 +790,9 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel1.Controls.Add(this.ParticleChoice, 1, 10);
             this.tableLayoutPanel1.Controls.Add(this.label2, 0, 10);
             this.tableLayoutPanel1.Controls.Add(this.OpenFolder, 2, 11);
-            this.tableLayoutPanel1.Controls.Add(this.button3, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.BackButton, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.Preview, 0, 1);
-            this.tableLayoutPanel1.Controls.Add(this.button2, 3, 0);
+            this.tableLayoutPanel1.Controls.Add(this.ForwButton, 3, 0);
             this.tableLayoutPanel1.Controls.Add(this.Param3_4, 2, 4);
             this.tableLayoutPanel1.Controls.Add(this.Param1_2, 2, 5);
             this.tableLayoutPanel1.Controls.Add(this.Param1_4, 2, 6);
@@ -837,18 +839,19 @@ namespace Pachyderm_Acoustic
             this.label5.Text = "Render Settings";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // button2
+            // ForwButton
             // 
-            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.ForwButton.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(231, 3);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(70, 24);
-            this.button2.TabIndex = 34;
-            this.button2.Text = ">>";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.Forw_Click);
+            this.ForwButton.Enabled = false;
+            this.ForwButton.Location = new System.Drawing.Point(231, 3);
+            this.ForwButton.Name = "ForwButton";
+            this.ForwButton.Size = new System.Drawing.Size(70, 24);
+            this.ForwButton.TabIndex = 34;
+            this.ForwButton.Text = ">>";
+            this.ForwButton.UseVisualStyleBackColor = true;
+            this.ForwButton.Click += new System.EventHandler(this.Forw_Click);
             // 
             // Pach_Visual_Control
             // 
@@ -893,7 +896,7 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.Label Label15;
             internal System.Windows.Forms.ComboBox SourceSelection;
             internal System.Windows.Forms.ComboBox RoomSelection;
-            internal System.Windows.Forms.Button button3;
+            internal System.Windows.Forms.Button BackButton;
             internal System.Windows.Forms.GroupBox GroupBox2;
             internal System.Windows.Forms.ComboBox SourceSelect;
             private System.Windows.Forms.GroupBox groupBox1;
@@ -927,7 +930,7 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.GroupBox groupBox4;
             private System.Windows.Forms.Label Time_Preview;
             private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-            internal System.Windows.Forms.Button button2;
+            internal System.Windows.Forms.Button ForwButton;
             internal System.Windows.Forms.Label label5;
         }
     }

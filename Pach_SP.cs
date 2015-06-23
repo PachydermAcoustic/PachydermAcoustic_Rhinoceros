@@ -1088,7 +1088,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 ///////////////Create Zero Phase Time Domain Filter/////////////
-                Complex[] prefilter = IFFT(Mirror_Spectrum(M_spec), threadid);
+                double[] prefilter = IFFT_Real_General(Mirror_Spectrum(M_spec), threadid);
                 double scale = Math.Sqrt(prefilter.Length);
                 //Rotate filter in time domain to center.
                 int hw = prefilter.Length / 2;
@@ -1096,7 +1096,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < prefilter.Length; i++)
                 {
-                    filter[i] = prefilter[(i + hw) % prefilter.Length].Real / scale;
+                    filter[i] = prefilter[(i + hw) % prefilter.Length] / scale;
                 }
 
                 return filter;

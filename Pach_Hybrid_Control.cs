@@ -1435,28 +1435,28 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(MTI[6], 2));
                         break;
                     case "Lateral Fraction (LF)":
-                        double LF = AcousticalMath.Lateral_Fraction(ETC[0], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        double LF = AcousticalMath.Lateral_Fraction(ETC[0], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[1], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[1], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[2], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[2], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[3], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[3], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT4.Text = string.Format("500 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[4], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[4], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[5], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[5], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[6], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[6], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[7], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[7], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(LF, 2));
                         break;
                     case "Lateral Efficiency (LE)":

@@ -464,13 +464,10 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                public static double[][] ETCurve_1d(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+                public static double[][] ETCurve_1d_Tight(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
                 {
                     //TODO: Make provisions for specifying source delays...
                     double[][] Histogram = new double[3][];
-                    //Histogram[0] = new double[(int)(CO_Time * Sampling_Frequency)];
-                    //Histogram[1] = new double[(int)(CO_Time * Sampling_Frequency)];
-                    //Histogram[2] = new double[(int)(CO_Time * Sampling_Frequency)];
 
                     if (Direct == null) Direct = new Direct_Sound[SrcIDs[SrcIDs.Count - 1] + 1];
                     if (ISData == null) ISData = new ImageSourceData[SrcIDs[SrcIDs.Count - 1] + 1];
@@ -486,9 +483,8 @@ namespace Pachyderm_Acoustic
 
                     foreach (int s in SrcIDs)
                     {
-                        double[][] IR = ETCurve_1d(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
+                        double[][] IR = ETCurve_1d_Tight(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
                         //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
-                        //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int d = 0; d < 3; d++)
                         {
                             for (int i = 0; i < IR[0].Length; i++)
@@ -500,7 +496,157 @@ namespace Pachyderm_Acoustic
                     return Histogram;
                 }
 
-                public static double[][] ETCurve_1d(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
+            public static double[][] ETCurve_1d_Tight(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
+            {
+                double[][] Histogram = new double[3][];
+                Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
+                Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
+                Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
+                if (RTData != null)
+                {
+                    for (int i = 0; i < Histogram[0].Length; i++)
+                    {
+                        Hare.Geometry.Vector Vpos = RTData.Directions_Pos(Octave, i, Rec_ID, alt, azi, degrees);
+                        Hare.Geometry.Vector Vneg = RTData.Directions_Neg(Octave, i, Rec_ID, alt, azi, degrees);
+
+                        Hare.Geometry.Vector VTot = new Hare.Geometry.Vector(-Math.Abs(Vpos.x) + Math.Abs(Vneg.x), -Math.Abs(Vpos.y) + Math.Abs(Vneg.y), -Math.Abs(Vpos.z) + Math.Abs(Vneg.z));
+                        //double E = VTot.Length();
+                        //if (E != 0)
+                        //{
+                        //VTot.x /= E;
+                        //VTot.y /= E;
+                        //VTot.z /= E;
+
+                        //VTot.x *= Math.Sqrt(E);
+                        //VTot.y *= Math.Sqrt(E);
+                        //VTot.z *= Math.Sqrt(E);
+
+                        //Histogram[0][i] = Math.Abs(VTot.x * VTot.x);
+                        //Histogram[1][i] = Math.Abs(VTot.y * VTot.y);
+                        //Histogram[2][i] = Math.Abs(VTot.z * VTot.z);
+                        //}
+                        Histogram[0][i] = Math.Abs(VTot.x);
+                        Histogram[1][i] = Math.Abs(VTot.y);
+                        Histogram[2][i] = Math.Abs(VTot.z);
+                    }
+                }
+
+                if (Direct != null && Direct.IsOccluded(Rec_ID))
+                {
+                    int D_Start = 0;
+                    if (!Start_at_Zero) D_Start = (int)Math.Ceiling(Direct.Time(Rec_ID) * Sampling_Frequency);
+
+                    Hare.Geometry.Vector[] DirectValue;
+                    switch (Octave)
+                    {
+                        case 8:
+                            DirectValue = Direct.Dir_Energy_Sum(Rec_ID, alt, azi, degrees);
+                            break;
+                        default:
+                            DirectValue = Direct.Dir_Energy(Octave, Rec_ID, alt, azi, degrees);
+                            break;
+                    }
+
+                    for (int i = 0; i < DirectValue.Length; i++)
+                    {
+                        //double E = DirectValue[i].Length();
+
+                        //Hare.Geometry.Vector Vtot = new Hare.Geometry.Vector(DirectValue[i].x / E * Math.Sqrt(E), DirectValue[i].y / E * Math.Sqrt(E), DirectValue[i].z / E * Math.Sqrt(E));
+
+                        Histogram[0][D_Start + i] += DirectValue[i].x;// * DirectValue[i].x / E);
+                        Histogram[1][D_Start + i] += DirectValue[i].y;// * DirectValue[i].y / E);
+                        Histogram[2][D_Start + i] += DirectValue[i].z;// * DirectValue[i].z / E);
+                    }
+                }
+
+                if (ISData != null)
+                {
+                    switch (Octave)
+                    {
+                        case 8:
+                            foreach (Deterministic_Reflection value in ISData.Paths[Rec_ID])
+                            {
+                                if (Math.Ceiling(Sampling_Frequency * value.TravelTime) < Histogram[0].Length - 1)
+                                {
+                                    Hare.Geometry.Vector[] E_Sum = value.Dir_EnergySum(alt, azi, degrees);
+                                    for (int i = 0; i < E_Sum.Length; i++)
+                                    {
+                                        //double E = E_Sum[i].Length();
+
+                                        //Hare.Geometry.Vector Vtot = new Hare.Geometry.Vector(E_Sum[i].x / E * Math.Sqrt(E), E_Sum[i].y / E * Math.Sqrt(E), E_Sum[i].z / E * Math.Sqrt(E));
+
+                                        Histogram[0][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Sum[i].x;// E_Sum[i].x;// * E_Sum[i].x / E);
+                                        Histogram[1][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Sum[i].y;// E_Sum[i].y;// * E_Sum[i].y / E);
+                                        Histogram[2][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Sum[i].z;// E_Sum[i].z;// * E_Sum[i].z / E);
+                                    }
+                                }
+                            }
+                            break;
+                        default:
+                            foreach (Deterministic_Reflection value in ISData.Paths[Rec_ID])
+                            {
+                                if (Math.Ceiling(Sampling_Frequency * value.TravelTime) < Histogram[0].Length - 1)
+                                {
+                                    Hare.Geometry.Vector[] E_Dir = value.Dir_Energy(Octave, alt, azi, degrees);
+                                    for (int i = 0; i < E_Dir.Length; i++)
+                                    {
+                                        //double E = E_Dir[i].Length();
+
+                                        //Hare.Geometry.Vector Vtot = new Hare.Geometry.Vector(E_Dir[i].x / E * Math.Sqrt(E), E_Dir[i].y / E * Math.Sqrt(E), E_Dir[i].z / E * Math.Sqrt(E));
+
+                                        Histogram[0][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Dir[i].x;// * E_Dir[i].x / E);
+                                        Histogram[1][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Dir[i].y;// * E_Dir[i].y / E);
+                                        Histogram[2][(int)Math.Ceiling(Sampling_Frequency * value.TravelTime + i / Sampling_Frequency)] += E_Dir[i].z;// * E_Dir[i].z / E);
+                                    }
+                                }
+                            }
+                            break;
+                    }
+                }
+
+                for(int i = 0; i < Histogram.Length; i++)
+                {
+                    for (int j = 0; j < Histogram[i].Length; j++)
+                    {
+                        Histogram[i][j] = Math.Abs(Histogram[i][j]);
+                    }
+                }
+                return Histogram;
+            }
+
+            public static double[][] ETCurve_1d(IEnumerable<Direct_Sound> Direct, IEnumerable<ImageSourceData> ISData, IEnumerable<Environment.Receiver_Bank> RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, List<int> SrcIDs, bool StartAtZero, double alt, double azi, bool degrees)
+            {
+                //TODO: Make provisions for specifying source delays...
+                double[][] Histogram = new double[3][];
+
+                if (Direct == null) Direct = new Direct_Sound[SrcIDs[SrcIDs.Count - 1] + 1];
+                if (ISData == null) ISData = new ImageSourceData[SrcIDs[SrcIDs.Count - 1] + 1];
+                if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
+
+                double maxdelay = 0;
+                foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                maxdelay *= Sampling_Frequency / 1000;
+
+                Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+
+                foreach (int s in SrcIDs)
+                {
+                    double[][] IR = ETCurve_1d(Direct.ElementAt<Direct_Sound>(s), ISData.ElementAt<ImageSourceData>(s), RTData.ElementAt<Receiver_Bank>(s), CO_Time_ms, Sampling_Frequency, Octave, Rec_ID, StartAtZero, alt, azi, degrees);
+                    //Array.Resize(ref IR, IR.Length + (int)Math.Ceiling(maxdelay));
+                    for (int d = 0; d < 3; d++)
+                    {
+                        for (int i = 0; i < IR[0].Length; i++)
+                        {
+                            Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                        }
+                    }
+                }
+                return Histogram;
+            }
+
+            public static double[][] ETCurve_1d(Direct_Sound Direct, ImageSourceData ISData, Receiver_Bank RTData, double CO_Time_ms, int Sampling_Frequency, int Octave, int Rec_ID, bool Start_at_Zero, double alt, double azi, bool degrees)
                 {
                     double[][] Histogram = new double[3][];
                     Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency)];
@@ -1654,8 +1800,8 @@ namespace Pachyderm_Acoustic
                 }
                 while (i <= Math.Floor(sample_f * (UpperBound_s + startTime)))
                 {
-                    Hare.Geometry.Vector V = new Hare.Geometry.Vector(Dir_ETC[0][i], Dir_ETC[1][i], Dir_ETC[2][i]);
-                    sum_Lateral += Math.Abs(Hare.Geometry.Hare_math.Dot(V, new Hare.Geometry.Vector(0,1,0)));
+                    //Hare.Geometry.Vector V = new Hare.Geometry.Vector(Dir_ETC[0][i], Dir_ETC[1][i], Dir_ETC[2][i]);
+                    sum_Lateral += Dir_ETC[1][i];//Math.Abs(Hare.Geometry.Hare_math.Dot(V, new Hare.Geometry.Vector(0,1,0)));
                     sum_Total += Total_ETC[i];
                     i++;
                 }

@@ -20,9 +20,7 @@ using Rhino.Geometry;
 using System;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using Hare.Geometry;
 using Pachyderm_Acoustic.Environment;
-using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Visualization;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
@@ -54,28 +52,11 @@ namespace Pachyderm_Acoustic
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];
 
                 Calculate.Enabled = false;
-                //Model = new Pach_GetModel_Command();
-
-                //Model.Rel_Humidity = 0;
-                //Model.Air_Temp = (double)Air_Temp.Value;
-                //Model.Atm_pressure = 0;
-                //Model.Atten_Choice = 0;
-
-                //Rhino.RhinoApp.RunScript("GetModel", false);
                 PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
                 Scene Sc;
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) Sc = PachTools.Get_NURBS_Scene(0, (double)Air_Temp.Value, 0, 0, false);
                 else Sc = PachTools.Get_Poly_Scene(0, (double)Air_Temp.Value, 0, 0, false);
-                //if (!Model.Ret_Mesh_Scene.Complete || !Model.Ret_NURBS_Scene.Complete) return;
-                //Source = new Source[SPT.Length];
-
                 
-
-                //for (int i = 0; i < SPT.Length; i++)
-                //{
-                //    Source[i] = new GeodesicSource(plugin.GetSourceSWL(i), new double[]{0,0,0,0,0,0,0,0}, SPT[i], (int)RT_Count.Value, 0);//TODO: Implement User Source Control
-                //}
-
                 for (int i = 0; i < Source.Length; i++)
                 {
                     if (Source != null)
@@ -90,7 +71,6 @@ namespace Pachyderm_Acoustic
 
                         if (plugin.Geometry_Spec() == 0)
                         {
-                            //Model.Ret_NURBS_Scene.partition(L_RC);
                             Sc.partition(L_RC, 15);
                             RTParticles[i] = new ParticleRays(Source[i], Sc, (int)RT_Count.Value, CutOffLength());
                         }
@@ -180,11 +160,7 @@ namespace Pachyderm_Acoustic
                     else number = q.ToString();
                     Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
 
-                    //Rhino.RhinoApp.RunScript("_-Render", false);
-                    //Rhino.RhinoApp.RunScript("_-SaveRenderWindowAs " + char.ConvertFromUtf32(34) + Folder_Status.Text + "\\"[0] + number + ".bmp" + char.ConvertFromUtf32(34), true);
-                    //Rhino.RhinoApp.RunScript("_-CloseRenderWindow", true);
                     //Clean Up Model
-
                     Rhino.RhinoDoc.ActiveDoc.Objects.Delete(Particle_IDS, true);
                     Particle_IDS.Clear();
                 }
@@ -192,6 +168,9 @@ namespace Pachyderm_Acoustic
 
             private void Preview_Click(object sender, EventArgs e)
             {
+                Loop.Enabled = false;
+                ForwButton.Enabled = false;
+                BackButton.Enabled = false;
                 PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
 
                 if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
@@ -249,6 +228,9 @@ namespace Pachyderm_Acoustic
                 }
 
                 PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_Mesh_Scene);
+                ForwButton.Enabled = true;
+                BackButton.Enabled = true;
+                Loop.Enabled = true;
                 Loop.Text = "Stop";
                 FC = new ForCall(Forw_proc);
                 System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)); });
