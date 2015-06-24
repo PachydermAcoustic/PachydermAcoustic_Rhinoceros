@@ -395,7 +395,7 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point[]> PathVertices = new List<Hare.Geometry.Point[]>();
                 Hare.Geometry.Point S = Src.H_Origin();
                 Hare.Geometry.Point E = Rec[rec_id];
-                double df = SampleRate * .5 / 2048;
+                double df = SampleRate * .5 / 8192;
 
                 //Find all Path Legs from Receiver to Source
                 
@@ -652,7 +652,7 @@ namespace Pachyderm_Acoustic
 
                             ///Apply TransMod to TF...
                             ///Each sample will have it's own unique air attenuation and occlusion conditions, which means that it needs to be treated individually for input signal (for air attenuation and absorption).
-                            //double[] TF = Audio.Pach_SP.Magnitude_Filter(new double[8] { Math.Sqrt(Trans_Mod[p_id][0] * SW[0]), Math.Sqrt(Trans_Mod[p_id][1] * SW[1]), Math.Sqrt(Trans_Mod[p_id][2] * SW[2]), Math.Sqrt(Trans_Mod[p_id][3] * SW[3]), Math.Sqrt(Trans_Mod[p_id][4] * SW[4]), Math.Sqrt(Trans_Mod[p_id][5] * SW[5]), Math.Sqrt(Trans_Mod[p_id][6] * SW[6]), Math.Sqrt(Trans_Mod[p_id][7] * SW[7]) }, 44100, 2048, Threadid);
+                            //double[] TF = Audio.Pach_SP.Magnitude_Filter(new double[8] { Math.Sqrt(Trans_Mod[p_id][0] * SW[0]), Math.Sqrt(Trans_Mod[p_id][1] * SW[1]), Math.Sqrt(Trans_Mod[p_id][2] * SW[2]), Math.Sqrt(Trans_Mod[p_id][3] * SW[3]), Math.Sqrt(Trans_Mod[p_id][4] * SW[4]), Math.Sqrt(Trans_Mod[p_id][5] * SW[5]), Math.Sqrt(Trans_Mod[p_id][6] * SW[6]), Math.Sqrt(Trans_Mod[p_id][7] * SW[7]) }, 44100, 8192, Threadid);
                             double[] SW = Src.DirPower(Threadid, this.Rnd[Threadid].Next(), dir);
                             foreach (Environment.Material m in M)
                             {
@@ -663,7 +663,7 @@ namespace Pachyderm_Acoustic
                                     }
                             }
                             
-                            double[] ms = Audio.Pach_SP.Magnitude_Spectrum(new double[8] { Math.Sqrt(SW[0]), Math.Sqrt(SW[1]), Math.Sqrt(SW[2]), Math.Sqrt(SW[3]), Math.Sqrt(SW[4]), Math.Sqrt(SW[5]), Math.Sqrt(SW[6]), Math.Sqrt(SW[7]) }, 44100, 2048, Threadid);
+                            double[] ms = Audio.Pach_SP.Magnitude_Spectrum(new double[8] { Math.Sqrt(SW[0]), Math.Sqrt(SW[1]), Math.Sqrt(SW[2]), Math.Sqrt(SW[3]), Math.Sqrt(SW[4]), Math.Sqrt(SW[5]), Math.Sqrt(SW[6]), Math.Sqrt(SW[7]) }, 44100, 8192, Threadid);
 
                             System.Numerics.Complex[] TF = new System.Numerics.Complex[ms.Length];
                             for (int j = 0; j < TF.Length; j++) TF[j] = ms[j];
@@ -707,7 +707,7 @@ namespace Pachyderm_Acoustic
                             {
                                 //Todo: confirm that pulse comes in at right times...
                                 int t_c = index + j;
-                                double p_t = omni_pr * pulse[j] / 2048;
+                                double p_t = omni_pr * pulse[j] / 8192;
 
                                 if (!H_d.Keys.Contains<int>(index + j))
                                 {
@@ -1276,7 +1276,7 @@ namespace Pachyderm_Acoustic
             Sequence = Seq;
             Identify(SrcID, Direct_Time);
 
-            System.Numerics.Complex[] Pspec = Audio.Pach_SP.Mirror_Spectrum(Audio.Pach_SP.Magnitude_Spectrum(prms, 44100, 2048, 0));
+            System.Numerics.Complex[] Pspec = Audio.Pach_SP.Mirror_Spectrum(Audio.Pach_SP.Magnitude_Spectrum(prms, 44100, 8192, 0));
 
             if (Special_Filter != null)
             {
@@ -1340,7 +1340,7 @@ namespace Pachyderm_Acoustic
 
             for (int i = 0; i < 8; i++) prms[i] = Math.Sqrt(PathEnergy[i] * Room.Rho_C(Path[0]));
 
-            System.Numerics.Complex[] Pspec = Audio.Pach_SP.Mirror_Spectrum(Audio.Pach_SP.Magnitude_Spectrum(prms, 44100, 2048, thread));
+            System.Numerics.Complex[] Pspec = Audio.Pach_SP.Mirror_Spectrum(Audio.Pach_SP.Magnitude_Spectrum(prms, 44100, 8192, thread));
 
             foreach (int q in Seq_Polys)
             {
@@ -1351,7 +1351,7 @@ namespace Pachyderm_Acoustic
                     Hare.Geometry.Vector d = Path[i + 1] - Path[i + 2]; d.Normalize();
                     if (!(Room.AbsorptionValue[Seq_Polys[i]] is Basic_Material))
                     {
-                        System.Numerics.Complex[] Ref = Room.AbsorptionValue[Seq_Polys[i]].Reflection_Spectrum(44100, 2048, Room.Normal(Seq_Polys[i]), d, thread);
+                        System.Numerics.Complex[] Ref = Room.AbsorptionValue[Seq_Polys[i]].Reflection_Spectrum(44100, 8192, Room.Normal(Seq_Polys[i]), d, thread);
                         for (int j = 0; j < Pspec.Length; j++) Pspec[j] *= Ref[j];
                     }
                 }

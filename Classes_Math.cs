@@ -299,7 +299,7 @@ namespace Pachyderm_Acoustic
                     foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
                     maxdelay *= Sampling_Frequency / 1000;
 
-                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192*2 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
@@ -988,11 +988,11 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -1099,13 +1099,13 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[3] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[6] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[3] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[4] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[5] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[6] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -1231,9 +1231,9 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
-                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
+                        Histogram[2] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))
@@ -1318,7 +1318,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 2048];
+                        Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192];
                     }
 
                     if (Direct != null && Direct.IsOccluded(Rec_ID))

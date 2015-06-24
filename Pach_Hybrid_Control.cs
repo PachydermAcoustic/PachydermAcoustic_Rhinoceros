@@ -1610,8 +1610,12 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Pressure Time Curve":
-                            zero_sample = 1024;
-                            Filter2 = Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false), PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            zero_sample = 8192/2;
+                            Filter2 = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                            if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                            {
+                                Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
@@ -1623,7 +1627,11 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Lateral PTC":
                             zero_sample = 1024;
-                            Filter2 = Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0], PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                            if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                            {
+                                Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
@@ -1635,7 +1643,11 @@ namespace Pachyderm_Acoustic
                             break;
                         case"Vertical PTC":
                             zero_sample = 1024;
-                            Filter2 = Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                            if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                            {
+                                Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
@@ -1647,7 +1659,11 @@ namespace Pachyderm_Acoustic
                             break;
                         case"Fore-Aft PTC":
                             zero_sample = 1024;
-                            Filter2 = Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2], PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                            if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                            {
+                                Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                            }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           

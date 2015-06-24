@@ -32,13 +32,13 @@ namespace Pachyderm_Acoustic
         public class Pach_SP
         {
             static System.Threading.Semaphore S = new System.Threading.Semaphore(1, 1);
-            //For all standard 2048 sample FFTs...
-            static fftw_complexarray[] FFT_ArrayIn2048;
-            static fftw_complexarray[] FFT_ArrayOut2048;
-            static fftw_plan[] FFT_Plan2048;
-            static fftw_complexarray[] IFFT_ArrayIn2048;
-            static fftw_complexarray[] IFFT_ArrayOut2048;
-            static fftw_plan[] IFFT_Plan2048;
+            //For all standard 8192 sample FFTs...
+            static fftw_complexarray[] FFT_ArrayIn8192;
+            static fftw_complexarray[] FFT_ArrayOut8192;
+            static fftw_plan[] FFT_Plan8192;
+            static fftw_complexarray[] IFFT_ArrayIn8192;
+            static fftw_complexarray[] IFFT_ArrayOut8192;
+            static fftw_plan[] IFFT_Plan8192;
 
             //For all others...
             static fftw_complexarray[] FFT_ArrayIn;
@@ -51,12 +51,12 @@ namespace Pachyderm_Acoustic
             public static void Initialize_FFTW()
             {
                 int proc = System.Environment.ProcessorCount;
-                FFT_ArrayIn2048 = new fftw_complexarray[proc];
-                FFT_ArrayOut2048 = new fftw_complexarray[proc];
-                FFT_Plan2048 = new fftw_plan[proc];
-                IFFT_ArrayIn2048 = new fftw_complexarray[proc];
-                IFFT_ArrayOut2048 = new fftw_complexarray[proc];
-                IFFT_Plan2048 = new fftw_plan[proc];
+                FFT_ArrayIn8192 = new fftw_complexarray[proc];
+                FFT_ArrayOut8192 = new fftw_complexarray[proc];
+                FFT_Plan8192 = new fftw_plan[proc];
+                IFFT_ArrayIn8192 = new fftw_complexarray[proc];
+                IFFT_ArrayOut8192 = new fftw_complexarray[proc];
+                IFFT_Plan8192 = new fftw_plan[proc];
 
                 FFT_ArrayIn = new fftw_complexarray[proc];
                 FFT_ArrayOut = new fftw_complexarray[proc];
@@ -67,12 +67,12 @@ namespace Pachyderm_Acoustic
                 
                 for(int i = 0; i < proc; i++)
                 {
-                    FFT_ArrayIn2048[i] = new fftw_complexarray(2048);
-                    FFT_ArrayOut2048[i] = new fftw_complexarray(2048);
-                    FFT_Plan2048[i] = fftw_plan.dft_1d(2048, FFT_ArrayIn2048[i], FFT_ArrayOut2048[i], fftw_direction.Forward, fftw_flags.Exhaustive);
-                    IFFT_ArrayIn2048[i] = new fftw_complexarray(2048);
-                    IFFT_ArrayOut2048[i] = new fftw_complexarray(2048);
-                    IFFT_Plan2048[i] = fftw_plan.dft_1d(2048, IFFT_ArrayIn2048[i], IFFT_ArrayOut2048[i], fftw_direction.Forward, fftw_flags.Exhaustive);                    
+                    FFT_ArrayIn8192[i] = new fftw_complexarray(8192);
+                    FFT_ArrayOut8192[i] = new fftw_complexarray(8192);
+                    FFT_Plan8192[i] = fftw_plan.dft_1d(8192, FFT_ArrayIn8192[i], FFT_ArrayOut8192[i], fftw_direction.Forward, fftw_flags.Exhaustive);
+                    IFFT_ArrayIn8192[i] = new fftw_complexarray(8192);
+                    IFFT_ArrayOut8192[i] = new fftw_complexarray(8192);
+                    IFFT_Plan8192[i] = fftw_plan.dft_1d(8192, IFFT_ArrayIn8192[i], IFFT_ArrayOut8192[i], fftw_direction.Forward, fftw_flags.Exhaustive);                    
                 }
             }
 
@@ -129,7 +129,7 @@ namespace Pachyderm_Acoustic
             {
                 int length = h.Length;
 
-                if (length != 2048)
+                if (length != 8192)
                 {
                     Array.Resize(ref h, (int)Math.Pow(2, Math.Ceiling(Math.Log(h.Length, 2)) + 1));
                 }
@@ -137,34 +137,45 @@ namespace Pachyderm_Acoustic
                 double ctr =  62.5 * Math.Pow(2, octave_index);
                 double freq_l = ctr / Utilities.Numerics.rt2;
                 double freq_u = ctr * Utilities.Numerics.rt2;
-                int idl = (int)Math.Round((h.Length * freq_l) / 44100);
-                int idu = (int)Math.Round((h.Length * freq_u) / 44100);
+                int idl = (int)Math.Round((h.Length * freq_l) / (44100));
+                int idu = (int)Math.Round((h.Length * freq_u) / (44100));
                 //////////////////////////////////////////
                 //Design Butterworth filters with relevant passbands...
-                Complex[] magspec = new Complex[h.Length / 2];
-                for (int i = 1; i <= magspec.Length; i++)
-                {
-                    if (i < idl)
-                    {
-                        magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)idl / (double)i, 6)));
-                    }
-                    else if (i > idu)
-                    {
-                        magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)i / (double)idu, 12)));
-                    }
-                    else
-                    {
-                        magspec[i - 1] = 1;
-                    }
-                }
+                //Complex[] magspec = new Complex[h.Length / 2];
+                //for (int i = 1; i <= magspec.Length; i++)
+                //{
+                //    if (i < idl)
+                //    {
+                //        magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)idl / (double)i, 6)));
+                //    }
+                //    else if (i > idu)
+                //    {
+                //        magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)i / (double)idu, 12)));
+                //    }
+                //    else
+                //    {
+                //        magspec[i - 1] = 1;
+                //    }
+                //}
+                //////////////////////////////////////////
+                //Design Raised Cosine filters with relevant passbands...
+                double[] magspec = new double[h.Length/2];
+                int tau = (int)Math.Floor((idu - idl) / 20f);
 
-                ///////////////Create Linear Phase bandpass///////////// Too much phase distortion...
+                for (int i = 0; i < idu - idl + tau; i++)
+                {
+                    double v = 0;
+                    if (i < tau) v = .5 * (-Math.Cos(Math.PI * i / tau) + 1);
+                    else if (i > (idu - idl) - tau - 1)
+                    {
+                        v = 1 - .5 * (-Math.Cos(Math.PI * (idu - idl - i) / tau) + 1);
+                    }
+                    else v = 1;
+                    magspec[i + idl - tau/2] = v;
+                }
 
                 ///////////Use Zero Phase Bandpass//////////////////////
                 System.Numerics.Complex[] filter = Mirror_Spectrum(magspec);
-
-                ///////////Use Minimum Phase Bandpass///////////////////
-                //System.Numerics.Complex[] filter = Minimum_Phase_TF(magspec, 44100, thread);
 
                 //Convolve signal with Bandpass Filter.
                 Complex[] freq_h = FFT_General(h, thread);
@@ -185,11 +196,11 @@ namespace Pachyderm_Acoustic
             //public static System.Numerics.Complex[] FFT(Complex[] Signal, int threadid)
             //{
             //    //FFTW.Net Setup//
-            //    FFT_ArrayIn2048[threadid].SetData(Signal);
-            //    //FFT_ArrayOut2048[threadid].SetZeroData();
-            //    FFT_Plan2048[threadid].Execute();
+            //    FFT_ArrayIn8192[threadid].SetData(Signal);
+            //    //FFT_ArrayOut8192[threadid].SetZeroData();
+            //    FFT_Plan8192[threadid].Execute();
 
-            //    System.Numerics.Complex[] Out = FFT_ArrayOut2048[threadid].GetData_Complex();
+            //    System.Numerics.Complex[] Out = FFT_ArrayOut8192[threadid].GetData_Complex();
             //    return Out;
             //}
 
@@ -200,10 +211,10 @@ namespace Pachyderm_Acoustic
 
                 //FFTW.Net Setup//
                 FFT_ArrayIn[threadid].SetData(Sig_complex);
-                //FFT_ArrayOut2048[threadid].SetZeroData();
+                //FFT_ArrayOut8192[threadid].SetZeroData();
                 FFT_Plan[threadid].Execute();
 
-                System.Numerics.Complex[] Out = FFT_ArrayOut2048[threadid].GetData_Complex();
+                System.Numerics.Complex[] Out = FFT_ArrayOut8192[threadid].GetData_Complex();
                 return Out;
             }
 
@@ -217,10 +228,10 @@ namespace Pachyderm_Acoustic
                 }
 
                 //FFTW.Net Setup//
-                IFFT_ArrayIn2048[threadid].SetData(samplep);
-                IFFT_Plan2048[threadid].Execute();
+                IFFT_ArrayIn8192[threadid].SetData(samplep);
+                IFFT_Plan8192[threadid].Execute();
 
-                double[] Out = IFFT_ArrayOut2048[threadid].GetData_Real();
+                double[] Out = IFFT_ArrayOut8192[threadid].GetData_Real();
 
                 return Out;
             }
@@ -235,10 +246,10 @@ namespace Pachyderm_Acoustic
                 }
 
                 //FFTW.Net Setup//
-                IFFT_ArrayIn2048[threadid].SetData(samplep);
-                IFFT_Plan2048[threadid].Execute();
+                IFFT_ArrayIn8192[threadid].SetData(samplep);
+                IFFT_Plan8192[threadid].Execute();
 
-                System.Numerics.Complex[] Out = IFFT_ArrayOut2048[threadid].GetData_Complex();
+                System.Numerics.Complex[] Out = IFFT_ArrayOut8192[threadid].GetData_Complex();
 
                 return Out;
             }
@@ -370,469 +381,52 @@ namespace Pachyderm_Acoustic
                 double[] p_i = new double[length_starttofinish / 2];
                 double df = (double)(sample_frequency) / (double)length_starttofinish;
 
-                int octave_index = 0;
-                double ctr = 62.5 * Math.Pow(2, octave_index);
-                double freq_l = ctr / Utilities.Numerics.rt2;
-                double freq_u = ctr * Utilities.Numerics.rt2;
-                int idl = (int)Math.Round((length_starttofinish / 2 * freq_l) / 44100);
-                int idu = (int)Math.Round((length_starttofinish / 2 * freq_u) / 44100);
-                double l = Math.Sqrt((idu - idl)) * Math.Sqrt(2);
-                //double[] magspec = new double[length_starttofinish / 2];
+                //int octave_index = 0;
+                //double ctr = 62.5 * Math.Pow(2, octave_index);
+                //double freq_l = ctr / Utilities.Numerics.rt2;
+                //double freq_u = ctr * Utilities.Numerics.rt2;
+                //int idl = (int)Math.Round((length_starttofinish / 2 * freq_l) / 44100);
+                //int idu = (int)Math.Round((length_starttofinish / 2 * freq_u) / 44100);
+                //double l = Math.Sqrt((idu - idl)) * Math.Sqrt(2);
                 
-                for (int i = 1; i < p_i.Length; i++)
+                for (int oct = 0; oct < 8; oct++)
                 {
-                    if(i == idu)
+                    double ctr = 62.5 * Math.Pow(2, oct);
+                    double freq_l = ctr / Utilities.Numerics.rt2;
+                    double freq_u = ctr * Utilities.Numerics.rt2;
+                    int idl = (int)Math.Round(freq_l / df);
+                    int idu = (int)Math.Round(freq_u / df);
+                    double l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+
+                    //constant
+                    int tau = (int)Math.Floor((idu - idl) / 5f);
+
+                    int length = (idu - idl) + tau;
+                    double mod = 0;
+                    double[] magspec = new double[length];
+
+                    for (int i = 0; i < length; i++)
                     {
-                        octave_index++;
-                        ctr = 62.5 * Math.Pow(2, octave_index);
-                        freq_l = ctr / Utilities.Numerics.rt2;
-                        freq_u = ctr * Utilities.Numerics.rt2;
-                        idl = (int)Math.Round((length_starttofinish / 2 * freq_l) / 44100);
-                        idu = (int)Math.Round((length_starttofinish / 2 * freq_u) / 44100);
-                        l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+                        double v = 0;
+                        if (i < tau) v = .5 * (-Math.Cos(Math.PI * i / tau) + 1);
+                        else if (i > length - tau - 1)
+                        {
+                            v = 1 - (-Math.Cos(Math.PI * (idu - idl - i) / tau) + 1);
+                        }
+                        else v = 1;
+                        magspec[i] = v * v;
+                        mod += magspec[i];
                     }
 
-                    //double total = 0;
-                    //////////////////////////////////////////
-                    //Design Raised Cosine filters with relevant passbands...
-
-                    if (octave_index < 8)
+                    mod = Octave_pressure[oct] * Octave_pressure[oct] / mod;
+                    for (int i = 0; i < magspec.Length; i++)
                     {
-                        p_i[i] = Octave_pressure[octave_index] / l;
+                        p_i[idl - tau/2 + i] += 0.5 * Math.Sqrt(magspec[i] * mod);
                     }
-                    else 
-                    {
-                        p_i[i] = Octave_pressure[7] / l;
-                    }
-                    //if (i < idl && octave_index != 0)
-                    //{
-                    //    magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)idl / (double)i, 6))) / l;
-                    //}
-                    //else if (i > idu && octave_index != 7)
-                    //{
-                    //    magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)i / (double)idu, 12))) / l;
-                    //}
-                    //else
-                    //{
-                    //    magspec[i - 1] = 1 / l;
-                    //}
-                    //total += magspec[i - 1];
                 }
-                    //////////////////////////////////////////
-                    //double mod = Octave_pressure[octave_index] / Math.Sqrt((idu - idl) / df);// / total;
-                    //for (int i = 0; i < magspec.Length; i++)
-                    //{
-                    //    p_i[i] += magspec[i] * mod;
-                    //}
-                
-
-
-                //for (int octave_index = 0; octave_index < 8; octave_index++)
-                //{
-                //    double ctr = 62.5 * Math.Pow(2, octave_index);
-                //    double freq_l = ctr / Utilities.Numerics.rt2;
-                //    double freq_u = ctr * Utilities.Numerics.rt2;
-                //    int idl = (int)Math.Round((length_starttofinish / 2 * freq_l) / 44100);
-                //    int idu = (int)Math.Round((length_starttofinish / 2 * freq_u) / 44100);
-
-                //    double total = 0;
-                //    //////////////////////////////////////////
-                //    //Design Raised Cosine filters with relevant passbands...
-                //    double[] magspec = new double[length_starttofinish / 2];
-                //    int l = idu - idl;
-                //    for (int i = 1; i <= magspec.Length; i++)
-                //    {
-                //        if (i < idl && octave_index != 0)
-                //        {
-                //            magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)idl / (double)i, 6))) / l;
-                //        }
-                //        else if (i > idu && octave_index != 7)
-                //        {
-                //            magspec[i - 1] = 1 / Math.Sqrt(1 + (Math.Pow((double)i / (double)idu, 12))) / l;
-                //        }
-                //        else
-                //        {
-                //            magspec[i - 1] = 1 / l;
-                //        }
-                //        //total += magspec[i - 1];
-                //    }
-                //    //////////////////////////////////////////
-                //    double mod = Octave_pressure[octave_index] / Math.Sqrt((idu - idl) / df);// / total;
-                //    for (int i = 0; i < magspec.Length; i++)
-                //    {
-                //        p_i[i] += magspec[i] * mod;
-                //    }
-                //}
-
-                //double[] p = new double[p_i.Length];
-                ///Smooth
-
-                //for (int i = 0; i < p_i.Length; i++) p_i[i] = Math.Log10(p_i[i]);
-
-                //for (int i = 0; i < p_i.Length; i++)
-                //{
-                //    double total = 0;
-
-                //    //double[] gauss = new double[(int)Math.Ceiling(Math.Log((i + 1)*df, 31.25))];
-                //    double[] gauss = new double[p_i.Length / 10];
-                //    int b = (int)Math.Ceiling(gauss.Length / 2d);
-                //    double c = Math.Ceiling(gauss.Length / 6f);
-
-                //    for (int x = 0; x < gauss.Length; x++)
-                //    {
-                //        double xb = x - b;
-                //        gauss[x] = System.Math.Exp(-(xb * xb) / (2 * c * c));
-                //        total += gauss[x];
-                //    }
-
-                //    total = Math.Sqrt(total);
-                //    int ib = i + b;
-                //    for (int x = 0; x < gauss.Length; x++)
-                //    {
-                //        if (ib + x >= p_i.Length) break;
-                //        p[ib + x] += Math.Pow(10, gauss[x] * p_i[i] / total);
-                //    }
-                //}
 
                 return p_i;
             }
-
-            //public static double[] Magnitude_Spectrum(double[] Octave_pressure, int sample_frequency, int length_starttofinish, int threadid)
-            //{
-            //    double rt2 = Math.Sqrt(2);
-            //    int spec_length = length_starttofinish;
-            //    double df = (double)(sample_frequency) / (double)spec_length;
-
-            //    List<double> f = new List<double>();
-            //    List<double> pr = new List<double>();
-
-            //    for (int oct = 0; oct < 7; oct++) if (Octave_pressure[oct] == 0) Octave_pressure[oct] = double.Epsilon;
-
-            //    double s = Math.Abs(62.5 * Math.Pow(2, 0) / rt2 - 62.5 * Math.Pow(2, 0) * rt2) / df;
-            //    double BASE = Math.Pow(Octave_pressure.Max() / Octave_pressure.Min(), 2);
-
-            //    f.Add(df);
-            //    pr.Add((2 * Octave_pressure[0] * Octave_pressure[0] - Octave_pressure[0] * Octave_pressure[0]) / (62.5/df));
-                
-            //    double[] fl = new double[8], fu = new double[8], bw = new double[8];
-            //    double[] samples = new double[8];
-            //    for (int oct = 0; oct < 8; oct++)
-            //    {
-            //        double fr = 62.5 * Math.Pow(2, oct);
-            //        fl[oct] = fr / rt2;
-            //        fu[oct] = fr * rt2;
-            //        bw[oct] = fu[oct] - fl[oct];
-            //        samples[oct] = bw[oct] / df * Math.Pow(2, oct + 1);
-            //    }
-
-            //    for (int oct = 0; oct < 8; oct++)
-            //    {
-
-            //        double I_next, samples_;
-            //        if (oct == 7)
-            //        {
-            //            samples_ = 2 * (fu[oct] - fl[oct]) / df / Math.Pow(2, oct + 1);
-            //            I_next = Octave_pressure[7] * Octave_pressure[7] / (samples_);
-            //        }
-            //        else
-            //        {
-            //            samples_ = (fu[oct + 1] - fl[oct + 1]) / df / Math.Pow(2, oct + 1);
-            //            I_next = Octave_pressure[oct + 1] * Octave_pressure[oct + 1] / (samples_);
-            //        }
-            //        double I_c = Octave_pressure[oct] * Octave_pressure[oct] / samples[oct];
-            //        double I_u = I_c + (I_next - I_c) / 3;
-            //        double I_l = I_c + 2 * (I_c - pr.Last()) / 3;
-            //        //double P_c = Octave_pressure[oct] / samples[oct];
-            //        //double P_next = (oct < 7) ? Octave_pressure[oct + 1] / (samples[oct] * 2) : Octave_pressure[7] / (samples[oct] * 2);
-            //        //double P_u = (P_c + P_next) / 3;
-            //        //double P_l = 2 * (pr.Last() + P_c) / 3;
-            //        ////Construct a sensitive region with the right amount of total root mean square pressure...
-            //        double Itot = Octave_pressure[oct] * Octave_pressure[oct]; //total power in each half of the region of interest...
-            //        //double Ptot = Octave_pressure[oct] / 2; //total power in each half of the region of interest...
-
-            //        //double I_current = Math.Pow(BASE, spl_current);
-            //        //double I_next = Math.Pow(BASE, spl_next);
-            //        //I_current *= I_current;
-            //        //I_next *= I_next;
-            //        //double I_l = Math.Pow(BASE, pr.Last());
-            //        //double I_u = (I_current + I_next) / 3;
-
-            //        //I_l *= I_l;
-            //        //I_u *= I_u;
-            //        //double Itot = Octave_pressure[oct] * Octave_pressure[oct];
-
-            //        if (samples[oct] < 4)
-            //        {
-            //            f.Add(fl[oct] + bw[oct] / 2);
-            //            f.Add(fu[oct]);
-            //            pr.Add(I_c);
-            //            pr.Add(I_u);
-            //        }
-            //        else
-            //        {
-            //            f.Add(fl[oct] + bw[oct] / 4);
-            //            f.Add(fl[oct] + bw[oct] / 2);
-            //            f.Add(fl[oct] + 3 * bw[oct] / 4);
-            //            f.Add(fu[oct]);
-            //            pr.Add(2 * Itot / (samples[oct]) - (I_l + I_c) / 2);
-            //            pr.Add(I_c);
-            //            pr.Add(2 * Itot / (samples[oct]) - (I_u + I_c) / 2);
-            //            pr.Add(I_u);
-            //        }
-            //        //pr.Add(2 * Ptot / Math.Sqrt(samples[oct]) - (P_l + P_c) / 2);
-            //        //pr.Add(P_c);
-            //        //pr.Add(2 * Ptot / Math.Sqrt(samples[oct]) - (P_u + P_c) / 2);
-            //        //pr.Add(P_u);
-            //        //pr.Add(2 * Itot / (samples[oct]) - (I_l + I_c) / 2);
-            //        //pr.Add(I_c);
-            //        //pr.Add(2 * Itot / (samples[oct]) - (I_u + I_c) / 2);
-            //        //pr.Add(I_u);
-            //        //pr.Add(Math.Log(Math.Sqrt(Itot / (samples[oct]) - (I_l + I_c) / 2), BASE));
-            //        //pr.Add(spl_current);
-            //        //pr.Add(Math.Log(Math.Sqrt(Itot / (samples[oct]) - (I_u + I_c) / 2), BASE));
-            //        //pr.Add(Math.Log(Math.Sqrt(I_u)));
-            //    }
-
-            //    double freq = 0;
-            //    int octave = 7;
-            //    while (freq < sample_frequency / 2)
-            //    {
-            //        octave++;
-            //        freq = 62.5 * Math.Pow(2, octave);
-            //        double fl_ = freq / rt2, fu_ = freq * rt2;
-            //        double bw_ = fu_ - fl_;
-            //        double samples_ = bw_ / df;
-
-            //        f.Add((fl_ + fu_) / 2);
-            //        //pr.Add(Octave_pressure[7] * Octave_pressure[7] / (samples_));
-            //        pr.Add(Octave_pressure[7] * Octave_pressure[7] / samples_ * Math.Pow(2, octave + 1));
-            //    }
-
-            //    for(int i = 0; i < pr.Count; i++) pr[i] = Math.Log(pr[i], BASE);
-
-            //    double[] pra = pr.ToArray();
-
-            //    MathNet.Numerics.Interpolation.CubicSpline prm = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(f.ToArray(), pra);
-
-            //    double[] p_i = new double[spec_length / 2];
-
-            //    for (int j = 0; j < spec_length / 2; j++)
-            //    {
-            //        double fr = (j + 1) * df;
-            //        p_i[j] = Math.Pow(BASE, prm.Interpolate(fr));// / (1 + Math.Exp(-(fr - 44))));// / (fr);
-            //    }
-
-            //    //    ///Smooth
-            //    double[] p = new double[p_i.Length];
-            //    for (int i = 0; i < p_i.Length; i++)
-            //    {
-            //        double total = 0;
-
-            //        //double[] gauss = new double[(int)Math.Ceiling(Math.Log((i + 1)*df, 31.25))];
-            //        double[] gauss = new double[p_i.Length / 10];
-            //        int b = (int)Math.Ceiling(gauss.Length / 2d);
-            //        double c = Math.Ceiling(gauss.Length / 6f);
-
-            //        for (int x = 0; x < gauss.Length; x++)
-            //        {
-            //            double xb = x - b;
-            //            gauss[x] = System.Math.Exp(-(xb * xb) / (2 * c * c));
-            //            total += gauss[x];
-            //        }
-
-            //        total = Math.Sqrt(total);
-            //        int ib = i + b;
-            //        for (int x = 0; x < gauss.Length; x++)
-            //        {
-            //            if (ib + x >= p_i.Length) break;
-            //            p[ib + x] += Math.Pow(10, gauss[x] * p_i[i] / total);
-            //        }
-            //    }
-
-            //    return p_i;
-            //}
-
-            //public static double[] Magnitude_Spectrum(double[] Octave_pressure, int sample_frequency, int length_starttofinish, int threadid)
-            //{
-            //    double rt2 = Math.Sqrt(2);
-            //    int spec_length = length_starttofinish;
-            //    double df = (double)(sample_frequency) / (double)spec_length;
-
-            //    List<double> f = new List<double>();
-            //    List<double> pr = new List<double>();
-
-            //    for (int oct = 0; oct < 7; oct++) if (Octave_pressure[oct] == 0) Octave_pressure[oct] = double.Epsilon;
-
-            //    double s = Math.Abs(62.5 * Math.Pow(2, 0) / rt2 - 62.5 * Math.Pow(2, 0) * rt2) / df;
-            //    double BASE = Math.Pow(Octave_pressure.Max() / Octave_pressure.Min(), 2);
-
-            //    f.Add(df);
-            //    pr.Add(Math.Log(Octave_pressure[0] / Math.Sqrt(2 * s), BASE));
-            //    f.Add(31.25 * rt2);
-            //    pr.Add(Math.Log(Octave_pressure[0] / Math.Sqrt(2 * s), BASE));
-            //    double[] fl = new double[8], fu = new double[8];
-            //    int[] samples = new int[8];
-            //    double[] fr = new double[8];
-            //    for (int oct = 0; oct < 8; oct++)
-            //    {
-            //        fr[oct] = 62.5 * Math.Pow(2, oct);
-            //        fl[oct] = fr[oct] / rt2; fu[oct] = fr[oct] * rt2;
-            //        double bw = fu[oct] - fl[oct];
-            //        samples[oct] = (int)Math.Ceiling(bw / df);
-
-            //        f.Add((fr[oct] + fl[oct]) / 2);
-            //        pr.Add(Math.Log(Octave_pressure[oct] / Math.Sqrt(2 * samples[oct]), BASE));
-            //    }
-
-            //    double freq = 0;
-            //    int octave = 7;
-            //    while (freq < sample_frequency / 2)
-            //    {
-            //        octave++;
-            //        freq = 62.5 * Math.Pow(2, octave);
-            //        double fl_ = freq / rt2, fu_ = freq * rt2;
-            //        double bw_ = fu_ - fl_;
-            //        double samples_ = bw_ / df;
-
-            //        f.Add((fl_ + fu_) / 2);
-            //        pr.Add(Math.Log(Octave_pressure[7] / Math.Sqrt(2 * samples_), BASE));
-            //    }
-
-            //    MathNet.Numerics.Interpolation.CubicSpline prm = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(f.ToArray(), pr.ToArray());
-
-            //    double[] p_i = new double[spec_length / 2];
-
-
-            //    for (int j = 0; j < spec_length / 2; j++)
-            //    {
-            //        double frequency = (j + 1) * df;
-            //        p_i[j] = Math.Pow(BASE, prm.Interpolate(frequency));
-            //    }
-
-            //    ///TODO: Total prms. Find out the deficiency, and then add on a guaussian correction.
-            //    double[] p = new double[p_i.Length];
-            //    for (int i = 0; i < p.Length; i++) p[i] = p_i[i] * p_i[i];
-
-            //    //for (int oct = 1; oct < 8; oct++)
-            //    //{
-            //    //    double total = 0;
-            //    //    double[] gauss = new double[samples[oct] * 2];
-            //    //    double b = samples[oct] / 2;
-            //    //    double c = Math.Ceiling(samples[oct] / 6f);
-
-            //    //    for (int x = 0; x < gauss.Length; x++)
-            //    //    {
-            //    //        double xb = x - b;
-            //    //        gauss[x] = System.Math.Exp(-(xb * xb) / (2 * c * c));
-            //    //        total += gauss[x] * gauss[x];
-            //    //    }
-
-            //    //    total = Math.Sqrt(total);
-
-            //    //    int offset1 = (int)(fl[oct] / df);
-            //    //    int offset2 = (int)(.5 * (fl[oct - 1] + fu[oct - 1]) / df);
-            //    //    double octaveP = 0;
-            //    //    for (int x = 0; x < gauss.Length * .5; x++) octaveP += p[x + offset1];
-            //    //    octaveP = Math.Sqrt(octaveP);
-            //    //    double mod = (.5 * Octave_pressure[oct] - octaveP) / total;
-            //    //    for (int x = 0; x < gauss.Length; x++) p[offset2 + x] += gauss[x] * mod;
-            //    //}
-
-
-
-            //    List<double> mod = new List<double>();
-            //    mod.Add(0);//Octave_pressure[0] / 2 * s);
-            //    mod.Add(0);//Octave_pressure[0] / 2 * s);
-            //    mod.Add(0);//Octave_pressure[0] / 2 * s);
-
-            //    for (int oct = 1; oct < 8; oct++)
-            //    {
-            //        int offset = (int)(62.5 * Math.Pow(2, oct) / rt2 / df);
-            //        double octaveP = 0;
-            //        for (int x = 0; x < samples[oct]; x++) octaveP += p[x + offset];
-            //        octaveP = Math.Sqrt(octaveP);
-            //        mod.Add((Octave_pressure[oct] * Octave_pressure[oct] - octaveP) / samples[oct]);
-            //    }
-
-            //    freq = 0;
-            //    octave = 7;
-            //    while (freq < sample_frequency / 2)
-            //    {
-            //        octave++;
-            //        freq = 62.5 * Math.Pow(2, octave);
-            //        //double fl_ = freq / rt2, fu_ = freq * rt2;
-            //        //double bw_ = fu_ - fl_;
-            //        //double samples_ = bw_ / df;
-            //        mod.Add(mod.Last() / 2);
-            //    }
-            //    prm = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(f.ToArray(), mod.ToArray());
-
-            //    for (int j = 0; j < spec_length / 2; j++)
-            //    {
-            //        double frequency = (j + 1) * df;
-            //        p[j] += Math.Pow(BASE, prm.Interpolate(frequency));
-            //    }
-
-            //    for (int i = 0; i < p.Length; i++) p[i] = Math.Sqrt(p[i]);
-
-
-
-
-            //        ////for (int oct = 0; oct < 8; oct++)
-            //        //{
-            //        //    double total = 0;
-            //        //    double[] gauss = new double[samples[oct]];
-            //        //    double b = samples[oct] / 2;
-            //        //    double c = Math.Ceiling(samples[oct] / 6f);
-
-            //        //    for (int x = 0; x < gauss.Length; x++)
-            //        //    {
-            //        //        double xb = x - b;
-            //        //        gauss[x] = System.Math.Exp(-(xb * xb) / (2 * c * c));
-            //        //        total += gauss[x] * gauss[x];
-            //        //    }
-
-            //        //    total = Math.Sqrt(total);
-
-            //        //    int offset = (int)Math.Floor(fl[oct] / df);
-            //        //    double octaveP = 0;
-            //        //    for (int x = 0; x < gauss.Length; x++) octaveP += p_i[x + offset] * p_i[x + offset];
-            //        //    octaveP = Math.Sqrt(octaveP);
-            //        //    double mod = (.5 * Octave_pressure[oct] - octaveP) / total;
-            //        //    for (int x = 0; x < gauss.Length; x++) p_i[x + offset] += gauss[x] * mod;
-            //        //}
-
-            //        /////Smooth
-            //        //double[] p = new double[p_i.Length];
-            //        ////for (int i = 0; i < p_i.Length; i++) p_i[i] = Math.Log10(p_i[i]);
-
-            //        //    for (int i = 0; i < p_i.Length; i++)
-            //        //    {
-            //        //        double total = 0;
-            //        //        double[] gauss = new double[7];
-            //        //        int b = (int)Math.Ceiling(gauss.Length / 3d);
-            //        //        double c = Math.Ceiling(gauss.Length / 12d);
-
-            //        //        for (int x = 0; x < gauss.Length; x++)
-            //        //        {
-            //        //            double xb = x - b;
-            //        //            gauss[x] = System.Math.Exp(-(xb * xb) / (2 * c * c));
-            //        //            total += gauss[x];
-            //        //        }
-
-            //        //        total = Math.Sqrt(total);
-            //        //        int ib = i + b;
-            //        //        for (int x = 0; x < gauss.Length; x++)
-            //        //        {
-            //        //            if (ib + x >= p_i.Length) break;
-            //        //            //p[ib + x] += Math.Pow(10, gauss[x] * p_i[i] / total);
-            //        //            p[ib + x] += .5 * p_i[i] * gauss[x] / total;
-            //        //        }
-
-            //        //    p_i = p;
-            //        //}
-            //        return p;
-            //}
 
             public static double[] Magnitude_Filter(double[] Octave_pressure, int sample_frequency, int length_starttofinish, int threadid)
             {
@@ -1136,7 +730,7 @@ namespace Pachyderm_Acoustic
 
             public static double[] ETCToPTC(double[][] Octave_ETC, double CutOffTime, int sample_frequency_in, int sample_frequency_out, double Rho_C)
             {
-                int length = (int)Math.Pow(2, 11);
+                int length = 8192;
                 double[] IR = new double[(int)Math.Floor(sample_frequency_out * CutOffTime) + 2 * (int)length];
                 double BW = (double)sample_frequency_out / (double)sample_frequency_in;
 
@@ -1168,13 +762,13 @@ namespace Pachyderm_Acoustic
                         {
                             ct++;
                             double[] pr = new double[8];
-                            for (int oct = 0; oct < 8; oct++) pr[oct] = Math.Sqrt(Octave_ETC[0][t] * Rho_C);
+                            for (int oct = 0; oct < 8; oct++) pr[oct] = Math.Sqrt(Octave_ETC[oct][t] * Rho_C);
 
                             double sum = 0;
                             foreach (double d in pr) sum += d;
                             if (sum > 0)
                             {
-                                output[thr] = Linear_Phase_Signal(pr, sample_frequency_out, 2048, thr);
+                                output[thr] = Linear_Phase_Signal(pr, sample_frequency_out, 8192, thr);
                                 Audio.Pach_SP.Raised_Cosine_Window(ref output[thr]);
                                 for (int k = 0; k < length; k++)
                                 {
