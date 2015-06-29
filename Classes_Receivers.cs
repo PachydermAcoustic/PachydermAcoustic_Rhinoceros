@@ -41,6 +41,8 @@ namespace Pachyderm_Acoustic
             public Hare.Geometry.Point Min;
             public Hare.Geometry.Point Max;
             public int[] Oct_choice;
+            public double delay_ms;
+
             /// <summary>
             /// Specifies the kinds of receivers that can be placed in this receiver bank.
             /// </summary>
@@ -62,8 +64,9 @@ namespace Pachyderm_Acoustic
             /// <param name="CSound">the speed of sound in m/s</param>
             /// <param name="CO_Time_in">The Cut Off Time of the simulation in ms.</param>
             /// <param name="Type">The type of receiver to be used</param>
-            private Receiver_Bank(int Rec_Count, int SampleRate_in, double CO_Time_in, double[] rho_c, int[] Octaves, Receiver_Bank.Type Type)
+            private Receiver_Bank(int Rec_Count, int SampleRate_in, double CO_Time_in, double delayinms, double[] rho_c, int[] Octaves, Receiver_Bank.Type Type)
             {
+                delay_ms = delayinms;
                 SampleRate = SampleRate_in;
                 SampleCT = (int)Math.Ceiling(CO_Time_in * SampleRate_in / 1000);
                 this.CutOffTime = CO_Time_in;
@@ -86,8 +89,9 @@ namespace Pachyderm_Acoustic
             /// <param name="SampleRate_in">the simulation histogram sampling frequency</param>
             /// <param name="COTime_in">the Cut Off Time in ms.</param>
             /// <param name="Type">the type of receivers contained in this receiver bank</param>
-            public Receiver_Bank(IEnumerable<Point3d> Pt, Point3d SrcPT, Scene Sc, int SampleRate_in, double COTime_in, Type Type)
+            public Receiver_Bank(IEnumerable<Point3d> Pt, Point3d SrcPT, Scene Sc, int SampleRate_in, double COTime_in, double delayinms, Type Type)
             {
+                delay_ms = delayinms;
                 SampleRate = SampleRate_in;
                 SampleCT = (int)Math.Floor(COTime_in * SampleRate_in / 1000);
                 this.CutOffTime = COTime_in;
@@ -276,7 +280,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Rec_CT">The number of receivers</param>
             /// <param name="SampleRate">the histogram sampling frequency</param>
             /// <returns>a complete receiver bank</returns>
-            public static Receiver_Bank Read_Data(ref System.IO.BinaryReader BR, int Rec_CT, IEnumerable<Hare.Geometry.Point> RecPts, double[] rho_c, ref int SampleRate, string version)
+            public static Receiver_Bank Read_Data(ref System.IO.BinaryReader BR, int Rec_CT, IEnumerable<Hare.Geometry.Point> RecPts, double[] rho_c, double delayms, ref int SampleRate, string version)
             {
                 //2. Write the type of receivers used
                 Type Rec_typ = (Type)Enum.ToObject(typeof(Type), BR.ReadUInt32());
@@ -293,13 +297,12 @@ namespace Pachyderm_Acoustic
                 //6. Write the cut off time:double
                 double CutoffTime = BR.ReadDouble();
 
-                Receiver_Bank Rec = new Receiver_Bank(Rec_CT, SampleRate, CutoffTime, rho_c, new int[]{0,1,2,3,4,5,6,7}, Rec_typ);
+                Receiver_Bank Rec = new Receiver_Bank(Rec_CT, SampleRate, CutoffTime, delayms, rho_c, new int[]{0,1,2,3,4,5,6,7},Rec_typ);
 
                 double v = double.Parse(version.Substring(0, 3));
 
                 for (int q = 0; q < Rec_CT; q++)
                 {
-
                     Rec.Rec_List[q].H_Origin = RecPts.ElementAt<Hare.Geometry.Point>(q);
                     Rec.Rec_List[q].Recs.Energy[0] = new double[SampleCT];
                     Rec.Rec_List[q].Recs.Energy[1] = new double[SampleCT];

@@ -96,7 +96,7 @@ namespace Pachyderm_Acoustic
                     for (int oct = 0; oct < 8; oct++) for (int dir = 0; dir < 3; dir++)
                         {
                             BW.Write(Dir_Rec_Pos[q][oct, time, dir]);
-                            BW.Write(Dir_Rec_Pos[q][oct, time, dir]);
+                            BW.Write(Dir_Rec_Neg[q][oct, time, dir]);
                         }
                 }
             }
@@ -858,62 +858,55 @@ namespace Pachyderm_Acoustic
             Pdir = new double[Receiver.Count][][];
             double scale = Math.Sqrt(8192);
 
-            for(int i = 0; i < Receiver.Count; i++)
+            for (int i = 0; i < Receiver.Count; i++)
             {
                 double[][] ETC = new double[8][];
 
                 for (int oct = 0; oct < 8; oct++) ETC[oct] = new double[Io[i].GetLongLength(0)];
-                
-                for(int t = 0; t < ETC[0].Length; t++) 
+
+                for (int t = 0; t < ETC[0].Length; t++)
                 {
-                    for(int oct = 0; oct < 8; oct++) ETC[oct][t] = Math.Sqrt(Io[i][t,oct] * Rho_C[i]);
+                    for (int oct = 0; oct < 8; oct++) ETC[oct][t] = Math.Sqrt(Io[i][t, oct] * Rho_C[i]);
                 }
 
                 P[i] = new double[ETC[0].Length + 8192];
                 Pdir[i] = new double[6][];
                 for (int j = 0; j < 6; j++) Pdir[i][j] = new double[ETC[0].Length + 8192];
-                    for (int t = 0; t < ETC[0].Length; t++)
+                for (int t = 0; t < ETC[0].Length; t++)
+                {
+                    Rhino.RhinoApp.CommandPrompt = string.Format("Creating direct sound pressure for receiver {0}. {1}% complete, ", i, Math.Round((double)t / ETC[0].Length * 100));
+                    double[] Pmin = Audio.Pach_SP.Linear_Phase_Signal(new double[8] { ETC[0][0], ETC[1][0], ETC[2][0], ETC[3][0], ETC[4][0], ETC[5][0], ETC[6][0], ETC[7][0] }, 44100, 8192, 0);
+                    //Audio.Pach_SP.Raised_Cosine_Window(ref Pmin);
+                    for (int u = 0; u < Pmin.Length; u++)
                     {
-                        Rhino.RhinoApp.CommandPrompt = string.Format("Creating direct sound pressure for receiver {0}. {1}% complete, ", i, Math.Round((double)t / ETC[0].Length * 100));
-                        double[] Pmin = Audio.Pach_SP.Linear_Phase_Signal(new double[8] { ETC[0][0], ETC[1][0], ETC[2][0], ETC[3][0], ETC[4][0], ETC[5][0], ETC[6][0], ETC[7][0] }, 44100, 8192, 0);
-                        Audio.Pach_SP.Raised_Cosine_Window(ref Pmin);
-                        for (int u = 0; u < Pmin.Length; u++)
-                        {
-                            P[i][t + u] += Pmin[u];// *scale;
-                        }
+                        P[i][t + u] += Pmin[u];// *scale;
+                    }
 
-                        double[][] dir_E = new double[6][];
-                        for (int d = 0; d < 6; d++) dir_E[d] = new double[8];
-                        //double[] totalprms = new double[6];
-                        Vector vpos = new Vector(), vneg = new Vector();
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            vpos += new Vector(Math.Abs(Dir_Rec_Pos[i][oct, t, 0]), Math.Abs(Dir_Rec_Pos[i][oct, t, 1]), Math.Abs(Dir_Rec_Pos[i][oct, t, 2]));
-                            vneg += new Vector(Math.Abs(Dir_Rec_Neg[i][oct, t, 0]), Math.Abs(Dir_Rec_Neg[i][oct, t, 1]), Math.Abs(Dir_Rec_Neg[i][oct, t, 2]));
-                            //dir_E[0][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Pos[i][oct, t, 0] * Rho_C[i]));
-                            //dir_E[1][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Neg[i][oct, t, 0] * Rho_C[i]));
-                            //dir_E[2][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Pos[i][oct, t, 1] * Rho_C[i]));
-                            //dir_E[3][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Neg[i][oct, t, 1] * Rho_C[i]));
-                            //dir_E[4][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Pos[i][oct, t, 2] * Rho_C[i]));
-                            //dir_E[5][oct] = Math.Sqrt(Math.Abs(this.Dir_Rec_Neg[i][oct, t, 2] * Rho_C[i]));
-                            //for(int j = 0; j < 6; j++) totalprms[j] += dir_E[j][oct];
-                        }
+                    double[][] dir_E = new double[6][];
+                    for (int d = 0; d < 6; d++) dir_E[d] = new double[8];
+                    //double[] totalprms = new double[6];
+                    Vector vpos = new Vector(), vneg = new Vector();
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        vpos += new Vector(Math.Abs(Dir_Rec_Pos[i][oct, t, 0]), Math.Abs(Dir_Rec_Pos[i][oct, t, 1]), Math.Abs(Dir_Rec_Pos[i][oct, t, 2]));
+                        vneg += new Vector(Math.Abs(Dir_Rec_Neg[i][oct, t, 0]), Math.Abs(Dir_Rec_Neg[i][oct, t, 1]), Math.Abs(Dir_Rec_Neg[i][oct, t, 2]));
+                    }
 
-                        //6th order normalization:
-                        double length = Math.Sqrt(vpos.x * vpos.x + vneg.x * vneg.x + vpos.y * vpos.y + vneg.y * vneg.y + vpos.z * vpos.z + vneg.z * vneg.z );
-                        vpos /= length;
-                        vneg /= length;
-                                                
-                        for (int j = 0; j < 3; j++)
+                    //6th order normalization:
+                    double length = Math.Sqrt(+vpos.x * vpos.x + vneg.x * vneg.x + vpos.y * vpos.y + vneg.y * vneg.y + vpos.z * vpos.z + vneg.z * vneg.z);
+                    vpos /= length;
+                    vneg /= length;
+
+                    for (int j = 0; j < 3; j++)
+                    {
+                        for (int k = 0; k < 8192; k++)
                         {
-                            for (int k = 0; k < 8192; k++)
-                            {
-                                int j2 = 2 * j;
-                                Pdir[i][j2][t + k] += Pmin[k] * vpos.byint(j);//((double.IsNaN(hist_temp[j2][k])) ? 0: hist_temp[j2][k]);
-                                Pdir[i][j2 + 1][t + k] += Pmin[k] * vneg.byint(j);//((double.IsNaN(hist_temp[j2 + 1][k])) ? 0 : hist_temp[j2 + 1][k]);
-                            }
+                            int j2 = 2 * j;
+                            Pdir[i][j2][t + k] += Pmin[k] * vpos.byint(j);//((double.IsNaN(hist_temp[j2][k])) ? 0: hist_temp[j2][k]);
+                            Pdir[i][j2 + 1][t + k] += Pmin[k] * vneg.byint(j);//((double.IsNaN(hist_temp[j2 + 1][k])) ? 0 : hist_temp[j2 + 1][k]);
                         }
                     }
+                }
             }
         }
 

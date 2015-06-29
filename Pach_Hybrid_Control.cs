@@ -120,10 +120,10 @@ namespace Pachyderm_Acoustic
                         SavePath = sf.FileName;
                     }
                 }
+                for (int i = 0; i < SourceList.Items.Count; i++) SourceList.SetItemChecked(i, false);
 
                 SourceList.Items.Clear();
                 Source_Aim.Items.Clear();
-
                 Receiver_Choice.Text = "0";
 
                 IS_Data = null;
@@ -204,7 +204,7 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Source.Length; s++)
                 {
-                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, T);
+                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, Source[s].Delay, T);
                     
                     command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[]{0,1,2,3,4,5,6,7});
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
@@ -1626,7 +1626,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral PTC":
-                            zero_sample = 1024;
+                            zero_sample = 8192/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1642,7 +1642,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Vertical PTC":
-                            zero_sample = 1024;
+                            zero_sample = 8192/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1658,7 +1658,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Fore-Aft PTC":
-                            zero_sample = 1024;
+                            zero_sample = 8192/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1775,7 +1775,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
                 double azi, alt;
 
-                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Receiver[Source_Aim.SelectedIndex].Origin(Receiver_Choice.SelectedIndex), true, out alt, out azi);
+                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), true, out alt, out azi);
 
                 Alt_Choice.Value = (decimal)alt;
                 Azi_Choice.Value = (decimal)azi;

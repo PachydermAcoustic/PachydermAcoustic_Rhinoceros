@@ -693,7 +693,7 @@ namespace Pachyderm_Acoustic
                                 pulse[j] = prepulse[(j + prepulse.Length/2) % prepulse.Length];
                             }
 
-                            Audio.Pach_SP.Raised_Cosine_Window(ref pulse);
+                            //Audio.Pach_SP.Raised_Cosine_Window(ref pulse);
                             //Manual convolution of each distinct contribution of edge...
                             int index = (int)Math.Floor(t * SampleRate);
                             double omni_pr = Pr_Spline[i].Interpolate(t);
@@ -1289,7 +1289,7 @@ namespace Pachyderm_Acoustic
             int hw = P.Length / 2;
             for (int i = 0; i < pre.Length; i++) P[i] = pre[(i + hw) % pre.Length] / scale;
 
-            Audio.Pach_SP.Raised_Cosine_Window(ref P);
+            //Audio.Pach_SP.Raised_Cosine_Window(ref P);
         }
 
         public Specular_Path(Hare.Geometry.Point[] Path, int[] Seq_planes, int[] Seq_Polys, Scene Room, Source Src, double C_Sound, double[] Trans_Mod, ref double Direct_Time, int thread, int Rnd)
@@ -1357,15 +1357,17 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            //double[] tank = new double[Pspec.Length];
+            //for (int i = 0; i < tank.Length; i++) tank[i] = Pspec[i].Real;
+            //P = Audio.Pach_SP.Minimum_Phase_Response(tank, 44100, thread);
             //TODO: Investigate phase propoerties of this for special materials filters...
-
             double[] pre = Audio.Pach_SP.IFFT_Real_General(Pspec, thread);
             P = new double[pre.Length];
             double scale = Math.Sqrt(P.Length);
             int hw = P.Length / 2;
             for (int i = 0; i < pre.Length; i++) P[i] = pre[(i + hw) % pre.Length] / scale;
 
-            Audio.Pach_SP.Raised_Cosine_Window(ref P);
+            //Audio.Pach_SP.Raised_Cosine_Window(ref P);
         }
 
         private void Identify(int SrcID, double Direct_Time)

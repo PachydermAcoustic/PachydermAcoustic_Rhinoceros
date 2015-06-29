@@ -267,9 +267,28 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
 
+                    List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                    maxdelay *= Sampling_Frequency / 1000;
+                    
                     double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
@@ -279,7 +298,7 @@ namespace Pachyderm_Acoustic
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
                         {
-                            Histogram[i + (int)Math.Ceiling(Direct[s].Delay_ms / 1000 * Sampling_Frequency)] += IR[i];
+                            Histogram[i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[i];
                         }
                     }
                     return Histogram;
@@ -296,9 +315,28 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
 
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                maxdelay *= Sampling_Frequency / 1000;
+                    
                     double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192*2 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
@@ -309,7 +347,7 @@ namespace Pachyderm_Acoustic
                         //if (P.Length > Ptotal.Length) Array.Resize(ref Ptotal, P.Length);
                         for (int i = 0; i < P.Length; i++)
                         {
-                            Histogram[i + (int)Math.Ceiling(Direct[s].Delay_ms /1000 * Sampling_Frequency)] += P[i];
+                            Histogram[i + (int)Math.Ceiling(delays[s] /1000 * Sampling_Frequency)] += P[i];
                         }
                     }
                     return Histogram;
@@ -474,8 +512,27 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                maxdelay *= Sampling_Frequency / 1000;
 
                     Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
                     Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
@@ -489,7 +546,7 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < IR[0].Length; i++)
                             {
-                                Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                                Histogram[d][i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[d][i];
                             }
                         }
                     }
@@ -624,7 +681,26 @@ namespace Pachyderm_Acoustic
                 if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                 double maxdelay = 0;
-                foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
+
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
                 maxdelay *= Sampling_Frequency / 1000;
 
                 Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
@@ -639,7 +715,7 @@ namespace Pachyderm_Acoustic
                     {
                         for (int i = 0; i < IR[0].Length; i++)
                         {
-                            Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                            Histogram[d][i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[d][i];
                         }
                     }
                 }
@@ -743,8 +819,26 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                maxdelay *= Sampling_Frequency / 1000;
 
                     double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
 
@@ -755,7 +849,7 @@ namespace Pachyderm_Acoustic
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
                         {
-                            Histogram[i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[i];
+                            Histogram[i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[i];
                         }
                     }
                     return Histogram;
@@ -865,8 +959,25 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+                maxdelay *= Sampling_Frequency / 1000;
 
                     Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
                     Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
@@ -883,7 +994,7 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < IR[0].Length; i++)
                             {
-                                Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                                Histogram[d][i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[d][i];
                             }
                         }
                     }
@@ -907,8 +1018,25 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+                maxdelay *= Sampling_Frequency / 1000;
 
                     Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
                     Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
@@ -927,7 +1055,7 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < IR[0].Length; i++)
                             {
-                                Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                                Histogram[d][i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[d][i];
                             }
                         }
                     }
@@ -1189,8 +1317,27 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+
+                List<double> delays = new List<double>();
+
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                maxdelay *= Sampling_Frequency / 1000;
 
                     Histogram[0] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
                     Histogram[1] = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
@@ -1205,7 +1352,7 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < IR[0].Length; i++)
                             {
-                                Histogram[d][i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[d][i];
+                                Histogram[d][i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[d][i];
                             }
                         }
                     }
@@ -1281,10 +1428,28 @@ namespace Pachyderm_Acoustic
                     if (RTData == null) RTData = new Environment.Receiver_Bank[SrcIDs[SrcIDs.Count - 1] + 1];
 
                     double maxdelay = 0;
-                    foreach (Direct_Sound d in Direct) maxdelay = Math.Max(maxdelay, d.Delay_ms);
-                    maxdelay *= Sampling_Frequency / 1000;
+                List<double> delays = new List<double>();
 
-                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 4096 + (int)Math.Ceiling(maxdelay)];
+                if (Direct.ElementAt<Direct_Sound>(0) != null)
+                {
+                    foreach (Direct_Sound d in Direct)
+                    {
+                        delays.Add(d.Delay_ms);
+                        maxdelay = Math.Max(maxdelay, d.Delay_ms);
+                    }
+                }
+                else if (RTData.ElementAt<Receiver_Bank>(0) != null)
+                {
+                    foreach (Receiver_Bank r in RTData)
+                    {
+                        delays.Add(r.delay_ms);
+                        maxdelay = Math.Max(maxdelay, r.delay_ms);
+                    }
+                }
+
+                maxdelay *= Sampling_Frequency / 1000;
+
+                    double[] Histogram = new double[(int)(CO_Time_ms * 0.001 * Sampling_Frequency) + 8192 + (int)Math.Ceiling(maxdelay)];
 
                     foreach (int s in SrcIDs)
                     {
@@ -1293,7 +1458,7 @@ namespace Pachyderm_Acoustic
                         //if (IR.Length > Histogram.Length) Array.Resize(ref Histogram, IR.Length);
                         for (int i = 0; i < IR.Length; i++)
                         {
-                            Histogram[i + (int)Math.Ceiling(Direct.ElementAt<Direct_Sound>(s).Delay_ms / 1000 * Sampling_Frequency)] += IR[i];
+                            Histogram[i + (int)Math.Ceiling(delays[s] / 1000 * Sampling_Frequency)] += IR[i];
                         }
                     }
                     return Histogram;
@@ -2684,7 +2849,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Typ">0 for stationary, 1 for variable.</param>
             /// <param name="Sc">Scene object contains air attenuation, and speed of sound.</param>
             /// <returns></returns>
-            public static List<Receiver_Bank> GetReceivers(IEnumerable<Point3d> ReceiverLocations, IEnumerable<Point3d> SrcLocations, int No_of_Rays, int CutOffTime, int Typ, Scene Sc)
+            public static List<Receiver_Bank> GetReceivers(IEnumerable<Point3d> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc)
             {
                 Receiver_Bank.Type RecType;
                 switch (Typ)
@@ -2702,9 +2867,9 @@ namespace Pachyderm_Acoustic
 
                 List<Receiver_Bank> R = new List<Receiver_Bank>();
 
-                for (int i = 0; i < SrcLocations.Count<Point3d>(); i++)
+                for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                     R.Add(new Receiver_Bank(ReceiverLocations, SrcLocations.ElementAt<Point3d>(i), Sc, 1000, CutOffTime, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, (Srcs.ElementAt<Source>(i)).Origin(), Sc, 1000, CutOffTime, (Srcs.ElementAt<Source>(i)).Delay, RecType));
                 }
 
                 return R; 
@@ -2720,7 +2885,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Typ">0 for stationary, 1 for variable.</param>
             /// <param name="Sc">Scene object contains air attenuation, and speed of sound.</param>
             /// <returns></returns>
-            public static List<Receiver_Bank> GetReceivers(IEnumerable<Point3d> ReceiverLocations, IEnumerable<Point3d> SrcLocations, int No_of_Rays, int CutOffTime, int Typ, Scene Sc, int sample_rate)
+            public static List<Receiver_Bank> GetReceivers(IEnumerable<Point3d> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc, int sample_rate)
             {
                 Receiver_Bank.Type RecType;
                 switch (Typ)
@@ -2738,9 +2903,9 @@ namespace Pachyderm_Acoustic
 
                 List<Receiver_Bank> R = new List<Receiver_Bank>();
 
-                for (int i = 0; i < SrcLocations.Count<Point3d>(); i++)
+                for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                    R.Add(new Receiver_Bank(ReceiverLocations, SrcLocations.ElementAt<Point3d>(i), Sc, sample_rate, CutOffTime, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, Srcs.ElementAt<Source>(i).Origin(), Sc, sample_rate, CutOffTime, Srcs.ElementAt<Source>(i).Delay, RecType));
                 }
 
                 return R;

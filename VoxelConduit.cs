@@ -19,8 +19,6 @@
 using Rhino.Geometry;
 using Rhino.Display;
 using System.Collections.Generic;
-using Pachyderm_Acoustic.Environment;
-using Pachyderm_Acoustic.Visualization;
 using Pachyderm_Acoustic.Numeric.TimeDomain;
 
 namespace Pachyderm_Acoustic

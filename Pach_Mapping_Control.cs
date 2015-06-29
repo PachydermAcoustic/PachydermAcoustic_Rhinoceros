@@ -683,11 +683,6 @@ namespace Pachyderm_Acoustic
                 Update_Scale();
                 if (Flip_Toggle.Text == "Flip")
                 {
-                    //if (T != null)
-                    //{
-                    //    T.Start();
-                    //    return;
-                    //}
                     this.Flip_Toggle.Text = "Pause";
                     FC = new ForCall(Step_Forward);
                     TC = new T_Call(Update_T);
@@ -818,7 +813,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Coherent.Checked && Map != null && !Map[0].HasPressure())
                 {
-                    DialogResult DR = MessageBox.Show("Pressure Impulse Response Creation", "Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", MessageBoxButtons.YesNo);
+                    DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
                     if (DR == DialogResult.Yes)
                     {
                         for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Pressure();

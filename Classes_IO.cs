@@ -200,7 +200,7 @@ namespace Pachyderm_Acoustic
                                 break;
                             case "Ray-Traced_Data":
                                 //11. Read Ray Traced Sound Data
-                                Receiver[RTCT] = Environment.Receiver_Bank.Read_Data(ref sr, Rec_Ct, Recs, Rho_C, ref SampleRate, Pach_version);
+                                Receiver[RTCT] = Environment.Receiver_Bank.Read_Data(ref sr, Rec_Ct, Recs, Rho_C, Direct_Data[RTCT].Delay_ms, ref SampleRate, Pach_version);
                                 RTCT++;
                                 break;
                             case "End":
@@ -234,7 +234,7 @@ namespace Pachyderm_Acoustic
             }
 
             /// <summary>
-            /// 
+            /// Writes pachyderm mapping file.
             /// </summary>
             /// <param name="filename">The location the new file is to be written to.</param>
             /// <param name="Rec_List">The list of receivers to be written.</param>
@@ -292,6 +292,7 @@ namespace Pachyderm_Acoustic
                     sw.Write(Rec_List[i].Src.Z);
                     ///////////////////////
                     sw.Write(Rec_List[i].SrcType);
+                    sw.Write(Rec_List[i].delay_ms);//v.2.0.0.1
                 }
 
                 //8. Announce that the following data pertains to the receiver histograms (string)
@@ -369,12 +370,14 @@ namespace Pachyderm_Acoustic
                 int Rec_CT = (int)sr.ReadUInt32();
                 //4.5 Write the version number
                 double version = 1.1;
+                double rev = 0;
                 //5. Announce that the following data pertains to the form of the analysis mesh. (string)
                 int s_ct = 1;
                 Rhino.Geometry.Mesh Map_Mesh = new Rhino.Geometry.Mesh();
                 Map = new Mapping.PachMapReceiver[1];
                 //Map[0] = new Pach_Map_Receiver();        
                 //double[] Rho_C = null;
+                double[] delay = new double[s_ct];
 
                 do
                 {
@@ -382,7 +385,9 @@ namespace Pachyderm_Acoustic
                     {
                         case "Version":
                             //Pach1.7 = Versioning functionality added.
-                            version = double.Parse(sr.ReadString().Substring(0, 3));
+                            string v = sr.ReadString();
+                            version = double.Parse(v.Substring(0, 3));
+                            rev = int.Parse(v.Split(new char[1] { '.' })[3]);
                             break;
                         case "Mesh Information":
                             //6. Announce Mesh Vertices (string)
@@ -411,7 +416,7 @@ namespace Pachyderm_Acoustic
                             s_ct = sr.ReadInt32();
                             Map = new Mapping.PachMapReceiver[s_ct];
                             //7.5a Announce the type of source.
-                            
+
                             for (int s = 0; s < s_ct; s++)
                             {
                                 Map[s] = new Mapping.PachMapReceiver();
@@ -421,6 +426,11 @@ namespace Pachyderm_Acoustic
                                 Map[s].Map_Mesh = Map_Mesh;
                                 Map[s].Rec_List = new Mapping.PachMapReceiver.Map_Receiver[Rec_CT];
                                 Map[s].SrcType = sr.ReadString();
+                                //4.4 Source delay (ms)
+                                if (version > 2.0 || (version == 2.0 && rev >= 1))
+                                {
+                                    delay[s] = sr.ReadDouble();
+                                }
                             }
                             break;
                         case "SourceswLoc":
@@ -439,6 +449,11 @@ namespace Pachyderm_Acoustic
                                 Map[s].Rec_List = new Mapping.PachMapReceiver.Map_Receiver[Rec_CT];
                                 Map[s].Src = new Rhino.Geometry.Point3d(sr.ReadDouble(), sr.ReadDouble(), sr.ReadDouble());
                                 Map[s].SrcType = sr.ReadString();
+                                //4.4 Source delay (ms)
+                                if (version > 2.0 || (version == 2.0 && rev >= 1))
+                                {
+                                    delay[s] = sr.ReadDouble();
+                                }
                             }
                             break;
                         case "Receiver Hit Data":

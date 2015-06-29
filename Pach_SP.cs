@@ -48,6 +48,12 @@ namespace Pachyderm_Acoustic
             static fftw_complexarray[] IFFT_ArrayOut;
             static fftw_plan[] IFFT_Plan;
 
+            /// <summary>
+            /// A function used to describe the relationship between the ends of a raised 
+            /// cosine filter and the amount of spill into a neighboring octave band.
+            /// </summary>
+            static MathNet.Numerics.Interpolation.CubicSpline RCos_Integral;
+
             public static void Initialize_FFTW()
             {
                 int proc = System.Environment.ProcessorCount;
@@ -64,16 +70,33 @@ namespace Pachyderm_Acoustic
                 IFFT_ArrayIn = new fftw_complexarray[proc];
                 IFFT_ArrayOut = new fftw_complexarray[proc];
                 IFFT_Plan = new fftw_plan[proc];
-                
-                for(int i = 0; i < proc; i++)
+
+                for (int i = 0; i < proc; i++)
                 {
                     FFT_ArrayIn8192[i] = new fftw_complexarray(8192);
                     FFT_ArrayOut8192[i] = new fftw_complexarray(8192);
                     FFT_Plan8192[i] = fftw_plan.dft_1d(8192, FFT_ArrayIn8192[i], FFT_ArrayOut8192[i], fftw_direction.Forward, fftw_flags.Exhaustive);
                     IFFT_ArrayIn8192[i] = new fftw_complexarray(8192);
                     IFFT_ArrayOut8192[i] = new fftw_complexarray(8192);
-                    IFFT_Plan8192[i] = fftw_plan.dft_1d(8192, IFFT_ArrayIn8192[i], IFFT_ArrayOut8192[i], fftw_direction.Forward, fftw_flags.Exhaustive);                    
+                    IFFT_Plan8192[i] = fftw_plan.dft_1d(8192, IFFT_ArrayIn8192[i], IFFT_ArrayOut8192[i], fftw_direction.Forward, fftw_flags.Exhaustive);
                 }
+
+                Initialize_filter_functions();
+            }
+
+            public static void Initialize_filter_functions()
+            {
+                int n = 100;
+                double[] A = new double[n];
+                double[] ph = new double[n];
+
+                for (int i = 0; i < 100; i++)
+                {
+                    ph[i] = Math.PI / 2 * i;
+                    A[i] = 0.25 * (ph[i] - Math.Cos(ph[i])) / (Math.PI * 2);
+                }
+
+                RCos_Integral = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(A, ph);
             }
 
             public static void Raised_Cosine_Window(ref double[] h)
@@ -160,9 +183,9 @@ namespace Pachyderm_Acoustic
                 //////////////////////////////////////////
                 //Design Raised Cosine filters with relevant passbands...
                 double[] magspec = new double[h.Length/2];
-                int tau = (int)Math.Floor((idu - idl) / 20f);
+                int tau = (int)Math.Floor((idu - idl) / 5f);
 
-                for (int i = 0; i < idu - idl + tau; i++)
+                for (int i = 0; i < idu - idl; i++)
                 {
                     double v = 0;
                     if (i < tau) v = .5 * (-Math.Cos(Math.PI * i / tau) + 1);
@@ -171,7 +194,7 @@ namespace Pachyderm_Acoustic
                         v = 1 - .5 * (-Math.Cos(Math.PI * (idu - idl - i) / tau) + 1);
                     }
                     else v = 1;
-                    magspec[i + idl - tau/2] = v;
+                    magspec[i + idl] = v;
                 }
 
                 ///////////Use Zero Phase Bandpass//////////////////////
@@ -381,48 +404,235 @@ namespace Pachyderm_Acoustic
                 double[] p_i = new double[length_starttofinish / 2];
                 double df = (double)(sample_frequency) / (double)length_starttofinish;
 
-                //int octave_index = 0;
-                //double ctr = 62.5 * Math.Pow(2, octave_index);
-                //double freq_l = ctr / Utilities.Numerics.rt2;
-                //double freq_u = ctr * Utilities.Numerics.rt2;
-                //int idl = (int)Math.Round((length_starttofinish / 2 * freq_l) / 44100);
-                //int idu = (int)Math.Round((length_starttofinish / 2 * freq_u) / 44100);
-                //double l = Math.Sqrt((idu - idl)) * Math.Sqrt(2);
-                
-                for (int oct = 0; oct < 8; oct++)
+                int oct = 0;
+                ///////////////////////////////////////////////////////////////////
+                ///Do the bottom frequencies
+                double ctr = 62.5 * Math.Pow(2, oct);
+                double freq_l = ctr / Utilities.Numerics.rt2;
+                double freq_u = ctr * Utilities.Numerics.rt2;
+                int idl = 0;
+                int idu = (int)Math.Round(freq_u / df);
+                int ctr_id = ((idu + (int)Math.Round(freq_l / df)) / 2);
+                double l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+                int length = 0;
+                if (Octave_pressure[1] == 0)
                 {
-                    double ctr = 62.5 * Math.Pow(2, oct);
-                    double freq_l = ctr / Utilities.Numerics.rt2;
-                    double freq_u = ctr * Utilities.Numerics.rt2;
-                    int idl = (int)Math.Round(freq_l / df);
-                    int idu = (int)Math.Round(freq_u / df);
-                    double l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+                    //do nothing. boundaries stay as they are...
+                    length = idu;
+                }
+                else if ( Octave_pressure[1] * .25 / Octave_pressure[0] > 0.002503912)
+                {
+                    ///Use default overflow...
+                    //TODO: Default overflow needs work...
+                    length = (int)(idu / (1 - 1d/16));
+                }
+                else
+                {
+                    //calculate how much overflow can be tolerated...
+                    double ph = RCos_Integral.Integrate(Octave_pressure[1]*.25 / Octave_pressure[0]);
+                    //Idu is at ph. end of total bin is 0 to idu + ph.
+                    length = (int)(idu / (1 - ph));
+                }
+                
+                double[] magspec = new double[length];
 
-                    //constant
-                    int tau = (int)Math.Floor((idu - idl) / 5f);
+                double mod = 0;
 
-                    int length = (idu - idl) + tau;
-                    double mod = 0;
-                    double[] magspec = new double[length];
+                int t_length = ctr_id - 0;
+                for (int i = 0; i < t_length; i++)
+                {
+                    double v = 0;
+                    v = (-Math.Cos(Math.PI * (double)i/t_length) + 1);
+                    magspec[i] = v * v;
+                    mod += magspec[i];
+                }
 
-                    for (int i = 0; i < length; i++)
+                t_length = magspec.Length - ctr_id;
+                for (int i = 0; i < t_length; i++)
+                {
+                    double v = 0;
+                    v = (-Math.Cos(Math.PI + Math.PI * (double)i / t_length) + 1);
+                    magspec[i+ctr_id] = v * v;
+                    mod += magspec[i];
+                }
+
+                //TODO: handle step discontinuity resuling at high end of this bin.
+
+                mod = Octave_pressure[oct] * Octave_pressure[oct] / (mod * 2);
+                for (int i = 0; i < magspec.Length; i++)
+                {
+                    p_i[idl + i] += Math.Sqrt(magspec[i] * mod);
+                }
+
+                ///Do the top frequencies...
+                oct = 7;
+                ctr = 62.5 * Math.Pow(2, oct);
+                freq_l = ctr / Utilities.Numerics.rt2;
+                freq_u = ctr * Utilities.Numerics.rt2;
+                idl = (int)Math.Round(freq_l / df);
+                idu = (int)Math.Round(freq_u / df);
+                ctr_id = (idu + idl) / 2;
+                l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+                length = (int)(length_starttofinish / 2) - idl;
+                if (Octave_pressure[6] == 0)
+                {
+                    //do nothing. boundaries stay as they are...
+                    length = (idu - idl);
+                }
+                else if (Octave_pressure[6] * .25 / Octave_pressure[7] > 0.019572846)
+                {
+                    ///Use default overflow... 
+                    /// TODO: Default Overflow is incorrect...
+                    length = (int)((idu-idl) / (1 - 1d / 8)); //Check that this does not overload the neighboring bin...
+                }
+                else
+                {
+                    //calculate how much overflow  can be tolerated...
+                    double ph = RCos_Integral.Integrate(Octave_pressure[6] * .25 / Octave_pressure[7]);
+                    //Idu is at ph. end of total bin is 0 to idu + ph.
+                    int add = (int)((idu - idl) / (1 - ph)) - (idu - idl);
+                    length += add;
+                    idl -= add;
+                }
+
+                magspec = new double[length];
+
+                mod = 0;
+                t_length = ctr_id - idl;
+                for (int i = 0; i < t_length; i++)
+                {
+                    double v = 0;
+                    v = (-Math.Cos(Math.PI * (double)i / t_length) + 1);
+                    magspec[i] = v * v;
+                    mod += magspec[i];
+                }
+
+                t_length = idu - ctr_id;
+                for (int i = 0; i < t_length; i++)
+                {
+                    double v = 0;
+                    v = (-Math.Cos(Math.PI + Math.PI * (double)i / t_length) + 1);
+                    magspec[i+ctr_id - idl] = v * v;
+                    if (i < (idu - idl)) mod += magspec[i];
+                }
+                mod = Octave_pressure[oct] * Octave_pressure[oct] / (mod * 2);
+                for (int i = 0; i < magspec.Length; i++)
+                {
+                    p_i[idl + i] += Math.Sqrt(magspec[i] * mod);
+                }
+
+                //////////////////////////////////////////////////////////////////
+                for (oct = 1; oct < 7; oct++)
+                {
+                    if (Octave_pressure[oct] == 0) continue;
+
+                    ctr = 62.5 * Math.Pow(2, oct);
+                    freq_l = ctr / Utilities.Numerics.rt2;
+                    freq_u = ctr * Utilities.Numerics.rt2;
+                    idl = (int)Math.Round(freq_l / df);
+                    idu = (int)Math.Round(freq_u / df);
+                    l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+                    length = idu - idl;
+                    ctr_id = (idu + idl) / 2;
+                    double ph_l = 0;
+                    double ph_u = 0;
+                    if (Octave_pressure[oct + 1] == 0)
+                    {
+                        //do nothing. boundaries stay as they are...
+                    }
+                    else if (Octave_pressure[oct+1] * .25 / Octave_pressure[oct] > 0.019572846) //The area under the curve at phase = pi/4
+                    {
+                        ///Use default overflow...
+                        //length += ((idu - (int)(ctr / df)) / 2);
+                        ph_u = 1d / 8;
+                    }
+                    else
+                    {
+                        //calculate how much overflow  can be tolerated...
+                        double ph = RCos_Integral.Integrate(Octave_pressure[oct+1] * .25 / Octave_pressure[oct]);
+                        //Idu is at ph. end of total bin is 0 to idu + ph.
+                        ph_u = ph;
+                    }
+
+                    if (Octave_pressure[oct - 1] == 0)
+                    {
+                        //do nothing. boundaries stay as they are...
+                    }
+                    else if (Octave_pressure[oct-1] * .25 / Octave_pressure[oct] > 0.002503912)//The area under the curve at phase = pi/8
+                    {
+                        ///Use default overflow...
+                        //length += ((idu - (int)(ctr / df)) / 2);
+                        ph_l += 1d / 16;
+                    }
+                    else
+                    {
+                        //calculate how much overflow  can be tolerated...
+                        double ph = RCos_Integral.Integrate(Octave_pressure[oct - 1] * .25 / Octave_pressure[oct]);
+                        //Idu is at ph. end of total bin is 0 to idu + ph.
+                        ph_l += ph;
+                    }
+
+                    length = (int)(length / (1 - ph_l - ph_u));
+                    idl -= (int)(length * ph_l);
+                    magspec = new double[length];
+
+                    mod = 0;
+                    t_length = ctr_id - idl;
+                    for (int i = 0; i < t_length; i++)
                     {
                         double v = 0;
-                        if (i < tau) v = .5 * (-Math.Cos(Math.PI * i / tau) + 1);
-                        else if (i > length - tau - 1)
-                        {
-                            v = 1 - (-Math.Cos(Math.PI * (idu - idl - i) / tau) + 1);
-                        }
-                        else v = 1;
+                        v = (-Math.Cos(Math.PI * (double)i / t_length) + 1);
                         magspec[i] = v * v;
                         mod += magspec[i];
                     }
 
-                    mod = Octave_pressure[oct] * Octave_pressure[oct] / mod;
-                    for (int i = 0; i < magspec.Length; i++)
+                    t_length = idu - ctr_id;
+                    for (int i = 0; i < t_length; i++)
                     {
-                        p_i[idl - tau/2 + i] += 0.5 * Math.Sqrt(magspec[i] * mod);
+                        double v = 0;
+                        v = (-Math.Cos(Math.PI + Math.PI * (double)i / t_length) + 1);
+                        magspec[i+ctr_id-idl] = v * v;
+                        mod += magspec[i];
                     }
+
+                    mod = Octave_pressure[oct] * Octave_pressure[oct] / (mod * 2);
+                    for ( int i = 0; i < magspec.Length; i++)
+                    {
+                        p_i[idl + i] += Math.Sqrt(magspec[i] * mod);
+                    }
+
+                    //ctr = 62.5 * Math.Pow(2, oct);
+                    //freq_l = ctr / Utilities.Numerics.rt2;
+                    //freq_u = ctr * Utilities.Numerics.rt2;
+                    //idl = (int)Math.Round(freq_l / df);
+                    //idu = (int)Math.Round(freq_u / df);
+                    //l = Math.Sqrt(idu - idl) * Math.Sqrt(2);
+
+                    ////constant
+                    //tau = (int)Math.Floor((idu - idl) / 5f);
+
+                    //length = (idu - idl) + tau;
+                    //mod = 0;
+                    //magspec = new double[length];
+
+                    //for (int i = 0; i < length; i++)
+                    //{
+                    //    double v = 0;
+                    //    if (i < tau) v = .5 * (-Math.Cos(Math.PI * i / tau) + 1);
+                    //    else if (i > length - tau - 1)
+                    //    {
+                    //        v = 1 - (-Math.Cos(Math.PI * (idu - idl - i) / tau) + 1);
+                    //    }
+                    //    else v = 1;
+                    //    magspec[i] = v * v;
+                    //    mod += magspec[i];
+                    //}
+
+                    //mod = Octave_pressure[oct] * Octave_pressure[oct] / mod;
+                    //for (int i = 0; i < magspec.Length; i++)
+                    //{
+                    //    p_i[idl - tau/2 + i] += 0.5 * Math.Sqrt(magspec[i] * mod);
+                    //}
                 }
 
                 return p_i;
@@ -474,52 +684,6 @@ namespace Pachyderm_Acoustic
                 return p_i;
             }
             
-            //public static double[] Magnitude_Filter(double[] Octave_pressure, int sample_frequency, int length_starttofinish, int threadid)
-            //{
-            //    double rt2 = Math.Sqrt(2);
-            //    int spec_length = length_starttofinish / 2;
-
-            //    List<double> f = new List<double>();
-            //    f.Add(0);
-            //    f.Add(31.25 * rt2);
-            //    for (int oct = 0; oct < 9; oct++)
-            //    {
-            //        f.Add(62.5 * Math.Pow(2, oct));
-            //        f.Add(rt2 * 62.5 * Math.Pow(2, oct));
-            //    }
-            //    f.Add(sample_frequency / 2);
-
-            //    double[] output = new double[spec_length];
-            //    double[] samplep = new double[spec_length];
-
-            //    List<double> pr = new List<double>();
-            //    pr.Add(Octave_pressure[0]);
-            //    pr.Add(Octave_pressure[0]);
-
-            //    for (int oct = 0; oct < 7; oct++)
-            //    {
-            //        pr.Add(Octave_pressure[oct]);
-            //        pr.Add((Octave_pressure[oct] + Octave_pressure[oct + 1]) / 2);
-            //    }
-            //    if (pr.Count < f.Count) pr.Add(Octave_pressure[7]);//8k
-            //    if (pr.Count < f.Count) pr.Add(Octave_pressure[7]);//10k
-            //    if (pr.Count < f.Count) pr.Add(Octave_pressure[7]);//12k
-            //    if (pr.Count < f.Count) pr.Add(Octave_pressure[7]);//16k
-            //    while (pr.Count < f.Count) pr.Add(Octave_pressure[7]);
-
-            //    MathNet.Numerics.Interpolation.CubicSpline prm = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkimaSorted(f.ToArray(), pr.ToArray());
-
-            //    double[] p_i = new double[spec_length];
-
-            //    for (int j = 0; j < spec_length; j++)
-            //    {
-            //        double fr = (j + 1) * (sample_frequency / 2) / spec_length;
-            //        p_i[j] = prm.Interpolate(fr);// / (fr);
-            //    }
-
-            //    return p_i;
-            //}
-
             public static System.Numerics.Complex[] Minimum_Phase_TF(double[] M_spec, int sample_frequency, int threadid)
             {
                 System.Numerics.Complex[] logspec = new System.Numerics.Complex[M_spec.Length];
@@ -654,23 +818,6 @@ namespace Pachyderm_Acoustic
                 return ymspec;
             }
 
-            //public static Complex[] Linear_Phase_TF(Complex[] M_spec, int sample_frequency, int threadid)
-            //{
-            //    ///////////////Create Linear Phase Time Domain Filter/////////////
-            //    Complex[] prefilter = IFFT(Mirror_Spectrum(M_spec), threadid);
-            //    Scale(ref prefilter);
-
-            //    int hw = prefilter.Length / 2;
-
-            //    for (int i = 0; i < hw; i++)
-            //    {
-            //        prefilter[hw + i] = prefilter[i];
-            //        prefilter[hw - i - 1] = prefilter[i];
-            //    }
-
-            //    return FFT(prefilter, threadid);
-            //}
-
             public static double[] Linear_Phase_Signal(double[] Octave_pressure, int sample_frequency, int length_starttofinish, int threadid)
             {
                 double[] M_s = Magnitude_Spectrum(Octave_pressure, sample_frequency, length_starttofinish, threadid);
@@ -701,10 +848,11 @@ namespace Pachyderm_Acoustic
                 System.Numerics.Complex[] logspec = new System.Numerics.Complex[M_spec.Length];
                 for (int i = 0; i < M_spec.Length; i++)
                 {
-                    logspec[i] = Math.Log(M_spec[i]);
+                    if (M_spec[i]== 0) logspec[i] = Math.Log(double.Epsilon);
+                    else logspec[i] = Math.Log(M_spec[i]);
                 }
 
-                double[] real_cepstrum = IFFT_Real(Mirror_Spectrum(logspec), threadid);
+                double[] real_cepstrum = IFFT_Real_General(Mirror_Spectrum(logspec), threadid);
                 Scale(ref real_cepstrum);
 
                 double[] ym = new double[real_cepstrum.Length];
@@ -715,14 +863,14 @@ namespace Pachyderm_Acoustic
                     ym[i] = 2 * real_cepstrum[i];
                 }
                 ym[M_spec.Length] = real_cepstrum[M_spec.Length];
-                System.Numerics.Complex[] ymspec = FFT(ym, threadid);
+                System.Numerics.Complex[] ymspec = FFT_General(ym, threadid);
 
                 for (int i = 0; i < ymspec.Length; i++)
                 {
                     ymspec[i] = Complex.Exp(ymspec[i]);
                 }
 
-                double[] Signal = IFFT_Real(ymspec, threadid);
+                double[] Signal = IFFT_Real_General(ymspec, threadid);
                 Scale(ref Signal);
 
                 return Signal;
@@ -731,7 +879,7 @@ namespace Pachyderm_Acoustic
             public static double[] ETCToPTC(double[][] Octave_ETC, double CutOffTime, int sample_frequency_in, int sample_frequency_out, double Rho_C)
             {
                 int length = 8192;
-                double[] IR = new double[(int)Math.Floor(sample_frequency_out * CutOffTime) + 2 * (int)length];
+                double[] IR = new double[(int)Math.Floor(sample_frequency_out * CutOffTime) + (int)length];
                 double BW = (double)sample_frequency_out / (double)sample_frequency_in;
 
                 //Convert to Pressure & Interpolate full resolution IR
@@ -769,7 +917,7 @@ namespace Pachyderm_Acoustic
                             if (sum > 0)
                             {
                                 output[thr] = Linear_Phase_Signal(pr, sample_frequency_out, 8192, thr);
-                                Audio.Pach_SP.Raised_Cosine_Window(ref output[thr]);
+                                //Audio.Pach_SP.Raised_Cosine_Window(ref output[thr]);
                                 for (int k = 0; k < length; k++)
                                 {
                                     IR[(int)Math.Floor(t * BW) + k] += output[thr][k];
@@ -783,25 +931,6 @@ namespace Pachyderm_Acoustic
 
                 CDE.Wait();
 
-                //System.Threading.Mutex.WaitAll(ThreadFinishEvents.ToArray(), -1);
-
-                //System.Threading.Thread.CurrentThread.SetApartmentState(ExistingState);
-
-                //while (true)
-                //{
-                //    Rhino.RhinoApp.SetCommandPrompt(string.Format("Extrapolating Impulse : {0}% Complete", Math.Round(100 * (double)ct / (double)Octave_ETC[0].Length)));
-                //    System.Threading.Thread.Sleep(1000);
-                //    bool finished = true;
-                //    foreach (System.Threading.Thread t in T)
-                //    {
-                //        if (t.ThreadState == System.Threading.ThreadState.Running)
-                //        {
-                //            finished = false;
-                //            break;
-                //        }
-                //    }
-                //    if (finished) break;
-                //}
                 return IR;
             }
 
@@ -809,7 +938,6 @@ namespace Pachyderm_Acoustic
             {
                 int length = (int)Math.Pow(2, 11);
                 int sample_frequency_in = DiffuseIn[0].SampleRate;
-                //fftwlib.fftw. FFT = new MathNet.Numerics.IntegralTransforms.Algorithms.DiscreteFourierTransform();
                 double[] IR = new double[(int)Math.Floor(sample_frequency_out * CutOffTime) + 2 * (int)length];
                 double[][] Octave_ETC = new double[8][];
                 double BW = (double)sample_frequency_out / (double)sample_frequency_in;
