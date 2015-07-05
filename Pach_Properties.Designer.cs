@@ -71,6 +71,9 @@ namespace Pachyderm_Acoustic
             this.Browse_Material = new System.Windows.Forms.Button();
             this.Library_Path = new System.Windows.Forms.MaskedTextBox();
             this.Save_Results = new System.Windows.Forms.CheckBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.Filt_LinearPhase = new System.Windows.Forms.RadioButton();
+            this.Filt_MinPhase = new System.Windows.Forms.RadioButton();
             this.Processing_Select.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Thread_Spec)).BeginInit();
             this.Geometry_Select.SuspendLayout();
@@ -78,6 +81,7 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.VGDOMAIN)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.OCT_DEPTH)).BeginInit();
             this.Material_Path.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // PR_Single
@@ -324,17 +328,51 @@ namespace Pachyderm_Acoustic
             // Save_Results
             // 
             this.Save_Results.AutoSize = true;
-            this.Save_Results.Location = new System.Drawing.Point(208, 22);
+            this.Save_Results.Location = new System.Drawing.Point(208, 3);
             this.Save_Results.Name = "Save_Results";
             this.Save_Results.Size = new System.Drawing.Size(154, 17);
             this.Save_Results.TabIndex = 9;
             this.Save_Results.Text = "Automatically Save Results";
             this.Save_Results.UseVisualStyleBackColor = true;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.Filt_MinPhase);
+            this.groupBox2.Controls.Add(this.Filt_LinearPhase);
+            this.groupBox2.Location = new System.Drawing.Point(202, 22);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(187, 83);
+            this.groupBox2.TabIndex = 10;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Filtering Settings";
+            // 
+            // Filt_LinearPhase
+            // 
+            this.Filt_LinearPhase.AutoSize = true;
+            this.Filt_LinearPhase.Checked = true;
+            this.Filt_LinearPhase.Location = new System.Drawing.Point(7, 20);
+            this.Filt_LinearPhase.Name = "Filt_LinearPhase";
+            this.Filt_LinearPhase.Size = new System.Drawing.Size(87, 17);
+            this.Filt_LinearPhase.TabIndex = 0;
+            this.Filt_LinearPhase.TabStop = true;
+            this.Filt_LinearPhase.Text = "Linear Phase";
+            this.Filt_LinearPhase.UseVisualStyleBackColor = true;
+            // 
+            // Filt_MinPhase
+            // 
+            this.Filt_MinPhase.AutoSize = true;
+            this.Filt_MinPhase.Location = new System.Drawing.Point(6, 43);
+            this.Filt_MinPhase.Name = "Filt_MinPhase";
+            this.Filt_MinPhase.Size = new System.Drawing.Size(99, 17);
+            this.Filt_MinPhase.TabIndex = 1;
+            this.Filt_MinPhase.Text = "Minimum Phase";
+            this.Filt_MinPhase.UseVisualStyleBackColor = true;
+            // 
             // Pach_Properties
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Save_Results);
             this.Controls.Add(this.Material_Path);
             this.Controls.Add(this.groupBox1);
@@ -342,6 +380,7 @@ namespace Pachyderm_Acoustic
             this.Controls.Add(this.Processing_Select);
             this.Name = "Pach_Properties";
             this.Size = new System.Drawing.Size(398, 324);
+            this.Load += new System.EventHandler(this.Pach_Properties_Load);
             this.Processing_Select.ResumeLayout(false);
             this.Processing_Select.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Thread_Spec)).EndInit();
@@ -353,6 +392,8 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.OCT_DEPTH)).EndInit();
             this.Material_Path.ResumeLayout(false);
             this.Material_Path.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -379,6 +420,9 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.MaskedTextBox Library_Path;
             private System.Windows.Forms.Button Browse_Material;
             private System.Windows.Forms.CheckBox Save_Results;
+            private System.Windows.Forms.GroupBox groupBox2;
+            private System.Windows.Forms.RadioButton Filt_MinPhase;
+            private System.Windows.Forms.RadioButton Filt_LinearPhase;
         }
     }
 }

@@ -898,7 +898,7 @@ namespace Pachyderm_Acoustic
                     this.SampleCT = SampleCT;
                     CO_Time = (double)SampleCT / SampleRate;
                     Energy = new double[8][];
-                    //P = new double[SampleCT + 8192];
+                    //P = new double[SampleCT + 4096];
 
                     for (int o = 0; o < 8; o++)
                     {

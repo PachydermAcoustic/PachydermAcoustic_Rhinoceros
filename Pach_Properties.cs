@@ -94,6 +94,18 @@ namespace Pachyderm_Acoustic
                     Library_Path.Text = Reader.ReadString();
                     //9. Save Results after simulation?
                     Save_Results.Checked = Reader.ReadBoolean();
+                    //10. Save Filter Method
+                    switch (Reader.ReadInt32())
+                    {
+                        case 1:
+                            Filt_LinearPhase.Checked = true;
+                            Audio.Pach_SP.Filter = new Audio.Pach_SP.Linear_Phase_System();
+                            break;
+                        case 2:
+                            Filt_MinPhase.Checked = true;
+                            Audio.Pach_SP.Filter = new Audio.Pach_SP.Minimum_Phase_System();
+                            break;
+                    }
                     Reader.Close();
                     Writer.Close();
                 }
@@ -141,6 +153,8 @@ namespace Pachyderm_Acoustic
                 Writer.Write(false);
                 Reader.Close();
                 Writer.Close();
+                //10. Save Filter Method
+                { Writer.Write(1); }
             }
 
             /// <summary>
@@ -281,6 +295,11 @@ namespace Pachyderm_Acoustic
                 //9. Save Results after simulation?
                 Writer.Write(Save_Results.Checked);
                 Writer.Close();
+                //10. Save Filter Method
+                if (Filt_LinearPhase.Checked == true)
+                { Writer.Write(1); }
+                else
+                { Writer.Write(2); }
             }
 
             private void SettingsChanged(object sender, EventArgs e)

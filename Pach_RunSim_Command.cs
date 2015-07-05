@@ -24,7 +24,7 @@ namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-        ///<summary>
+        ///<summary>C:\Users\User\Desktop\DEV\PachydermAcoustic_Rhinoceros\Pach_RunSim_Command.cs
         /// A Rhino.NET plug-in can contain as many MRhinoCommand derived classes as it wants.
         /// DO NOT create an instance of this class (this is the responsibility of Rhino.NET.)
         /// </summary>

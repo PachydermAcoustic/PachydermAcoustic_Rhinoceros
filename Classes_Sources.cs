@@ -319,7 +319,7 @@ namespace Pachyderm_Acoustic
 
             //    double[][] OctavePressure = new double[8][];
 
-            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 8192, thread);
+            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 4096, thread);
             //}
         }
 
@@ -501,7 +501,7 @@ namespace Pachyderm_Acoustic
 
             //    double[][] OctavePressure = new double[8][];
 
-            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 8192, thread);
+            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 4096, thread);
             //}
         }
 
@@ -626,7 +626,7 @@ namespace Pachyderm_Acoustic
 
             //    double[][] OctavePressure = new double[8][];
 
-            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 8192, thread);
+            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 4096, thread);
             //}
         }
 
@@ -803,7 +803,7 @@ namespace Pachyderm_Acoustic
 
             //    double[][] OctavePressure = new double[8][];
 
-            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 8192, thread);
+            //    return Audio.Pach_SP.Minimum_Phase_Signal(pres, 44100, 4096, thread);
             //}
         }
     }

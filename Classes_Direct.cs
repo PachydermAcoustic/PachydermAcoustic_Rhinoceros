@@ -426,8 +426,8 @@ namespace Pachyderm_Acoustic
                                 Eo[octave] = Math.Sqrt(Io[Rec_ID][i, octave] * Rho_C[Rec_ID]) ;
                             }
                         }
-                        double[] P_temp = Audio.Pach_SP.Linear_Phase_Signal(Eo, SampleFreq, 8192, 0);
-                        for(int j = 0; j < 8192; j++)
+                        double[] P_temp = Audio.Pach_SP.Linear_Phase_Signal(Eo, SampleFreq, 4096, 0);
+                        for(int j = 0; j < 4096; j++)
                         {
                             Pn[i+j] += P_temp[j] * Vn.x;
                         }
@@ -473,8 +473,8 @@ namespace Pachyderm_Acoustic
                                 Eo[octave] = Math.Sqrt(Io[Rec_ID][i, octave] * Rho_C[Rec_ID]);
                             }
                         }
-                        double[] P_temp = Audio.Pach_SP.Linear_Phase_Signal(Eo, SampleFreq, 8192, 0);
-                        for (int j = 0; j < 8192; j++)
+                        double[] P_temp = Audio.Pach_SP.Linear_Phase_Signal(Eo, SampleFreq, 4096, 0);
+                        for (int j = 0; j < 4096; j++)
                         {
                             Pn[i + j][0] += P_temp[j] * Vn.x;
                             Pn[i + j][1] += P_temp[j] * Vn.y;
@@ -856,7 +856,7 @@ namespace Pachyderm_Acoustic
         {
             P = new double[Receiver.Count][];
             Pdir = new double[Receiver.Count][][];
-            double scale = Math.Sqrt(8192);
+            double scale = Math.Sqrt(4096);
 
             for (int i = 0; i < Receiver.Count; i++)
             {
@@ -869,13 +869,13 @@ namespace Pachyderm_Acoustic
                     for (int oct = 0; oct < 8; oct++) ETC[oct][t] = Math.Sqrt(Io[i][t, oct] * Rho_C[i]);
                 }
 
-                P[i] = new double[ETC[0].Length + 8192];
+                P[i] = new double[ETC[0].Length + 4096];
                 Pdir[i] = new double[6][];
-                for (int j = 0; j < 6; j++) Pdir[i][j] = new double[ETC[0].Length + 8192];
+                for (int j = 0; j < 6; j++) Pdir[i][j] = new double[ETC[0].Length + 4096];
                 for (int t = 0; t < ETC[0].Length; t++)
                 {
                     Rhino.RhinoApp.CommandPrompt = string.Format("Creating direct sound pressure for receiver {0}. {1}% complete, ", i, Math.Round((double)t / ETC[0].Length * 100));
-                    double[] Pmin = Audio.Pach_SP.Linear_Phase_Signal(new double[8] { ETC[0][0], ETC[1][0], ETC[2][0], ETC[3][0], ETC[4][0], ETC[5][0], ETC[6][0], ETC[7][0] }, 44100, 8192, 0);
+                    double[] Pmin = Audio.Pach_SP.Linear_Phase_Signal(new double[8] { ETC[0][0], ETC[1][0], ETC[2][0], ETC[3][0], ETC[4][0], ETC[5][0], ETC[6][0], ETC[7][0] }, 44100, 4096, 0);
                     //Audio.Pach_SP.Raised_Cosine_Window(ref Pmin);
                     for (int u = 0; u < Pmin.Length; u++)
                     {
@@ -899,7 +899,7 @@ namespace Pachyderm_Acoustic
 
                     for (int j = 0; j < 3; j++)
                     {
-                        for (int k = 0; k < 8192; k++)
+                        for (int k = 0; k < 4096; k++)
                         {
                             int j2 = 2 * j;
                             Pdir[i][j2][t + k] += Pmin[k] * vpos.byint(j);//((double.IsNaN(hist_temp[j2][k])) ? 0: hist_temp[j2][k]);

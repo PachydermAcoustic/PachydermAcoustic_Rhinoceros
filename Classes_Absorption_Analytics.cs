@@ -1159,8 +1159,8 @@ namespace Pachyderm_Acoustic
                 else
                 {
                     //Linear frequency scale
-                    frequency = new double[8192];
-                    double step = (sample_Freq / 2) / 8192;
+                    frequency = new double[4096];
+                    double step = (sample_Freq / 2) / 4096;
                     for (int i = 0; i < frequency.Length; i++) frequency[i] = (i + .5) * step;
                 }
 
@@ -1198,13 +1198,13 @@ namespace Pachyderm_Acoustic
                     T[i] = new SparseMatrix[anglesdeg.Length][];
                     for(int a = 0; a < anglesdeg.Length; a++)
                     {
-                        T[i][a] = new SparseMatrix[8192];
+                        T[i][a] = new SparseMatrix[4096];
                         double sintheta =  Math.Sin(Angle[a]);
                         
                             switch (Layer_i.T)
                             {
                                 case ABS_Layer.LayerType.AirSpace:
-                                    for(int f = 0; f < 8192; f++)    
+                                    for(int f = 0; f < 4096; f++)    
                                     {
                                         Complex Ksintheta = K_Air[f] * sintheta;
                                         T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth * 1000, Complex.Sqrt(K_Air[f] * K_Air[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
@@ -1212,7 +1212,7 @@ namespace Pachyderm_Acoustic
                                     break;
                                 case ABS_Layer.LayerType.PorousDB:
                                     Complex[] Kdb = Equivalent_Fluids.DelaneyBazley_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 8192; f++)    
+                                    for(int f = 0; f < 4096; f++)    
                                     {
                                         Complex Ksintheta = K_Air[f] * sintheta;
                                         T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Kdb[f] * Kdb[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
@@ -1220,7 +1220,7 @@ namespace Pachyderm_Acoustic
                                     break;
                                 case ABS_Layer.LayerType.PorousCA:
                                     Complex[] Kca = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 8192; f++)    
+                                    for(int f = 0; f < 4096; f++)    
                                     {
                                         Complex Ksintheta = K_Air[f] * sintheta;
                                         T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Kca[f] * Kca[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
@@ -1228,7 +1228,7 @@ namespace Pachyderm_Acoustic
                                     break;
                                 case ABS_Layer.LayerType.PorousM:
                                     Complex[] Km = Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 8192; f++)    
+                                    for(int f = 0; f < 4096; f++)    
                                     {                                        
                                         //Complex Ksintheta = K_Air[f] * sintheta;
                                         T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Km[f] * Km[f] * (1 - sintheta * sintheta)), frequency[f], 1.2);
@@ -1433,8 +1433,8 @@ namespace Pachyderm_Acoustic
                 else
                 {
                     //Linear frequency scale
-                    frequency = new double[8192];
-                    double step = ((double)sample_Freq) / 8192d;
+                    frequency = new double[4096];
+                    double step = ((double)sample_Freq) / 4096d;
                     for (int i = 0; i < frequency.Length; i++) frequency[i] = ((double)i+.5) * step;
                 }
 

@@ -69,7 +69,7 @@ namespace Pachyderm_Acoustic
             //Graph.Invalidate();
             //this.InvokePaint(this, null);
             Progress.Value = Prog_Percent;
-            Refresh();
+            //Refresh();
             if (WaitDuration != 0) System.Threading.Thread.Sleep(WaitDuration);
             this.Progress.Value = Prog_Percent;
         }

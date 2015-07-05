@@ -1610,7 +1610,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Pressure Time Curve":
-                            zero_sample = 8192/2;
+                            zero_sample = 4096/2;
                             Filter2 = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1626,7 +1626,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral PTC":
-                            zero_sample = 8192/2;
+                            zero_sample = 4096/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1642,7 +1642,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Vertical PTC":
-                            zero_sample = 8192/2;
+                            zero_sample = 4096/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1658,7 +1658,7 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Fore-Aft PTC":
-                            zero_sample = 8192/2;
+                            zero_sample = 4096/2;
                             Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
