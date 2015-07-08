@@ -72,8 +72,8 @@ namespace Pachyderm_Acoustic
             this.Library_Path = new System.Windows.Forms.MaskedTextBox();
             this.Save_Results = new System.Windows.Forms.CheckBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.Filt_LinearPhase = new System.Windows.Forms.RadioButton();
             this.Filt_MinPhase = new System.Windows.Forms.RadioButton();
+            this.Filt_LinearPhase = new System.Windows.Forms.RadioButton();
             this.Processing_Select.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Thread_Spec)).BeginInit();
             this.Geometry_Select.SuspendLayout();
@@ -334,6 +334,7 @@ namespace Pachyderm_Acoustic
             this.Save_Results.TabIndex = 9;
             this.Save_Results.Text = "Automatically Save Results";
             this.Save_Results.UseVisualStyleBackColor = true;
+            this.Save_Results.CheckedChanged += new System.EventHandler(this.SettingsChanged);
             // 
             // groupBox2
             // 
@@ -346,6 +347,17 @@ namespace Pachyderm_Acoustic
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Filtering Settings";
             // 
+            // Filt_MinPhase
+            // 
+            this.Filt_MinPhase.AutoSize = true;
+            this.Filt_MinPhase.Location = new System.Drawing.Point(6, 43);
+            this.Filt_MinPhase.Name = "Filt_MinPhase";
+            this.Filt_MinPhase.Size = new System.Drawing.Size(99, 17);
+            this.Filt_MinPhase.TabIndex = 1;
+            this.Filt_MinPhase.Text = "Minimum Phase";
+            this.Filt_MinPhase.UseVisualStyleBackColor = true;
+            this.Filt_MinPhase.MouseUp += new System.Windows.Forms.MouseEventHandler(this.SettingsChanged);
+            // 
             // Filt_LinearPhase
             // 
             this.Filt_LinearPhase.AutoSize = true;
@@ -357,16 +369,7 @@ namespace Pachyderm_Acoustic
             this.Filt_LinearPhase.TabStop = true;
             this.Filt_LinearPhase.Text = "Linear Phase";
             this.Filt_LinearPhase.UseVisualStyleBackColor = true;
-            // 
-            // Filt_MinPhase
-            // 
-            this.Filt_MinPhase.AutoSize = true;
-            this.Filt_MinPhase.Location = new System.Drawing.Point(6, 43);
-            this.Filt_MinPhase.Name = "Filt_MinPhase";
-            this.Filt_MinPhase.Size = new System.Drawing.Size(99, 17);
-            this.Filt_MinPhase.TabIndex = 1;
-            this.Filt_MinPhase.Text = "Minimum Phase";
-            this.Filt_MinPhase.UseVisualStyleBackColor = true;
+            this.Filt_LinearPhase.MouseUp += new System.Windows.Forms.MouseEventHandler(this.SettingsChanged);
             // 
             // Pach_Properties
             // 
@@ -380,7 +383,6 @@ namespace Pachyderm_Acoustic
             this.Controls.Add(this.Processing_Select);
             this.Name = "Pach_Properties";
             this.Size = new System.Drawing.Size(398, 324);
-            this.Load += new System.EventHandler(this.Pach_Properties_Load);
             this.Processing_Select.ResumeLayout(false);
             this.Processing_Select.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Thread_Spec)).EndInit();

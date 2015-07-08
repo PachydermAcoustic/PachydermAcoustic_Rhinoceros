@@ -47,7 +47,7 @@ namespace Pachyderm_Acoustic
                 private set;
             }
 
-        #region Tab 1: Impulse Response... 
+            #region Tab 1: Impulse Response... 
             //PachyDerm needs these common objects... 
             private Source[] Source = null;
             private Receiver_Bank[] Receiver = null;
@@ -55,6 +55,7 @@ namespace Pachyderm_Acoustic
             public int SampleRate = 44100;
             public double CutoffTime;
             List<System.Guid> ShownPaths = new List<Guid>();
+            bool Linear_Phase = false;
 
             private void ProcessEntireModel(string S)
             {
@@ -65,15 +66,15 @@ namespace Pachyderm_Acoustic
                     Scene Model = PachTools.Get_NURBS_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, (int)Atten_Method.SelectedIndex, (bool)EdgeFreq.Checked);
                     Rhino.RhinoApp.RunScript("GetModel", false);
 
-                    if (S == "Sabine RT" )
+                    if (S == "Sabine RT")
                     {
                         AcousticalMath.Sabine(Model, ref T60);
-                    } 
+                    }
                     else if (S == "Eyring RT")
                     {
                         AcousticalMath.Eyring(Model, ref T60);
                     }
-    
+
                     SRT1.Text = string.Format("62.5 hz. : {0} s.", Math.Round(T60[0], 2));
                     SRT2.Text = string.Format("125 hz. : {0} s.", Math.Round(T60[1], 2));
                     SRT3.Text = string.Format("250 hz. : {0} s.", Math.Round(T60[2], 2));
@@ -137,7 +138,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 List<Point3d> SPT = new List<Point3d>();
-                foreach(Source S in Source)
+                foreach (Source S in Source)
                 {
                     S.AppendPts(ref SPT);
                 }
@@ -164,7 +165,7 @@ namespace Pachyderm_Acoustic
                 ///////////////
 
                 Scene Flex_Scene;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) 
+                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0)
                 {
                     RhCommon_Scene NScene = Utilities.PachTools.Get_NURBS_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                     if (!NScene.Complete)
@@ -174,10 +175,10 @@ namespace Pachyderm_Acoustic
                     }
                     NScene.partition(P, plugin.VG_Domain());
                     Flex_Scene = NScene;
-                } 
+                }
                 else
                 {
-                    Flex_Scene = PScene;    
+                    Flex_Scene = PScene;
                 }
 
                 Receiver_Bank.Type T;
@@ -205,8 +206,8 @@ namespace Pachyderm_Acoustic
                 for (int s = 0; s < Source.Length; s++)
                 {
                     Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, Source[s].Delay, T);
-                    
-                    command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[]{0,1,2,3,4,5,6,7});
+
+                    command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
                     if (command.CommandResult != Rhino.Commands.Result.Cancel)
                     {
@@ -222,7 +223,7 @@ namespace Pachyderm_Acoustic
 
                     if (ISBox.CheckState == CheckState.Checked)
                     {
-                        command.Sim = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[]{0,7}, (int)Image_Order.Value, BTM_ED.Checked, s);
+                        command.Sim = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, 7 }, (int)Image_Order.Value, BTM_ED.Checked, s);
 
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
@@ -255,7 +256,7 @@ namespace Pachyderm_Acoustic
                     if (RTBox.CheckState == CheckState.Checked)
                     {
                         command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)RT_Count.Value, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0);
-                        
+
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
                         {
@@ -270,6 +271,11 @@ namespace Pachyderm_Acoustic
                         }
                         command.Reset();
                     }
+                }
+
+                if (Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System)
+                {
+
                 }
 
                 if (Source != null)
@@ -352,7 +358,7 @@ namespace Pachyderm_Acoustic
                     IS_Path_Box.Items.Clear();
                     if (IS_Data != null && IS_Data[0] != null)
                     {
-                        if (SourceList.CheckedIndices.Count == 0) return; 
+                        if (SourceList.CheckedIndices.Count == 0) return;
                         foreach (int i in SourceList.CheckedIndices)
                         {
                             Deterministic_Reflection[] S = IS_Data[i].Paths[int.Parse(Receiver_Choice.Text)].ToArray();
@@ -362,9 +368,9 @@ namespace Pachyderm_Acoustic
                     }
                 }
             }
-        #endregion
+            #endregion
 
-        #region Tab 2: Materials Tab 
+            #region Tab 2: Materials Tab 
 
             private List<string> LayerNames = new List<string>();
             private Acoustics_Library Materials = new Acoustics_Library();
@@ -431,16 +437,16 @@ namespace Pachyderm_Acoustic
                 }
 
                 double[] Abs = new double[8];
-                Abs[0] = (double)Abs63Out.Value/100;
-                Abs[1] = (double)Abs125Out.Value/100;
-                Abs[2] = (double)Abs250Out.Value/100;
-                Abs[3] = (double)Abs500Out.Value/100;
-                Abs[4] = (double)Abs1kOut.Value/100;
-                Abs[5] = (double)Abs2kOut.Value/100;
-                Abs[6] = (double)Abs4kOut.Value/100;
-                Abs[7] = (double)Abs8kOut.Value/100;
-                
-                Materials.Add(new Material(Material_Name.Text,Abs));
+                Abs[0] = (double)Abs63Out.Value / 100;
+                Abs[1] = (double)Abs125Out.Value / 100;
+                Abs[2] = (double)Abs250Out.Value / 100;
+                Abs[3] = (double)Abs500Out.Value / 100;
+                Abs[4] = (double)Abs1kOut.Value / 100;
+                Abs[5] = (double)Abs2kOut.Value / 100;
+                Abs[6] = (double)Abs4kOut.Value / 100;
+                Abs[7] = (double)Abs8kOut.Value / 100;
+
+                Materials.Add(new Material(Material_Name.Text, Abs));
                 Material_Lib.Items.Add(Material_Name.Text);
                 Materials.Save_Library();
             }
@@ -491,7 +497,7 @@ namespace Pachyderm_Acoustic
                 Sct[5] = (int)Scat2kOut.Value;
                 Sct[6] = (int)Scat4kOut.Value;
                 Sct[7] = (int)Scat8kOut.Value;
-                
+
                 if (Trans_Check.Checked)
                 {
                     Trn = new int[8];
@@ -507,6 +513,16 @@ namespace Pachyderm_Acoustic
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                 layer.SetUserString("Acoustics", PachydermAc_PlugIn.EncodeAcoustics(Abs, Sct, Trn));
                 Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
+            }
+
+            public void Set_Phase_Regime(bool Linear_Phase)
+            {
+                if (Direct_Data == null) return;
+                if ((this.Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (this.Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)) return;
+                
+                    for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Pressure();
+                    for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Pressure(44100, 4096);
+                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Pressure();
             }
 
             private void Trans_Check_CheckedChanged(object sender, EventArgs e)

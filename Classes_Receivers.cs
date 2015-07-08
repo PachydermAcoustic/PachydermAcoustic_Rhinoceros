@@ -373,6 +373,14 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            public void reset_pressure()
+            {
+                for (int i = 0; i < Rec_List.Length; i++)
+                {
+                    Rec_List[i].Recs.P = null;
+                }
+            }
+
             public virtual bool HasPressure()
             {
                 return Rec_List[0].Recs.P != null;

@@ -809,6 +809,14 @@ namespace Pachyderm_Acoustic
                 else { DirectionalToggle.Enabled = true; }
             }
 
+            bool Linear_Phase = false;
+
+            public void Set_Phase_Regime(bool Linear_Phase)
+            {
+                if ((this.Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (this.Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)) return;
+                for (int i = 0; i < Map.Length; i++) Map[i].reset_pressure();
+            }
+
             private void Coherent_CheckedChanged(object sender, EventArgs e)
             {
                 if (Coherent.Checked && Map != null && !Map[0].HasPressure())
@@ -816,6 +824,7 @@ namespace Pachyderm_Acoustic
                     DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
                     if (DR == DialogResult.Yes)
                     {
+                        Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
                         for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Pressure();
                     }
                     else 

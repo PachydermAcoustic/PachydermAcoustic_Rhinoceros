@@ -151,10 +151,10 @@ namespace Pachyderm_Acoustic
                 Writer.Write(mlPath);
                 //9. Save Results after simulation?
                 Writer.Write(false);
-                Reader.Close();
-                Writer.Close();
                 //10. Save Filter Method
                 { Writer.Write(1); }
+                Reader.Close();
+                Writer.Close();
             }
 
             /// <summary>
@@ -294,12 +294,19 @@ namespace Pachyderm_Acoustic
                 Writer.Write(Library_Path.Text);
                 //9. Save Results after simulation?
                 Writer.Write(Save_Results.Checked);
-                Writer.Close();
+
                 //10. Save Filter Method
                 if (Filt_LinearPhase.Checked == true)
-                { Writer.Write(1); }
+                {
+                    Audio.Pach_SP.Filter = new Audio.Pach_SP.Linear_Phase_System();
+                    Writer.Write(1);
+                }
                 else
-                { Writer.Write(2); }
+                {
+                    Audio.Pach_SP.Filter = new Audio.Pach_SP.Minimum_Phase_System();
+                    Writer.Write(2);
+                }
+                Writer.Close();
             }
 
             private void SettingsChanged(object sender, EventArgs e)
@@ -334,6 +341,13 @@ namespace Pachyderm_Acoustic
                     if ((pprops == null)) pprops = new Pach_Properties();
                     return pprops;
                 }
+            }
+
+            public override bool OnApply()
+            {
+                Pach_Hybrid_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
+                Pach_Mapping_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
+                return base.OnApply();
             }
 
             public int Get_Processor_Spec()
