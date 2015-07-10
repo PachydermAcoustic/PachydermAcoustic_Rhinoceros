@@ -1413,9 +1413,9 @@ namespace Pachyderm_Acoustic
                 for (int j = 0; j < Pspec.Length; j++) Pspec[j] *= Special_Filter[j];
             }
 
-            double[] pre = Audio.Pach_SP.IFFT_Real4096(Pspec, 0);
+            double[] pre = Audio.Pach_SP.IFFT_Real4096(Audio.Pach_SP.Mirror_Spectrum(Pspec), 0);
             P = new double[pre.Length];
-            double scale = Math.Sqrt(P.Length);
+            double scale = P.Length;
             int hw = P.Length / 2;
             for (int i = 0; i < pre.Length; i++) P[i] = pre[(i + hw) % pre.Length] / scale;
         }
