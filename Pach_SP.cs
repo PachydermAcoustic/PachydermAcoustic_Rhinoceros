@@ -277,9 +277,9 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Signal.Length; i++) Sig_complex[i * 2] = Signal[i];
 
                 //FFTW.Net Setup//
-                FFT_ArrayIn[threadid].SetData(Sig_complex);
+                FFT_ArrayIn4096[threadid].SetData(Sig_complex);
                 //FFT_ArrayOut4096[threadid].SetZeroData();
-                FFT_Plan[threadid].Execute();
+                FFT_Plan4096[threadid].Execute();
 
                 System.Numerics.Complex[] Out = FFT_ArrayOut4096[threadid].GetData_Complex();
                 return Out;
@@ -748,14 +748,14 @@ namespace Pachyderm_Acoustic
                 double[] real_cepstrum = IFFT_Real_General(Mirror_Spectrum(logspec), threadid);
                 Scale(ref real_cepstrum);
 
-                double[] ym = new double[length_starttofinish];
+                double[] ym = new double[length_starttofinish/2];
                 ym[0] = real_cepstrum[0];
 
-                for (int i = 1; i < length_starttofinish / 2; i++)
+                for (int i = 1; i < length_starttofinish / 4; i++)
                 {
                     ym[i] = 2 * real_cepstrum[i];
                 }
-                ym[length_starttofinish / 2] = real_cepstrum[length_starttofinish / 2];
+                ym[length_starttofinish / 4] = real_cepstrum[length_starttofinish / 4];
                 System.Numerics.Complex[] ymspec = FFT_General(ym, threadid);
 
                 for (int i = 0; i < ymspec.Length; i++)
