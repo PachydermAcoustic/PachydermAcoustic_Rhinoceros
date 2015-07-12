@@ -46,8 +46,6 @@ namespace Pachyderm_Acoustic
         private TimeSpan _ts;
         private int h_oct;
         private int[] _octaves;
-        private System.Collections.Concurrent.ConcurrentQueue<object> BroadChecks = new System.Collections.Concurrent.ConcurrentQueue<object>();
-        private System.Collections.Concurrent.ConcurrentQueue<object> OctChecks = new System.Collections.Concurrent.ConcurrentQueue<object>();
 
         /// <summary>
         /// Constructor for the general case ray tracer.
