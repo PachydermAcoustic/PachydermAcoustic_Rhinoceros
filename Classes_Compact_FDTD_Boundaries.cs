@@ -30,7 +30,7 @@ namespace Pachyderm_Acoustic
     {
         namespace TimeDomain
         {
-            public partial class Acoustic_Compact_FDTD_complex : Simulation_Type
+            public partial class Acoustic_Compact_FDTD : Simulation_Type
             {
                 public class Bound_Node : P_Node
                 {

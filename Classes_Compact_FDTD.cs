@@ -30,7 +30,7 @@ namespace Pachyderm_Acoustic
     {
         namespace TimeDomain
         {
-            public partial class Acoustic_Compact_FDTD_complex : Simulation_Type
+            public partial class Acoustic_Compact_FDTD : Simulation_Type
             {
                 Polygon_Scene Rm;
                 public double tmax;       //seconds
@@ -38,18 +38,18 @@ namespace Pachyderm_Acoustic
                 double dt;
                 public double dx;
                 public readonly int xDim, yDim, zDim;
-                Acoustic_Compact_FDTD_complex.P_Node[][][] PFrame;            //pressure scalar field initialisation
+                Acoustic_Compact_FDTD.P_Node[][][] PFrame;            //pressure scalar field initialisation
                 Vector[] Dir = new Vector[13];
                 Point[] Orig = new Point[13];
                 double fmax;
                 Hare.Geometry.AABB Bounds;
-                public Signal_Driver_Compact_complex SD;
-                public Microphone_Compact_complex Mic;
+                public Signal_Driver_Compact SD;
+                public Microphone_Compact Mic;
                 public Rhino.Geometry.Mesh m_templateX, m_templateY, m_templateZ;
                 public int n;
                 double time_ms;
 
-                public Acoustic_Compact_FDTD_complex(Polygon_Scene Rm_in, ref Signal_Driver_Compact_complex S_in, ref Microphone_Compact_complex M_in, double fmax_in, double tmax_in)
+                public Acoustic_Compact_FDTD(Polygon_Scene Rm_in, ref Signal_Driver_Compact S_in, ref Microphone_Compact M_in, double fmax_in, double tmax_in)
                 {
                     Rm = Rm_in;
                     SD = S_in;
@@ -899,9 +899,9 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public class Signal_Driver_Compact_complex
+            public class Signal_Driver_Compact
             {
-                Acoustic_Compact_FDTD_complex.P_Node[] SrcNode;
+                Acoustic_Compact_FDTD.P_Node[] SrcNode;
                 Complex[] signal;
                 double f;
                 Rhino.Geometry.Point3d[] Loc;
@@ -918,7 +918,7 @@ namespace Pachyderm_Acoustic
                     SS_Noise_Pulse
                 }
 
-                public Signal_Driver_Compact_complex(Signal_Type S_in, double freq, double w_in, Rhino.Geometry.Point3d[] Loc_in)
+                public Signal_Driver_Compact(Signal_Type S_in, double freq, double w_in, Rhino.Geometry.Point3d[] Loc_in)
                 {
                     S = S_in;
                     f = freq;
@@ -926,7 +926,7 @@ namespace Pachyderm_Acoustic
                     w = w_in;
                 }
 
-                public void Connect_Grid(Acoustic_Compact_FDTD_complex.P_Node[][][] Frame, AABB Bounds, double dx, double tmax, double dt)
+                public void Connect_Grid(Acoustic_Compact_FDTD.P_Node[][][] Frame, AABB Bounds, double dx, double tmax, double dt)
                 {
                     signal = new Complex[(int)Math.Ceiling(tmax / dt)];
                     double f2pi = f * 2 * Math.PI;
@@ -968,7 +968,7 @@ namespace Pachyderm_Acoustic
                             break;
                     }
 
-                    SrcNode = new Acoustic_Compact_FDTD_complex.P_Node[Loc.Length];
+                    SrcNode = new Acoustic_Compact_FDTD.P_Node[Loc.Length];
 
                     for (int i = 0; i < Loc.Length; i++)
                     {
@@ -981,7 +981,7 @@ namespace Pachyderm_Acoustic
 
                 public void Drive(int t)
                 {
-                    foreach (Acoustic_Compact_FDTD_complex.P_Node n in SrcNode)
+                    foreach (Acoustic_Compact_FDTD.P_Node n in SrcNode)
                     {
                         Complex prop = signal[t];
                         n.Pn = prop;
@@ -989,21 +989,21 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public class Microphone_Compact_complex
+            public class Microphone_Compact
             {
                 System.Numerics.Complex[][] recording;
-                Acoustic_Compact_FDTD_complex.P_Node[] RecNode;
+                Acoustic_Compact_FDTD.P_Node[] RecNode;
                 Rhino.Geometry.Point3d[] Loc;
 
-                public Microphone_Compact_complex(Rhino.Geometry.Point3d[] Loc_in)
+                public Microphone_Compact(Rhino.Geometry.Point3d[] Loc_in)
                 {
                     Loc = Loc_in;
                     Random R = new Random();
                     recording = new System.Numerics.Complex[Loc.Length][];
-                    RecNode = new Acoustic_Compact_FDTD_complex.P_Node[Loc.Length];
+                    RecNode = new Acoustic_Compact_FDTD.P_Node[Loc.Length];
                 }
 
-                public void Connect_Grid(Acoustic_Compact_FDTD_complex.P_Node[][][] Frame, AABB Bounds, double dx, double tmax, double dt)
+                public void Connect_Grid(Acoustic_Compact_FDTD.P_Node[][][] Frame, AABB Bounds, double dx, double tmax, double dt)
                 {
                     for (int i = 0; i < Loc.Length; i++)
                     {

@@ -16,17 +16,12 @@
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-using Rhino.Geometry;
 using System;
 using System.Windows.Forms;
 using System.Collections.Generic;
-using Hare.Geometry;
 using Pachyderm_Acoustic.Environment;
-using Pachyderm_Acoustic.Audio;
-using Pachyderm_Acoustic.Visualization;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
-using System.Numerics;
 
 namespace Pachyderm_Acoustic
 {
@@ -45,8 +40,8 @@ namespace Pachyderm_Acoustic
 
             private Pach_Graphics.colorscale scale;
             public delegate void Populator(double Dist);
-            Numeric.TimeDomain.Acoustic_Compact_FDTD_complex FDTD;
-            Pachyderm_Acoustic.UI.WaveConduit P;
+            Numeric.TimeDomain.Acoustic_Compact_FDTD FDTD;
+            WaveConduit P;
             Rhino.Geometry.Mesh[] M;
             List<List<Rhino.Geometry.Point3d>> Pts;
             List<List<System.Numerics.Complex>> Pressure;
@@ -63,24 +58,24 @@ namespace Pachyderm_Acoustic
                 Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
-                Numeric.TimeDomain.Signal_Driver_Compact_complex.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact_complex.Signal_Type.Sine_Tone;
+                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
                         
                 switch (SourceSelect.Text)
                 {
                     case "Dirac Pulse":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact_complex.Signal_Type.Dirac_Pulse;
+                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
                         break;
                     case "Sine Wave":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact_complex.Signal_Type.Sine_Tone;
+                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
                         break;
                 }
                 
-                Numeric.TimeDomain.Signal_Driver_Compact_complex SD = new Numeric.TimeDomain.Signal_Driver_Compact_complex(s_type, (double)Frequency_Selection.Value, 1, PachTools.GetSource());
-                Numeric.TimeDomain.Microphone_Compact_complex Mic = new Numeric.TimeDomain.Microphone_Compact_complex(Rec);
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, PachTools.GetSource());
+                Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
                 //Pts = new List<List<Point3d>()>;
                 //Pressure = new List<List<Complex>()>;
-                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_complex(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value);
+                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value);
                 M = new Rhino.Geometry.Mesh[3] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
                 P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[]{(double)Param_Min.Value, (double)Param_Max.Value});
@@ -146,15 +141,8 @@ namespace Pachyderm_Acoustic
                 }
 
                 FDTD.Pressure_Points(ref Pts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10,(double)Param_Min.Value/20), false, false, true, Magnitude.Checked);
-                //if (Volumetric.Checked)
-                //{
-                //    P.Populate(Pts, Pressure);
-                //}
-                //else
-                //{
                 P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), FDTD.dx, Pressure, M, Magnitude.Checked);
-                //}
-
+            
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
