@@ -44,7 +44,7 @@ namespace Pachyderm_Acoustic
             WaveConduit P;
             Rhino.Geometry.Mesh[] M;
             List<List<Rhino.Geometry.Point3d>> Pts;
-            List<List<System.Numerics.Complex>> Pressure;
+            List<List<double>> Pressure;
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
@@ -73,8 +73,6 @@ namespace Pachyderm_Acoustic
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, PachTools.GetSource());
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
-                //Pts = new List<List<Point3d>()>;
-                //Pressure = new List<List<Complex>()>;
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value);
                 M = new Rhino.Geometry.Mesh[3] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
@@ -235,7 +233,7 @@ namespace Pachyderm_Acoustic
                         System.Drawing.Bitmap BM = new System.Drawing.Bitmap(FDTD.xDim, FDTD.yDim);
                         for (int j = 0; j < FDTD.xDim; j++) for (int k = 0; k < FDTD.yDim; k++)
                         {
-                            int V = (int) (255 * ( 20 * Math.Log10(FDTD.P(j,k,i).Magnitude / 0.00002)/200));
+                            int V = (int) (255 * ( 20 * Math.Log10(FDTD.P(j,k,i) / 0.00002)/200));
                             V = (V > 200) ? 200 : (V < 0) ? 0 : V;
                             BM.SetPixel(j, k, System.Drawing.Color.FromArgb(255,V,V,V));
                         }

@@ -55,6 +55,7 @@ namespace Pachyderm_Acoustic
             protected List<BrepEdge> EdgeList = new List<BrepEdge>();
             public List<Edge> Edge_Nodes = new List<Edge>();
             public bool IsHomogeneous = true;
+            public bool hasnulllayers = false;
             #region Inheritables
 
             /// <summary>
@@ -510,10 +511,13 @@ namespace Pachyderm_Acoustic
                 for (int q = 0; q <= Breps.Count - 1; q++)
                 {
                     List<Brep> B = new List<Brep>();
-                    if (Breps[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
+                    if (Breps[q].ObjectType == Rhino.DocObjects.ObjectType.Brep || Breps[q].ObjectType == Rhino.DocObjects.ObjectType.Surface)
                     {
-                        B.Add(((Rhino.Geometry.Brep)Breps[q]).DuplicateBrep());
                         //string m = ObjectList[q].Geometry.GetUserString("Acoustics_User");
+
+                        if (Breps[q].ObjectType == Rhino.DocObjects.ObjectType.Surface) B.Add((Breps[q] as Surface).ToBrep());
+                        else B.Add(((Rhino.Geometry.Brep)Breps[q]).DuplicateBrep());
+
                         if (Breps[q].GetUserString("Acoustics_User") == "yes")
                         {
                             double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
@@ -526,6 +530,8 @@ namespace Pachyderm_Acoustic
                         {
                             //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
                             //AcousticsData.Add(Layer.GetUserString("Acoustics"));
+                            if (Mat_Layer[LayerIds[q]] == null) hasnulllayers = true;
+
                             Mat_Obj.Add(Mat_Layer[LayerIds[q]]);
                             Scat_Obj.Add(Scat_Layer[LayerIds[q]]);
                             Trans_Obj.Add(Trans_Layer[LayerIds[q]]);
@@ -551,6 +557,8 @@ namespace Pachyderm_Acoustic
                                 //AcousticsData.Add(Layer.GetUserString("Acoustics"));
                                 //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
                                 //AcousticsData.Add(Layer.GetUserString("Acoustics"));
+                                if (Mat_Layer[LayerIds[q]] == null) hasnulllayers = true;
+
                                 Mat_Obj.Add(Mat_Layer[LayerIds[q]]);
                                 Scat_Obj.Add(Scat_Layer[LayerIds[q]]);
                                 Trans_Obj.Add(Trans_Layer[LayerIds[q]]);

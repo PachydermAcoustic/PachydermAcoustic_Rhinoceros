@@ -62,7 +62,7 @@ namespace Pachyderm_Acoustic
                 catch { return; }
             }
 
-            public void Add(Numeric.TimeDomain.Acoustic_Compact_FDTD.P_Node Node, int x, int y, int z, double dx, Rhino.Geometry.Point3d corner)
+            public void Add(Numeric.TimeDomain.Acoustic_Compact_FDTD.Node Node, int x, int y, int z, double dx, Rhino.Geometry.Point3d corner)
             {
                 double dx3 = dx / 3;
 

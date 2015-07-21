@@ -39,8 +39,8 @@ namespace Pachyderm_Acoustic
                     List<double[]> acoef;
                     public List<Boundary> B_List;
                     Boundary Flags;
-                    System.Numerics.Complex ab1 = 0;
-                    System.Numerics.Complex abDenom = 0;
+                    double ab1 = 0;
+                    double abDenom = 0;
                     int[] id;
 
                     public Bound_Node(Point loc, double rho0, double dt, double dx, double C, int[] id_in, List<double[]> acoef_in, List<Boundary> B_in)
@@ -53,7 +53,7 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < B_in.Count; i++) Flags |= B_in[i];
                     }
 
-                    public override void UpdateIWB()
+                    public override void UpdateP()
                     {
                         X = Xpos_Link.P + Xneg_Link.P;
                         Y = Ypos_Link.P + Yneg_Link.P;
@@ -65,11 +65,11 @@ namespace Pachyderm_Acoustic
                             Pnf += filter[i].g_b_term(); //* Courrant2 (1 for IWB) 
                             filter[i].Update(Pnf, Pn_1);
                         }
-                        System.Numerics.Complex P2 = 0;
+                        double P2 = 0;
                         foreach (P_Node P in this.Links2) P2 += P.P;
                         P2 *= 0;// 3.0 / 32.0;
 
-                        System.Numerics.Complex P3 = 0;
+                        double P3 = 0;
                         foreach (P_Node P in this.Links3) P3 += P.P;
                         P3 *= 0;//1.0 / 64.0;
 
@@ -263,13 +263,13 @@ namespace Pachyderm_Acoustic
                     //    #endregion
                     //}
 
-                    public override void Link_Nodes(ref P_Node[][][] Frame, int x, int y, int z)
+                    public override void Link_Nodes(ref Node[][][] Frame, int x, int y, int z)
                     {
-                        System.Numerics.Complex[] abs_poles = new System.Numerics.Complex[] { new System.Numerics.Complex(-0.212854, -0.285357), new System.Numerics.Complex(-.212854, 0.285357) };
-                        System.Numerics.Complex[] abs_zeros = new System.Numerics.Complex[] { 0.876, 0.876 };
+                        double[] abs_poles = new double[] { -0.212854, -.212854 };
+                        double[] abs_zeros = new double[] { 0.876, 0.876 };
 
-                        System.Numerics.Complex[] ref_poles = new System.Numerics.Complex[] { new System.Numerics.Complex(0, 0), new System.Numerics.Complex(0, 0) };
-                        System.Numerics.Complex[] ref_zeros = new System.Numerics.Complex[] { new System.Numerics.Complex(0, 0), new System.Numerics.Complex(0, 0) };
+                        double[] ref_poles = new double[] { 0, 0 };
+                        double[] ref_zeros = new double[] { 0, 0 };
 
                         //List<Complex[]> NodePoles = new List<Complex[]>();
                         //List<Complex[]> NodeZeros = new List<Complex[]>();
@@ -1075,19 +1075,19 @@ namespace Pachyderm_Acoustic
                     {
                         double[] ax;
                         double[] bx;
-                        System.Numerics.Complex[] xx;
-                        System.Numerics.Complex[] yx;
-                        System.Numerics.Complex rec_b0;
-                        System.Numerics.Complex gn;
+                        double[] xx;
+                        double[] yx;
+                        double rec_b0;
+                        double gn;
                         double interp;
 
-                        public DIF_IWB_2p(System.Numerics.Complex[] Poles, System.Numerics.Complex[] Zeros, double scale, double M)
+                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, double M)
                             : this(Poles, Zeros, scale)
                         {
                             interp = M;
                         }
 
-                        public DIF_IWB_2p(System.Numerics.Complex[] Poles, System.Numerics.Complex[] Zeros, double scale, IWB_Mask M)
+                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, IWB_Mask M)
                             : this(Poles, Zeros, scale)
                         {
                             switch (M)
@@ -1104,17 +1104,17 @@ namespace Pachyderm_Acoustic
                             }
                         }
 
-                        public DIF_IWB_2p(System.Numerics.Complex[] Poles, System.Numerics.Complex[] Zeros, double scale)
+                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale)
                         {
                             ax = new double[3];
                             ax[0] = 1;
-                            ax[1] = -(Poles[0].Real + Poles[1].Real);
-                            ax[2] = Poles[0].Real * Poles[1].Real;
+                            ax[1] = -(Poles[0] + Poles[1]);
+                            ax[2] = Poles[0] * Poles[1];
 
                             bx = new double[3];
                             bx[0] = 1 / scale;
-                            bx[1] = -(Zeros[0].Real + Zeros[1].Real) / scale;
-                            bx[2] = Zeros[0].Real * Zeros[1].Real / scale;
+                            bx[1] = -(Zeros[0] + Zeros[1]) / scale;
+                            bx[2] = Zeros[0] * Zeros[1] / scale;
 
                             //if (Poles[0].Imag != 0)
                             //{
@@ -1153,11 +1153,11 @@ namespace Pachyderm_Acoustic
                             if (ax.Length != bx.Length) throw new Exception("Number of Poles and Number of Zeros must be equal.");
                             rec_b0 = 1 / bx[0];
                             a_b = ax[0] / bx[0];
-                            xx = new System.Numerics.Complex[2];
-                            yx = new System.Numerics.Complex[2];
+                            xx = new double[2];
+                            yx = new double[2];
                         }
 
-                        public override System.Numerics.Complex g_b_term()
+                        public override double g_b_term()
                         {
                             gn = bx[1] * xx[0] - ax[1] * yx[0] + bx[2] * xx[1] - ax[2] * yx[1];
                             return gn * rec_b0 * interp;
@@ -1167,7 +1167,7 @@ namespace Pachyderm_Acoustic
                         /// Do before updating boundary node pressure values, but after getting the g-term.
                         /// </summary>
                         /// <param name="Pn"></param>
-                        public override void Update(System.Numerics.Complex Pnf, System.Numerics.Complex Pn_1)
+                        public override void Update(double Pnf, double Pn_1)
                         {
                             xx[1] = xx[0];
                             yx[1] = yx[0];
@@ -1175,19 +1175,19 @@ namespace Pachyderm_Acoustic
                             yx[0] = (bx[0] * xx[0] + gn) / ax[0];
                         }
 
-                        public System.Numerics.Complex A0
+                        public double A0
                         {
                             get { return ax[0]; }
                         }
 
-                        public System.Numerics.Complex B0
+                        public double B0
                         {
                             get { return bx[0]; }
                         }
                     }
                     public abstract class IIR_DIF
                     {
-                        public System.Numerics.Complex a_b;
+                        public double a_b;
                         protected int[] DIR;
 
                         public enum IWB_Mask
@@ -1199,9 +1199,9 @@ namespace Pachyderm_Acoustic
 
                         //public Complex a_b_sub_1 { get { return ab1; } }
                         //public Complex a_b_recip { get { return abdenom; } }
-                        public abstract System.Numerics.Complex g_b_term();
+                        public abstract double g_b_term();
                         //public Complex ab;
-                        public abstract void Update(System.Numerics.Complex Pnf, System.Numerics.Complex Pn_1);
+                        public abstract void Update(double Pnf, double Pn_1);
                     }
                     
                     [Flags]

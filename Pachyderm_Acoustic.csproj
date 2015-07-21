@@ -104,15 +104,13 @@
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
     <Compile Include="Classes_Absorption_Matrices.cs" />
+    <Compile Include="Classes_Compact_FDTD.cs" />
+    <Compile Include="Classes_Compact_FDTD_Boundaries.cs" />
     <Compile Include="Classes_Materials.cs" />
     <Compile Include="Classes_Special.cs" />
     <Compile Include="Classes_Absorption_Analytics.cs" />
     <Compile Include="Classes_Medium_Props.cs" />
     <Compile Include="Classes_VoxelGrid_PolyRefractive.cs" />
-    <Compile Include="Classes_Compact_FDTD_complex_Boundaries.cs" />
-    <Compile Include="Classes_Compact_FDTD_complex.cs" />
-    <Compile Include="Classes_FDTD_complex.cs" />
-    <Compile Include="Classes_FDTD.cs" />
     <Compile Include="Classes_RC_Scene.cs" />
     <Compile Include="Classes_RCVoxel.cs" />
     <Compile Include="Classes_IO.cs" />
