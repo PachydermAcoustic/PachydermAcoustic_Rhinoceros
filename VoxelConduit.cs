@@ -62,97 +62,97 @@ namespace Pachyderm_Acoustic
                 catch { return; }
             }
 
-            public void Add(Numeric.TimeDomain.Acoustic_Compact_FDTD_complex.P_Node Node, int x, int y, int z, double dx, Rhino.Geometry.Point3d corner)
+            public void Add(Numeric.TimeDomain.Acoustic_Compact_FDTD.Node Node, int x, int y, int z, double dx, Rhino.Geometry.Point3d corner)
             {
                 double dx3 = dx / 3;
 
-                if (Node.GetType() == typeof(Numeric.TimeDomain.Acoustic_Compact_FDTD_complex.Bound_Node))
+                if (Node.GetType() == typeof(Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node))
                 {
                     Point3d START = corner + new Rhino.Geometry.Point3d(dx * x, dx * y, dx * z);
                     DisplayMesh.Add(Mesh.CreateFromBox(new BoundingBox(START, START + new Point3d(dx, dx, dx)), 1, 1, 1));
-                    List<Numeric.TimeDomain.Acoustic_Compact_FDTD_complex.Bound_Node.Boundary> B = (Node as Numeric.TimeDomain.Acoustic_Compact_FDTD_complex.Bound_Node).B_List;
+                    List<Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node.Boundary> B = (Node as Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node).B_List;
                     Mesh[] corners = new Mesh[B.Count];
 
                     for (int i = 0; i < B.Count; i++)
                     {
                         switch (B[i])
                         {
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AXNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AXNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, dx3, 0), START + new Point3d(2 * dx3, 2 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AXPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AXPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, dx3, 2 * dx3), START + new Point3d(2 * dx3, 2 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AYNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AYNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 0, dx3), START + new Point3d(2 * dx3, dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AYPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AYPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 2 * dx3, dx3), START + new Point3d(2 * dx3, 3 * dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, dx3, dx3), START + new Point3d(dx3, 2 * dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.AZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.AZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, dx3, dx3), START + new Point3d(3 * dx3, 2 * dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXNegYNegZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXNegYNegZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START, START + new Point3d(dx3, dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXNegYNegZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXNegYNegZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, 0, 2 * dx3), START + new Point3d(dx3, dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXNegYPosZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXNegYPosZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, 2 * dx3, 0), START + new Point3d(dx3, 3 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXNegYPosZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXNegYPosZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, 2 * dx3, 2 * dx3), START + new Point3d(dx3, 3 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXPosYNegZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXPosYNegZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 0, 0), START + new Point3d(3 * dx3, dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXPosYNegZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXPosYNegZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 0, 2 * dx3), START + new Point3d(3 * dx3, dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXPosYPosZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXPosYPosZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 2 * dx3, 0), START + new Point3d(3 * dx3, 3 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.DXPosYPosZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.DXPosYPosZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 2 * dx3, 2 * dx3), START + new Point3d(3 * dx3, 3 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXNegYNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXNegYNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, 0, dx3), START + new Point3d(dx3, dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXNegYPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXNegYPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, 2 * dx3, 0), START + new Point3d(dx3, 3 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXNegZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXNegZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, dx3, 0), START + new Point3d(dx3, 2 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXNegZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXNegZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(0, dx3, 2 * dx3), START + new Point3d(dx3, 2 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXPosYNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXPosYNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 0, dx3), START + new Point3d(3 * dx3, dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXPosYPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXPosYPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, 2 * dx3, dx3), START + new Point3d(3 * dx3, 3 * dx3, 2 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXPosZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXPosZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, dx3, 0), START + new Point3d(3 * dx3, 2 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDXPosZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDXPosZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(2 * dx3, dx3, 2 * dx3), START + new Point3d(3 * dx3, 2 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDYNegZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDYNegZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 0, 0), START + new Point3d(2 * dx3, dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDYNegZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDYNegZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 0, 2 * dx3), START + new Point3d(2 * dx3, dx3, 3 * dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDYPosZNeg:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDYPosZNeg:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 2 * dx3, 0), START + new Point3d(2 * dx3, 3 * dx3, dx3)), 1, 1, 1);
                                 break;
-                            case Acoustic_Compact_FDTD_complex.Bound_Node.Boundary.SDYPosZPos:
+                            case Acoustic_Compact_FDTD.Bound_Node.Boundary.SDYPosZPos:
                                 corners[i] = Mesh.CreateFromBox(new BoundingBox(START + new Point3d(dx3, 2 * dx3, 2 * dx3), START + new Point3d(2 * dx3, 3 * dx3, 3 * dx3)), 1, 1, 1);
                                 break;
                         }

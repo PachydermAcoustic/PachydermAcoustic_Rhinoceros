@@ -233,7 +233,7 @@ namespace Pachyderm_Acoustic
                 this.Enabled = true;
             }
 
-            public void Populate(List<List<Point3d>> P, List<List<System.Numerics.Complex>> pressure)
+            public void Populate(List<List<Point3d>> P, List<List<double>> pressure)
             {
                 Mesh_Vis = false;
                 Section_Vis = false;
@@ -244,7 +244,7 @@ namespace Pachyderm_Acoustic
                     {
                         for (int i = 0; i < P[j].Count; i++)
                         {
-                            PC.Add(P[j][i], P_Color(20 * System.Math.Log(pressure[j][i].Magnitude / 2E-5)));//0.0000000004
+                            PC.Add(P[j][i], P_Color(20 * System.Math.Log(pressure[j][i] / 2E-5)));//0.0000000004
                         }
                     }
                 }
@@ -258,7 +258,7 @@ namespace Pachyderm_Acoustic
                 this.Enabled = true;
             }
 
-            public void Populate(int[] X, int[] Y, int[] Z, double dx, List<List<System.Numerics.Complex>> pressure, Mesh[] M, bool Magnitude)
+            public void Populate(int[] X, int[] Y, int[] Z, double dx, List<List<double>> pressure, Mesh[] M, bool Magnitude)
             {
                 DisplayMesh = new List<Mesh>();//[M.Length];    
                 Mesh_Vis = true;
@@ -299,7 +299,7 @@ namespace Pachyderm_Acoustic
                     //nullfaces = new List<int>();
                     for (int i = 0; i < DisplayMesh[j].Faces.Count; i++)
                     {
-                        double V = 10 * System.Math.Log(System.Math.Pow((Magnitude ? pressure[j][i].Magnitude : pressure[j][i].Real), 2) / 0.0000000004);
+                        double V = 10 * System.Math.Log(System.Math.Pow((Magnitude ? pressure[j][i] : pressure[j][i]), 2) / 0.0000000004);
 
                         //if (V < V_Bounds[0]) { nullfaces.Add(i); continue; }
 
@@ -313,35 +313,33 @@ namespace Pachyderm_Acoustic
                             DisplayMesh[j].VertexColors.SetColor(i4+3,C);
                         }
                     }
-                    //DisplayMesh[j].Faces.DeleteFaces(nullfaces);
                 }
-
                 this.Enabled = true;
             }
 
-            public void Populate(List<List<Point3d>> P, List<List<double>> pressure)
-            {
-                Mesh_Vis = false;
-                Section_Vis = false;
-                if (pressure.Count > 0)
-                {
-                    PC = new PointCloud();
-                    for (int j = 0; j < P.Count; j++)
-                    {
-                        for (int i = 0; i < P[j].Count; i++)
-                        {
-                            PC.Add(P[j][i], P_Color(Utilities.AcousticalMath.SPL_Intensity(pressure[j][i] * pressure[j][i])));
-                        }
-                    }
-                }
-                else
-                {
-                    for (int j = 0; j < P.Count; j++)
-                    {
-                        PC = new PointCloud(P[j]);
-                    }
-                }
-            }
+            //public void Populate(List<List<Point3d>> P, List<List<double>> pressure)
+            //{
+            //    Mesh_Vis = false;
+            //    Section_Vis = false;
+            //    if (pressure.Count > 0)
+            //    {
+            //        PC = new PointCloud();
+            //        for (int j = 0; j < P.Count; j++)
+            //        {
+            //            for (int i = 0; i < P[j].Count; i++)
+            //            {
+            //                PC.Add(P[j][i], P_Color(Utilities.AcousticalMath.SPL_Intensity(pressure[j][i] * pressure[j][i])));
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        for (int j = 0; j < P.Count; j++)
+            //        {
+            //            PC = new PointCloud(P[j]);
+            //        }
+            //    }
+            //}
 
             protected override void  PostDrawObjects(DrawEventArgs e)        
             {
