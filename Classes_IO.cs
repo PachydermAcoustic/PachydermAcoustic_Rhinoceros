@@ -372,13 +372,13 @@ namespace Pachyderm_Acoustic
                 double version = 1.1;
                 double rev = 0;
                 //5. Announce that the following data pertains to the form of the analysis mesh. (string)
-                int s_ct = 1;
+                int s_ct=1;
                 Rhino.Geometry.Mesh Map_Mesh = new Rhino.Geometry.Mesh();
                 Map = new Mapping.PachMapReceiver[1];
                 //Map[0] = new Pach_Map_Receiver();        
                 //double[] Rho_C = null;
-                double[] delay = new double[s_ct];
-
+                double[] delay;
+                 
                 do
                 {
                     switch (sr.ReadString())
@@ -414,6 +414,7 @@ namespace Pachyderm_Acoustic
                         case "Sources":
                             //7.5: Announce the number of sources.
                             s_ct = sr.ReadInt32();
+                            delay = new double[s_ct];
                             Map = new Mapping.PachMapReceiver[s_ct];
                             //7.5a Announce the type of source.
 
@@ -436,6 +437,7 @@ namespace Pachyderm_Acoustic
                         case "SourceswLoc":
                             //7.5: Announce the number of sources.
                             s_ct = sr.ReadInt32();
+                            delay = new double[s_ct];
                             Map = new Mapping.PachMapReceiver[s_ct];
                             //7.5a Announce the type of source.
 
