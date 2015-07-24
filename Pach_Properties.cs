@@ -113,8 +113,8 @@ namespace Pachyderm_Acoustic
                 {
                     if (x is EndOfStreamException)
                     { newSettings(ref Reader, ref Writer); }
-                    else if (x is AccessViolationException)
-                    { System.Windows.Forms.MessageBox.Show("You do not have write access permissions on Pachyderm Files. Go to your installation and check the security properties of all Pachyderm files. We recommend setting permissions on these files to 'Full Control' for all users.", "Access Violation Exception"); }
+                    else
+                    { System.Windows.Forms.MessageBox.Show("I'm not entirely sure, but I think you do not have write access permissions on Pachyderm Files. Go to your installation and check the security properties of all Pachyderm files. We recommend setting permissions on these files to 'Full Control' for all users.", "Some exception or another..."); }
                 }
             }
 
