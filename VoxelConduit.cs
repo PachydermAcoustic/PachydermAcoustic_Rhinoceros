@@ -70,7 +70,7 @@ namespace Pachyderm_Acoustic
                 {
                     Point3d START = corner + new Rhino.Geometry.Point3d(dx * x, dx * y, dx * z);
                     DisplayMesh.Add(Mesh.CreateFromBox(new BoundingBox(START, START + new Point3d(dx, dx, dx)), 1, 1, 1));
-                    List<Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node.Boundary> B = (Node as Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node).B_List;
+                    List<Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node.Boundary> B = (Node as Numeric.TimeDomain.Acoustic_Compact_FDTD.Bound_Node_RDD).B_List;
                     Mesh[] corners = new Mesh[B.Count];
 
                     for (int i = 0; i < B.Count; i++)

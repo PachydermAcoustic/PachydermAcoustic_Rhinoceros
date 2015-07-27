@@ -42,7 +42,7 @@ namespace Pachyderm_Acoustic
             public delegate void Populator(double Dist);
             Numeric.TimeDomain.Acoustic_Compact_FDTD FDTD;
             WaveConduit P;
-            Rhino.Geometry.Mesh[] M;
+            Rhino.Geometry.Mesh[][] M;
             List<List<Rhino.Geometry.Point3d>> Pts;
             List<List<double>> Pressure;
 
@@ -74,15 +74,15 @@ namespace Pachyderm_Acoustic
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value);
-                M = new Rhino.Geometry.Mesh[3] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
+                M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
                 P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[]{(double)Param_Min.Value, (double)Param_Max.Value});
                 P.Enabled = true;
 
-                if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = FDTD.xDim-1;
+                if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.xDim/2)-1;
 
-                else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = FDTD.yDim-1;
-                else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = FDTD.zDim-1;
+                else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.yDim/2)-1;
+                else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.zDim/2)-1;
 
                 if (Map_Planes.Items.Count == 0) 
                 {
@@ -180,7 +180,7 @@ namespace Pachyderm_Acoustic
 
             private void Param_Max_ValueChanged(object sender, EventArgs e)
             {
-                    this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString();
+                this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString();
                 this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString();
                 this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString();
 
@@ -270,7 +270,7 @@ namespace Pachyderm_Acoustic
 
                 if (FDTD != null)
                 {
-                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? FDTD.xDim-1 : (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? FDTD.yDim-1 : FDTD.zDim-1;
+                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)Math.Floor((double)FDTD.xDim/2)-1 : (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)Math.Floor((double)FDTD.yDim / 2) - 1 : (int)Math.Floor((double)FDTD.zDim / 2) - 1;
                 }
                 (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis = AxisSelect.SelectedIndex;
                 Map_Planes.Update();

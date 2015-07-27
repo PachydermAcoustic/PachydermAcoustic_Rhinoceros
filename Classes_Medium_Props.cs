@@ -227,6 +227,7 @@ namespace Pachyderm_Acoustic
             public abstract double Rho_C(Hare.Geometry.Point pt);
             public abstract double Rho_C(int arg);
             public abstract void AttenuationFilter(int no_of_elements, int sample_Frequency, double distance_meters, ref double[] Freq, ref double[] Atten, Hare.Geometry.Point pt);
+            public abstract double AttenuationPureTone(Hare.Geometry.Point pt, double frequency);
         }
 
         public class Uniform_Medium: Medium_Properties
@@ -262,6 +263,11 @@ namespace Pachyderm_Acoustic
                     Freq[i] = df * (i + 1);
                     Atten[i] = Math.Exp(-.1151 * Spectrum.Interpolate(Freq[i]) * distance_meters);
                 }
+            }
+
+            public override double AttenuationPureTone(Hare.Geometry.Point pt, double frequency)
+            {
+                return Spectrum.Interpolate(frequency);
             }
 
             /// <summary>
@@ -435,6 +441,15 @@ namespace Pachyderm_Acoustic
                 int Z = (int)Math.Floor((pt.z - MinZ) / VdimZ);
 
                 return C_Sound[XYTot * Z + Ydom * X + Y];
+            }
+
+            public override double AttenuationPureTone(Hare.Geometry.Point pt, double frequency)
+            {
+                int X = (int)Math.Floor((pt.x - MinX) / VdimX);
+                int Y = (int)Math.Floor((pt.y - MinY) / VdimY);
+                int Z = (int)Math.Floor((pt.z - MinZ) / VdimZ);
+
+                return Spectrum[XYTot * Z + Ydom * X + Y].Interpolate(frequency);
             }
 
             public override double Sound_Speed(Rhino.Geometry.Point3d pt)
