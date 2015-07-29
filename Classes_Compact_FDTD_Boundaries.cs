@@ -1355,17 +1355,7 @@ namespace Pachyderm_Acoustic
 
                     public override void UpdateP()
                     {
-                        Pnf = 0;
-
-                        //for (int i = 0; i < filter.Length; i++)
-                        //{
-                        //    Pnf += filter[i].g_b_term();
-                        //    filter[i].Update(Pnf, Pn_1);
-                        //}
-                        double P2 = 0;
-                        foreach (Node P in this.Links2) P2 += P.P;
-                        P2 *= 0;
-
+                        base.UpdateP();
                         Pnf *= R;
                     }
 

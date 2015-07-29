@@ -58,7 +58,7 @@ namespace Pachyderm_Acoustic
                 Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
-                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
+                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
                         
                 switch (SourceSelect.Text)
                 {
@@ -67,6 +67,9 @@ namespace Pachyderm_Acoustic
                         break;
                     case "Sine Wave":
                         s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
+                        break;
+                    case "Sine Pulse":
+                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse;
                         break;
                 }
                 

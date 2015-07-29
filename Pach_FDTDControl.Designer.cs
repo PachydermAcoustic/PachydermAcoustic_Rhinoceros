@@ -682,6 +682,7 @@ namespace Pachyderm_Acoustic
             this.SourceSelect.Items.AddRange(new object[] {
             "Sine Wave",
             "Dirac Pulse",
+            "Sine Pulse",
             "Pseudo Random Noise"});
             this.SourceSelect.Location = new System.Drawing.Point(79, 13);
             this.SourceSelect.Name = "SourceSelect";
