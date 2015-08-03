@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
-using Hare.Geometry;
 using System.Linq;
 
 namespace Pachyderm_Acoustic
@@ -58,10 +57,24 @@ namespace Pachyderm_Acoustic
             /// number of samples per meter.
             /// </summary>
             int samplespermeter = 16;
-            
+            /// <summary>
+            /// Private member controlling the directional characteristics of the line source.
+            /// </summary>
+            Directionality D;
+
             public LineSource(IEnumerable<Curve> SrcLines, List<String> CodeList, int el_m, int SrcID, Phase_Regime ph)
                 :base(new double[8]{60, 49, 41, 35, 31, 28, 26, 24}, new Point3d(0,0,0), ph, SrcID)
             {
+                string type = SrcLines.ElementAt<Curve>(0).GetUserString("SourceType");
+                double velocity = double.Parse(SrcLines.ElementAt<Curve>(0).GetUserString("Velocity"));
+                double delta = double.Parse(SrcLines.ElementAt<Curve>(0).GetUserString("delta"));
+
+                if (type == "Aircraft (ANCON derived)")
+                {
+                    D = new ANCON(delta, velocity);
+                }
+                else D = new Simple();
+
                 samplespermeter = el_m;
                 Curves = SrcLines.ToList<Curve>();
                 Samples = new Point3d[Curves.Count][];
@@ -118,31 +131,80 @@ namespace Pachyderm_Acoustic
 
             public override BroadRay Directions(int index, int thread, ref Random random)
             {
-                double pos = random.NextDouble();
-                int i;
-                for (i = 0; i < Curves.Count; i++) if (pos > Domains[i] && pos < Domains[i + 1]) break;
-                
-                Interval t = Curves[i].Domain;
-                double x = random.NextDouble() * (t[1] - t[0]) + t[0];
-                Point3d P = Curves[i].PointAt(x);
-                //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(P);
-                // Height of fountain mostly affects duration of signal and Frequency content. Info for angle of drop is unknown.
-                // Temporary solution - fixed frequency content and omnidirectional propagation from all points in fountain.
-                // Goal - accurate frequency content, loudness and directionality from each point in the fountain.
-                double Theta = random.NextDouble() * 2 * System.Math.PI;
-                double Phi = random.NextDouble() * 2 * System.Math.PI;
-                Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
-                double[] phase = new double[8];
-                if (ph == Phase_Regime.Random) for(int o = 0; o < 8; o++) phase[o] = random.Next() * 2 * Math.PI;
-                else for(int o = 0; o < 8; o++) phase[o] = 0 - Delay * Utilities.Numerics.angularFrequency[o];
-
-                return new BroadRay(Utilities.PachTools.RPttoHPt(P), Direction, random.Next(), thread, DomainPower[i], phase, delay, S_ID);
+                return D.Directions(index, thread, ref random, ref Curves, ref Domains, ref DomainPower, ref delay, ref ph, ref S_ID );
             }
 
-            //public override double[] Signal_by_Distance(double distance, Vector dir, int thread, int random, double Rho_C)
-            //{
-            //    throw new NotImplementedException();
-            //}
+            private abstract class Directionality
+            {
+                public abstract BroadRay Directions(int index, int thread, ref Random random, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower, ref double delay, ref Phase_Regime ph, ref int S_ID);
+            }
+
+            private class Simple: Directionality
+            {
+                public override BroadRay Directions(int index, int thread, ref Random random, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
+                {
+                    double pos = random.NextDouble();
+                    int i;
+                    for (i = 0; i < Curves.Count; i++) if (pos > Domains[i] && pos < Domains[i + 1]) break;
+
+                    Interval t = Curves[i].Domain;
+                    double x = random.NextDouble() * (t[1] - t[0]) + t[0];
+                    Point3d P = Curves[i].PointAt(x);
+
+                    double Theta = random.NextDouble() * 2 * System.Math.PI;
+                    double Phi = random.NextDouble() * 2 * System.Math.PI;
+                    Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
+                    double[] phase = new double[8];
+                    if (ph == Phase_Regime.Random) for (int o = 0; o < 8; o++) phase[o] = random.Next() * 2 * Math.PI;
+                    else for (int o = 0; o < 8; o++) phase[o] = 0 - Delay * Utilities.Numerics.angularFrequency[o];
+
+                    return new BroadRay(Utilities.PachTools.RPttoHPt(P), Direction, random.Next(), thread, DomainPower[i], phase, Delay, S_ID);
+                }
+            }
+
+            private class ANCON : Directionality
+            {
+                double delta; //slant angle in radians
+                double reciprocal_velocity; //m/s
+                double dLinf = 10 * Math.Pow(10, 0.8 / 10);
+                    
+                public ANCON(double delta_in, double velocity)
+                {
+                    delta = delta_in * Math.PI / 180; //degrees to radians
+                    reciprocal_velocity = 1 / velocity;
+                }
+                     
+
+                public override BroadRay Directions(int index, int thread, ref Random random, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
+                {
+                    double pos = random.NextDouble();
+                    int i;
+                    for (i = 0; i < Curves.Count; i++) if (pos > Domains[i] && pos < Domains[i + 1]) break;
+
+                    Interval t = Curves[i].Domain;
+                    double x = random.NextDouble() * (t[1] - t[0]) + t[0];
+                    Point3d P = Curves[i].PointAt(x);
+                    Rhino.Geometry.Vector3d f = Curves[i].TangentAt(x);
+                    Hare.Geometry.Vector fore = new Hare.Geometry.Vector(f.X, f.Y, f.Z);
+
+                    double Theta = random.NextDouble() * 2 * System.Math.PI;
+                    double Phi = random.NextDouble() * 2 * System.Math.PI;
+                    Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
+
+                    double cosphi = Hare.Geometry.Hare_math.Dot(Direction, fore);
+                    double sinphi = Math.Sqrt(1 - cosphi * cosphi);
+                    double tanphi =  sinphi/cosphi;
+                    double F_r = sinphi * sinphi * Math.Pow((tanphi * tanphi + 1) / (tanphi * tanphi + (1 + tanphi * Math.Tan(delta))), 1.5);
+
+                    double[] power = new double[8];
+                    for (int oct = 0; oct < 8; oct++) power[oct] = DomainPower[i][oct] * reciprocal_velocity * dLinf * F_r;
+                    double[] phase = new double[8];
+                    if (ph == Phase_Regime.Random) for (int o = 0; o < 8; o++) phase[o] = random.Next() * 2 * Math.PI;
+                    else for (int o = 0; o < 8; o++) phase[o] = 0 - Delay * Utilities.Numerics.angularFrequency[o];
+
+                    return new BroadRay(Utilities.PachTools.RPttoHPt(P), Direction, random.Next(), thread, DomainPower[i], phase, Delay, S_ID);
+                }
+            }
         }
     }
 }

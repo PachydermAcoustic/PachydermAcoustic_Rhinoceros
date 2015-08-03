@@ -268,7 +268,7 @@ namespace Pachyderm_Acoustic
                 this.Enabled = true;
             }
 
-            public void Populate(int[] X, int[] Y, int[] Z, double dx, List<List<double>> pressure, Mesh[] M, bool Magnitude)
+            public void Populate(int[] X, int[] Y, int[] Z, double dx, List<List<double>> pressure, Mesh[][] M, bool Magnitude)
             {
                 DisplayMesh = new List<Mesh>();//[M.Length];    
                 Mesh_Vis = true;
@@ -279,25 +279,25 @@ namespace Pachyderm_Acoustic
                 for (int x = 0; x < X.Length; x++)
                 {
                     ct++;
-                    DisplayMesh.Add(M[0].DuplicateMesh());
+                    DisplayMesh.Add(M[0][X[x]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(X[x] * dx, 0,0);
+                    DisplayMesh[ct].Translate(2 * X[x] * dx / Utilities.Numerics.rt2, 0,0);
                 }
 
                 for (int y = 0; y < Y.Length; y++)
                 {
                     ct++;
-                    DisplayMesh.Add(M[1].DuplicateMesh());
+                    DisplayMesh.Add(M[1][Y[y]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(0, Y[y] * dx,0);
+                    DisplayMesh[ct].Translate(0, 2 * Y[y] * dx,0);
                 }
 
                 for (int z = 0; z < Z.Length; z++)
                 {
                     ct++;
-                    DisplayMesh.Add(M[2].DuplicateMesh());
+                    DisplayMesh.Add(M[2][Z[z]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(0, 0, Z[z] * dx);
+                    DisplayMesh[ct].Translate(0, 0, 2 * Z[z] * dx);
                 }
 
                 if (ct != pressure.Count-1) throw new System.Exception("Input of unmatched pairs - Display of Mesh Plans.");

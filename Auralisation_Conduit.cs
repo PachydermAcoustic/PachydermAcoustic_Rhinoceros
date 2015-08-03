@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Rhino.Geometry;
 
 namespace Pachyderm_Acoustic
@@ -64,11 +63,11 @@ namespace Pachyderm_Acoustic
                     }
             }
 
-            Rhino.Geometry.PointCloud Recs;
-            Rhino.Geometry.PointCloud Srcs;
-            List<Rhino.Geometry.Polyline> Reflections;
-            List<Rhino.Geometry.Line> Speakers;
-            Rhino.Geometry.Line Dir;
+            PointCloud Recs;
+            PointCloud Srcs;
+            List<Polyline> Reflections;
+            List<Line> Speakers;
+            Line Dir;
 
             public void add_Receivers(IEnumerable<Rhino.Geometry.Point3d> pts)
             {
