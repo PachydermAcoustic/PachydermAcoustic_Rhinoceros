@@ -43,6 +43,7 @@ namespace Pachyderm_Acoustic
                 Special_Status p = new Special_Status();
                 Audio.Pach_SP.Initialize_FFTW();
                 Instance = this;
+
             }
             
             public Guid InstanceID
@@ -67,6 +68,7 @@ namespace Pachyderm_Acoustic
                 splash.Show();
                 splash.Refresh();
                 System.Threading.Thread.Sleep(2000);
+                new Pach_Properties();
 
                 //TODO: find out if we can now create arrays greater than 2 GB...
                 //Register the UserControl "Panels"

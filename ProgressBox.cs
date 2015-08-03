@@ -16,7 +16,6 @@ namespace Pachyderm_Acoustic
     partial class ProgressBox : Form
     {
         private ProgressBar Progress;
-        private IContainer components;
 
         public ProgressBox(string text)
         {

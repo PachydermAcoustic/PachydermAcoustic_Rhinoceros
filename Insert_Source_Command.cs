@@ -416,7 +416,6 @@ namespace Pachyderm_Acoustic
 
 
 
-
             ///<summary> This gets called when when the user runs this command.</summary> 
             protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
             {
@@ -427,6 +426,7 @@ namespace Pachyderm_Acoustic
                 GO.GeometryFilter = Rhino.DocObjects.ObjectType.Curve;
                 GO.AddOption("TrafficWelsh");
                 GO.AddOption("TrafficFHWA");
+                GO.AddOption("AircraftANCON");
                 GO.AddOption("Custom");
                 //GO.AddOptionList("SourceType", new List<string>() { "TrafficWelshStandard", "TrafficFHWA Standard", "Custom" }, 2);
                 GO.GroupSelect = false;
@@ -438,6 +438,8 @@ namespace Pachyderm_Acoustic
                 int pavement = 0;
                 double SPLW = 0;
                 double[] SWL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
+                double velocity = 83;
+                double delta = 45;
 
                 for (; ; )
                 {
@@ -525,7 +527,6 @@ namespace Pachyderm_Acoustic
                                             + (J1 + 0.6214 * J2 * s) * logf * logf * logf * logf * logf * logf;
                                         Es[oct] += 0.0476 * Math.Pow(10, Ls / 10) * Veh[v] / s;
                                     }
-                                    //Es[oct] *= Veh[v];
                                 }
                             }
 
@@ -535,6 +536,33 @@ namespace Pachyderm_Acoustic
                             for (int oct = 0; oct < 8; oct++)
                             {
                                 SWL[oct] = 10 * Math.Log10(Es[oct]) - Awt[oct] - dmod;//
+                            }
+                        }
+                        else if (type == 2)//"Aircraft (ANCON-derived)")
+                        {
+                            Rhino.Input.Custom.GetOption GOpt = new Rhino.Input.Custom.GetOption();
+                            GOpt.SetCommandPrompt("Takeoff or Landing?");
+                            GOpt.AddOption("Takeoff");
+                            GOpt.AddOption("Landing");
+                            GOpt.AddOption("Both");
+                            GOpt.AcceptNothing(false);
+                            GOpt.Get();
+                            int TL_Choice = GOpt.OptionIndex();
+
+                            double SWLA = 150;
+
+                            Rhino.Input.RhinoGet.GetNumber("What is the broadband sound power of the aircraft (in dBA)?", false, ref SWLA);
+                            Rhino.Input.RhinoGet.GetNumber("What is the maximum velocity of the aircraft in m/s?", false, ref velocity);
+                            Rhino.Input.RhinoGet.GetNumber("What is the slant angle for this aircraft?", false, ref delta);
+
+                            double[][] Aircraft_Normalization = new double[3][] {
+                                new double[8]{ -12, -10.5, -12, -15, -20, -27, -40, -44},
+                                new double[8]{-11, -13, -12, -13.5, -18, -21, -25, -35},
+                                new double[8]{-11, -10.5, -12, -13.5, -18, -21, -25, -35}};
+
+                            for (int oct = 0; oct < 8; oct++)
+                            {
+                                SWL[oct] = SWLA + Aircraft_Normalization[TL_Choice][oct];//
                             }
                         }
                         //    continue;
@@ -550,14 +578,21 @@ namespace Pachyderm_Acoustic
                             Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(obj.ObjectId);
 
                             rhObj.Attributes.Name = "Acoustical Source";
-                            rhObj.Geometry.SetUserString("SourceType", "");
 
                             if (type == 0)//"Traffic (Welsh Standard)")
                             {
+                                rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
                                 for (int oct = 0; oct < 8; oct++) SWL[oct] = SPLW + WelshTraffic[oct];
                             }
                             else if (type == 1)//"Traffic (FWHA Standard)")
                             {
+                                rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
+                            }
+                            else if (type == 2)//"Aircraft (ANCON-derived)")
+                            {
+                                rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
+                                rhObj.Geometry.SetUserString("delta", delta.ToString());
                             }
                             else
                             {

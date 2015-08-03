@@ -325,6 +325,11 @@ namespace Pachyderm_Acoustic
                 Env_Prop.AttenuationFilter(no_of_elements, sampleFrequency, dist, ref Freq, ref Atten, pt);
             }
 
+            public double AttenuationPureTone(Hare.Geometry.Point pt, double frequency)
+            {
+                return this.Env_Prop.AttenuationPureTone(pt, frequency);
+            }
+
             public double[] Attenuation(int arg)
             {
                 return this.Env_Prop.Attenuation_Coef(arg);
