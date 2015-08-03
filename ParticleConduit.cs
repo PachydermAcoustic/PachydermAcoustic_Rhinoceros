@@ -271,7 +271,7 @@ namespace Pachyderm_Acoustic
                     ct++;
                     DisplayMesh.Add(M[0][X[x]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(2 * X[x] * dx, 0,0);
+                    DisplayMesh[ct].Translate(2 * X[x] * dx / Utilities.Numerics.rt2, 0,0);
                 }
 
                 for (int y = 0; y < Y.Length; y++)

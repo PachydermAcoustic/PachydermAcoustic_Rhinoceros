@@ -82,10 +82,9 @@ namespace Pachyderm_Acoustic
                 P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[]{(double)Param_Min.Value, (double)Param_Max.Value});
                 P.Enabled = true;
 
-                if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.xDim/2)-1;
-
-                else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.yDim/2)-1;
-                else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = (int)Math.Floor((double)FDTD.zDim/2)-1;
+                if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = FDTD.xDim - 1;
+                else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = FDTD.yDim - 1;
+                else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = FDTD.zDim - 1;
 
                 if (Map_Planes.Items.Count == 0) 
                 {
@@ -270,13 +269,14 @@ namespace Pachyderm_Acoustic
             private void AxisSelect_SelectedIndexChanged(object sender, EventArgs e)
             {
                 if (Map_Planes.SelectedIndex < 0) return;
+                (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis = AxisSelect.SelectedIndex;
 
                 if (FDTD != null)
                 {
-                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)Math.Floor((double)FDTD.xDim/2)-1 : (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)Math.Floor((double)FDTD.yDim / 2) - 1 : (int)Math.Floor((double)FDTD.zDim / 2) - 1;
+                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)(FDTD.xDim - 1): (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)(FDTD.yDim - 1) : (int)(FDTD.zDim - 1);
                 }
-                (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis = AxisSelect.SelectedIndex;
-                Map_Planes.Update();
+
+                Map_Planes.Refresh();
             }
 
             private void Pos_Select_ValueChanged(object sender, EventArgs e)

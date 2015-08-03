@@ -635,7 +635,7 @@ namespace Pachyderm_Acoustic
             this.AxisSelect.Size = new System.Drawing.Size(96, 21);
             this.AxisSelect.TabIndex = 117;
             this.AxisSelect.Text = "Z";
-            this.AxisSelect.SelectedIndexChanged += new System.EventHandler(this.AxisSelect_SelectedIndexChanged);
+            this.AxisSelect.SelectionChangeCommitted += new System.EventHandler(this.AxisSelect_SelectedIndexChanged);
             // 
             // Map_Planes
             // 

@@ -438,6 +438,8 @@ namespace Pachyderm_Acoustic
                 int pavement = 0;
                 double SPLW = 0;
                 double[] SWL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
+                double velocity = 83;
+                double delta = 45;
 
                 for (; ; )
                 {
@@ -550,6 +552,8 @@ namespace Pachyderm_Acoustic
                             double SWLA = 150;
 
                             Rhino.Input.RhinoGet.GetNumber("What is the broadband sound power of the aircraft (in dBA)?", false, ref SWLA);
+                            Rhino.Input.RhinoGet.GetNumber("What is the maximum velocity of the aircraft in m/s?", false, ref velocity);
+                            Rhino.Input.RhinoGet.GetNumber("What is the slant angle for this aircraft?", false, ref delta);
 
                             double[][] Aircraft_Normalization = new double[3][] {
                                 new double[8]{ -12, -10.5, -12, -15, -20, -27, -40, -44},
@@ -587,11 +591,7 @@ namespace Pachyderm_Acoustic
                             else if (type == 2)//"Aircraft (ANCON-derived)")
                             {
                                 rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
-                                double velocity = 83;
-                                Rhino.Input.RhinoGet.GetNumber("What is the maximum velocity of the aircraft in m/s?", false, ref velocity);
                                 rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
-                                double delta = 45;
-                                Rhino.Input.RhinoGet.GetNumber("What is the slant angle for this aircraft?", false, ref delta);
                                 rhObj.Geometry.SetUserString("delta", delta.ToString());
                             }
                             else
