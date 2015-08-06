@@ -171,7 +171,7 @@ namespace Pachyderm_Acoustic
                             C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
                             D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
                             TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
-                            double[] L_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, new System.Collections.Generic.List<int>() {s}, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
+                            double[] L_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value), SampleRate, oct, r, new System.Collections.Generic.List<int>() {s}, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
                             LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                             LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                         }
