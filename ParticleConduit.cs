@@ -50,7 +50,17 @@ namespace Pachyderm_Acoustic
                 nx = (int)System.Math.Ceiling(range.x);
                 ny = (int)System.Math.Ceiling(range.y);
                 nz = (int)System.Math.Ceiling(range.z);
-                ptgrid = new List<int>[nx, ny, nz];
+                try
+                {
+                    ptgrid = new List<int>[nx, ny, nz];
+                }
+                catch (System.Exception)
+                {
+                    //handle out of memory error
+                    throw new System.Exception("The model is too big. Try reducing the Spatial Voxelization in the preferences.");
+                    
+                }
+                
                 for (int x = 0; x < nx; x++)
                     for (int y = 0; y < ny; y++)
                         for (int z = 0; z < nz; z++)
