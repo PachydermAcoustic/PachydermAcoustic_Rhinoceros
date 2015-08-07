@@ -918,11 +918,10 @@ namespace Pachyderm_Acoustic
             List<Hare.Geometry.Point> R = new List<Hare.Geometry.Point>();
             foreach (Hare.Geometry.Point p in Receiver) R.Add(p);
             bool[][][] Valid = new bool[R.Count][][];
-
+            double[][][][] Io_ = new double[R.Count][][][];
             double[][][] tau = new double[R.Count][][]; //Rec;Curve;Sample
             double[][][] dist = new double[R.Count][][]; //Rec;Curve;Sample
             int[] RecT = new int[R.Count];
-            Io = new double[R.Count][,];
             //P = new double[R.Count][,];
             Dir_Rec_Pos = new float[R.Count][, ,];
             Dir_Rec_Neg = new float[R.Count][, ,];
@@ -948,12 +947,14 @@ namespace Pachyderm_Acoustic
             System.Threading.Tasks.Parallel.For(0, R.Count, rec_id =>
             {
                 Inflection[rec_id] = new List<int>[LSrc.Curves.Count];
+                Io_[rec_id] = new double[LSrc.Curves.Count][][];
                 Valid[rec_id] = new bool[LSrc.Curves.Count][];
                 Random RndGen = new Random(rand_list[rec_id]);
                 tau[rec_id] = new double[LSrc.Curves.Count][];
                 dist[rec_id] = new double[LSrc.Curves.Count][];
                 tmod[rec_id] = new double[LSrc.Curves.Count][][];
                 dir[rec_id] = new Vector[LSrc.Curves.Count][];
+
                 ///////////////
                 d_mod[rec_id] = new double[LSrc.Curves.Count][];
                 ///////////////
@@ -963,6 +964,7 @@ namespace Pachyderm_Acoustic
                     Valid[rec_id][i] = new bool[LSrc.Samples[i].Length];
                     tau[rec_id][i] = new double[LSrc.Samples[i].Length];
                     dist[rec_id][i] = new double[LSrc.Samples[i].Length];
+                    Io_[rec_id][i] = new double[LSrc.Samples[i].Length][];
                     Time_Pt[rec_id] = double.MaxValue;
                     tmod[rec_id][i] = new double[LSrc.Samples[i].Length][];
                     dir[rec_id][i] = new Vector[LSrc.Samples[i].Length];
@@ -993,6 +995,7 @@ namespace Pachyderm_Acoustic
                         if (RecT[rec_id] < tau[rec_id][i][j]) RecT[rec_id] = (int)tau[rec_id][i][j];
                         if (Time_Pt[rec_id] > tdbl) Time_Pt[rec_id] = tdbl;
                         dir[rec_id][i][j].Normalize();
+                        Io_[rec_id][i][j] = LSrc.DirPower(0, RndGen.Next(), dir[rec_id][i][j], j, i);
 
                         ////////////////////
                         double tanpt;
@@ -1010,7 +1013,6 @@ namespace Pachyderm_Acoustic
                                 t_peak *= -1;
                             }
                         }
-
 
                         Ray D = new Ray(Utilities.PachTools.RPttoHPt(p), dir[rec_id][i][j], 0, RndGen.Next());
                         double x1 = 0, x2 = 0;
@@ -1146,7 +1148,6 @@ namespace Pachyderm_Acoustic
                         ///Tributary length in samples - divide the energy of the line element up among the samples interpolation will produce...
                         double trib = 0;
 
-
                         if (j > 0)
                         {
                             trib += Math.Abs(tau[rec_id][i][j] - tau[rec_id][i][j - 1]) / 2;
@@ -1161,24 +1162,27 @@ namespace Pachyderm_Acoustic
                         if (trib < 1) trib = 1;
                         //trib = C_Sound * tau[rec_id][i][j] * d_mod[rec_id][i][j] / 1000;
 
-                        //TODO: Need to know start and end times for each of these...
                         double[] Io_t = new double[8];
-                        Io_t[0] = LSrc.DomainPower[i][0] * Math.Pow(10,-.1 * Room.Attenuation(0)[0] * dist[rec_id][i][j]) * tmod[rec_id][i][j][0] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[1] = LSrc.DomainPower[i][1] * Math.Pow(10,-.1 * Room.Attenuation(0)[1] * dist[rec_id][i][j]) * tmod[rec_id][i][j][1] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[2] = LSrc.DomainPower[i][2] * Math.Pow(10,-.1 * Room.Attenuation(0)[2] * dist[rec_id][i][j]) * tmod[rec_id][i][j][2] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[3] = LSrc.DomainPower[i][3] * Math.Pow(10,-.1 * Room.Attenuation(0)[3] * dist[rec_id][i][j]) * tmod[rec_id][i][j][3] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[4] = LSrc.DomainPower[i][4] * Math.Pow(10,-.1 * Room.Attenuation(0)[4] * dist[rec_id][i][j]) * tmod[rec_id][i][j][4] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[5] = LSrc.DomainPower[i][5] * Math.Pow(10,-.1 * Room.Attenuation(0)[5] * dist[rec_id][i][j]) * tmod[rec_id][i][j][5] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[6] = LSrc.DomainPower[i][6] * Math.Pow(10,-.1 * Room.Attenuation(0)[6] * dist[rec_id][i][j]) * tmod[rec_id][i][j][6] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
-                        Io_t[7] = LSrc.DomainPower[i][7] * Math.Pow(10,-.1 * Room.Attenuation(0)[7] * dist[rec_id][i][j]) * tmod[rec_id][i][j][7] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        
+                        //Io_t[0] = LSrc.DomainPower[i][0] * Math.Pow(10,-.1 * Room.Attenuation(0)[0] * dist[rec_id][i][j]) * tmod[rec_id][i][j][0] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        
+                        Io_t[0] = Io_[rec_id][i][j][0] * Math.Pow(10,-.1 * Room.Attenuation(0)[0] * dist[rec_id][i][j]) * tmod[rec_id][i][j][0] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[1] = Io_[rec_id][i][j][1] * Math.Pow(10,-.1 * Room.Attenuation(0)[1] * dist[rec_id][i][j]) * tmod[rec_id][i][j][1] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[2] = Io_[rec_id][i][j][2] * Math.Pow(10,-.1 * Room.Attenuation(0)[2] * dist[rec_id][i][j]) * tmod[rec_id][i][j][2] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[3] = Io_[rec_id][i][j][3] * Math.Pow(10,-.1 * Room.Attenuation(0)[3] * dist[rec_id][i][j]) * tmod[rec_id][i][j][3] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[4] = Io_[rec_id][i][j][4] * Math.Pow(10,-.1 * Room.Attenuation(0)[4] * dist[rec_id][i][j]) * tmod[rec_id][i][j][4] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[5] = Io_[rec_id][i][j][5] * Math.Pow(10,-.1 * Room.Attenuation(0)[5] * dist[rec_id][i][j]) * tmod[rec_id][i][j][5] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[6] = Io_[rec_id][i][j][6] * Math.Pow(10,-.1 * Room.Attenuation(0)[6] * dist[rec_id][i][j]) * tmod[rec_id][i][j][6] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
+                        Io_t[7] = Io_[rec_id][i][j][7] * Math.Pow(10,-.1 * Room.Attenuation(0)[7] * dist[rec_id][i][j]) * tmod[rec_id][i][j][7] / (4 * Math.PI * dist[rec_id][i][j] * dist[rec_id][i][j] * trib);
 
                         bool isgood = true;
                         for (int oct = 0; oct < 8; oct++)
                         {
-                            isgood &= !(double.IsInfinity(Io_t[oct]) || double.IsNaN(Io_t[oct]));
+                            isgood &= !(double.IsInfinity(Io_t[oct]) || double.IsNaN(Io_t[oct]) || Io_t[oct] < 0);
                         }
 
-                        if (!isgood) continue;
+                        if (!isgood)
+                            continue;
 
                         for (int oct = 0; oct < 8; oct++) Io_temp[oct].Add(Io_t[oct]);
                         t.Add(tau[rec_id][i][j]);
@@ -1214,7 +1218,7 @@ namespace Pachyderm_Acoustic
                             {
                                 Io_temp[oct] = I_Curve[i][oct][j].Interpolate((double)time);
                             }
-                            for (int oct = 0; oct < 8; oct++) if (!(double.IsInfinity(Io_temp[oct]) || double.IsNaN(Io_temp[oct]))) Io[rec_id][t, oct] += Io_temp[oct];
+                            for (int oct = 0; oct < 8; oct++) if (!(double.IsInfinity(Io_temp[oct]) && !double.IsNaN(Io_temp[oct])) && Io_temp[oct] > 0) Io[rec_id][t, oct] += Io_temp[oct];
 
                             for (int oct = 0; oct < 8; oct++)
                             {

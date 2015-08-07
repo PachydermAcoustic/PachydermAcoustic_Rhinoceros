@@ -192,7 +192,7 @@ namespace Pachyderm_Acoustic
                         // Waterfall Power Spectrum = new double[] {25, 50, 75, 104, 102, 100, 94, 88}
                         // Measured Daytime Central London Street Noise 2012 = new double[] {81.9, 74.3, 71.5, 68.1, 66.7, 63.5, 59.8, 55.4}
                         // F1 Power Spectrum new double[] {120, 120, 136, 134, 130, 130, 124, 115},
-                        S[0] = new Environment.LineSource(ObjectList, CodeList, 4, 0, Environment.Source.Phase_Regime.Random);
+                        S[0] = new Environment.LineSource(ObjectList, CodeList, 16, 0, Environment.Source.Phase_Regime.Random);
                         return true;
                     default:
                         return false;
@@ -271,7 +271,7 @@ namespace Pachyderm_Acoustic
                             for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
                         }
 
-                        S[id] = new Environment.LineSource(new Curve[] { (Origin.Geometry as Curve) }, new List<string> { SWL }, 1, id, Environment.Source.Phase_Regime.Random);                         
+                        S[id] = new Environment.LineSource(new Curve[] { (Origin.Geometry as Curve) }, new List<string> { SWL }, 16, id, Environment.Source.Phase_Regime.Random);                         
                     }
                 }
                 if (S == null) return false;

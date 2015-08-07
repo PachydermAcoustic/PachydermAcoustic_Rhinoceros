@@ -584,7 +584,13 @@ namespace Pachyderm_Acoustic
                                 E_Sum += E_oct_Sum * AFactors[oct];
                             }
                         }
-                        SPL_Values[i] = AcousticalMath.SPL_Intensity(E_Sum);
+
+                        if (E_Sum < 0)
+                        {
+                            Rhino.RhinoApp.Write("MEEP");
+                        }
+
+                        SPL_Values[i] = AcousticalMath.SPL_Intensity(Math.Abs(E_Sum));
                     }
                 }
                 if (plotNumbers)

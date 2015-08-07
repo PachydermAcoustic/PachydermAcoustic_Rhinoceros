@@ -518,11 +518,14 @@ namespace Pachyderm_Acoustic
             public void Set_Phase_Regime(bool Linear_Phase)
             {
                 if (Direct_Data == null) return;
-                if ((this.Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (this.Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)) return;
-                
+                if (this.Linear_Phase == Linear_Phase) return;
+                this.Linear_Phase = Linear_Phase;
+                if ((Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System))
+                {
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Pressure();
                     for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Pressure(44100, 4096);
                     for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Pressure();
+                }
             }
 
             private void Trans_Check_CheckedChanged(object sender, EventArgs e)

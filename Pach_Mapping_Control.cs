@@ -813,8 +813,14 @@ namespace Pachyderm_Acoustic
 
             public void Set_Phase_Regime(bool Linear_Phase)
             {
-                if ((this.Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (this.Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)) return;
-                for (int i = 0; i < Map.Length; i++) Map[i].reset_pressure();
+                if (Map == null || Map[0] == null) return;
+                if (Linear_Phase == this.Linear_Phase) return;
+                if ((this.Linear_Phase == true && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System)) || (this.Linear_Phase == false && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)))
+                {
+                    for (int i = 0; i < Map.Length; i++) Map[i].reset_pressure();
+                    Rhino.RhinoApp.Write("Mapping pressure reset.");
+                    this.Linear_Phase = Linear_Phase;
+                }
             }
 
             private void Coherent_CheckedChanged(object sender, EventArgs e)

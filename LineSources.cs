@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
 using System.Linq;
+using Hare.Geometry;
 
 namespace Pachyderm_Acoustic
 {
@@ -66,7 +67,8 @@ namespace Pachyderm_Acoustic
                 :base(new double[8]{60, 49, 41, 35, 31, 28, 26, 24}, new Point3d(0,0,0), ph, SrcID)
             {
                 string type = SrcLines.ElementAt<Curve>(0).GetUserString("SourceType");
-                double velocity = double.Parse(SrcLines.ElementAt<Curve>(0).GetUserString("Velocity"));
+                string v = SrcLines.ElementAt<Curve>(0).GetUserString("Velocity");
+                double velocity = double.Parse(v);
                 double delta = double.Parse(SrcLines.ElementAt<Curve>(0).GetUserString("delta"));
 
                 if (type == "Aircraft (ANCON derived)")
@@ -134,9 +136,22 @@ namespace Pachyderm_Acoustic
                 return D.Directions(index, thread, ref random, ref Curves, ref Domains, ref DomainPower, ref delay, ref ph, ref S_ID );
             }
 
+            public double[] DirPower(int threadid, int random, Vector Direction, Point3d pt, int Domain_index)
+            {
+                double t;
+                Curves[Domain_index].ClosestPoint(pt, out t);
+                return D.DirPower(threadid, random, Direction, t, Domain_index, ref Curves, ref Domains, ref DomainPower);
+            }
+
+            public double[] DirPower(int threadid, int random, Vector Direction, double position, int Domain_index)
+            {
+                return D.DirPower(threadid, random, Direction, position, Domain_index, ref Curves, ref Domains, ref DomainPower);
+            }
+
             private abstract class Directionality
             {
                 public abstract BroadRay Directions(int index, int thread, ref Random random, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower, ref double delay, ref Phase_Regime ph, ref int S_ID);
+                public abstract double[] DirPower(int threadid, int random, Vector Direction, double position, int d_idx, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower);
             }
 
             private class Simple: Directionality
@@ -153,12 +168,17 @@ namespace Pachyderm_Acoustic
 
                     double Theta = random.NextDouble() * 2 * System.Math.PI;
                     double Phi = random.NextDouble() * 2 * System.Math.PI;
-                    Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
+                    Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
                     double[] phase = new double[8];
                     if (ph == Phase_Regime.Random) for (int o = 0; o < 8; o++) phase[o] = random.Next() * 2 * Math.PI;
                     else for (int o = 0; o < 8; o++) phase[o] = 0 - Delay * Utilities.Numerics.angularFrequency[o];
 
                     return new BroadRay(Utilities.PachTools.RPttoHPt(P), Direction, random.Next(), thread, DomainPower[i], phase, Delay, S_ID);
+                }
+
+                public override double[] DirPower(int threadid, int random, Vector Direction, double position, int d_idx, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower)
+                {
+                    return DomainPower[d_idx];
                 }
             }
 
@@ -173,7 +193,47 @@ namespace Pachyderm_Acoustic
                     delta = delta_in * Math.PI / 180; //degrees to radians
                     reciprocal_velocity = 1 / velocity;
                 }
-                     
+
+                public override double[] DirPower(int threadid, int random, Vector Direction, double position, int d_idx, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower)
+                {
+                    X_Event X = new X_Event();
+                    double[] RayPower = new double[8];
+
+                    Interval t = Curves[d_idx].Domain;
+                    Point3d P = Curves[d_idx].PointAt(position);
+                    Vector3d f = Curves[d_idx].TangentAt(position);
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        if (DomainPower[d_idx][oct] == 0)
+                        {
+                            RayPower[oct] = 0;
+                        }
+                        else
+                        {
+                            Vector fore = new Hare.Geometry.Vector(f.X, f.Y, f.Z);
+
+                            double cosphi = Hare.Geometry.Hare_math.Dot(Direction, fore);
+                            double sinphi = Math.Sqrt(1 - cosphi * cosphi);
+                            double tanphi = sinphi / cosphi;
+                            double F_r = sinphi * sinphi * Math.Pow((tanphi * tanphi + 1) / (tanphi * tanphi + (1 + tanphi * Math.Tan(delta))), 1.5);
+
+                            if (Math.Abs(cosphi) < 3E-8)
+                            {
+                                //if (F_r < 0)
+                                //{
+                                Rhino.RhinoApp.Write("Singularity!");
+                                //}
+                            }
+                            RayPower[oct] = DomainPower[d_idx][oct] * reciprocal_velocity * dLinf * F_r;
+                        }
+                    }
+
+                    for (int i = 0; i < 8; i++)
+                        if (RayPower[i] < 0)
+                            Rhino.RhinoApp.Write("Meep");
+
+                    return RayPower;
+                }
 
                 public override BroadRay Directions(int index, int thread, ref Random random, ref List<Curve> Curves, ref double[] Domains, ref double[][] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
                 {
@@ -184,12 +244,12 @@ namespace Pachyderm_Acoustic
                     Interval t = Curves[i].Domain;
                     double x = random.NextDouble() * (t[1] - t[0]) + t[0];
                     Point3d P = Curves[i].PointAt(x);
-                    Rhino.Geometry.Vector3d f = Curves[i].TangentAt(x);
-                    Hare.Geometry.Vector fore = new Hare.Geometry.Vector(f.X, f.Y, f.Z);
+                    Vector3d f = Curves[i].TangentAt(x);
+                    Vector fore = new Hare.Geometry.Vector(f.X, f.Y, f.Z);
 
                     double Theta = random.NextDouble() * 2 * System.Math.PI;
                     double Phi = random.NextDouble() * 2 * System.Math.PI;
-                    Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
+                    Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
 
                     double cosphi = Hare.Geometry.Hare_math.Dot(Direction, fore);
                     double sinphi = Math.Sqrt(1 - cosphi * cosphi);
