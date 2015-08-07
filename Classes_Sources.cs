@@ -240,7 +240,6 @@ namespace Pachyderm_Acoustic
             //public abstract double[] Signal_by_Distance(double distance, Vector dir, int thread, int random, double Rho_C);
         }
 
-
         /// <summary>
         /// source object based on a random number generator.
         /// </summary>

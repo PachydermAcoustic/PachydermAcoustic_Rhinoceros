@@ -680,10 +680,13 @@ namespace Pachyderm_Acoustic
                             
                             for (int j = 0; j < M.Length; j++)
                             {
-                                if (!(M[j] is Environment.Basic_Material)) 
+                                if (!(M[j] is Environment.Basic_Material))
                                 {
-                                    System.Numerics.Complex[] spec = M[j].Reflection_Spectrum(44100, 4096/2, Room.Normal(Sequence[j]), PathVertices[i][j] - PathVertices[i][j - 1], Threadid);
-                                    for (int k = 0; k < TF.Length; k++) TF[k] *= spec[k];
+                                    if (Sequence[j] < Room.PlaneCount)
+                                    {
+                                        System.Numerics.Complex[] spec = M[j].Reflection_Spectrum(44100, 4096 / 2, Room.Normal(Sequence[j]), PathVertices[i][j] - PathVertices[i][j - 1], Threadid);
+                                        for (int k = 0; k < TF.Length; k++) TF[k] *= spec[k];
+                                    }
                                 }
                             }
 

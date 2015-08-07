@@ -671,24 +671,33 @@ namespace Pachyderm_Acoustic
                 angle = Math.Abs(Hare_math.Dot(PointB - Dpt[j], Z_Dir));
                 if (angle < MinAngle) MinAngle = angle;
             }
-            double fs =176400; //Hz.
+            double fs = 176400; //Hz.
             double DeltaZ = Att_Props.Sound_Speed(this.PointA) / (fs * MinAngle);//TODO: Adjust depending on distance from source to receiver... (nearest, farthest?)
             
             double El_Ct = Math.Ceiling(length / DeltaZ);
             DeltaZ = length / El_Ct;
 
+            Random r = new Random();
+
             Plane P;
-            double t = Be.Domain.Mid;
-            Be.PerpendicularFrameAt(t, out P);
             Curve[] Csects1;
             Curve[] Csects2;
             Point3d[] Psects;
 
-            Rhino.Geometry.Intersect.Intersection.BrepPlane(Brep[0], P, 0.01, out Csects1, out Psects);
-            Rhino.Geometry.Intersect.Intersection.BrepPlane(Brep[1], P, 0.01, out Csects2, out Psects);
+            //for (;;)
+            //{
+                double t = r.NextDouble() * (Be.Domain.Max - Be.Domain.Min) + Be.Domain.Min;
 
-            Rhino.RhinoDoc.ActiveDoc.Objects.Add(Csects1[0]);
-            Rhino.RhinoDoc.ActiveDoc.Objects.Add(Csects2[0]);
+                Be.PerpendicularFrameAt(t, out P);
+
+                Rhino.Geometry.Intersect.Intersection.BrepPlane(Brep[0], P, 0.1, out Csects1, out Psects);
+                Rhino.Geometry.Intersect.Intersection.BrepPlane(Brep[1], P, 0.1, out Csects2, out Psects);
+
+                //if (Csects1 != null && Csects2 != null && Csects1.Length > 0 && Csects2.Length > 0) break;
+
+                //Rhino.RhinoDoc.ActiveDoc.Objects.Add(Csects1[0]);
+                //Rhino.RhinoDoc.ActiveDoc.Objects.Add(Csects2[0]);
+            //}
 
             Vector3d[] Tangents = new Vector3d[2];
             ///Control Start Point of curve
