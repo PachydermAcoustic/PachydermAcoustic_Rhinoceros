@@ -178,6 +178,9 @@ namespace Pachyderm_Acoustic
 
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day!");
 
+                ///////
+                //for(int i = 0;i < 10000; i++) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(((Source[0] as LineSource).D as LineSource.ANCON).Pt[i]);
+                ///////
                 Calculate.Enabled = true;
             }
 
