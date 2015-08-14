@@ -63,35 +63,12 @@ namespace Pachyderm_Acoustic
             this.Label15 = new System.Windows.Forms.Label();
             this.SourceSelection = new System.Windows.Forms.ComboBox();
             this.RoomSelection = new System.Windows.Forms.ComboBox();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.Time_Preview = new System.Windows.Forms.Label();
-            this.Param_Max = new System.Windows.Forms.NumericUpDown();
-            this.Param3_4 = new System.Windows.Forms.Label();
-            this.Preview = new System.Windows.Forms.Button();
-            this.Loop = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.Frequency_Selection = new System.Windows.Forms.NumericUpDown();
-            this.COTime = new System.Windows.Forms.Label();
-            this.CO_TIME = new System.Windows.Forms.NumericUpDown();
-            this.label10 = new System.Windows.Forms.Label();
-            this.Freq_Max = new System.Windows.Forms.NumericUpDown();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.Param1_2 = new System.Windows.Forms.Label();
-            this.Param_Scale = new System.Windows.Forms.PictureBox();
-            this.Param1_4 = new System.Windows.Forms.Label();
-            this.Param_Min = new System.Windows.Forms.NumericUpDown();
-            this.button2 = new System.Windows.Forms.Button();
-            this.Color_Selection = new System.Windows.Forms.ComboBox();
-            this.label23 = new System.Windows.Forms.Label();
-            this.Pos_Select = new System.Windows.Forms.NumericUpDown();
-            this.AxisSelect = new System.Windows.Forms.ComboBox();
-            this.Map_Planes = new System.Windows.Forms.ListBox();
-            this.AddPlane = new System.Windows.Forms.Button();
-            this.Magnitude = new System.Windows.Forms.CheckBox();
-            this.SourceSelect = new System.Windows.Forms.ComboBox();
-            this.label8 = new System.Windows.Forms.Label();
-            this.GroupBox2 = new System.Windows.Forms.GroupBox();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label2 = new System.Windows.Forms.Label();
+            this.Selected_Extent = new System.Windows.Forms.ComboBox();
+            this.CalculateSim = new System.Windows.Forms.Button();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.EdgeFreq = new System.Windows.Forms.CheckBox();
             this.Label21 = new System.Windows.Forms.Label();
@@ -102,21 +79,53 @@ namespace Pachyderm_Acoustic
             this.Rel_Humidity = new System.Windows.Forms.NumericUpDown();
             this.AirTemp = new System.Windows.Forms.Label();
             this.Air_Temp = new System.Windows.Forms.NumericUpDown();
-            this.groupBox4.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Max)).BeginInit();
-            this.groupBox1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Frequency_Selection)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Freq_Max)).BeginInit();
-            this.tableLayoutPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Scale)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Pos_Select)).BeginInit();
-            this.GroupBox2.SuspendLayout();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.Preview = new System.Windows.Forms.Button();
+            this.Param3_4 = new System.Windows.Forms.Label();
+            this.Param1_2 = new System.Windows.Forms.Label();
+            this.Param_Max = new System.Windows.Forms.NumericUpDown();
+            this.Param_Scale = new System.Windows.Forms.PictureBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.Time_Preview = new System.Windows.Forms.Label();
+            this.Param1_4 = new System.Windows.Forms.Label();
+            this.Param_Min = new System.Windows.Forms.NumericUpDown();
+            this.Loop = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.Color_Selection = new System.Windows.Forms.ComboBox();
+            this.label23 = new System.Windows.Forms.Label();
+            this.Pos_Select = new System.Windows.Forms.NumericUpDown();
+            this.AxisSelect = new System.Windows.Forms.ComboBox();
+            this.Map_Planes = new System.Windows.Forms.ListBox();
+            this.AddPlane = new System.Windows.Forms.Button();
+            this.Magnitude = new System.Windows.Forms.CheckBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.Frequency_Selection = new System.Windows.Forms.NumericUpDown();
+            this.COTime = new System.Windows.Forms.Label();
+            this.CO_TIME = new System.Windows.Forms.NumericUpDown();
+            this.label10 = new System.Windows.Forms.Label();
+            this.Freq_Max = new System.Windows.Forms.NumericUpDown();
+            this.GroupBox2 = new System.Windows.Forms.GroupBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.SourceSelect = new System.Windows.Forms.ComboBox();
+            this.tabControl1.SuspendLayout();
+            this.tabPage1.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Rel_Humidity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Temp)).BeginInit();
+            this.tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Max)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Scale)).BeginInit();
+            this.groupBox4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Pos_Select)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Frequency_Selection)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Max)).BeginInit();
+            this.GroupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // FromPointInputToolStripMenuItem
@@ -256,35 +265,321 @@ namespace Pachyderm_Acoustic
             this.RoomSelection.TabIndex = 26;
             this.RoomSelection.Text = "Use Entire Model";
             // 
-            // groupBox4
+            // tabControl1
             // 
-            this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.tabControl1.Controls.Add(this.tabPage1);
+            this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Location = new System.Drawing.Point(3, 3);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(415, 631);
+            this.tabControl1.TabIndex = 0;
+            // 
+            // tabPage1
+            // 
+            this.tabPage1.Controls.Add(this.label2);
+            this.tabPage1.Controls.Add(this.Selected_Extent);
+            this.tabPage1.Controls.Add(this.CalculateSim);
+            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Name = "tabPage1";
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage1.Size = new System.Drawing.Size(407, 605);
+            this.tabPage1.TabIndex = 0;
+            this.tabPage1.Text = "Simulation";
+            this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 10);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(81, 13);
+            this.label2.TabIndex = 2;
+            this.label2.Text = "Calculate up to:";
+            // 
+            // Selected_Extent
+            // 
+            this.Selected_Extent.FormattingEnabled = true;
+            this.Selected_Extent.Items.AddRange(new object[] {
+            "63 Hz. Octave Band",
+            "125 Hz. Octave Band",
+            "250 Hz. Octave Band",
+            "500 Hz. Octave Band",
+            "1000 Hz. Octave Band",
+            "2000 Hz. Octave Band",
+            "4000 Hz. Octave Band",
+            "8000 Hz. Octave Band"});
+            this.Selected_Extent.Location = new System.Drawing.Point(98, 7);
+            this.Selected_Extent.Name = "Selected_Extent";
+            this.Selected_Extent.Size = new System.Drawing.Size(303, 21);
+            this.Selected_Extent.TabIndex = 1;
+            // 
+            // CalculateSim
+            // 
+            this.CalculateSim.Location = new System.Drawing.Point(6, 110);
+            this.CalculateSim.Name = "CalculateSim";
+            this.CalculateSim.Size = new System.Drawing.Size(395, 23);
+            this.CalculateSim.TabIndex = 0;
+            this.CalculateSim.Text = "Calculate";
+            this.CalculateSim.UseVisualStyleBackColor = true;
+            this.CalculateSim.Click += new System.EventHandler(this.CalculateSim_Click);
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.groupBox3);
+            this.tabPage2.Controls.Add(this.tableLayoutPanel1);
+            this.tabPage2.Controls.Add(this.groupBox1);
+            this.tabPage2.Controls.Add(this.GroupBox2);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(407, 605);
+            this.tabPage2.TabIndex = 1;
+            this.tabPage2.Text = "Visualization";
+            this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.SetColumnSpan(this.groupBox4, 2);
-            this.groupBox4.Controls.Add(this.Time_Preview);
-            this.groupBox4.Location = new System.Drawing.Point(3, 63);
-            this.groupBox4.Name = "groupBox4";
-            this.tableLayoutPanel1.SetRowSpan(this.groupBox4, 2);
-            this.groupBox4.Size = new System.Drawing.Size(198, 34);
-            this.groupBox4.TabIndex = 104;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Current Time (ms)";
+            this.groupBox3.Controls.Add(this.EdgeFreq);
+            this.groupBox3.Controls.Add(this.Label21);
+            this.groupBox3.Controls.Add(this.Atten_Method);
+            this.groupBox3.Controls.Add(this.Label19);
+            this.groupBox3.Controls.Add(this.Air_Pressure);
+            this.groupBox3.Controls.Add(this.Label3);
+            this.groupBox3.Controls.Add(this.Rel_Humidity);
+            this.groupBox3.Controls.Add(this.AirTemp);
+            this.groupBox3.Controls.Add(this.Air_Temp);
+            this.groupBox3.Location = new System.Drawing.Point(6, 458);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(395, 141);
+            this.groupBox3.TabIndex = 101;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Environmental Factors";
             // 
-            // Time_Preview
+            // EdgeFreq
             // 
-            this.Time_Preview.AutoSize = true;
-            this.Time_Preview.Location = new System.Drawing.Point(25, 16);
-            this.Time_Preview.Name = "Time_Preview";
-            this.Time_Preview.Size = new System.Drawing.Size(74, 13);
-            this.Time_Preview.TabIndex = 106;
-            this.Time_Preview.Text = "Time_Preview";
+            this.EdgeFreq.AutoSize = true;
+            this.EdgeFreq.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.EdgeFreq.Location = new System.Drawing.Point(70, 123);
+            this.EdgeFreq.Name = "EdgeFreq";
+            this.EdgeFreq.Size = new System.Drawing.Size(155, 17);
+            this.EdgeFreq.TabIndex = 35;
+            this.EdgeFreq.Text = "Edge Frequency Correction";
+            this.EdgeFreq.UseVisualStyleBackColor = true;
+            // 
+            // Label21
+            // 
+            this.Label21.AutoSize = true;
+            this.Label21.Location = new System.Drawing.Point(8, 99);
+            this.Label21.Name = "Label21";
+            this.Label21.Size = new System.Drawing.Size(46, 13);
+            this.Label21.TabIndex = 34;
+            this.Label21.Text = "Method:";
+            // 
+            // Atten_Method
+            // 
+            this.Atten_Method.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Atten_Method.FormattingEnabled = true;
+            this.Atten_Method.Items.AddRange(new object[] {
+            "ISO 9613-1 (Outdoor Attenuation)",
+            "Evans & Bazley (Indoor Attenuation)",
+            "Known values (Vorlander)"});
+            this.Atten_Method.Location = new System.Drawing.Point(70, 96);
+            this.Atten_Method.Name = "Atten_Method";
+            this.Atten_Method.Size = new System.Drawing.Size(316, 21);
+            this.Atten_Method.TabIndex = 14;
+            this.Atten_Method.Text = "ISO 9613-1 (Outdoor Attenuation)";
+            // 
+            // Label19
+            // 
+            this.Label19.AutoSize = true;
+            this.Label19.Location = new System.Drawing.Point(8, 72);
+            this.Label19.Name = "Label19";
+            this.Label19.Size = new System.Drawing.Size(121, 13);
+            this.Label19.TabIndex = 32;
+            this.Label19.Text = "Static Air Pressure (hPa)";
+            // 
+            // Air_Pressure
+            // 
+            this.Air_Pressure.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.Air_Pressure.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.Air_Pressure.Location = new System.Drawing.Point(322, 70);
+            this.Air_Pressure.Maximum = new decimal(new int[] {
+            1500,
+            0,
+            0,
+            0});
+            this.Air_Pressure.Minimum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            -2147483648});
+            this.Air_Pressure.Name = "Air_Pressure";
+            this.Air_Pressure.Size = new System.Drawing.Size(64, 20);
+            this.Air_Pressure.TabIndex = 13;
+            this.Air_Pressure.Value = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            // 
+            // Label3
+            // 
+            this.Label3.AutoSize = true;
+            this.Label3.Location = new System.Drawing.Point(8, 46);
+            this.Label3.Name = "Label3";
+            this.Label3.Size = new System.Drawing.Size(103, 13);
+            this.Label3.TabIndex = 30;
+            this.Label3.Text = "Relative Humidity(%)";
+            // 
+            // Rel_Humidity
+            // 
+            this.Rel_Humidity.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.Rel_Humidity.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.Rel_Humidity.Location = new System.Drawing.Point(354, 44);
+            this.Rel_Humidity.Maximum = new decimal(new int[] {
+            80,
+            0,
+            0,
+            0});
+            this.Rel_Humidity.Minimum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            -2147483648});
+            this.Rel_Humidity.Name = "Rel_Humidity";
+            this.Rel_Humidity.Size = new System.Drawing.Size(32, 20);
+            this.Rel_Humidity.TabIndex = 12;
+            this.Rel_Humidity.Value = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
+            // 
+            // AirTemp
+            // 
+            this.AirTemp.AutoSize = true;
+            this.AirTemp.Location = new System.Drawing.Point(8, 20);
+            this.AirTemp.Name = "AirTemp";
+            this.AirTemp.Size = new System.Drawing.Size(98, 13);
+            this.AirTemp.TabIndex = 28;
+            this.AirTemp.Text = "Air Temperature (C)";
+            // 
+            // Air_Temp
+            // 
+            this.Air_Temp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.Air_Temp.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.Air_Temp.Location = new System.Drawing.Point(354, 18);
+            this.Air_Temp.Maximum = new decimal(new int[] {
+            80,
+            0,
+            0,
+            0});
+            this.Air_Temp.Minimum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            -2147483648});
+            this.Air_Temp.Name = "Air_Temp";
+            this.Air_Temp.Size = new System.Drawing.Size(32, 20);
+            this.Air_Temp.TabIndex = 11;
+            this.Air_Temp.Value = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel1.AutoScroll = true;
+            this.tableLayoutPanel1.ColumnCount = 4;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+            this.tableLayoutPanel1.Controls.Add(this.Preview, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.Param3_4, 2, 4);
+            this.tableLayoutPanel1.Controls.Add(this.Param1_2, 2, 5);
+            this.tableLayoutPanel1.Controls.Add(this.Param_Max, 2, 3);
+            this.tableLayoutPanel1.Controls.Add(this.Param_Scale, 3, 3);
+            this.tableLayoutPanel1.Controls.Add(this.groupBox4, 0, 2);
+            this.tableLayoutPanel1.Controls.Add(this.Param1_4, 2, 6);
+            this.tableLayoutPanel1.Controls.Add(this.Param_Min, 2, 7);
+            this.tableLayoutPanel1.Controls.Add(this.Loop, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.button2, 2, 0);
+            this.tableLayoutPanel1.Controls.Add(this.Color_Selection, 1, 4);
+            this.tableLayoutPanel1.Controls.Add(this.label23, 0, 4);
+            this.tableLayoutPanel1.Controls.Add(this.Pos_Select, 1, 7);
+            this.tableLayoutPanel1.Controls.Add(this.AxisSelect, 0, 7);
+            this.tableLayoutPanel1.Controls.Add(this.Map_Planes, 0, 5);
+            this.tableLayoutPanel1.Controls.Add(this.AddPlane, 0, 8);
+            this.tableLayoutPanel1.Controls.Add(this.Magnitude, 2, 8);
+            this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(7, 159);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 9;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(394, 286);
+            this.tableLayoutPanel1.TabIndex = 100;
+            // 
+            // Preview
+            // 
+            this.Preview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel1.SetColumnSpan(this.Preview, 4);
+            this.Preview.Location = new System.Drawing.Point(2, 32);
+            this.Preview.Margin = new System.Windows.Forms.Padding(2);
+            this.Preview.Name = "Preview";
+            this.Preview.Size = new System.Drawing.Size(390, 26);
+            this.Preview.TabIndex = 87;
+            this.Preview.Text = "Calculate & Run";
+            this.Preview.UseVisualStyleBackColor = true;
+            // 
+            // Param3_4
+            // 
+            this.Param3_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Param3_4.AutoSize = true;
+            this.Param3_4.Location = new System.Drawing.Point(272, 100);
+            this.Param3_4.Name = "Param3_4";
+            this.Param3_4.Size = new System.Drawing.Size(19, 43);
+            this.Param3_4.TabIndex = 95;
+            this.Param3_4.Text = "75";
+            this.Param3_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // Param1_2
+            // 
+            this.Param1_2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Param1_2.AutoSize = true;
+            this.Param1_2.Location = new System.Drawing.Point(272, 143);
+            this.Param1_2.Name = "Param1_2";
+            this.Param1_2.Size = new System.Drawing.Size(19, 43);
+            this.Param1_2.TabIndex = 98;
+            this.Param1_2.Text = "50";
+            this.Param1_2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Param_Max
             // 
             this.Param_Max.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Param_Max.DecimalPlaces = 1;
-            this.Param_Max.Location = new System.Drawing.Point(252, 73);
+            this.Param_Max.Location = new System.Drawing.Point(240, 73);
             this.Param_Max.Maximum = new decimal(new int[] {
             200,
             0,
@@ -298,34 +593,68 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
-            this.Param_Max.ValueChanged += new System.EventHandler(this.Param_Max_ValueChanged);
             // 
-            // Param3_4
+            // Param_Scale
             // 
-            this.Param3_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param3_4.AutoSize = true;
-            this.Param3_4.Location = new System.Drawing.Point(284, 100);
-            this.Param3_4.Name = "Param3_4";
-            this.Param3_4.Size = new System.Drawing.Size(19, 47);
-            this.Param3_4.TabIndex = 95;
-            this.Param3_4.Text = "75";
-            this.Param3_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // Preview
-            // 
-            this.Preview.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.Param_Scale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.SetColumnSpan(this.Preview, 4);
-            this.Preview.Location = new System.Drawing.Point(2, 32);
-            this.Preview.Margin = new System.Windows.Forms.Padding(2);
-            this.Preview.Name = "Preview";
-            this.Preview.Size = new System.Drawing.Size(406, 26);
-            this.Preview.TabIndex = 87;
-            this.Preview.Text = "Calculate & Run";
-            this.Preview.UseVisualStyleBackColor = true;
-            this.Preview.Click += new System.EventHandler(this.Calculate_Click);
+            this.Param_Scale.Location = new System.Drawing.Point(297, 73);
+            this.Param_Scale.Name = "Param_Scale";
+            this.tableLayoutPanel1.SetRowSpan(this.Param_Scale, 5);
+            this.Param_Scale.Size = new System.Drawing.Size(94, 183);
+            this.Param_Scale.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.Param_Scale.TabIndex = 94;
+            this.Param_Scale.TabStop = false;
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel1.SetColumnSpan(this.groupBox4, 2);
+            this.groupBox4.Controls.Add(this.Time_Preview);
+            this.groupBox4.Location = new System.Drawing.Point(3, 63);
+            this.groupBox4.Name = "groupBox4";
+            this.tableLayoutPanel1.SetRowSpan(this.groupBox4, 2);
+            this.groupBox4.Size = new System.Drawing.Size(190, 34);
+            this.groupBox4.TabIndex = 104;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Current Time (ms)";
+            // 
+            // Time_Preview
+            // 
+            this.Time_Preview.AutoSize = true;
+            this.Time_Preview.Location = new System.Drawing.Point(25, 16);
+            this.Time_Preview.Name = "Time_Preview";
+            this.Time_Preview.Size = new System.Drawing.Size(74, 13);
+            this.Time_Preview.TabIndex = 106;
+            this.Time_Preview.Text = "Time_Preview";
+            // 
+            // Param1_4
+            // 
+            this.Param1_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Param1_4.AutoSize = true;
+            this.Param1_4.Location = new System.Drawing.Point(272, 186);
+            this.Param1_4.Name = "Param1_4";
+            this.Param1_4.Size = new System.Drawing.Size(19, 43);
+            this.Param1_4.TabIndex = 99;
+            this.Param1_4.Text = "25";
+            this.Param1_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // Param_Min
+            // 
+            this.Param_Min.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.Param_Min.DecimalPlaces = 1;
+            this.Param_Min.Location = new System.Drawing.Point(240, 236);
+            this.Param_Min.Maximum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.Param_Min.Name = "Param_Min";
+            this.Param_Min.Size = new System.Drawing.Size(51, 20);
+            this.Param_Min.TabIndex = 97;
             // 
             // Loop
             // 
@@ -335,11 +664,110 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel1.SetColumnSpan(this.Loop, 2);
             this.Loop.Location = new System.Drawing.Point(3, 3);
             this.Loop.Name = "Loop";
-            this.Loop.Size = new System.Drawing.Size(198, 24);
+            this.Loop.Size = new System.Drawing.Size(190, 24);
             this.Loop.TabIndex = 35;
             this.Loop.Text = "Loop";
             this.Loop.UseVisualStyleBackColor = true;
-            this.Loop.Click += new System.EventHandler(this.Loop_Click);
+            // 
+            // button2
+            // 
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel1.SetColumnSpan(this.button2, 2);
+            this.button2.Location = new System.Drawing.Point(199, 3);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(192, 24);
+            this.button2.TabIndex = 34;
+            this.button2.Text = ">>";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
+            // Color_Selection
+            // 
+            this.Color_Selection.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Color_Selection.FormattingEnabled = true;
+            this.Color_Selection.Items.AddRange(new object[] {
+            "R-O-Y-G-B-I-V",
+            "R-O-Y",
+            "Y-G-B",
+            "W-B",
+            "R-M-B"});
+            this.Color_Selection.Location = new System.Drawing.Point(101, 103);
+            this.Color_Selection.Name = "Color_Selection";
+            this.Color_Selection.Size = new System.Drawing.Size(92, 21);
+            this.Color_Selection.TabIndex = 100;
+            this.Color_Selection.Text = "R-O-Y-G-B-I-V";
+            // 
+            // label23
+            // 
+            this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(3, 100);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(78, 43);
+            this.label23.TabIndex = 107;
+            this.label23.Text = "Color Selection";
+            // 
+            // Pos_Select
+            // 
+            this.Pos_Select.Location = new System.Drawing.Point(101, 232);
+            this.Pos_Select.Name = "Pos_Select";
+            this.Pos_Select.Size = new System.Drawing.Size(92, 20);
+            this.Pos_Select.TabIndex = 109;
+            // 
+            // AxisSelect
+            // 
+            this.AxisSelect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.AxisSelect.AutoCompleteCustomSource.AddRange(new string[] {
+            "X",
+            "Y",
+            "Z"});
+            this.AxisSelect.FormattingEnabled = true;
+            this.AxisSelect.Items.AddRange(new object[] {
+            "X",
+            "Y",
+            "Z"});
+            this.AxisSelect.Location = new System.Drawing.Point(3, 232);
+            this.AxisSelect.Name = "AxisSelect";
+            this.AxisSelect.Size = new System.Drawing.Size(92, 21);
+            this.AxisSelect.TabIndex = 117;
+            this.AxisSelect.Text = "Z";
+            // 
+            // Map_Planes
+            // 
+            this.tableLayoutPanel1.SetColumnSpan(this.Map_Planes, 2);
+            this.Map_Planes.FormattingEnabled = true;
+            this.Map_Planes.Location = new System.Drawing.Point(3, 146);
+            this.Map_Planes.Name = "Map_Planes";
+            this.tableLayoutPanel1.SetRowSpan(this.Map_Planes, 2);
+            this.Map_Planes.Size = new System.Drawing.Size(190, 69);
+            this.Map_Planes.TabIndex = 118;
+            // 
+            // AddPlane
+            // 
+            this.AddPlane.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel1.SetColumnSpan(this.AddPlane, 2);
+            this.AddPlane.Location = new System.Drawing.Point(3, 262);
+            this.AddPlane.Name = "AddPlane";
+            this.AddPlane.Size = new System.Drawing.Size(190, 21);
+            this.AddPlane.TabIndex = 116;
+            this.AddPlane.Text = "Add Plane";
+            this.AddPlane.UseVisualStyleBackColor = true;
+            // 
+            // Magnitude
+            // 
+            this.Magnitude.AutoSize = true;
+            this.Magnitude.Location = new System.Drawing.Point(199, 262);
+            this.Magnitude.Name = "Magnitude";
+            this.Magnitude.Size = new System.Drawing.Size(76, 17);
+            this.Magnitude.TabIndex = 119;
+            this.Magnitude.Text = "Magnitude";
+            this.Magnitude.UseVisualStyleBackColor = true;
             // 
             // groupBox1
             // 
@@ -351,10 +779,10 @@ namespace Pachyderm_Acoustic
             this.groupBox1.Controls.Add(this.CO_TIME);
             this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.Freq_Max);
-            this.groupBox1.Location = new System.Drawing.Point(8, 49);
+            this.groupBox1.Location = new System.Drawing.Point(6, 55);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(410, 93);
-            this.groupBox1.TabIndex = 94;
+            this.groupBox1.Size = new System.Drawing.Size(395, 96);
+            this.groupBox1.TabIndex = 99;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Simulation Settings";
             // 
@@ -376,7 +804,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
-            this.Frequency_Selection.Location = new System.Drawing.Point(337, 16);
+            this.Frequency_Selection.Location = new System.Drawing.Point(322, 16);
             this.Frequency_Selection.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -410,7 +838,7 @@ namespace Pachyderm_Acoustic
             // 
             this.CO_TIME.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.CO_TIME.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.CO_TIME.Location = new System.Drawing.Point(337, 68);
+            this.CO_TIME.Location = new System.Drawing.Point(322, 68);
             this.CO_TIME.Maximum = new decimal(new int[] {
             8000,
             0,
@@ -449,7 +877,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
-            this.Freq_Max.Location = new System.Drawing.Point(337, 42);
+            this.Freq_Max.Location = new System.Drawing.Point(322, 42);
             this.Freq_Max.Maximum = new decimal(new int[] {
             10000000,
             0,
@@ -470,206 +898,27 @@ namespace Pachyderm_Acoustic
             0,
             0});
             // 
-            // tableLayoutPanel1
+            // GroupBox2
             // 
-            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.GroupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.AutoScroll = true;
-            this.tableLayoutPanel1.ColumnCount = 4;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanel1.Controls.Add(this.Preview, 0, 1);
-            this.tableLayoutPanel1.Controls.Add(this.Param3_4, 2, 4);
-            this.tableLayoutPanel1.Controls.Add(this.Param1_2, 2, 5);
-            this.tableLayoutPanel1.Controls.Add(this.Param_Max, 2, 3);
-            this.tableLayoutPanel1.Controls.Add(this.Param_Scale, 3, 3);
-            this.tableLayoutPanel1.Controls.Add(this.groupBox4, 0, 2);
-            this.tableLayoutPanel1.Controls.Add(this.Param1_4, 2, 6);
-            this.tableLayoutPanel1.Controls.Add(this.Param_Min, 2, 7);
-            this.tableLayoutPanel1.Controls.Add(this.Loop, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.button2, 2, 0);
-            this.tableLayoutPanel1.Controls.Add(this.Color_Selection, 1, 4);
-            this.tableLayoutPanel1.Controls.Add(this.label23, 0, 4);
-            this.tableLayoutPanel1.Controls.Add(this.Pos_Select, 1, 7);
-            this.tableLayoutPanel1.Controls.Add(this.AxisSelect, 0, 7);
-            this.tableLayoutPanel1.Controls.Add(this.Map_Planes, 0, 5);
-            this.tableLayoutPanel1.Controls.Add(this.AddPlane, 0, 8);
-            this.tableLayoutPanel1.Controls.Add(this.Magnitude, 2, 8);
-            this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(8, 148);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 9;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(410, 296);
-            this.tableLayoutPanel1.TabIndex = 96;
+            this.GroupBox2.Controls.Add(this.label8);
+            this.GroupBox2.Controls.Add(this.SourceSelect);
+            this.GroupBox2.Location = new System.Drawing.Point(6, 6);
+            this.GroupBox2.Name = "GroupBox2";
+            this.GroupBox2.Size = new System.Drawing.Size(395, 43);
+            this.GroupBox2.TabIndex = 98;
+            this.GroupBox2.TabStop = false;
+            this.GroupBox2.Text = "Geometry";
             // 
-            // Param1_2
+            // label8
             // 
-            this.Param1_2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param1_2.AutoSize = true;
-            this.Param1_2.Location = new System.Drawing.Point(284, 147);
-            this.Param1_2.Name = "Param1_2";
-            this.Param1_2.Size = new System.Drawing.Size(19, 47);
-            this.Param1_2.TabIndex = 98;
-            this.Param1_2.Text = "50";
-            this.Param1_2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // Param_Scale
-            // 
-            this.Param_Scale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param_Scale.Location = new System.Drawing.Point(309, 73);
-            this.Param_Scale.Name = "Param_Scale";
-            this.tableLayoutPanel1.SetRowSpan(this.Param_Scale, 5);
-            this.Param_Scale.Size = new System.Drawing.Size(98, 195);
-            this.Param_Scale.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.Param_Scale.TabIndex = 94;
-            this.Param_Scale.TabStop = false;
-            // 
-            // Param1_4
-            // 
-            this.Param1_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param1_4.AutoSize = true;
-            this.Param1_4.Location = new System.Drawing.Point(284, 194);
-            this.Param1_4.Name = "Param1_4";
-            this.Param1_4.Size = new System.Drawing.Size(19, 47);
-            this.Param1_4.TabIndex = 99;
-            this.Param1_4.Text = "25";
-            this.Param1_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // Param_Min
-            // 
-            this.Param_Min.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param_Min.DecimalPlaces = 1;
-            this.Param_Min.Location = new System.Drawing.Point(252, 248);
-            this.Param_Min.Maximum = new decimal(new int[] {
-            200,
-            0,
-            0,
-            0});
-            this.Param_Min.Name = "Param_Min";
-            this.Param_Min.Size = new System.Drawing.Size(51, 20);
-            this.Param_Min.TabIndex = 97;
-            this.Param_Min.ValueChanged += new System.EventHandler(this.Param_Max_ValueChanged);
-            // 
-            // button2
-            // 
-            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.SetColumnSpan(this.button2, 2);
-            this.button2.Location = new System.Drawing.Point(207, 3);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(200, 24);
-            this.button2.TabIndex = 34;
-            this.button2.Text = ">>";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.Forw_Click);
-            // 
-            // Color_Selection
-            // 
-            this.Color_Selection.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Color_Selection.FormattingEnabled = true;
-            this.Color_Selection.Items.AddRange(new object[] {
-            "R-O-Y-G-B-I-V",
-            "R-O-Y",
-            "Y-G-B",
-            "W-B",
-            "R-M-B"});
-            this.Color_Selection.Location = new System.Drawing.Point(105, 103);
-            this.Color_Selection.Name = "Color_Selection";
-            this.Color_Selection.Size = new System.Drawing.Size(96, 21);
-            this.Color_Selection.TabIndex = 100;
-            this.Color_Selection.Text = "R-O-Y-G-B-I-V";
-            this.Color_Selection.SelectedIndexChanged += new System.EventHandler(this.Color_Selection_SelectedIndexChanged);
-            // 
-            // label23
-            // 
-            this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.label23.AutoSize = true;
-            this.label23.Location = new System.Drawing.Point(3, 100);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(78, 47);
-            this.label23.TabIndex = 107;
-            this.label23.Text = "Color Selection";
-            // 
-            // Pos_Select
-            // 
-            this.Pos_Select.Location = new System.Drawing.Point(105, 244);
-            this.Pos_Select.Name = "Pos_Select";
-            this.Pos_Select.Size = new System.Drawing.Size(96, 20);
-            this.Pos_Select.TabIndex = 109;
-            this.Pos_Select.ValueChanged += new System.EventHandler(this.Pos_Select_ValueChanged);
-            // 
-            // AxisSelect
-            // 
-            this.AxisSelect.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.AxisSelect.AutoCompleteCustomSource.AddRange(new string[] {
-            "X",
-            "Y",
-            "Z"});
-            this.AxisSelect.FormattingEnabled = true;
-            this.AxisSelect.Items.AddRange(new object[] {
-            "X",
-            "Y",
-            "Z"});
-            this.AxisSelect.Location = new System.Drawing.Point(3, 244);
-            this.AxisSelect.Name = "AxisSelect";
-            this.AxisSelect.Size = new System.Drawing.Size(96, 21);
-            this.AxisSelect.TabIndex = 117;
-            this.AxisSelect.Text = "Z";
-            this.AxisSelect.SelectionChangeCommitted += new System.EventHandler(this.AxisSelect_SelectedIndexChanged);
-            // 
-            // Map_Planes
-            // 
-            this.tableLayoutPanel1.SetColumnSpan(this.Map_Planes, 2);
-            this.Map_Planes.FormattingEnabled = true;
-            this.Map_Planes.Location = new System.Drawing.Point(3, 150);
-            this.Map_Planes.Name = "Map_Planes";
-            this.tableLayoutPanel1.SetRowSpan(this.Map_Planes, 2);
-            this.Map_Planes.Size = new System.Drawing.Size(198, 69);
-            this.Map_Planes.TabIndex = 118;
-            // 
-            // AddPlane
-            // 
-            this.AddPlane.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.SetColumnSpan(this.AddPlane, 2);
-            this.AddPlane.Location = new System.Drawing.Point(3, 274);
-            this.AddPlane.Name = "AddPlane";
-            this.AddPlane.Size = new System.Drawing.Size(198, 19);
-            this.AddPlane.TabIndex = 116;
-            this.AddPlane.Text = "Add Plane";
-            this.AddPlane.UseVisualStyleBackColor = true;
-            this.AddPlane.Click += new System.EventHandler(this.AddPlane_Click);
-            // 
-            // Magnitude
-            // 
-            this.Magnitude.AutoSize = true;
-            this.Magnitude.Location = new System.Drawing.Point(207, 274);
-            this.Magnitude.Name = "Magnitude";
-            this.Magnitude.Size = new System.Drawing.Size(76, 17);
-            this.Magnitude.TabIndex = 119;
-            this.Magnitude.Text = "Magnitude";
-            this.Magnitude.UseVisualStyleBackColor = true;
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(2, 16);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(76, 13);
+            this.label8.TabIndex = 30;
+            this.label8.Text = "Source Signal:";
             // 
             // SourceSelect
             // 
@@ -686,216 +935,41 @@ namespace Pachyderm_Acoustic
             "Pseudo Random Noise"});
             this.SourceSelect.Location = new System.Drawing.Point(79, 13);
             this.SourceSelect.Name = "SourceSelect";
-            this.SourceSelect.Size = new System.Drawing.Size(325, 21);
+            this.SourceSelect.Size = new System.Drawing.Size(310, 21);
             this.SourceSelect.TabIndex = 27;
             this.SourceSelect.Text = "Sine Wave";
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(2, 16);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(76, 13);
-            this.label8.TabIndex = 30;
-            this.label8.Text = "Source Signal:";
-            // 
-            // GroupBox2
-            // 
-            this.GroupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.GroupBox2.Controls.Add(this.label8);
-            this.GroupBox2.Controls.Add(this.SourceSelect);
-            this.GroupBox2.Location = new System.Drawing.Point(8, 3);
-            this.GroupBox2.Name = "GroupBox2";
-            this.GroupBox2.Size = new System.Drawing.Size(410, 43);
-            this.GroupBox2.TabIndex = 71;
-            this.GroupBox2.TabStop = false;
-            this.GroupBox2.Text = "Geometry";
-            // 
-            // groupBox3
-            // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox3.Controls.Add(this.EdgeFreq);
-            this.groupBox3.Controls.Add(this.Label21);
-            this.groupBox3.Controls.Add(this.Atten_Method);
-            this.groupBox3.Controls.Add(this.Label19);
-            this.groupBox3.Controls.Add(this.Air_Pressure);
-            this.groupBox3.Controls.Add(this.Label3);
-            this.groupBox3.Controls.Add(this.Rel_Humidity);
-            this.groupBox3.Controls.Add(this.AirTemp);
-            this.groupBox3.Controls.Add(this.Air_Temp);
-            this.groupBox3.Location = new System.Drawing.Point(8, 447);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(410, 141);
-            this.groupBox3.TabIndex = 97;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Environmental Factors";
-            // 
-            // EdgeFreq
-            // 
-            this.EdgeFreq.AutoSize = true;
-            this.EdgeFreq.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.EdgeFreq.Location = new System.Drawing.Point(70, 123);
-            this.EdgeFreq.Name = "EdgeFreq";
-            this.EdgeFreq.Size = new System.Drawing.Size(155, 17);
-            this.EdgeFreq.TabIndex = 35;
-            this.EdgeFreq.Text = "Edge Frequency Correction";
-            this.EdgeFreq.UseVisualStyleBackColor = true;
-            // 
-            // Label21
-            // 
-            this.Label21.AutoSize = true;
-            this.Label21.Location = new System.Drawing.Point(8, 99);
-            this.Label21.Name = "Label21";
-            this.Label21.Size = new System.Drawing.Size(46, 13);
-            this.Label21.TabIndex = 34;
-            this.Label21.Text = "Method:";
-            // 
-            // Atten_Method
-            // 
-            this.Atten_Method.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Atten_Method.FormattingEnabled = true;
-            this.Atten_Method.Items.AddRange(new object[] {
-            "ISO 9613-1 (Outdoor Attenuation)",
-            "Evans & Bazley (Indoor Attenuation)",
-            "Known values (Vorlander)"});
-            this.Atten_Method.Location = new System.Drawing.Point(70, 96);
-            this.Atten_Method.Name = "Atten_Method";
-            this.Atten_Method.Size = new System.Drawing.Size(331, 21);
-            this.Atten_Method.TabIndex = 14;
-            this.Atten_Method.Text = "ISO 9613-1 (Outdoor Attenuation)";
-            // 
-            // Label19
-            // 
-            this.Label19.AutoSize = true;
-            this.Label19.Location = new System.Drawing.Point(8, 72);
-            this.Label19.Name = "Label19";
-            this.Label19.Size = new System.Drawing.Size(121, 13);
-            this.Label19.TabIndex = 32;
-            this.Label19.Text = "Static Air Pressure (hPa)";
-            // 
-            // Air_Pressure
-            // 
-            this.Air_Pressure.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.Air_Pressure.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Air_Pressure.Location = new System.Drawing.Point(337, 70);
-            this.Air_Pressure.Maximum = new decimal(new int[] {
-            1500,
-            0,
-            0,
-            0});
-            this.Air_Pressure.Minimum = new decimal(new int[] {
-            50,
-            0,
-            0,
-            -2147483648});
-            this.Air_Pressure.Name = "Air_Pressure";
-            this.Air_Pressure.Size = new System.Drawing.Size(64, 20);
-            this.Air_Pressure.TabIndex = 13;
-            this.Air_Pressure.Value = new decimal(new int[] {
-            1000,
-            0,
-            0,
-            0});
-            // 
-            // Label3
-            // 
-            this.Label3.AutoSize = true;
-            this.Label3.Location = new System.Drawing.Point(8, 46);
-            this.Label3.Name = "Label3";
-            this.Label3.Size = new System.Drawing.Size(103, 13);
-            this.Label3.TabIndex = 30;
-            this.Label3.Text = "Relative Humidity(%)";
-            // 
-            // Rel_Humidity
-            // 
-            this.Rel_Humidity.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.Rel_Humidity.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Rel_Humidity.Location = new System.Drawing.Point(369, 44);
-            this.Rel_Humidity.Maximum = new decimal(new int[] {
-            80,
-            0,
-            0,
-            0});
-            this.Rel_Humidity.Minimum = new decimal(new int[] {
-            50,
-            0,
-            0,
-            -2147483648});
-            this.Rel_Humidity.Name = "Rel_Humidity";
-            this.Rel_Humidity.Size = new System.Drawing.Size(32, 20);
-            this.Rel_Humidity.TabIndex = 12;
-            this.Rel_Humidity.Value = new decimal(new int[] {
-            50,
-            0,
-            0,
-            0});
-            // 
-            // AirTemp
-            // 
-            this.AirTemp.AutoSize = true;
-            this.AirTemp.Location = new System.Drawing.Point(8, 20);
-            this.AirTemp.Name = "AirTemp";
-            this.AirTemp.Size = new System.Drawing.Size(98, 13);
-            this.AirTemp.TabIndex = 28;
-            this.AirTemp.Text = "Air Temperature (C)";
-            // 
-            // Air_Temp
-            // 
-            this.Air_Temp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.Air_Temp.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Air_Temp.Location = new System.Drawing.Point(369, 18);
-            this.Air_Temp.Maximum = new decimal(new int[] {
-            80,
-            0,
-            0,
-            0});
-            this.Air_Temp.Minimum = new decimal(new int[] {
-            50,
-            0,
-            0,
-            -2147483648});
-            this.Air_Temp.Name = "Air_Temp";
-            this.Air_Temp.Size = new System.Drawing.Size(32, 20);
-            this.Air_Temp.TabIndex = 11;
-            this.Air_Temp.Value = new decimal(new int[] {
-            20,
-            0,
-            0,
-            0});
             // 
             // Pach_TD_Numeric_Control
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.tableLayoutPanel1);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.GroupBox2);
+            this.Controls.Add(this.tabControl1);
             this.Name = "Pach_TD_Numeric_Control";
-            this.Size = new System.Drawing.Size(421, 594);
-            this.groupBox4.ResumeLayout(false);
-            this.groupBox4.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Max)).EndInit();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Frequency_Selection)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Freq_Max)).EndInit();
-            this.tableLayoutPanel1.ResumeLayout(false);
-            this.tableLayoutPanel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Scale)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Pos_Select)).EndInit();
-            this.GroupBox2.ResumeLayout(false);
-            this.GroupBox2.PerformLayout();
+            this.Size = new System.Drawing.Size(421, 637);
+            this.tabControl1.ResumeLayout(false);
+            this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            this.tabPage2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Rel_Humidity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Temp)).EndInit();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Max)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Scale)).EndInit();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Pos_Select)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Frequency_Selection)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Max)).EndInit();
+            this.GroupBox2.ResumeLayout(false);
+            this.GroupBox2.PerformLayout();
             this.ResumeLayout(false);
 
             }
@@ -906,7 +980,6 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.ToolStripMenuItem FromPointInputToolStripMenuItem2;
             internal System.Windows.Forms.ToolStripMenuItem SelectASphereToolStripMenuItem;
             internal System.Windows.Forms.ToolStripMenuItem FromSphereObjectToolStripMenuItem1;
-            internal System.Windows.Forms.Button Loop;
             internal System.Windows.Forms.Button Forw;
             internal System.Windows.Forms.Button Rev;
             internal System.Windows.Forms.Label label4;
@@ -915,21 +988,9 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.Label Label15;
             internal System.Windows.Forms.ComboBox SourceSelection;
             internal System.Windows.Forms.ComboBox RoomSelection;
-            private System.Windows.Forms.GroupBox groupBox1;
-            internal System.Windows.Forms.Label COTime;
-            internal System.Windows.Forms.NumericUpDown CO_TIME;
-            internal System.Windows.Forms.Label label10;
-            internal System.Windows.Forms.NumericUpDown Freq_Max;
-            private System.Windows.Forms.NumericUpDown Param_Max;
-            private System.Windows.Forms.Label Param3_4;
-            internal System.Windows.Forms.Button Preview;
-            private System.Windows.Forms.GroupBox groupBox4;
-            private System.Windows.Forms.Label Time_Preview;
-            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-            internal System.Windows.Forms.Button button2;
-            internal System.Windows.Forms.ComboBox SourceSelect;
-            internal System.Windows.Forms.Label label8;
-            internal System.Windows.Forms.GroupBox GroupBox2;
+            private System.Windows.Forms.TabControl tabControl1;
+            private System.Windows.Forms.TabPage tabPage1;
+            private System.Windows.Forms.TabPage tabPage2;
             internal System.Windows.Forms.GroupBox groupBox3;
             private System.Windows.Forms.CheckBox EdgeFreq;
             internal System.Windows.Forms.Label Label21;
@@ -940,19 +1001,38 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.NumericUpDown Rel_Humidity;
             internal System.Windows.Forms.Label AirTemp;
             internal System.Windows.Forms.NumericUpDown Air_Temp;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+            internal System.Windows.Forms.Button Preview;
+            private System.Windows.Forms.Label Param3_4;
             private System.Windows.Forms.Label Param1_2;
+            private System.Windows.Forms.NumericUpDown Param_Max;
             private System.Windows.Forms.PictureBox Param_Scale;
-            internal System.Windows.Forms.ComboBox Color_Selection;
+            private System.Windows.Forms.GroupBox groupBox4;
+            private System.Windows.Forms.Label Time_Preview;
             private System.Windows.Forms.Label Param1_4;
             private System.Windows.Forms.NumericUpDown Param_Min;
-            internal System.Windows.Forms.Label label1;
-            internal System.Windows.Forms.NumericUpDown Frequency_Selection;
+            internal System.Windows.Forms.Button Loop;
+            internal System.Windows.Forms.Button button2;
+            internal System.Windows.Forms.ComboBox Color_Selection;
             private System.Windows.Forms.Label label23;
             private System.Windows.Forms.NumericUpDown Pos_Select;
-            private System.Windows.Forms.Button AddPlane;
             internal System.Windows.Forms.ComboBox AxisSelect;
             private System.Windows.Forms.ListBox Map_Planes;
+            private System.Windows.Forms.Button AddPlane;
             private System.Windows.Forms.CheckBox Magnitude;
+            private System.Windows.Forms.GroupBox groupBox1;
+            internal System.Windows.Forms.Label label1;
+            internal System.Windows.Forms.NumericUpDown Frequency_Selection;
+            internal System.Windows.Forms.Label COTime;
+            internal System.Windows.Forms.NumericUpDown CO_TIME;
+            internal System.Windows.Forms.Label label10;
+            internal System.Windows.Forms.NumericUpDown Freq_Max;
+            internal System.Windows.Forms.GroupBox GroupBox2;
+            internal System.Windows.Forms.Label label8;
+            internal System.Windows.Forms.ComboBox SourceSelect;
+            private System.Windows.Forms.Label label2;
+            private System.Windows.Forms.ComboBox Selected_Extent;
+            private System.Windows.Forms.Button CalculateSim;
         }
     }
 }

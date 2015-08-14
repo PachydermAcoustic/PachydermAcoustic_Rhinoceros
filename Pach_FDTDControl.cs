@@ -34,9 +34,12 @@ namespace Pachyderm_Acoustic
             public Pach_TD_Numeric_Control()
             {
                 InitializeComponent();
+                Selected_Extent.SelectedIndex = 4;
                 scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
                 Param_Scale.Image = scale.PIC;
             }
+
+            #region Visualization
 
             private Pach_Graphics.colorscale scale;
             public delegate void Populator(double Dist);
@@ -285,6 +288,43 @@ namespace Pachyderm_Acoustic
                 (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).pos = (int)Pos_Select.Value;
                 Map_Planes.Update();
             }
+
+            #endregion
+
+            #region Simulation
+            private void CalculateSim_Click(object sender, EventArgs e)
+            {
+                FC = new ForCall(Forw_proc);
+
+                Polygon_Scene Rm = PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                if (!Rm.Complete) return;
+
+                Rhino.Geometry.Point3d[] Src = PachTools.GetSource();
+                Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
+                if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
+
+                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
+
+                Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
+                double fs = 137.8125 * Math.Pow(2, Selected_Extent.SelectedIndex);
+                double df = 1d / ((double)CO_TIME.Value / 1000);
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, df, 1, PachTools.GetSource());
+                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value);
+
+                for (double f = df; f < fs; f+= df)
+                {
+                    FDTD.reset(f, Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse);
+                    FDTD.RuntoCompletion();
+                }
+
+                result_signals = Mic.Recordings;
+
+
+            }
+
+            List<double[][]> result_signals;
+
+            #endregion
         }
     }
 }
