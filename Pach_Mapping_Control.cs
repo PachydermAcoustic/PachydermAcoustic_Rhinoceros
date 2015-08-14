@@ -192,19 +192,20 @@ namespace Pachyderm_Acoustic
                 Rhino.DocObjects.ObjRef[] refs;
                 Rhino.Input.RhinoGet.GetMultipleObjects("Select Mapping Surfaces", false, Rhino.DocObjects.ObjectType.Brep, out refs);
                 List<Brep> B_Temp = new List<Brep>();
-                
-                foreach (Rhino.DocObjects.ObjRef o in refs)
+                if (refs != null)
                 {
-                    Rhino.DocObjects.ObjectType t = o.Geometry().ObjectType;
-
-                    if (o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Brep || o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Extrusion || o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Surface)
+                    foreach (Rhino.DocObjects.ObjRef o in refs)
                     {
-                        B_Temp.Add(o.Brep());
-                    }
-                }
+                        Rhino.DocObjects.ObjectType t = o.Geometry().ObjectType;
 
-                Rec_Srfs = B_Temp.ToArray();
-                
+                        if (o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Brep || o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Extrusion || o.Geometry().ObjectType == Rhino.DocObjects.ObjectType.Surface)
+                        {
+                            B_Temp.Add(o.Brep());
+                        }
+                    }
+
+                    Rec_Srfs = B_Temp.ToArray();
+                }
                 if (Rec_Srfs.Length > 0)
                 {
                     Select_Map.Text = "Select Mapping Surface: Complete";
