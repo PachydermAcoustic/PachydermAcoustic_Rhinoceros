@@ -174,26 +174,27 @@ namespace Pachyderm_Acoustic
 
             private bool Check_Special(ref Environment.Source[] S)
             {
+                //an interface to create overriding conditions for source objects... Was originally used to quickly insert line-source conditions. Now can be used by anyone to put together interesting overrides.
                 switch (SpecialCode)
                 {
-                    case "Streets":
-                        Rhino.DocObjects.RhinoObject[] objs = Rhino.RhinoDoc.ActiveDoc.Objects.FindByObjectType(Rhino.DocObjects.ObjectType.Curve);
-                        List<Rhino.Geometry.Curve> ObjectList = new List<Rhino.Geometry.Curve>();
-                        List<String> CodeList = new List<string>();
-                        foreach (Rhino.DocObjects.RhinoObject stuff in objs)
-                        {
-                            if (stuff.ObjectType == Rhino.DocObjects.ObjectType.Curve)
-                            {
-                                ObjectList.Add(((Rhino.DocObjects.CurveObject)stuff).DuplicateCurveGeometry().DuplicateCurve());
-                                CodeList.Add(stuff.Attributes.GetUserString("Sound_Power"));
-                            }
-                        }
-                        S = new Environment.Source[1];
-                        // Waterfall Power Spectrum = new double[] {25, 50, 75, 104, 102, 100, 94, 88}
-                        // Measured Daytime Central London Street Noise 2012 = new double[] {81.9, 74.3, 71.5, 68.1, 66.7, 63.5, 59.8, 55.4}
-                        // F1 Power Spectrum new double[] {120, 120, 136, 134, 130, 130, 124, 115},
-                        S[0] = new Environment.LineSource(ObjectList, CodeList, 16, 0, Environment.Source.Phase_Regime.Random);
-                        return true;
+                    //case "Streets":
+                        //Rhino.DocObjects.RhinoObject[] objs = Rhino.RhinoDoc.ActiveDoc.Objects.FindByObjectType(Rhino.DocObjects.ObjectType.Curve);
+                        //Curve ObjectList = new List<Rhino.Geometry.Curve>();
+                        //List<String> CodeList = new List<string>();
+                        //foreach (Rhino.DocObjects.RhinoObject stuff in objs)
+                        //{
+                        //    if (stuff.ObjectType == Rhino.DocObjects.ObjectType.Curve)
+                        //    {
+                        //        ObjectList.Add(((Rhino.DocObjects.CurveObject)stuff).DuplicateCurveGeometry().DuplicateCurve());
+                        //        CodeList.Add(stuff.Attributes.GetUserString("Sound_Power"));
+                        //    }
+                        //}
+                        //S = new Environment.Source[1];
+                        //// Waterfall Power Spectrum = new double[] {25, 50, 75, 104, 102, 100, 94, 88}
+                        //// Measured Daytime Central London Street Noise 2012 = new double[] {81.9, 74.3, 71.5, 68.1, 66.7, 63.5, 59.8, 55.4}
+                        //// F1 Power Spectrum new double[] {120, 120, 136, 134, 130, 130, 124, 115},
+                        //S[0] = new Environment.LineSource(ObjectList, CodeList, 16, 0, Environment.Source.Phase_Regime.Random);
+                        //return true;
                     default:
                         return false;
                 }
@@ -271,7 +272,7 @@ namespace Pachyderm_Acoustic
                             for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
                         }
 
-                        S[id] = new Environment.LineSource(new Curve[] { (Origin.Geometry as Curve) }, new List<string> { SWL }, 16, id, Environment.Source.Phase_Regime.Random);                         
+                        S[id] = new Environment.LineSource(Origin.Geometry as Curve, SWL, 1, id, Environment.Source.Phase_Regime.Random);                         
                     }
                 }
                 if (S == null) return false;
