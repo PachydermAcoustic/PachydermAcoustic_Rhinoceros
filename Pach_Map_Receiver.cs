@@ -275,7 +275,7 @@ namespace Pachyderm_Acoustic
                     for (int oct = 0; oct < 8; oct++)
                     {
                         int tsample = 0;
-                        int length = D.Io[i].GetLength(0);
+                        int length = D.Io[i][oct].Length;
                         for (int s = 0; s < length; s++)
                         {
                             if (D.EnergyValue(oct, s, i) > 0 && tsample == 0) tsample = s;
