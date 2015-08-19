@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System;
 using System.Windows.Forms;
 using Pachyderm_Acoustic.Environment;
-using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;

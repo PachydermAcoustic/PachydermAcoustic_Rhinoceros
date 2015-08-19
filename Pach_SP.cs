@@ -92,11 +92,11 @@ namespace Pachyderm_Acoustic
                 public abstract Complex[] Spectrum(double[] Octave_Pessure, int SampleFrequency, int LengthStartToFinish, int Threadid);
             }
 
-            public class Minimum_Phase_System: DSP_System
+            public class Minimum_Phase_System : DSP_System
             {
                 public override double[] Signal(double[] OctavePressure, int SampleFrequency, int LengthStartToFinish, int Threadid)
                 {
-                    return Pach_SP.Minimum_Phase_Signal( OctavePressure, SampleFrequency, LengthStartToFinish, Threadid);
+                    return Pach_SP.Minimum_Phase_Signal(OctavePressure, SampleFrequency, LengthStartToFinish, Threadid);
                 }
 
                 public override double[] Response(double[] Spectrum, int SampleFrequency, int Threadid)
@@ -126,6 +126,87 @@ namespace Pachyderm_Acoustic
                 {
                     return Linear_Phase_Spectrum(Octave_Pessure, SampleFrequency, LengthStartToFinish, Threadid);
                 }
+            }
+
+            public static Complex[] SpectrumFromIIR(double[] a, double[] b, int fs = 44100, int n = 512)
+            {
+                int k = Math.Max(b.Length, a.Length);
+
+                double[] f = new double[n];
+                for(int i = 0; i < n; i++) f[i] = (double)fs * i / (2 * n);
+
+                int pad_sz = n * (int)Math.Ceiling((double)k/n);
+                Array.Resize(ref b, 2*n);
+                Array.Resize(ref a, 2*n);
+
+                Complex[] h = new Complex[n];
+
+                Complex[] pb = FFT_General(b, 0);
+                Complex[] pa = FFT_General(a, 0);
+
+                for(int i = 0; i < h.Length; i++) h[i] = pb[i] / pa[i];
+                return h;
+            }
+
+            public static double[] AutoCorrelation_Coef(Complex[] X, int maxlag)
+            {
+                double[] r_l = new double[maxlag];
+
+                for (int lag = 1; lag <= maxlag; lag++)
+                {
+                    double mean = 0;
+                    for (int i = 0; i < X.Length; i++) mean += X[i].Real;
+                    mean /= X.Length;
+                    double denom = 0;
+                    double num = 0;
+
+                    int N_k = X.Length - lag;
+
+                    for (int i = 0; i < N_k; i++)
+                    {
+                        double x_X = X[i].Real - mean;
+                        denom += x_X * x_X;
+                        num += x_X * (X[i + lag].Real - mean);
+                    }
+
+                    for (int i = 0; i < lag; i++)
+                    {
+                        int idx = N_k + i;
+                        double x_X = X[idx].Real - mean;
+                        denom += x_X * x_X;
+                    }
+
+                    r_l[lag-1] = num / denom;
+                }
+
+                return r_l;
+            }
+
+            public static void Yule_Walker(double[] r, out double[] a, out double[] b)
+            {
+                MathNet.Numerics.LinearAlgebra.Double.Matrix AC = MathNet.Numerics.LinearAlgebra.Double.DenseMatrix.Create(r.Length, r.Length, 1);
+                MathNet.Numerics.LinearAlgebra.Double.Matrix RC = MathNet.Numerics.LinearAlgebra.Double.DenseMatrix.Create(r.Length, 1, 0);
+                
+                for (int i = 0; i < r.Length; i++)
+                {
+                    for(int j = 0; j < r.Length - i - 1; j++)
+                    {
+                        AC[i + j + 1, j] = r[i];
+                        AC[j, i + j + 1] = r[i];
+                    }
+                    RC[i, 0] = r[i];
+                }
+
+                MathNet.Numerics.LinearAlgebra.Matrix<double> PC = -AC.Inverse() * RC;
+                a = new double[r.Length];
+                for (int i = 0; i < r.Length; i++) a[i] = PC[i, 0];
+                b = new double[r.Length];
+                
+                for (int k = 0; k < r.Length; k++) for (int i = 0; i < a.Length; i++) for (int j = 0; j < a.Length; j++)
+                    {
+                            int idx = k + i - j;
+                            if (idx < r.Length) b[k] += a[i] * a[j] * r[Math.Abs(idx)];
+                    }
             }
 
             public static void Initialize_filter_functions()

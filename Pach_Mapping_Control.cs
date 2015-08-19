@@ -64,7 +64,7 @@ namespace Pachyderm_Acoustic
 
                 if (plugin.Save_Results())
                 {
-                    System.Windows.Forms.SaveFileDialog sf = new System.Windows.Forms.SaveFileDialog();
+                    SaveFileDialog sf = new System.Windows.Forms.SaveFileDialog();
                     sf.DefaultExt = ".pachm";
                     sf.AddExtension = true;
                     sf.Filter = "Pachyderm Mapping Data File (*.pachm)|*.pachm|" + "All Files|";
@@ -98,7 +98,7 @@ namespace Pachyderm_Acoustic
                     Calculate.Enabled = true;
                     return;
                 }
-                WC = new WaveConduit(c_scale, new double[] { Current_SPLMin, Current_SPLMax }, PScene);
+                WC = new WaveConduit(c_scale, new double[] { Current_SPLMin, Current_SPLMax });
 
                 PScene.partition(P);
                 Scene Flex_Scene;

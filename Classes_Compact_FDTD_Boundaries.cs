@@ -18,11 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Pachyderm_Acoustic.Environment;
 using Hare.Geometry;
-using System.Numerics;
 
 namespace Pachyderm_Acoustic
 {
@@ -37,105 +33,6 @@ namespace Pachyderm_Acoustic
                     public Bound_Node(Point loc)
                     : base(loc)
                     { }
-
-                    public class DIF_IWB_2p : IIR_DIF
-                    {
-                        double[] ax;
-                        double[] bx;
-                        double[] xx;
-                        double[] yx;
-                        double rec_b0;
-                        double gn;
-                        double interp;
-
-                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, double M)
-                            : this(Poles, Zeros, scale)
-                        {
-                            interp = M;
-                        }
-
-                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, IWB_Mask M)
-                            : this(Poles, Zeros, scale)
-                        {
-                            switch (M)
-                            {
-                                case IWB_Mask.Axial:
-                                    interp = .25;
-                                    break;
-                                case IWB_Mask.SideDiagonal:
-                                    interp = .125;
-                                    break;
-                                case IWB_Mask.Diagonal:
-                                    interp = .0625;
-                                    break;
-                            }
-                        }
-
-                        public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale)
-                        {
-                            ax = new double[3];
-                            ax[0] = 1;
-                            ax[1] = -(Poles[0] + Poles[1]);
-                            ax[2] = Poles[0] * Poles[1];
-
-                            bx = new double[3];
-                            bx[0] = 1 / scale;
-                            bx[1] = -(Zeros[0] + Zeros[1]) / scale;
-                            bx[2] = Zeros[0] * Zeros[1] / scale;
-
-                            if (ax.Length != bx.Length) throw new Exception("Number of Poles and Number of Zeros must be equal.");
-                            rec_b0 = 1 / bx[0];
-                            a_b = ax[0] / bx[0];
-                            xx = new double[2];
-                            yx = new double[2];
-                        }
-
-                        public override double g_b_term()
-                        {
-                            gn = bx[1] * xx[0] - ax[1] * yx[0] + bx[2] * xx[1] - ax[2] * yx[1];
-                            return gn * rec_b0 * interp;
-                        }
-
-                        /// <summary>
-                        /// Do before updating boundary node pressure values, but after getting the g-term.
-                        /// </summary>
-                        /// <param name="Pn"></param>
-                        public override void Update(double Pnf, double Pn_1)
-                        {
-                            xx[1] = xx[0];
-                            yx[1] = yx[0];
-                            xx[0] = a_b * (Pnf - Pn_1) - gn / bx[0];
-                            yx[0] = (bx[0] * xx[0] + gn) / ax[0];
-                        }
-
-                        public double A0
-                        {
-                            get { return ax[0]; }
-                        }
-
-                        public double B0
-                        {
-                            get { return bx[0]; }
-                        }
-                    }
-                    public abstract class IIR_DIF
-                    {
-                        public double a_b;
-                        protected int[] DIR;
-
-                        public enum IWB_Mask
-                        {
-                            Axial,
-                            SideDiagonal,
-                            Diagonal
-                        }
-
-                        //public Complex a_b_sub_1 { get { return ab1; } }
-                        //public Complex a_b_recip { get { return abdenom; } }
-                        public abstract double g_b_term();
-                        //public Complex ab;
-                        public abstract void Update(double Pnf, double Pn_1);
-                    }
 
                     [Flags]
                     public enum Boundary
@@ -277,7 +174,6 @@ namespace Pachyderm_Acoustic
                         Boundary.DXNegYNegZPos | Boundary.DXPosYNegZPos | Boundary.SDYNegZPos
                     };
                 #endregion
-
             }
 
                 public class Bound_Node_IWB : Bound_Node
@@ -1339,7 +1235,11 @@ namespace Pachyderm_Acoustic
                     Bound_Node.Boundary Flags;
                     int[] id;
 
-                    //Node[] Links2 = new Node[12];
+                    //Kowalczyk Boundary Filter Node.
+                    IIR_DIF filter;
+                    List<double[]> acoef;
+                    double ab1 = 0;
+                    double abDenom = 0;
 
                     public Bound_Node_RDD(Point loc, double rho0, double dt, double dx, double C, int[] id_in, List<double> Rcoef_in, List<Bound_Node.Boundary> B_in)
                     : base(loc)
@@ -1351,9 +1251,34 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < B_in.Count; i++) Flags |= B_in[i];
                         for (int i = 0; i < Rcoef.Count; i++) R += Rcoef[i];
                         R /= Rcoef.Count;
+
+                        //filter = new DIF_IWB_2p(abs_zeros, abs_poles, 0.81, IIR_DIF.IWB_Mask.Axial);
+
+                        ab1 += filter.a_b;
+                        this.abDenom = 1 / (ab1 + 1);
+                        ab1 -= 1;
                     }
 
-                    public  void Complete_Boundary()
+                    public override void UpdateP()
+                    {
+                        double p2 = 0;
+                        foreach (Node node in Links2) p2 += node.P;
+                        Pnf = p2 * 0.25 - Pn - Pn_1 * ab1 + filter.g_b_term();
+
+                        Pnf *= abDenom;
+
+                        filter.Update(Pnf, Pn_1);
+                    }
+
+                    public override void UpdateT()
+                    {
+                        Pn_1 = Pn;
+                        Pn = Pnf * Attenuation;
+
+                        base.UpdateT();
+                    }
+
+                    public void Complete_Boundary()
                     {
                         /*
                         [0] = x+y+z+
@@ -1367,29 +1292,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[0] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[0].Pt));
-                                (Links2[0] as RDD_Node).Links2[5] = new Null_Node();
-                                Links2[0] = new Null_Node();
+                                //(Links2[0] as RDD_Node).Links2[5] = new Null_Node();
+                                //Links2[0] = new Null_Node();
+                                (Links2[0] as RDD_Node).Links2[5] = (Links2[0] as RDD_Node).Links2[0];
+                                Links2[0] = Links2[5];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYNegZNeg)
                             {
                                 if (Links2[1] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[1].Pt));
-                                (Links2[1] as RDD_Node).Links2[4] = new Null_Node();
-                                Links2[1] = new Null_Node();
+                                //(Links2[1] as RDD_Node).Links2[4] = new Null_Node();
+                                //Links2[1] = new Null_Node();
+                                (Links2[1] as RDD_Node).Links2[4] = (Links2[1] as RDD_Node).Links2[1];
+                                Links2[1] = Links2[4];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYNegZPos)
                             {
                                 if (Links2[2] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[2].Pt));
-                                (Links2[2] as RDD_Node).Links2[7] = new Null_Node();
-                                Links2[2] = new Null_Node();
+                                //(Links2[2] as RDD_Node).Links2[7] = new Null_Node();
+                                //Links2[2] = new Null_Node();
+                                (Links2[2] as RDD_Node).Links2[7] = (Links2[2] as RDD_Node).Links2[2];
+                                Links2[2] = Links2[7];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYPosZNeg)
                             {
                                 if (Links2[3] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[3].Pt));
-                                (Links2[3] as RDD_Node).Links2[6] = new Null_Node();
-                                Links2[3] = new Null_Node();
+                                //(Links2[3] as RDD_Node).Links2[6] = new Null_Node();
+                                //Links2[3] = new Null_Node();
+                                (Links2[3] as RDD_Node).Links2[6] = (Links2[3] as RDD_Node).Links2[3];
+                                Links2[3] = Links2[6];
                             }
                             /*
                             [4] = x-y+z+
@@ -1401,29 +1334,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[4] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[4].Pt));
-                                (Links2[4] as RDD_Node).Links2[1] = new Null_Node();
-                                Links2[4] = new Null_Node();
+                                //(Links2[4] as RDD_Node).Links2[1] = new Null_Node();
+                                //Links2[4] = new Null_Node();
+                                (Links2[4] as RDD_Node).Links2[1] = (Links2[4] as RDD_Node).Links2[4];
+                                Links2[4] = Links2[1];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYNegZNeg)
                             {
                                 if (Links2[5] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[5].Pt));
-                                (Links2[5] as RDD_Node).Links2[0] = new Null_Node();
-                                Links2[5] = new Null_Node();
+                                //(Links2[5] as RDD_Node).Links2[0] = new Null_Node();
+                                //Links2[5] = new Null_Node();
+                                (Links2[5] as RDD_Node).Links2[0] = (Links2[5] as RDD_Node).Links2[5];
+                                Links2[5] = Links2[0];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYNegZPos)
                             {
                                 if (Links2[6] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[6].Pt));
-                                (Links2[6] as RDD_Node).Links2[3] = new Null_Node();
-                                Links2[6] = new Null_Node();
+                                //(Links2[6] as RDD_Node).Links2[3] = new Null_Node();
+                                //Links2[6] = new Null_Node();
+                                (Links2[6] as RDD_Node).Links2[3] = (Links2[6] as RDD_Node).Links2[6];
+                                Links2[6] = Links2[3];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYPosZNeg)
                             {
                                 if (Links2[7] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[7].Pt));
-                                (Links2[7] as RDD_Node).Links2[2] = new Null_Node();
-                                Links2[7] = new Null_Node();
+                                //(Links2[7] as RDD_Node).Links2[2] = new Null_Node();
+                                //Links2[7] = new Null_Node();
+                                (Links2[7] as RDD_Node).Links2[2] = (Links2[7] as RDD_Node).Links2[7];
+                                Links2[7] = Links2[2];
                             }
                             /*
                             [8] = y+
@@ -1435,29 +1376,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[8] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[8].Pt));
-                                (Links2[8] as RDD_Node).Links2[9] = new Null_Node();
-                                Links2[8] = new Null_Node();
+                                //(Links2[8] as RDD_Node).Links2[9] = new Null_Node();
+                                //Links2[8] = new Null_Node();
+                                (Links2[8] as RDD_Node).Links2[9] = (Links2[8] as RDD_Node).Links2[8];
+                                Links2[8] = Links2[9];
                             }
                             else if (b == Bound_Node.Boundary.AYNeg)
                             {
                                 if (Links2[9] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[9].Pt));
-                                (Links2[9] as RDD_Node).Links2[8] = new Null_Node();
-                                Links2[9] = new Null_Node();
+                                //(Links2[9] as RDD_Node).Links2[8] = new Null_Node();
+                                //Links2[9] = new Null_Node();
+                                (Links2[9] as RDD_Node).Links2[8] = (Links2[9] as RDD_Node).Links2[9];
+                                Links2[9] = Links2[8];
                             }
                             else if (b == Bound_Node.Boundary.AZPos)
                             {
                                 if (Links2[10] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[10].Pt));
-                                (Links2[10] as RDD_Node).Links2[11] = new Null_Node();
-                                Links2[10] = new Null_Node();
+                                //(Links2[10] as RDD_Node).Links2[11] = new Null_Node();
+                                //Links2[10] = new Null_Node();
+                                (Links2[10] as RDD_Node).Links2[11] = (Links2[10] as RDD_Node).Links2[10];
+                                Links2[10] = Links2[11];
                             }
                             else if (b == Bound_Node.Boundary.AZNeg)
                             {
                                 if (Links2[11] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[11].Pt));
-                                (Links2[11] as RDD_Node).Links2[10] = new Null_Node();
-                                Links2[11] = new Null_Node();
+                                //(Links2[11] as RDD_Node).Links2[10] = new Null_Node();
+                                //Links2[11] = new Null_Node();
+                                (Links2[11] as RDD_Node).Links2[10] = (Links2[11] as RDD_Node).Links2[11];
+                                Links2[11] = Links2[10];
                             }
                         }
                         /*
@@ -1474,14 +1423,13 @@ namespace Pachyderm_Acoustic
                         [10] = z+
                         [11] = z-
                         */
-
                     }
 
-                    public override void UpdateP()
-                    {
-                        base.UpdateP();
-                        Pnf *= R;
-                    }
+                    //public override void UpdateP()
+                    //{
+                    //    base.UpdateP();
+                    //    Pnf *= R;
+                    //}
 
                     //public override void Link_Nodes(ref Node[][][] Frame, int x, int y, int z)
                     //{
@@ -1610,6 +1558,106 @@ namespace Pachyderm_Acoustic
                     //    }
                     //    #endregion
                     //}
+                }
+
+                public class DIF_IWB_2p : IIR_DIF
+                {
+                    double[] ax;
+                    double[] bx;
+                    double[] xx;
+                    double[] yx;
+                    double rec_b0;
+                    double gn;
+                    double interp;
+
+                    public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, double M)
+                        : this(Poles, Zeros, scale)
+                    {
+                        interp = M;
+                    }
+
+                    public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale, IWB_Mask M)
+                        : this(Poles, Zeros, scale)
+                    {
+                        switch (M)
+                        {
+                            case IWB_Mask.Axial:
+                                interp = .25;
+                                break;
+                            case IWB_Mask.SideDiagonal:
+                                interp = .125;
+                                break;
+                            case IWB_Mask.Diagonal:
+                                interp = .0625;
+                                break;
+                        }
+                    }
+
+                    public DIF_IWB_2p(double[] Poles, double[] Zeros, double scale)
+                    {
+                        ax = new double[3];
+                        ax[0] = 1;
+                        ax[1] = -(Poles[0] + Poles[1]);
+                        ax[2] = Poles[0] * Poles[1];
+
+                        bx = new double[3];
+                        bx[0] = 1 / scale;
+                        bx[1] = -(Zeros[0] + Zeros[1]) / scale;
+                        bx[2] = Zeros[0] * Zeros[1] / scale;
+
+                        if (ax.Length != bx.Length) throw new Exception("Number of Poles and Number of Zeros must be equal.");
+                        rec_b0 = 1 / bx[0];
+                        a_b = ax[0] / bx[0];
+                        xx = new double[2];
+                        yx = new double[2];
+                    }
+
+                    public override double g_b_term()
+                    {
+                        gn = bx[1] * xx[0] - ax[1] * yx[0] + bx[2] * xx[1] - ax[2] * yx[1];
+                        return gn * rec_b0 * interp;
+                    }
+
+                    /// <summary>
+                    /// Do before updating boundary node pressure values, but after getting the g-term.
+                    /// </summary>
+                    /// <param name="Pn"></param>
+                    public override void Update(double Pnf, double Pn_1)
+                    {
+                        xx[1] = xx[0];
+                        yx[1] = yx[0];
+                        xx[0] = a_b * (Pn_1 - Pnf) - gn / bx[0];
+                        yx[0] = (bx[0] * xx[0] + gn) / ax[0];
+                    }
+
+                    public double A0
+                    {
+                        get { return ax[0]; }
+                    }
+
+                    public double B0
+                    {
+                        get { return bx[0]; }
+                    }
+                }
+
+                public abstract class IIR_DIF
+                {
+                    public double a_b;
+                    protected int[] DIR;
+
+                    public enum IWB_Mask
+                    {
+                        Axial,
+                        SideDiagonal,
+                        Diagonal
+                    }
+
+                    //public Complex a_b_sub_1 { get { return ab1; } }
+                    //public Complex a_b_recip { get { return abdenom; } }
+                    public abstract double g_b_term();
+                    //public Complex ab;
+                    public abstract void Update(double Pnf, double Pn_1);
                 }
             }
         }

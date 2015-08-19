@@ -191,8 +191,6 @@ namespace Pachyderm_Acoustic
                     return RayPower;
                 }
 
-                //public List<Point3d> Pt = new List<Point3d>(10000);
-
                 public override BroadRay Directions(int index, int thread, ref Random random, ref Curve Curves, ref double[] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
                 {
                     double pos = random.NextDouble();

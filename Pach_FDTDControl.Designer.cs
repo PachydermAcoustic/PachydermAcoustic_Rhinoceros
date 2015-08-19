@@ -48,6 +48,7 @@ namespace Pachyderm_Acoustic
             [System.Diagnostics.DebuggerStepThrough()]
             private void InitializeComponent()
             {
+            this.components = new System.ComponentModel.Container();
             this.FromPointInputToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.DirectionalSourceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FromMeshSphereToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,6 +66,13 @@ namespace Pachyderm_Acoustic
             this.RoomSelection = new System.Windows.Forms.ComboBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label20 = new System.Windows.Forms.Label();
+            this.Receiver_Choice = new System.Windows.Forms.ComboBox();
+            this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+            this.Frequencies = new System.Windows.Forms.CheckedListBox();
+            this.Analysis_View = new ZedGraph.ZedGraphControl();
+            this.LockUserScale = new System.Windows.Forms.CheckBox();
+            this.Normalize_Graph = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.Selected_Extent = new System.Windows.Forms.ComboBox();
             this.CalculateSim = new System.Windows.Forms.Button();
@@ -110,6 +118,7 @@ namespace Pachyderm_Acoustic
             this.SourceSelect = new System.Windows.Forms.ComboBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.tableLayoutPanel3.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).BeginInit();
@@ -267,6 +276,9 @@ namespace Pachyderm_Acoustic
             // 
             // tabControl1
             // 
+            this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Location = new System.Drawing.Point(3, 3);
@@ -277,6 +289,9 @@ namespace Pachyderm_Acoustic
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.label20);
+            this.tabPage1.Controls.Add(this.Receiver_Choice);
+            this.tabPage1.Controls.Add(this.tableLayoutPanel3);
             this.tabPage1.Controls.Add(this.label2);
             this.tabPage1.Controls.Add(this.Selected_Extent);
             this.tabPage1.Controls.Add(this.CalculateSim);
@@ -287,6 +302,112 @@ namespace Pachyderm_Acoustic
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Simulation";
             this.tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label20
+            // 
+            this.label20.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label20.AutoSize = true;
+            this.label20.Enabled = false;
+            this.label20.Location = new System.Drawing.Point(6, 60);
+            this.label20.Name = "label20";
+            this.label20.Size = new System.Drawing.Size(50, 13);
+            this.label20.TabIndex = 47;
+            this.label20.Text = "Receiver";
+            // 
+            // Receiver_Choice
+            // 
+            this.Receiver_Choice.FormattingEnabled = true;
+            this.Receiver_Choice.Location = new System.Drawing.Point(62, 61);
+            this.Receiver_Choice.Name = "Receiver_Choice";
+            this.Receiver_Choice.Size = new System.Drawing.Size(201, 21);
+            this.Receiver_Choice.TabIndex = 46;
+            this.Receiver_Choice.Text = "No Results Calculated...";
+            // 
+            // tableLayoutPanel3
+            // 
+            this.tableLayoutPanel3.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel3.AutoScroll = true;
+            this.tableLayoutPanel3.ColumnCount = 4;
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 21F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 118F));
+            this.tableLayoutPanel3.Controls.Add(this.Frequencies, 0, 0);
+            this.tableLayoutPanel3.Controls.Add(this.Analysis_View, 0, 2);
+            this.tableLayoutPanel3.Controls.Add(this.LockUserScale, 1, 1);
+            this.tableLayoutPanel3.Controls.Add(this.Normalize_Graph, 2, 1);
+            this.tableLayoutPanel3.Location = new System.Drawing.Point(6, 88);
+            this.tableLayoutPanel3.Name = "tableLayoutPanel3";
+            this.tableLayoutPanel3.RowCount = 3;
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(395, 511);
+            this.tableLayoutPanel3.TabIndex = 44;
+            // 
+            // Frequencies
+            // 
+            this.Frequencies.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Frequencies.CheckOnClick = true;
+            this.tableLayoutPanel3.SetColumnSpan(this.Frequencies, 4);
+            this.Frequencies.FormattingEnabled = true;
+            this.Frequencies.Location = new System.Drawing.Point(3, 3);
+            this.Frequencies.MinimumSize = new System.Drawing.Size(4, 64);
+            this.Frequencies.Name = "Frequencies";
+            this.Frequencies.ScrollAlwaysVisible = true;
+            this.Frequencies.Size = new System.Drawing.Size(389, 94);
+            this.Frequencies.TabIndex = 7;
+            this.Frequencies.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.Frequencies_ItemCheck);
+            // 
+            // Analysis_View
+            // 
+            this.Analysis_View.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Analysis_View.AutoSize = true;
+            this.Analysis_View.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel3.SetColumnSpan(this.Analysis_View, 4);
+            this.Analysis_View.EditButtons = System.Windows.Forms.MouseButtons.Left;
+            this.Analysis_View.Location = new System.Drawing.Point(3, 128);
+            this.Analysis_View.Name = "Analysis_View";
+            this.Analysis_View.PanModifierKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.None)));
+            this.Analysis_View.ScrollGrace = 0D;
+            this.Analysis_View.ScrollMaxX = 0D;
+            this.Analysis_View.ScrollMaxY = 0D;
+            this.Analysis_View.ScrollMaxY2 = 0D;
+            this.Analysis_View.ScrollMinX = 0D;
+            this.Analysis_View.ScrollMinY = 0D;
+            this.Analysis_View.ScrollMinY2 = 0D;
+            this.Analysis_View.Size = new System.Drawing.Size(389, 380);
+            this.Analysis_View.TabIndex = 42;
+            // 
+            // LockUserScale
+            // 
+            this.LockUserScale.AutoSize = true;
+            this.LockUserScale.Location = new System.Drawing.Point(24, 103);
+            this.LockUserScale.Name = "LockUserScale";
+            this.LockUserScale.Size = new System.Drawing.Size(105, 17);
+            this.LockUserScale.TabIndex = 44;
+            this.LockUserScale.Text = "Lock User Scale";
+            this.LockUserScale.UseVisualStyleBackColor = true;
+            // 
+            // Normalize_Graph
+            // 
+            this.Normalize_Graph.AutoSize = true;
+            this.Normalize_Graph.Checked = true;
+            this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Normalize_Graph.Location = new System.Drawing.Point(151, 103);
+            this.Normalize_Graph.Name = "Normalize_Graph";
+            this.Normalize_Graph.Size = new System.Drawing.Size(119, 17);
+            this.Normalize_Graph.TabIndex = 43;
+            this.Normalize_Graph.Text = "Normalize To Direct";
+            this.Normalize_Graph.UseVisualStyleBackColor = true;
             // 
             // label2
             // 
@@ -316,7 +437,7 @@ namespace Pachyderm_Acoustic
             // 
             // CalculateSim
             // 
-            this.CalculateSim.Location = new System.Drawing.Point(6, 110);
+            this.CalculateSim.Location = new System.Drawing.Point(6, 34);
             this.CalculateSim.Name = "CalculateSim";
             this.CalculateSim.Size = new System.Drawing.Size(395, 23);
             this.CalculateSim.TabIndex = 0;
@@ -549,6 +670,7 @@ namespace Pachyderm_Acoustic
             this.Preview.TabIndex = 87;
             this.Preview.Text = "Calculate & Run";
             this.Preview.UseVisualStyleBackColor = true;
+            this.Preview.Click += new System.EventHandler(this.Calculate_Click);
             // 
             // Param3_4
             // 
@@ -593,6 +715,8 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
+            this.Param_Max.ValueChanged += new System.EventHandler(this.Param_Max_ValueChanged);
+            this.Param_Max.Click += new System.EventHandler(this.Param_Max_ValueChanged);
             // 
             // Param_Scale
             // 
@@ -655,6 +779,8 @@ namespace Pachyderm_Acoustic
             this.Param_Min.Name = "Param_Min";
             this.Param_Min.Size = new System.Drawing.Size(51, 20);
             this.Param_Min.TabIndex = 97;
+            this.Param_Min.ValueChanged += new System.EventHandler(this.Param_Max_ValueChanged);
+            this.Param_Min.Click += new System.EventHandler(this.Param_Max_ValueChanged);
             // 
             // Loop
             // 
@@ -668,6 +794,7 @@ namespace Pachyderm_Acoustic
             this.Loop.TabIndex = 35;
             this.Loop.Text = "Loop";
             this.Loop.UseVisualStyleBackColor = true;
+            this.Loop.Click += new System.EventHandler(this.Loop_Click);
             // 
             // button2
             // 
@@ -681,6 +808,7 @@ namespace Pachyderm_Acoustic
             this.button2.TabIndex = 34;
             this.button2.Text = ">>";
             this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.Forw_Click);
             // 
             // Color_Selection
             // 
@@ -698,6 +826,8 @@ namespace Pachyderm_Acoustic
             this.Color_Selection.Size = new System.Drawing.Size(92, 21);
             this.Color_Selection.TabIndex = 100;
             this.Color_Selection.Text = "R-O-Y-G-B-I-V";
+            this.Color_Selection.SelectedIndexChanged += new System.EventHandler(this.Color_Selection_SelectedIndexChanged);
+            this.Color_Selection.Click += new System.EventHandler(this.Color_Selection_SelectedIndexChanged);
             // 
             // label23
             // 
@@ -716,6 +846,8 @@ namespace Pachyderm_Acoustic
             this.Pos_Select.Name = "Pos_Select";
             this.Pos_Select.Size = new System.Drawing.Size(92, 20);
             this.Pos_Select.TabIndex = 109;
+            this.Pos_Select.ValueChanged += new System.EventHandler(this.Pos_Select_ValueChanged);
+            this.Pos_Select.Click += new System.EventHandler(this.Pos_Select_ValueChanged);
             // 
             // AxisSelect
             // 
@@ -735,6 +867,8 @@ namespace Pachyderm_Acoustic
             this.AxisSelect.Size = new System.Drawing.Size(92, 21);
             this.AxisSelect.TabIndex = 117;
             this.AxisSelect.Text = "Z";
+            this.AxisSelect.SelectedIndexChanged += new System.EventHandler(this.AxisSelect_SelectedIndexChanged);
+            this.AxisSelect.Click += new System.EventHandler(this.AxisSelect_SelectedIndexChanged);
             // 
             // Map_Planes
             // 
@@ -758,6 +892,7 @@ namespace Pachyderm_Acoustic
             this.AddPlane.TabIndex = 116;
             this.AddPlane.Text = "Add Plane";
             this.AddPlane.UseVisualStyleBackColor = true;
+            this.AddPlane.Click += new System.EventHandler(this.AddPlane_Click);
             // 
             // Magnitude
             // 
@@ -949,6 +1084,8 @@ namespace Pachyderm_Acoustic
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
+            this.tableLayoutPanel3.ResumeLayout(false);
+            this.tableLayoutPanel3.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
@@ -1033,6 +1170,13 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label label2;
             private System.Windows.Forms.ComboBox Selected_Extent;
             private System.Windows.Forms.Button CalculateSim;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
+            internal System.Windows.Forms.CheckedListBox Frequencies;
+            private ZedGraph.ZedGraphControl Analysis_View;
+            private System.Windows.Forms.CheckBox LockUserScale;
+            private System.Windows.Forms.CheckBox Normalize_Graph;
+            internal System.Windows.Forms.Label label20;
+            internal System.Windows.Forms.ComboBox Receiver_Choice;
         }
     }
 }
