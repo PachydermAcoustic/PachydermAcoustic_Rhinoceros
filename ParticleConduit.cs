@@ -43,6 +43,12 @@ namespace Pachyderm_Acoustic
             int nx, ny, nz;
             Point3d min;
 
+            public WaveConduit(Pach_Graphics.colorscale C_in, double[] V_Bounds_in)
+            {
+                C = C_in;
+                V_Bounds = V_Bounds_in;
+            }
+
             public WaveConduit(Pach_Graphics.colorscale C_in, double[] V_Bounds_in, Scene S)
             {
                 min = Utilities.PachTools.HPttoRPt(S.Min());

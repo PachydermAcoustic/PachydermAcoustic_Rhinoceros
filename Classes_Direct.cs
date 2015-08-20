@@ -417,9 +417,9 @@ namespace Pachyderm_Acoustic
                         //P[i][0, oct] = Math.Sqrt(Io[i][0, oct] * Room.Rho_C(Receiver[i]));
                         Vector V = dir * Io[i][oct][0];
 
-                        if (V.x > 0) Dir_Rec_Pos[i][0][oct][0] += (float)V.x; else Dir_Rec_Neg[i][0][oct][0] += (float)V.x;
-                        if (V.y > 0) Dir_Rec_Pos[i][0][oct][1] += (float)V.y; else Dir_Rec_Neg[i][0][oct][1] += (float)V.y;
-                        if (V.z > 0) Dir_Rec_Pos[i][0][oct][2] += (float)V.z; else Dir_Rec_Neg[i][0][oct][2] += (float)V.z;
+                        if (V.x > 0) Dir_Rec_Pos[i][oct][0][0] += (float)V.x; else Dir_Rec_Neg[i][oct][0][0] += (float)V.x;
+                        if (V.y > 0) Dir_Rec_Pos[i][oct][0][1] += (float)V.y; else Dir_Rec_Neg[i][oct][0][1] += (float)V.y;
+                        if (V.z > 0) Dir_Rec_Pos[i][oct][0][2] += (float)V.z; else Dir_Rec_Neg[i][oct][0][2] += (float)V.z;
                     }
 
                     Time_Pt[i] = Length / C_Sound + Src.Delay;
@@ -818,7 +818,7 @@ namespace Pachyderm_Acoustic
             {
                 double[][] ETC = new double[8][];
 
-                for (int oct = 0; oct < 8; oct++) ETC[oct] = new double[Io[i].GetLongLength(0)];
+                for (int oct = 0; oct < 8; oct++) ETC[oct] = new double[Io[i][0].Length];
 
                 for (int t = 0; t < ETC[0].Length; t++)
                 {

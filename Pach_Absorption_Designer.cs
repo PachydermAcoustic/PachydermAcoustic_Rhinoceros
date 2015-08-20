@@ -244,6 +244,22 @@ namespace Pachyderm_Acoustic
                 else for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
                 
                 for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
+
+                Estimate_IIR();
+            }
+
+            public void Estimate_IIR()
+            {
+                Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
+                double[] R = Audio.Pach_SP.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
+
+                double[] a, b;
+                Audio.Pach_SP.Yule_Walker(R, out a, out b);
+                Complex[] IIR_spec = Audio.Pach_SP.SpectrumFromIIR(a, b, 44100, 4096);
+                double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
+
+                Alpha_Normal.Series[2].Points.Clear();
+                for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[2].Points.AddXY(sm.frequency[i], alpha[i]);
             }
 
             public Chart Polar_Plot()

@@ -86,30 +86,31 @@ namespace Pachyderm_Acoustic
             System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint2 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1D, 1D);
             System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint3 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(62.5D, 10D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint4 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(62.5D, 0D);
-            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series13 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint5 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(125D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint6 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(125D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series13 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series14 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint7 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(250D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint8 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(250D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series14 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series15 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint9 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(500D, 10D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint10 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(500D, 0D);
-            System.Windows.Forms.DataVisualization.Charting.Series series15 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series16 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint11 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1000D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint12 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1000D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series16 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series17 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint13 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(2000D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint14 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(2000D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series17 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series18 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint15 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(4000D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint16 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(4000D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series18 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series19 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint17 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(8000D, 0D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint18 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(8000D, 10D);
-            System.Windows.Forms.DataVisualization.Charting.Series series19 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series20 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint19 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1D, 1D);
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint20 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(10000D, 1D);
             System.Windows.Forms.DataVisualization.Charting.Title title1 = new System.Windows.Forms.DataVisualization.Charting.Title();
@@ -125,9 +126,9 @@ namespace Pachyderm_Acoustic
             System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel27 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
             System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel28 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
             System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series20 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint21 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1D, 1D);
             System.Windows.Forms.DataVisualization.Charting.Series series21 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint21 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1D, 1D);
+            System.Windows.Forms.DataVisualization.Charting.Series series22 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint22 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(1D, 1D);
             this.LayerList = new System.Windows.Forms.ListBox();
             this.Use_RI = new System.Windows.Forms.Button();
@@ -190,6 +191,8 @@ namespace Pachyderm_Acoustic
             this.label5 = new System.Windows.Forms.Label();
             this.label21 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
+            this.IIR_Order = new System.Windows.Forms.NumericUpDown();
+            this.label23 = new System.Windows.Forms.Label();
             Cancel = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.Polar_Absorption)).BeginInit();
             this.Porous_1Param.SuspendLayout();
@@ -212,6 +215,7 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.diameter)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.SoundSpeed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Impedance_Graph)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.IIR_Order)).BeginInit();
             this.SuspendLayout();
             // 
             // Cancel
@@ -1016,92 +1020,96 @@ namespace Pachyderm_Acoustic
             series10.MarkerStyle = System.Windows.Forms.DataVisualization.Charting.MarkerStyle.Cross;
             series10.Name = "Random Incidence";
             series10.Points.Add(dataPoint2);
-            series11.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series11.ChartArea = "ChartArea1";
             series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series11.Color = System.Drawing.Color.DarkGray;
-            series11.IsVisibleInLegend = false;
             series11.Legend = "Legend1";
-            series11.Name = "Series2";
-            dataPoint3.IsVisibleInLegend = false;
-            dataPoint3.LabelBorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.NotSet;
-            dataPoint3.LabelForeColor = System.Drawing.Color.Black;
-            series11.Points.Add(dataPoint3);
-            series11.Points.Add(dataPoint4);
+            series11.Name = "IIR Estimate";
             series12.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series12.ChartArea = "ChartArea1";
             series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series12.Color = System.Drawing.Color.DarkGray;
             series12.IsVisibleInLegend = false;
             series12.Legend = "Legend1";
-            series12.Name = "Series3";
-            series12.Points.Add(dataPoint5);
-            series12.Points.Add(dataPoint6);
+            series12.Name = "Series2";
+            dataPoint3.IsVisibleInLegend = false;
+            dataPoint3.LabelBorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.NotSet;
+            dataPoint3.LabelForeColor = System.Drawing.Color.Black;
+            series12.Points.Add(dataPoint3);
+            series12.Points.Add(dataPoint4);
             series13.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series13.ChartArea = "ChartArea1";
             series13.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series13.Color = System.Drawing.Color.DarkGray;
             series13.IsVisibleInLegend = false;
             series13.Legend = "Legend1";
-            series13.Name = "Series4";
-            series13.Points.Add(dataPoint7);
-            series13.Points.Add(dataPoint8);
+            series13.Name = "Series3";
+            series13.Points.Add(dataPoint5);
+            series13.Points.Add(dataPoint6);
             series14.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series14.ChartArea = "ChartArea1";
             series14.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series14.Color = System.Drawing.Color.DarkGray;
             series14.IsVisibleInLegend = false;
             series14.Legend = "Legend1";
-            series14.Name = "Series5";
-            series14.Points.Add(dataPoint9);
-            series14.Points.Add(dataPoint10);
+            series14.Name = "Series4";
+            series14.Points.Add(dataPoint7);
+            series14.Points.Add(dataPoint8);
             series15.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series15.ChartArea = "ChartArea1";
             series15.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series15.Color = System.Drawing.Color.DarkGray;
             series15.IsVisibleInLegend = false;
             series15.Legend = "Legend1";
-            series15.Name = "Series6";
-            series15.Points.Add(dataPoint11);
-            series15.Points.Add(dataPoint12);
+            series15.Name = "Series5";
+            series15.Points.Add(dataPoint9);
+            series15.Points.Add(dataPoint10);
             series16.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series16.ChartArea = "ChartArea1";
             series16.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series16.Color = System.Drawing.Color.DarkGray;
             series16.IsVisibleInLegend = false;
             series16.Legend = "Legend1";
-            series16.Name = "Series7";
-            series16.Points.Add(dataPoint13);
-            series16.Points.Add(dataPoint14);
+            series16.Name = "Series6";
+            series16.Points.Add(dataPoint11);
+            series16.Points.Add(dataPoint12);
             series17.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series17.ChartArea = "ChartArea1";
             series17.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series17.Color = System.Drawing.Color.DarkGray;
             series17.IsVisibleInLegend = false;
             series17.Legend = "Legend1";
-            series17.Name = "Series8";
-            series17.Points.Add(dataPoint15);
-            series17.Points.Add(dataPoint16);
+            series17.Name = "Series7";
+            series17.Points.Add(dataPoint13);
+            series17.Points.Add(dataPoint14);
             series18.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             series18.ChartArea = "ChartArea1";
             series18.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series18.Color = System.Drawing.Color.DarkGray;
             series18.IsVisibleInLegend = false;
             series18.Legend = "Legend1";
-            series18.Name = "Series9";
-            series18.Points.Add(dataPoint17);
-            series18.Points.Add(dataPoint18);
+            series18.Name = "Series8";
+            series18.Points.Add(dataPoint15);
+            series18.Points.Add(dataPoint16);
             series19.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
-            series19.BorderWidth = 2;
             series19.ChartArea = "ChartArea1";
             series19.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series19.Color = System.Drawing.Color.DodgerBlue;
+            series19.Color = System.Drawing.Color.DarkGray;
             series19.IsVisibleInLegend = false;
             series19.Legend = "Legend1";
-            series19.MarkerColor = System.Drawing.Color.Transparent;
-            series19.Name = "Series11";
-            series19.Points.Add(dataPoint19);
-            series19.Points.Add(dataPoint20);
+            series19.Name = "Series9";
+            series19.Points.Add(dataPoint17);
+            series19.Points.Add(dataPoint18);
+            series20.BorderDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
+            series20.BorderWidth = 2;
+            series20.ChartArea = "ChartArea1";
+            series20.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series20.Color = System.Drawing.Color.DodgerBlue;
+            series20.IsVisibleInLegend = false;
+            series20.Legend = "Legend1";
+            series20.MarkerColor = System.Drawing.Color.Transparent;
+            series20.Name = "Series11";
+            series20.Points.Add(dataPoint19);
+            series20.Points.Add(dataPoint20);
             this.Alpha_Normal.Series.Add(series9);
             this.Alpha_Normal.Series.Add(series10);
             this.Alpha_Normal.Series.Add(series11);
@@ -1113,6 +1121,7 @@ namespace Pachyderm_Acoustic
             this.Alpha_Normal.Series.Add(series17);
             this.Alpha_Normal.Series.Add(series18);
             this.Alpha_Normal.Series.Add(series19);
+            this.Alpha_Normal.Series.Add(series20);
             this.Alpha_Normal.Size = new System.Drawing.Size(864, 260);
             this.Alpha_Normal.TabIndex = 48;
             this.Alpha_Normal.Text = "Absorption Coefficient";
@@ -1486,22 +1495,22 @@ namespace Pachyderm_Acoustic
             this.Impedance_Graph.Legends.Add(legend3);
             this.Impedance_Graph.Location = new System.Drawing.Point(448, 275);
             this.Impedance_Graph.Name = "Impedance_Graph";
-            series20.ChartArea = "ChartArea1";
-            series20.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series20.Color = System.Drawing.Color.Blue;
-            series20.Legend = "Legend1";
-            series20.Name = "Z Real";
-            series20.Points.Add(dataPoint21);
             series21.ChartArea = "ChartArea1";
             series21.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series21.Color = System.Drawing.Color.Red;
+            series21.Color = System.Drawing.Color.Blue;
             series21.Legend = "Legend1";
-            series21.MarkerBorderColor = System.Drawing.Color.Red;
-            series21.MarkerColor = System.Drawing.Color.Red;
-            series21.Name = "Z Imaginary";
-            series21.Points.Add(dataPoint22);
-            this.Impedance_Graph.Series.Add(series20);
+            series21.Name = "Z Real";
+            series21.Points.Add(dataPoint21);
+            series22.ChartArea = "ChartArea1";
+            series22.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series22.Color = System.Drawing.Color.Red;
+            series22.Legend = "Legend1";
+            series22.MarkerBorderColor = System.Drawing.Color.Red;
+            series22.MarkerColor = System.Drawing.Color.Red;
+            series22.Name = "Z Imaginary";
+            series22.Points.Add(dataPoint22);
             this.Impedance_Graph.Series.Add(series21);
+            this.Impedance_Graph.Series.Add(series22);
             this.Impedance_Graph.Size = new System.Drawing.Size(428, 448);
             this.Impedance_Graph.TabIndex = 50;
             this.Impedance_Graph.Text = "Impedance";
@@ -1566,11 +1575,37 @@ namespace Pachyderm_Acoustic
             this.label22.TabIndex = 59;
             this.label22.Text = "-- Incident Side (Air [Z = rho * c)] --";
             // 
+            // IIR_Order
+            // 
+            this.IIR_Order.Location = new System.Drawing.Point(205, 243);
+            this.IIR_Order.Name = "IIR_Order";
+            this.IIR_Order.Size = new System.Drawing.Size(115, 20);
+            this.IIR_Order.TabIndex = 62;
+            this.IIR_Order.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.IIR_Order.Value = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            // 
+            // label23
+            // 
+            this.label23.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(124, 245);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(75, 13);
+            this.label23.TabIndex = 62;
+            this.label23.Text = "IIR Filter Order";
+            // 
             // Pach_Absorption_Designer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1462, 742);
+            this.Controls.Add(this.label23);
             this.Controls.Add(this.label22);
             this.Controls.Add(this.label21);
             this.Controls.Add(this.label4);
@@ -1578,11 +1613,12 @@ namespace Pachyderm_Acoustic
             this.Controls.Add(this.label2);
             this.Controls.Add(this.Impedance_Graph);
             this.Controls.Add(this.Physical_Params1);
-            this.Controls.Add(this.Alpha_Normal);
             this.Controls.Add(this.tableLayoutPanel2);
+            this.Controls.Add(this.IIR_Order);
             this.Controls.Add(this.Porous_1Param);
             this.Controls.Add(this.Polar_Absorption);
             this.Controls.Add(this.LayerList);
+            this.Controls.Add(this.Alpha_Normal);
             this.Name = "Pach_Absorption_Designer";
             this.Text = "Materials Designer";
             ((System.ComponentModel.ISupportInitialize)(this.Polar_Absorption)).EndInit();
@@ -1610,6 +1646,7 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.diameter)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.SoundSpeed)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Impedance_Graph)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.IIR_Order)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1678,6 +1715,8 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.ComboBox Zf_Incorp_Method;
             private System.Windows.Forms.Label label21;
             private System.Windows.Forms.Label label22;
+            private System.Windows.Forms.NumericUpDown IIR_Order;
+            private System.Windows.Forms.Label label23;
         }
     }
 }

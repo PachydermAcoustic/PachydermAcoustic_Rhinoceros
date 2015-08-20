@@ -339,6 +339,7 @@ namespace Pachyderm_Acoustic
                     SD.Drive(n);
                     Mic.Record(n);
                     n += 1;
+                    time_ms = n * dt * 1000;
                     return time_ms;
                 }
 
@@ -1290,25 +1291,6 @@ namespace Pachyderm_Acoustic
                         Coefficients = new double[no_of_Layers / 2];
                         layerCt = no_of_Layers / 2;
 
-                        //for (int i = 0; i < no_of_Layers; i++)
-                        //{
-                        //    Coefficients[i] = 1 - max_Coefficient * (no_of_Layers - i) / no_of_Layers;
-                        //    Layers[i] = new List<Node>();
-                        //    for (int y = 0; y < PFrame[i].Length - i; y++) for (int z = 0; z < PFrame[i][y].Length - i; z++) Layers[i].Add(PFrame[i][y][z]);
-                        //    int last = PFrame.Length - 1 - i;
-                        //    for (int y = 0; y < PFrame[last].Length - i; y++) for (int z = 0; z < PFrame[last][y].Length - i; z++) Layers[i].Add(PFrame[last][y][z]);
-                        //    int end = PFrame.Length - i - 1;
-                        //    for (int x = i + 1; x < end; x++)
-                        //    {
-                        //        for (int j = i; j < PFrame[x][i].Length; j++) Layers[i].Add(PFrame[x][i][j]);
-                        //        for (int j = i; j < PFrame[x][PFrame[x].Length - i - 1].Length; j++) Layers[i].Add(PFrame[x][PFrame[x].Length - i - 1][j]);
-                        //        for (int j = i + 1; j < PFrame[x].Length - 1; j++)
-                        //        {
-                        //            Layers[i].Add(PFrame[x][j][i]);
-                        //            Layers[i].Add(PFrame[x][j][PFrame[x][j].Length - 1 - i]);
-                        //        }
-                        //    }
-                        //}
                         for (int i = 0; i < layerCt; i++)
                         {
                             Coefficients[i] = 1 - max_Coefficient * (layerCt - i) / layerCt;
@@ -1432,7 +1414,20 @@ namespace Pachyderm_Acoustic
                             }
                             break;
                         case Signal_Type.Sine_Pulse:
-                            for (int n = 0; n < tmax / dt; n++) signal[n] = Math.Exp(-.5 * Math.Pow((double)n / 1, 2)) * Math.Sin(f2pi * n * dt);
+                            //for (int n = 0; n < tmax / dt; n++) signal[n] = Math.Exp(-.5 * Math.Pow((double)n / 1, 2)) * Math.Sin(f2pi * n * dt);
+                            double kk = Math.PI / 60 / 343 / dt;
+                            double offset = Math.PI / kk / 343;
+                            signal = new double[60];
+                            double param = 2 * (0.371 * 60 - 8.1);
+                            double sumsig = 0;
+                            for (int n = 0; n < 60; n++)
+                            {
+                                double t = n * dt;
+                                signal[n] = (t - offset / 2) * Math.Pow(Math.Sin(kk * 343 * t), param);
+                                sumsig += signal[n] * signal[n];
+                            }
+                            for (int i = 0; i < signal.Length; i++) signal[i] = Math.Sqrt(signal[i] * signal[i] / sumsig) * ((signal[i] < 0) ? -1 : 1);
+
                             break;
                         case Signal_Type.SteadyState_Noise:
                             for (int n = 0; n < tmax / dt; n++) signal[n] = R.NextDouble();

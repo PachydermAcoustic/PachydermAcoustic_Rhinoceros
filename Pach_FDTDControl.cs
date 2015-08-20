@@ -28,7 +28,7 @@ namespace Pachyderm_Acoustic
     namespace UI
     {
         [GuidAttribute("7c62fae6-efa7-4c07-af12-cd440049c7fc")]
-        public partial class Pach_TD_Numeric_Control: System.Windows.Forms.UserControl
+        public partial class Pach_TD_Numeric_Control : System.Windows.Forms.UserControl
         {
             // This call is required by the Windows Form Designer. 
             public Pach_TD_Numeric_Control()
@@ -52,17 +52,17 @@ namespace Pachyderm_Acoustic
             private void Calculate_Click(object sender, System.EventArgs e)
             {
                 FC = new ForCall(Forw_proc);
-                
-                Polygon_Scene Rm = PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double) Air_Temp.Value, (double) Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+
+                Polygon_Scene Rm = PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                 if (!Rm.Complete) return;
 
-                if (P == null) P = new WaveConduit(scale, new double[2] { (double)this.Param_Min.Value, (double)this.Param_Max.Value }, Rm);
+                if (P == null) P = new WaveConduit(scale, new double[2] { (double)this.Param_Min.Value, (double)this.Param_Max.Value });
                 Rhino.Geometry.Point3d[] Src = PachTools.GetSource();
                 Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
                 Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
-                        
+
                 switch (SourceSelect.Text)
                 {
                     case "Dirac Pulse":
@@ -75,24 +75,24 @@ namespace Pachyderm_Acoustic
                         s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse;
                         break;
                 }
-                
+
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, PachTools.GetSource());
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value);
                 M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
-                P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[]{(double)Param_Min.Value, (double)Param_Max.Value});
+                P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[] { (double)Param_Min.Value, (double)Param_Max.Value });
                 P.Enabled = true;
 
                 if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = FDTD.xDim - 1;
                 else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = FDTD.yDim - 1;
                 else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = FDTD.zDim - 1;
 
-                if (Map_Planes.Items.Count == 0) 
+                if (Map_Planes.Items.Count == 0)
                 {
-                    Pos_Select.Value = Pos_Select.Maximum / 2; 
-                    AddPlane_Click(new object(), new EventArgs()); 
+                    Pos_Select.Value = Pos_Select.Maximum / 2;
+                    AddPlane_Click(new object(), new EventArgs());
                 }
             }
 
@@ -116,14 +116,14 @@ namespace Pachyderm_Acoustic
                         FC();
                         System.Threading.Thread.Sleep(100);
                     }
-                    else 
+                    else
                     {
                         System.Threading.Thread.CurrentThread.Abort();
                     }
                 }
                 while (true);
             }
-            
+
             private delegate void ForCall();
             ForCall FC;
 
@@ -143,9 +143,9 @@ namespace Pachyderm_Acoustic
                     else if (p.axis == 2) Z.Add(p.pos);
                 }
 
-                FDTD.Pressure_Points(ref Pts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10,(double)Param_Min.Value/20), false, false, true, Magnitude.Checked);
+                FDTD.Pressure_Points(ref Pts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, (double)Param_Min.Value / 20), false, false, true, Magnitude.Checked);
                 P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), FDTD.dx, Pressure, M, Magnitude.Checked);
-            
+
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
@@ -154,10 +154,10 @@ namespace Pachyderm_Acoustic
                 double t = FDTD.Increment();
 
                 Show_Field();
-                
+
                 this.Invoke((MethodInvoker)delegate
                 {
-                    Time_Preview.Text = Math.Round(t,3).ToString();
+                    Time_Preview.Text = Math.Round(t, 3).ToString();
                 });
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
@@ -202,7 +202,7 @@ namespace Pachyderm_Acoustic
                         Param_Scale.Image = scale.PIC;
                         break;
                     case "Y-G-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI/3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
                         Param_Scale.Image = scale.PIC;
                         break;
                     case "R-O-Y":
@@ -218,7 +218,7 @@ namespace Pachyderm_Acoustic
                         Param_Scale.Image = scale.PIC;
                         break;
                     default:
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI/2.0, 0, 0, 1, 1, false, 12);
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
                         Param_Scale.Image = scale.PIC;
                         break;
                 }
@@ -236,18 +236,19 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < FDTD.zDim; i++)
                     {
                         System.Drawing.Bitmap BM = new System.Drawing.Bitmap(FDTD.xDim, FDTD.yDim);
-                        for (int j = 0; j < FDTD.xDim; j++) for (int k = 0; k < FDTD.yDim; k++)
-                        {
-                            int V = (int) (255 * ( 20 * Math.Log10(FDTD.P(j,k,i) / 0.00002)/200));
-                            V = (V > 200) ? 200 : (V < 0) ? 0 : V;
-                            BM.SetPixel(j, k, System.Drawing.Color.FromArgb(255,V,V,V));
-                        }
+                        for (int j = 0; j < FDTD.xDim; j++)
+                            for (int k = 0; k < FDTD.yDim; k++)
+                            {
+                                int V = (int)(255 * (20 * Math.Log10(FDTD.P(j, k, i) / 0.00002) / 200));
+                                V = (V > 200) ? 200 : (V < 0) ? 0 : V;
+                                BM.SetPixel(j, k, System.Drawing.Color.FromArgb(255, V, V, V));
+                            }
                         BM.Save(sf.SelectedPath + "\\" + i.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
                     }
                 }
             }
 
-            private class CutPlane 
+            private class CutPlane
             {
                 public int pos;
                 public int axis;
@@ -276,7 +277,7 @@ namespace Pachyderm_Acoustic
 
                 if (FDTD != null)
                 {
-                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)(FDTD.xDim - 1): (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)(FDTD.yDim - 1) : (int)(FDTD.zDim - 1);
+                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)(FDTD.xDim - 1) : (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)(FDTD.yDim - 1) : (int)(FDTD.zDim - 1);
                 }
 
                 Map_Planes.Refresh();
@@ -284,7 +285,7 @@ namespace Pachyderm_Acoustic
 
             private void Pos_Select_ValueChanged(object sender, EventArgs e)
             {
-                if (Map_Planes.SelectedIndex < 0) return; 
+                if (Map_Planes.SelectedIndex < 0) return;
                 (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).pos = (int)Pos_Select.Value;
                 Map_Planes.Update();
             }
@@ -292,38 +293,49 @@ namespace Pachyderm_Acoustic
             #endregion
 
             #region Simulation
+            double samplefrequency;
+
             private void CalculateSim_Click(object sender, EventArgs e)
             {
                 FC = new ForCall(Forw_proc);
 
                 Polygon_Scene Rm = PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                 if (!Rm.Complete) return;
-
+                
                 Rhino.Geometry.Point3d[] Src = PachTools.GetSource();
                 Rhino.Geometry.Point3d[] Rec = PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
-                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
-
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
                 double fs = 137.8125 * Math.Pow(2, Selected_Extent.SelectedIndex);
+                samplefrequency = fs;
                 double df = 1d / ((double)CO_TIME.Value / 1000);
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, df, 1, PachTools.GetSource());
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value);
 
-                for (double f = df; f < fs; f+= df)
+                for (double f = df; f < fs; f += df)
                 {
                     FDTD.reset(f, Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse);
                     FDTD.RuntoCompletion();
+
+                    Frequencies.Items.Add(string.Format("{0} Hz.", f), true);
                 }
 
+                Receiver_Choice.Text = "0";
+
                 result_signals = Mic.Recordings;
-
-
             }
 
             List<double[][]> result_signals;
+            private void Frequencies_ItemCheck(object sender, ItemCheckEventArgs e)
+            {
+                Update_Graph(this, null);
+            }
 
+            private void Update_Graph(object sender, EventArgs e)
+            {
+
+            }
             #endregion
         }
     }
