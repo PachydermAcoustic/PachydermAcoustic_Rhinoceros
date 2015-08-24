@@ -64,62 +64,71 @@ namespace Pachyderm_Acoustic
 
                 Pachyderm_Acoustic.UI.PachydermAc_PlugIn plugin = Pachyderm_Acoustic.UI.PachydermAc_PlugIn.Instance;
 
-                System.IO.BinaryWriter sw = new System.IO.BinaryWriter(System.IO.File.Open(filename, System.IO.FileMode.Create));
-                //1. Date & Time
-                sw.Write(System.DateTime.Now.ToString());
-                //2. Plugin Version... if less than 1.1, assume only 1 source.
-                sw.Write(plugin.Version);
-                //3. Cut off Time (seconds) and SampleRate
-                sw.Write((double)Receiver[0].CO_Time);//CO_TIME.Value);
-                sw.Write(Receiver[0].SampleRate);
-                //4.0 Source Count(int)
-                Rhino.Geometry.Point3d[] SRC;
-                plugin.SourceOrigin(out SRC);
-                sw.Write(SRC.Length);
-                for (int i = 0; i < SRC.Length; i++)
+                System.IO.FileStream file = System.IO.File.Open(filename, System.IO.FileMode.Create);
+                if (file.CanWrite)
                 {
-                    //4.1 Source Location x (double)    
-                    sw.Write(SRC[i].X);
-                    //4.2 Source Location y (double)
-                    sw.Write(SRC[i].Y);
-                    //4.3 Source Location z (double)
-                    sw.Write(SRC[i].Z);
-                }
-                //5. No of Receivers
-                sw.Write(Receiver[0].Rec_List.Length);
-
-                //6. Write the coordinates of each receiver point
-                //6b. Write the environmental characteristics at each receiver point (Rho * C); V2.0 only...
-                for (int q = 0; q < Receiver[0].Rec_List.Length; q++)
-                {
-                    sw.Write(Receiver[0].Rec_List[q].H_Origin.x);
-                    sw.Write(Receiver[0].Rec_List[q].H_Origin.y);
-                    sw.Write(Receiver[0].Rec_List[q].H_Origin.z);
-                    sw.Write(Receiver[0].Rec_List[q].Rho_C);
-                }
-
-                for (int s = 0; s < SRC.Length; s++)
-                {
-                    if (Direct_Data != null)
+                    System.IO.BinaryWriter sw = new System.IO.BinaryWriter(file);
+                    //1. Date & Time
+                    sw.Write(System.DateTime.Now.ToString());
+                    //2. Plugin Version... if less than 1.1, assume only 1 source.
+                    sw.Write(plugin.Version);
+                    //3. Cut off Time (seconds) and SampleRate
+                    sw.Write((double)Receiver[0].CO_Time);//CO_TIME.Value);
+                    sw.Write(Receiver[0].SampleRate);
+                    //4.0 Source Count(int)
+                    Rhino.Geometry.Point3d[] SRC;
+                    plugin.SourceOrigin(out SRC);
+                    sw.Write(SRC.Length);
+                    for (int i = 0; i < SRC.Length; i++)
                     {
-                        //7. Write Direct Sound Data
-                        Direct_Data[s].Write_Data(ref sw);
+                        //4.1 Source Location x (double)    
+                        sw.Write(SRC[i].X);
+                        //4.2 Source Location y (double)
+                        sw.Write(SRC[i].Y);
+                        //4.3 Source Location z (double)
+                        sw.Write(SRC[i].Z);
+                    }
+                    //5. No of Receivers
+                    sw.Write(Receiver[0].Rec_List.Length);
+
+                    //6. Write the coordinates of each receiver point
+                    //6b. Write the environmental characteristics at each receiver point (Rho * C); V2.0 only...
+                    for (int q = 0; q < Receiver[0].Rec_List.Length; q++)
+                    {
+                        sw.Write(Receiver[0].Rec_List[q].H_Origin.x);
+                        sw.Write(Receiver[0].Rec_List[q].H_Origin.y);
+                        sw.Write(Receiver[0].Rec_List[q].H_Origin.z);
+                        sw.Write(Receiver[0].Rec_List[q].Rho_C);
                     }
 
-                    if (IS_Data[0] != null)
+                    for (int s = 0; s < SRC.Length; s++)
                     {
-                        //8. Write Image Source Sound Data
-                        IS_Data[s].Write_Data(ref sw);
-                    }
+                        if (Direct_Data != null)
+                        {
+                            //7. Write Direct Sound Data
+                            Direct_Data[s].Write_Data(ref sw);
+                        }
 
-                    if (Receiver != null)
-                    {
-                        //9. Write Ray Traced Sound Data
-                        Receiver[s].Write_Data(ref sw);
+                        if (IS_Data[0] != null)
+                        {
+                            //8. Write Image Source Sound Data
+                            IS_Data[s].Write_Data(ref sw);
+                        }
+
+                        if (Receiver != null)
+                        {
+                            //9. Write Ray Traced Sound Data
+                            Receiver[s].Write_Data(ref sw);
+                        }
                     }
+                    sw.Write("End");
+                    sw.Close();
                 }
-                sw.Write("End");
-                sw.Close();
+                else
+                {
+                    System.Windows.Forms.MessageBox.Show("Cannot write to file. It may be open in another application.");
+                    return;
+                }
             }
 
             /// <summary>

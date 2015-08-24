@@ -57,6 +57,7 @@ namespace Pachyderm_Acoustic
                 ny = (int)System.Math.Ceiling(range.y);
                 nz = (int)System.Math.Ceiling(range.z);
                 ptgrid = new List<int>[nx, ny, nz];
+                
                 for (int x = 0; x < nx; x++)
                     for (int y = 0; y < ny; y++)
                         for (int z = 0; z < nz; z++)
