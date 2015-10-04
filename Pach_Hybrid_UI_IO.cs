@@ -138,45 +138,7 @@ namespace Pachyderm_Acoustic
             public void Plot_Results()
             {
                 if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.Text != "Sabine RT" && Parameter_Choice.Text != "Eyring RT") { return; }
-                double[] Schroeder;
 
-                double[,,] EDT = new double[this.SourceList.Items.Count,Recs.Length,8];
-                double[, ,] T10 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] T15 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] T20 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] T30 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] G = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] C80 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] C50 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] D50 = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] TS = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] LF = new double[this.SourceList.Items.Count, Recs.Length, 8];
-                double[, ,] LE = new double[this.SourceList.Items.Count, Recs.Length, 8];
-
-                for (int s = 0; s < SourceList.Items.Count; s++)
-                {
-                    for (int r = 0; r < Recs.Length; r++)
-                    {
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            double[] ETC = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
-                            Schroeder = AcousticalMath.Schroeder_Integral(ETC);
-                            EDT[s, r, oct] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
-                            T10[s, r, oct] = AcousticalMath.T_X(Schroeder, 10, SampleRate);
-                            T15[s, r, oct] = AcousticalMath.T_X(Schroeder, 15, SampleRate);
-                            T20[s, r, oct] = AcousticalMath.T_X(Schroeder, 20, SampleRate);
-                            T30[s, r, oct] = AcousticalMath.T_X(Schroeder, 30, SampleRate);
-                            G[s, r, oct] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
-                            C50[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                            C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
-                            D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                            TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
-                            double[] L_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value), SampleRate, oct, r, new System.Collections.Generic.List<int>() {s}, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
-                            LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
-                            LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
-                        }
-                    }
-                }
                 System.Windows.Forms.SaveFileDialog sf = new System.Windows.Forms.SaveFileDialog();
                 sf.DefaultExt = ".txt";
                 sf.AddExtension = true;
@@ -184,7 +146,59 @@ namespace Pachyderm_Acoustic
 
                 if (sf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    System.IO.StreamWriter SW = new System.IO.StreamWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
+                    System.IO.StreamWriter SW;
+
+                    fileread:
+                    try
+                    {
+                        SW = new System.IO.StreamWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
+                    }
+                    catch
+                    {
+                        System.Windows.Forms.DialogResult dr = System.Windows.Forms.MessageBox.Show("File is in use. Close any programs using the file, and try again.", "File In Use", System.Windows.Forms.MessageBoxButtons.RetryCancel);
+                        if (dr == System.Windows.Forms.DialogResult.Cancel) return;
+                        goto fileread;
+                    }
+                    
+                    double[] Schroeder;
+                    double[, ,] EDT = new double[this.SourceList.Items.Count,Recs.Length,8];
+                    double[, ,] T10 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] T15 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] T20 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] T30 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] G = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] C80 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] C50 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] D50 = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] TS = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] LF = new double[this.SourceList.Items.Count, Recs.Length, 8];
+                    double[, ,] LE = new double[this.SourceList.Items.Count, Recs.Length, 8];
+
+                    for (int s = 0; s < SourceList.Items.Count; s++)
+                    {
+                        for (int r = 0; r < Recs.Length; r++)
+                        {
+                            for (int oct = 0; oct < 8; oct++)
+                            {
+                                double[] ETC = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
+                                Schroeder = AcousticalMath.Schroeder_Integral(ETC);
+                                EDT[s, r, oct] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
+                                T10[s, r, oct] = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+                                T15[s, r, oct] = AcousticalMath.T_X(Schroeder, 15, SampleRate);
+                                T20[s, r, oct] = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+                                T30[s, r, oct] = AcousticalMath.T_X(Schroeder, 30, SampleRate);
+                                G[s, r, oct] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
+                                C50[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
+                                C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
+                                D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
+                                TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
+                                double[] L_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value), SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
+                                LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
+                                LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
+                            }
+                        }
+                    }
+
                     SW.WriteLine("Pachyderm Acoustic Simulation Results");
                     SW.WriteLine("Saved {0}", System.DateTime.Now.ToString());
                     SW.WriteLine("Filename:{0}", Rhino.RhinoDoc.ActiveDoc.Name);
