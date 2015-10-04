@@ -56,51 +56,10 @@ namespace Pachyderm_Acoustic
             List<System.Guid> ShownPaths = new List<Guid>();
             bool Linear_Phase = false;
 
-            private void ProcessEntireModel(string S)
-            {
-                if (Rhino.RhinoDoc.ActiveDoc != null)
-                {
-                    double[] T60 = new double[8];
-
-                    Scene Model = PachTools.Get_NURBS_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, (int)Atten_Method.SelectedIndex, (bool)EdgeFreq.Checked);
-                    Rhino.RhinoApp.RunScript("GetModel", false);
-
-                    if (S == "Sabine RT")
-                    {
-                        AcousticalMath.Sabine(Model, ref T60);
-                    }
-                    else if (S == "Eyring RT")
-                    {
-                        AcousticalMath.Eyring(Model, ref T60);
-                    }
-
-                    SRT1.Text = string.Format("62.5 hz. : {0} s.", Math.Round(T60[0], 2));
-                    SRT2.Text = string.Format("125 hz. : {0} s.", Math.Round(T60[1], 2));
-                    SRT3.Text = string.Format("250 hz. : {0} s.", Math.Round(T60[2], 2));
-                    SRT4.Text = string.Format("500 hz. : {0} s.", Math.Round(T60[3], 2));
-                    SRT5.Text = string.Format("1000 hz. : {0} s.", Math.Round(T60[4], 2));
-                    SRT6.Text = string.Format("2000 hz. : {0} s.", Math.Round(T60[5], 2));
-                    SRT7.Text = string.Format("4000 hz. : {0} s.", Math.Round(T60[6], 2));
-                    SRT8.Text = string.Format("8000 hz. : {0} s.", Math.Round(T60[7], 2));
-                }
-                else
-                {
-                    SRT1.Text = string.Format("62.5 hz. :");
-                    SRT2.Text = string.Format("125 hz. :");
-                    SRT3.Text = string.Format("250 hz. :");
-                    SRT4.Text = string.Format("500 hz. :");
-                    SRT5.Text = string.Format("1000 hz. :");
-                    SRT6.Text = string.Format("2000 hz. :");
-                    SRT7.Text = string.Format("4000 hz. :");
-                    SRT8.Text = string.Format("8000 hz. :");
-                }
-            }
-
             //To Begin Calculation... 
             PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
             Direct_Sound[] Direct_Data = null;
             ImageSourceData[] IS_Data = null;
-            //VoxelGrid_RC Grid = default(VoxelGrid_RC);
             List<string> SrcTypeList = new List<string>();
 
             private void Calculate_Click(object sender, System.EventArgs e)
@@ -272,11 +231,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                if (Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System)
-                {
-
-                }
-
                 if (Source != null)
                 {
                     List<Point3d> R;
@@ -345,7 +299,6 @@ namespace Pachyderm_Acoustic
             private void cleanup()
             {
                 //Cleanup Code 
-                //Source = null;
                 Calculate.Enabled = true;
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day.");
             }
@@ -1054,14 +1007,6 @@ namespace Pachyderm_Acoustic
 
                 switch (Parameter_Choice.Text)
                 {
-                    case "Sabine RT":
-                        //TODO: correct Sabine RT...
-                        ProcessEntireModel(Parameter_Choice.Text);
-                        break;
-                    case "Eyring RT":
-                        //TODO: correct Eyring RT...
-                        ProcessEntireModel(Parameter_Choice.Text);
-                        break;
                     case "Early Decay Time":
 
                         Schroeder = AcousticalMath.Schroeder_Integral(ETC[0]);

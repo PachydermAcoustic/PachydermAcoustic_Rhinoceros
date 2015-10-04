@@ -61,11 +61,27 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AForge, Version=2.2.5.0, Culture=neutral, PublicKeyToken=c1db6ff4eaa06aeb, processorArchitecture=MSIL">
+      <HintPath>packages\AForge.2.2.5\lib\AForge.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="AForge.Math, Version=2.2.5.0, Culture=neutral, PublicKeyToken=abba2e25397ee8c9, processorArchitecture=MSIL">
+      <HintPath>packages\AForge.Math.2.2.5\lib\AForge.Math.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="CLF_Read">
       <HintPath>Resources\CLF_Read.dll</HintPath>
     </Reference>
     <Reference Include="Hare">
       <HintPath>Resources\Hare.dll</HintPath>
+    </Reference>
+    <Reference Include="i4Ds.GAFramework, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\i4Ds.GAFramework.1.0.0.3\lib\net40\i4Ds.GAFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="LibOptimization, Version=1.7.2.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\LibOptimization.1.7.2.1\lib\net40\LibOptimization.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>packages\MathNet.Numerics.3.7.0\lib\net40\MathNet.Numerics.dll</HintPath>
@@ -103,6 +119,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
+    <Compile Include="Pach_SP_IIR.cs" />
     <Compile Include="Classes_Absorption_Matrices.cs" />
     <Compile Include="Classes_Compact_FDTD.cs" />
     <Compile Include="Classes_Compact_FDTD_Boundaries.cs" />

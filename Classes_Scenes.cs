@@ -41,8 +41,6 @@ namespace Pachyderm_Acoustic
             protected bool EdgeFC;
             protected int AC_S;
             protected double[] Area;
-            protected double Volume;
-            protected bool IsContained;
             protected Medium_Properties Env_Prop;
             protected double SplitRatio = 0.25;
             public System.Windows.Forms.DialogResult Status = System.Windows.Forms.DialogResult.OK;
@@ -104,7 +102,6 @@ namespace Pachyderm_Acoustic
 
                 //// Density of air:
                 //rho = 3.48349 * 1e-3 * Atmospheric_Pressure / (Z * (Temp + 273.15)) * (1 - 0.3780 * xw);
-
 
                 //Get_Edges();
             }
@@ -171,21 +168,11 @@ namespace Pachyderm_Acoustic
             ///// <returns></returns>
             //public abstract Vector3d Normal(double u, double v, int i);
             /// <summary>
-            /// Returns the volume of the scene.
-            /// </summary>
-            /// <returns></returns>
-            public abstract double RoomVolume();
-            /// <summary>
             /// Returns the surface area of a surface in the model.
             /// </summary>
             /// <param name="x">the index of the surface.</param>
             /// <returns></returns>
             public abstract double SurfaceArea(int x);
-            /// <summary>
-            /// verifies whether or not a closed BREP containing the room is present.
-            /// </summary>
-            /// <returns></returns>
-            public abstract bool IsClosed();
             /// <summary>
             /// Returns the number of surface objects in the model.
             /// </summary>
@@ -758,10 +745,6 @@ namespace Pachyderm_Acoustic
                         PolyPlaneFract[q][t] += PolyPlaneFract[q][t - 1] + Topo[0].Polygon_Area(Topo[0].Plane_Members[q][t]) / Plane_Area[q];
                     }
                 }
-                ////////////////////////////////////////////////////
-                //Determine whether or not the room is a closed volume...
-                IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
-                ////////////////////////////////////////////////////
                 Valid = true;
                 Rhino.RhinoDoc.ActiveDoc.Objects.Add(Utilities.PachTools.Hare_to_RhinoMesh(Topo[0]));
             }
@@ -1106,10 +1089,6 @@ namespace Pachyderm_Acoustic
                         PolyPlaneFract[q][t] += PolyPlaneFract[q][t - 1] + Topo[0].Polygon_Area(Topo[0].Plane_Members[q][t]) / Plane_Area[q];
                     }
                 }
-                ////////////////////////////////////////////////////
-                //Determine whether or not the room is a closed volume...
-                IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
-                ////////////////////////////////////////////////////
                 Valid = true;
 
                 //Utilities.PachTools.Plot_Hare_Topology(Topo[0]);
@@ -1410,10 +1389,6 @@ namespace Pachyderm_Acoustic
             //            PolyPlaneFract[q][t] += PolyPlaneFract[q][t - 1] + Topo[0].Polygon_Area(Topo[0].Plane_Members[q][t]) / Plane_Area[q];
             //        }
             //    }
-            //    ////////////////////////////////////////////////////
-            //    //Determine whether or not the room is a closed volume...
-            //    IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
-            //    ////////////////////////////////////////////////////
             //    Valid = true;
 
             //    Utilities.PachTools.Plot_Hare_Topology(Topo[0]);
@@ -2068,16 +2043,6 @@ namespace Pachyderm_Acoustic
             public override bool IsPlanar(int q)
             {
                 return true;
-            }
-
-            public override double RoomVolume()
-            {
-                return 5;
-            }
-
-            public override bool IsClosed()
-            {
-                return IsContained;
             }
 
             public override double SurfaceArea(int x)

@@ -323,7 +323,7 @@ namespace Pachyderm_Acoustic
                     {
                         int D_Start = 0;
                         if (!Start_at_Zero) D_Start = (int)Math.Ceiling(Direct[Src_ID].Time(Rec_ID) * Sampling_Frequency);
-                        for (int i = 0; i < Direct[Src_ID].Io[Rec_ID].GetLength(0); i++)
+                        for (int i = 0; i < Direct[Src_ID].Io[Rec_ID][0].Length; i++)
                         {
                             double DirectValue = 0;
                             switch (Octave)
@@ -398,7 +398,7 @@ namespace Pachyderm_Acoustic
                         int D_Start = 0;
                         if (!Start_at_Zero) D_Start = (int)Math.Ceiling(Direct[Src_ID].Time(Rec_ID) * Sampling_Frequency);
                             
-                        for (int i = 0; i < Direct[Src_ID].P[Rec_ID].GetLength(0); i++)
+                        for (int i = 0; i < Direct[Src_ID].P[Rec_ID].Length; i++)
                         {
                             P[D_Start + i] += Direct[Src_ID].P[Rec_ID][i];
                         }
@@ -1373,7 +1373,7 @@ namespace Pachyderm_Acoustic
             ///<summary>
             /// Sabine Reverberation Time : T60 = 0.161V/A
             ///</summary>
-            public static void Sabine(Environment.Scene Room, ref double[] T60)
+            public static void Sabine(Environment.Scene Room, double volume, ref double[] T60)
             {
                 T60 = new double[8];
                 if (Room == null) return;
@@ -1385,14 +1385,14 @@ namespace Pachyderm_Acoustic
                     {
                         TA += (Room.SurfaceArea(q) * Room.AbsorptionValue[q].Coefficient_A_Broad(t));
                     }
-                    T60[t] = (0.161 * (Room.RoomVolume() / (TA + (4 * Room.Attenuation(0)[t] * Room.RoomVolume()))));
+                    T60[t] = (0.161 * (volume / (TA + (4 * Room.Attenuation(0)[t] * volume))));
                 }
             }
 
             ///<summary>
             /// Sabine Reverberation Time : T60 = 0.161V/ln(1-a)S
             ///</summary>
-            public static void Eyring(Environment.Scene Room, ref double[] T60)
+            public static void Eyring(Environment.Scene Room, double volume, ref double[] T60)
             {
                 T60 = new double[8];
                 if (Room == null) return;
@@ -1404,7 +1404,7 @@ namespace Pachyderm_Acoustic
                     {
                         TA += (Room.SurfaceArea(q) * (-System.Math.Log(1 - Room.AbsorptionValue[q].Coefficient_A_Broad(t),System.Math.E)));
                     }
-                    T60[t] = 0.161 * Room.RoomVolume() / (TA + 4 * Room.Attenuation(0)[t] * Room.RoomVolume());
+                    T60[t] = 0.161 * volume / (TA + 4 * Room.Attenuation(0)[t] * volume);
                 }
             }
 

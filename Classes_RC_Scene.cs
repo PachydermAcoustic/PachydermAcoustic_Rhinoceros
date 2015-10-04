@@ -170,8 +170,6 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-                //SurfaceArray = SurfaceList.ToArray();
-                IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
                 Valid = true;
             }
 
@@ -241,7 +239,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 //SurfaceArray = SurfaceList.ToArray();
-                IsContained = Utilities.AcousticalMath.RoomVolume(BrepList, ref Volume, out Area);
                 Valid = true;
             }
 
@@ -572,19 +569,9 @@ namespace Pachyderm_Acoustic
                 throw new Exception("(U,V) coordinates required to find the normal of a NURBS surface.");
             }
 
-            public override double RoomVolume()
-            {
-                return Volume;
-            }
-
             public override double SurfaceArea(int x)
             {
                 return Area[x];
-            }
-
-            public override bool IsClosed()
-            {
-                return IsContained;
             }
 
             public override Point3d ClosestPt(Point3d P, ref double Dist)

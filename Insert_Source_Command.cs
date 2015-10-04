@@ -187,7 +187,6 @@ namespace Pachyderm_Acoustic
 
                             double[] SPL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
 
-
                             if (type == "Crowd")
                             {
                                 //double mod = (effort < 3) ? .5 : 1;

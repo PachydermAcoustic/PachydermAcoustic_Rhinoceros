@@ -18,12 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Numerics;
@@ -200,8 +194,8 @@ namespace Pachyderm_Acoustic
 
                 if (Layers.Count == 0) return;
 
-                if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Layers, 44100, 1.2, 343, Averaging.SelectedIndex);
-                else sm = new Environment.Smart_Material(Layers, 44100, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
+                if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Layers, 16000, 1.2, 343, Averaging.SelectedIndex);
+                else sm = new Environment.Smart_Material(Layers, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
 
                 double[] AnglesDeg = new double[sm.Angles.Length];
                 for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
@@ -245,21 +239,41 @@ namespace Pachyderm_Acoustic
                 
                 for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
 
-                Estimate_IIR();
+                //Estimate_IIR();
             }
 
             public void Estimate_IIR()
             {
-                Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
-                double[] R = Audio.Pach_SP.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
+                //Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
+                //for (int i = 0; i < IR.Length; i++) IR[i] = IR[i].Real;
+                //Complex[] R = Audio.Pach_SP.IIR_Design.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
+
+                //Complex[] a, b;
+                //Audio.Pach_SP.IIR_Design.Yule_Walker(R, out a, out b);
 
                 double[] a, b;
-                Audio.Pach_SP.Yule_Walker(R, out a, out b);
-                Complex[] IIR_spec = Audio.Pach_SP.SpectrumFromIIR(a, b, 44100, 4096);
+                Complex[] RefSpectrum = sm.Reflection_Coefficient[18];
+                Audio.Pach_SP.IIR_Design.OptimizeIIR(RefSpectrum, 16000, (int)IIR_Order.Value, out a, out b);
+
+                Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b),new List<double>(a), sm.frequency);
+                //Audio.Pach_SP.IIR_Design.SpectrumFromIIR(a, b, 16000, 4096);
+
+                double corr = Audio.Pach_SP.IIR_Design.CrossCorrelation_Coef(RefSpectrum, IIR_spec).Real;
+
+                Rhino.RhinoApp.WriteLine(string.Format("Correlation: {0}", corr));
+
+                //Normalize
+                //double ms = 0;
+                //foreach (Complex s in IIR_spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
+                //double mb = 0;
+                //foreach (Complex s in RefSpectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
+
+                //for (int i = 0; i < IIR_spec.Length; i++) IIR_spec[i] *= mb / ms;
+
                 double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
 
                 Alpha_Normal.Series[2].Points.Clear();
-                for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[2].Points.AddXY(sm.frequency[i], alpha[i]);
+                for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Series[2].Points.AddXY((double)(i + 1)* 16000 / alpha.Length, alpha[i]);
             }
 
             public Chart Polar_Plot()
