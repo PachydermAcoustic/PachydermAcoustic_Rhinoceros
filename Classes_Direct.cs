@@ -900,7 +900,7 @@ namespace Pachyderm_Acoustic
                     t_dump[i] = t[i];
                     tmin = Math.Min(t[i], tmin);
                     tmax = Math.Max(t[i], tmax);
-                    double log10Eps = Math.Log10(double.Epsilon);
+                    double log10Eps = Math.Log10(1E-12);
 
                     for (int oct = 0; oct < 8; oct++)
                     {
@@ -983,9 +983,10 @@ namespace Pachyderm_Acoustic
                     for (int oct = 0; oct < 8; oct++)
                     {
                         double tdbl = (double)tau * dt;
-                        Io[rec_id][oct][tau] += Math.Pow(10, I_Spline[oct].Interpolate(tdbl));// * mod;
+                        double spl = I_Spline[oct].Interpolate(tdbl);
+                        Io[rec_id][oct][tau] += Math.Pow(10, spl);// * mod;
 
-                        if (Io[rec_id][oct][tau] < 0 || double.IsInfinity(Io[rec_id][oct][tau]))
+                        if (Io[rec_id][oct][tau] < 0 || double.IsInfinity(Io[rec_id][oct][tau]) || double.IsNaN(Io[rec_id][oct][tau]))
                         {
                             Rhino.RhinoApp.Write("MEEP");
                         }
@@ -1008,12 +1009,6 @@ namespace Pachyderm_Acoustic
             I = new List<double[]>();
             d = new List<Vector>();
         }
-
-        //private void Record_Line_Segment(ref List<double> t, ref List<double[]> I, ref List<Vector> d, int rec_id)
-        //{
-
-
-        //}
 
         private bool Line_Calculation()
         {

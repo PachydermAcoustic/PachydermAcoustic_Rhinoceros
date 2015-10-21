@@ -191,7 +191,8 @@ namespace Pachyderm_Acoustic
                             p[i + p_conj] = x[p_conj + i];
                         }
                         Complex[] a;
-                        P2poly(p, out a);
+                        P2poly(p, out a
+                            );
                         Complex[] Spectrum_Mod = new Complex[Spectrum.Length];
                         for (int i = 0; i < Spectrum.Length; i++)
                         {
@@ -207,6 +208,7 @@ namespace Pachyderm_Acoustic
                             Spectrum_Mod[i] = Spectrum[i] * denom;
                         }
 
+                        //TODO: find a polynomial fit operation that works on complex numbers...
                         //MathNet.Numerics.Fit.Polynomial(freq, Spectrum_Mod, 3);
                     }
 
@@ -437,7 +439,6 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-
 
                 public class IIR_Spectrum_Objective:LibOptimization.Optimization.absObjectiveFunction
                 {
@@ -760,7 +761,7 @@ namespace Pachyderm_Acoustic
                     //LibOptimization.Optimization.clsOptNelderMead SA = new LibOptimization.Optimization.clsOptNelderMead(obj);
                     //SA.UseEliteStrategy(10);
                     //SA.PARAM_PopulationSize = Filter_Order * 50;
-                   
+                    SA.PARAM_NEIGHBOR_RANGE = 0.00001;
                     //SA.PARAM_InitRange = 1;
                     //SA.PARAM_ChildrenSize = 20;
                     //SA.PARAM_MAX_ITERATION = 1000;
@@ -942,12 +943,12 @@ namespace Pachyderm_Acoustic
                     {
                         //if (f > f1.Length) continue;
                         //Corr += Math.Abs((f1[f].Magnitude - f2[f].Magnitude))/Math.Max(f1[f].Magnitude, f2[f].Magnitude);
-                        Corr += Math.Abs((f1[i].Real - f2[i].Real)) / Math.Max(f1[i].Real, f2[i].Real);
+                        Corr += Math.Pow(f1[i].Real - f2[i].Real, 2) + Math.Pow(f1[i].Imaginary - f2[i].Imaginary, 2);
                         //Corr += Math.Abs((f1[i].Real - f2[i].Real)) / Math.Max(f1[i].Real, f2[i].Real);
                         //Corr = Math.Max(Corr, Math.Abs((f1[f].Imaginary - f2[f].Imaginary)) / Math.Max(f1[f].Imaginary, f2[f].Imaginary));
                     }
 
-                    Corr /= sampled.Length;
+                    //Corr /= sampled.Length;
                     return Corr;
                 }
 

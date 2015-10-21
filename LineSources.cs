@@ -57,12 +57,11 @@ namespace Pachyderm_Acoustic
                 :base(new double[8]{60, 49, 41, 35, 31, 28, 26, 24}, new Point3d(0,0,0), ph, SrcID)
             {
                 string type = SrcPath.GetUserString("SourceType");
-                string v = SrcPath.GetUserString("Velocity");
-                double velocity = double.Parse(v);
-                double delta = double.Parse(SrcPath.GetUserString("delta"));
-
+                
                 if (type == "Aircraft (ANCON derived)")
                 {
+                    double velocity = double.Parse(SrcPath.GetUserString("Velocity"));
+                    double delta = double.Parse(SrcPath.GetUserString("delta"));
                     D = new ANCON(delta, velocity);
                 }
                 else D = new Simple();
@@ -146,7 +145,7 @@ namespace Pachyderm_Acoustic
 
                 public override double[] DirPower(int threadid, int random, Vector Direction, double position, ref Curve Curves, ref double[] DomainPower)
                 {
-                    return DomainPower;
+                    return DomainPower.Clone() as double[];
                 }
             }
 
