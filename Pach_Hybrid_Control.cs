@@ -340,8 +340,6 @@ namespace Pachyderm_Acoustic
                     LayerDisplay.Items.Clear();
                     LayerDisplay.Items.AddRange(LayerNames.ToArray());
                     LayerDisplay.Text = Selection;
-                    Material_Lib.Items.Clear();
-                    Material_Lib.Items.AddRange(Materials.Names().ToArray());
                 }
             }
 
@@ -381,13 +379,6 @@ namespace Pachyderm_Acoustic
 
             private void SaveAbs_Click(object sender, EventArgs e)
             {
-                foreach (Material MAT in Materials)
-                {
-                    if (!string.Equals(MAT.Name, Material_Name.Text, StringComparison.OrdinalIgnoreCase)) continue;
-                    System.Windows.Forms.MessageBox.Show("The material name " + Material_Name.Text + " already exists in the materials library. Please choose a different name.", "Material Name Error", MessageBoxButtons.OK);
-                    return;
-                }
-
                 double[] Abs = new double[8];
                 Abs[0] = (double)Abs63Out.Value / 100;
                 Abs[1] = (double)Abs125Out.Value / 100;
@@ -398,9 +389,40 @@ namespace Pachyderm_Acoustic
                 Abs[6] = (double)Abs4kOut.Value / 100;
                 Abs[7] = (double)Abs8kOut.Value / 100;
 
-                Materials.Add(new Material(Material_Name.Text, Abs));
-                Material_Lib.Items.Add(Material_Name.Text);
+                Materials.Add_Unique(Material_Name.Text, Abs);
                 Materials.Save_Library();
+
+                Material_Lib.Items.Clear();
+                Material_Lib.Items.AddRange(Materials.Names().ToArray());
+            }
+
+            private void Delete_Material_Click(object sender, EventArgs e)
+            {
+                string choice = (string)Material_Lib.SelectedItem;
+                Materials.Delete(choice);
+                Materials.Save_Library();
+
+                Material_Lib.Items.Clear();
+                Material_Lib.Items.AddRange(Materials.Names().ToArray());
+            }
+
+            private void Apply_Material_Click(object sender, EventArgs e)
+            {
+                if (Material_Lib.SelectedItem == null) return;
+                string Selection = Material_Lib.SelectedItem.ToString();
+                Material Mat = Materials.byKey(Selection);
+
+                Abs63.Value = (int)(Mat.Absorption[0] * 100);
+                Abs125.Value = (int)(Mat.Absorption[1] * 100);
+                Abs250.Value = (int)(Mat.Absorption[2] * 100);
+                Abs500.Value = (int)(Mat.Absorption[3] * 100);
+                Abs1k.Value = (int)(Mat.Absorption[4] * 100);
+                Abs2k.Value = (int)(Mat.Absorption[5] * 100);
+                Abs4k.Value = (int)(Mat.Absorption[6] * 100);
+                Abs8k.Value = (int)(Mat.Absorption[7] * 100);
+                Commit_Layer_Acoustics();
+
+                Material_Mode(true);
             }
 
             private void Commit_SmartMaterial(Pach_Absorption_Designer AD)
@@ -573,7 +595,6 @@ namespace Pachyderm_Acoustic
                         Trans_Check.Checked = true;
                     }
                     else { Trans_Check.Checked = false; }
-                    
                 }
                 else
                 {
@@ -602,32 +623,6 @@ namespace Pachyderm_Acoustic
                     Trans_4kv.Value = 0;
                     Trans_8kv.Value = 0;
                 }
-            }
-
-            private void Material_Lib_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
-            {
-                if (Material_Lib.SelectedItem == null) return;
-                string Selection = Material_Lib.SelectedItem.ToString();
-                Material SelectedMat = default(Material);
-                foreach (Material Mat in Materials)
-                {
-                    if (Mat.Name == Selection)
-                    {
-                        SelectedMat = Mat;
-                        Abs63.Value = (int)(Mat.Absorption[0] * 100);
-                        Abs125.Value = (int)(Mat.Absorption[1] * 100);
-                        Abs250.Value = (int)(Mat.Absorption[2] * 100);
-                        Abs500.Value = (int)(Mat.Absorption[3] * 100);
-                        Abs1k.Value = (int)(Mat.Absorption[4] * 100);
-                        Abs2k.Value = (int)(Mat.Absorption[5] * 100);
-                        Abs4k.Value = (int)(Mat.Absorption[6] * 100);
-                        Abs8k.Value = (int)(Mat.Absorption[7] * 100);
-                        this.
-                        Commit_Layer_Acoustics();
-                    }
-                }
-
-                Material_Mode(true);
             }
 
             private void ScatFlat_ValueChanged(object sender, EventArgs e)

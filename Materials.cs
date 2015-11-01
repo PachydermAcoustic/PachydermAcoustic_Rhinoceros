@@ -11,7 +11,7 @@
 //'but WITHOUT ANY WARRANTY; without even the implied warranty of 
 //'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
 //'GNU General Public License for more details. 
-//' 
+//'
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
@@ -25,7 +25,6 @@ namespace Pachyderm_Acoustic
     /// </summary>
     public class Acoustics_Library : List<Material>
     {
-        List<string> Catalog = new List<string>();
         public Acoustics_Library()
             : base()
         {
@@ -63,12 +62,42 @@ namespace Pachyderm_Acoustic
                     double[] Sct = new double[8];
                     double[] Trns = new double[8];
                     UI.PachydermAc_PlugIn.DecodeAcoustics(Abs_Code, ref Abs, ref Sct, ref Trns);
-                    this.Add(new Material(Name, Abs));
+                    this.Add_Unique(Name, Abs);
                 }
                 catch (System.Exception)
                 { continue; }
             } while (!Reader.EndOfStream);
             Reader.Close();
+        }
+
+        public void Add_Unique(string Name, double[] Abs)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                if (!string.Equals(this[i].Name, Name, System.StringComparison.OrdinalIgnoreCase)) continue;
+                Rhino.RhinoApp.WriteLine(string.Format("Replacing material '{0}'", this[i].Name));
+                this.RemoveAt(i);
+                break;
+            }
+
+            this.Add(new Material(Name, Abs));
+        }
+
+        public void Delete (string Name)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                if (!string.Equals(this[i].Name, Name, System.StringComparison.OrdinalIgnoreCase)) continue;
+                Rhino.RhinoApp.WriteLine(string.Format("Deleting material '{0}'", this[i].Name));
+                this.RemoveAt(i);
+                break;
+            }
+        }
+
+        public Material byKey(string Selection)
+        {
+            foreach (Material Mat in this) if (Mat.Name == Selection) return Mat;
+            throw new System.Exception();
         }
 
         /// <summary>
@@ -91,7 +120,7 @@ namespace Pachyderm_Acoustic
                 int[] trns = new int[1];
                 for (int oct = 0; oct < 8; oct++)
                 {
-                    abs[oct] = (int)this[i].Absorption[oct] * 100;
+                    abs[oct] = (int)(this[i].Absorption[oct] * 100.0);
                 }
                 string Abs_Code = UI.PachydermAc_PlugIn.EncodeAcoustics(abs, sct, trns);
                 Entry += Abs_Code.Substring(0, 16);
@@ -106,7 +135,7 @@ namespace Pachyderm_Acoustic
         /// <returns></returns>
         public List<string> Names()
         {
-            Catalog.Clear();
+            List<string> Catalog = new List<string>();
             foreach (Material obj in this)
             {
                 Catalog.Add(obj.Name);

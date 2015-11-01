@@ -187,7 +187,9 @@ namespace Pachyderm_Acoustic
             this.Abs_Designer = new System.Windows.Forms.Button();
             this.LayerLbl = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.SaveAbs = new System.Windows.Forms.Button();
+            this.Apply_Material = new System.Windows.Forms.Button();
+            this.Delete_Material = new System.Windows.Forms.Button();
+            this.Save_Material = new System.Windows.Forms.Button();
             this.Material_Name = new System.Windows.Forms.MaskedTextBox();
             this.LayerDisplay = new System.Windows.Forms.ComboBox();
             this.Material_Lib = new System.Windows.Forms.ListBox();
@@ -1620,7 +1622,7 @@ namespace Pachyderm_Acoustic
             this.tabControl1.Controls.Add(this.Absorption);
             this.tabControl1.Controls.Add(this.Scattering);
             this.tabControl1.Controls.Add(this.Transparency);
-            this.tabControl1.Location = new System.Drawing.Point(4, 135);
+            this.tabControl1.Location = new System.Drawing.Point(6, 195);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(382, 320);
@@ -2276,7 +2278,7 @@ namespace Pachyderm_Acoustic
             // 
             this.Abs_Designer.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Abs_Designer.Location = new System.Drawing.Point(6, 106);
+            this.Abs_Designer.Location = new System.Drawing.Point(6, 169);
             this.Abs_Designer.Name = "Abs_Designer";
             this.Abs_Designer.Size = new System.Drawing.Size(373, 23);
             this.Abs_Designer.TabIndex = 2;
@@ -2296,26 +2298,52 @@ namespace Pachyderm_Acoustic
             // groupBox5
             // 
             this.groupBox5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox5.Controls.Add(this.SaveAbs);
+            this.groupBox5.Controls.Add(this.Apply_Material);
+            this.groupBox5.Controls.Add(this.Delete_Material);
+            this.groupBox5.Controls.Add(this.Save_Material);
             this.groupBox5.Controls.Add(this.Material_Name);
             this.groupBox5.Location = new System.Drawing.Point(189, 27);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(190, 72);
+            this.groupBox5.Size = new System.Drawing.Size(190, 133);
             this.groupBox5.TabIndex = 28;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Save Material Absorption";
             // 
-            // SaveAbs
+            // Apply_Material
             // 
-            this.SaveAbs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.Apply_Material.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.SaveAbs.Location = new System.Drawing.Point(6, 44);
-            this.SaveAbs.Name = "SaveAbs";
-            this.SaveAbs.Size = new System.Drawing.Size(178, 23);
-            this.SaveAbs.TabIndex = 1;
-            this.SaveAbs.Text = "Save Material";
-            this.SaveAbs.UseVisualStyleBackColor = true;
-            this.SaveAbs.Click += new System.EventHandler(this.SaveAbs_Click);
+            this.Apply_Material.Location = new System.Drawing.Point(6, 102);
+            this.Apply_Material.Name = "Apply_Material";
+            this.Apply_Material.Size = new System.Drawing.Size(178, 23);
+            this.Apply_Material.TabIndex = 3;
+            this.Apply_Material.Text = "Apply Material";
+            this.Apply_Material.UseVisualStyleBackColor = true;
+            this.Apply_Material.Click += new System.EventHandler(this.Apply_Material_Click);
+            // 
+            // Delete_Material
+            // 
+            this.Delete_Material.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Delete_Material.Location = new System.Drawing.Point(6, 73);
+            this.Delete_Material.Name = "Delete_Material";
+            this.Delete_Material.Size = new System.Drawing.Size(178, 23);
+            this.Delete_Material.TabIndex = 2;
+            this.Delete_Material.Text = "Delete Material";
+            this.Delete_Material.UseVisualStyleBackColor = true;
+            this.Delete_Material.Click += new System.EventHandler(this.Delete_Material_Click);
+            // 
+            // Save_Material
+            // 
+            this.Save_Material.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Save_Material.Location = new System.Drawing.Point(6, 44);
+            this.Save_Material.Name = "Save_Material";
+            this.Save_Material.Size = new System.Drawing.Size(178, 23);
+            this.Save_Material.TabIndex = 1;
+            this.Save_Material.Text = "Save Material";
+            this.Save_Material.UseVisualStyleBackColor = true;
+            this.Save_Material.Click += new System.EventHandler(this.SaveAbs_Click);
             // 
             // Material_Name
             // 
@@ -2347,9 +2375,8 @@ namespace Pachyderm_Acoustic
             this.Material_Lib.Location = new System.Drawing.Point(6, 43);
             this.Material_Lib.Name = "Material_Lib";
             this.Material_Lib.ScrollAlwaysVisible = true;
-            this.Material_Lib.Size = new System.Drawing.Size(177, 56);
+            this.Material_Lib.Size = new System.Drawing.Size(177, 121);
             this.Material_Lib.TabIndex = 8;
-            this.Material_Lib.MouseClick += new System.Windows.Forms.MouseEventHandler(this.Material_Lib_MouseClick);
             // 
             // Mat_Lbl
             // 
@@ -2507,7 +2534,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 21F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 117F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 122F));
             this.tableLayoutPanel3.Controls.Add(this.IS_Path_Box, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.Analysis_View, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.Normalize_Graph, 2, 2);
@@ -2570,9 +2597,9 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.AutoSize = true;
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Normalize_Graph.Location = new System.Drawing.Point(142, 128);
+            this.Normalize_Graph.Location = new System.Drawing.Point(140, 128);
             this.Normalize_Graph.Name = "Normalize_Graph";
-            this.Normalize_Graph.Size = new System.Drawing.Size(114, 17);
+            this.Normalize_Graph.Size = new System.Drawing.Size(111, 17);
             this.Normalize_Graph.TabIndex = 43;
             this.Normalize_Graph.Text = "Normalize To Direct";
             this.Normalize_Graph.UseVisualStyleBackColor = true;
@@ -2605,9 +2632,9 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(142, 103);
+            this.Graph_Octave.Location = new System.Drawing.Point(140, 103);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(232, 21);
+            this.Graph_Octave.Size = new System.Drawing.Size(234, 21);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -2629,7 +2656,7 @@ namespace Pachyderm_Acoustic
             "Fore-Aft PTC"});
             this.Graph_Type.Location = new System.Drawing.Point(3, 103);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(133, 21);
+            this.Graph_Type.Size = new System.Drawing.Size(131, 21);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3195,7 +3222,7 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.NumericUpDown Scat63Out;
             internal System.Windows.Forms.Label label24;
             private System.Windows.Forms.GroupBox groupBox5;
-            private System.Windows.Forms.Button SaveAbs;
+            private System.Windows.Forms.Button Save_Material;
             private System.Windows.Forms.MaskedTextBox Material_Name;
             private System.Windows.Forms.CheckBox EdgeFreq;
             private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
@@ -3273,6 +3300,8 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.ToolStripMenuItem savePTBFormatToolStripMenuItem;
             private System.Windows.Forms.ToolStripMenuItem saveVRSpectraToolStripMenuItem;
             private System.Windows.Forms.Button Auralisation;
+            private System.Windows.Forms.Button Apply_Material;
+            private System.Windows.Forms.Button Delete_Material;
         }
     }
 }
