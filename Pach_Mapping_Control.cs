@@ -552,8 +552,8 @@ namespace Pachyderm_Acoustic
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                PachMapReceiver[] RT_IN;
-                if (!Utilities.FileIO.Read_pachm(out RT_IN)) return;
+                PachMapReceiver[] RT_IN = new PachMapReceiver[0];
+                if (!Utilities.FileIO.Read_pachm(ref RT_IN)) return;
                 //foreach (PachMapReceiver p in RT_IN) p.Correction(80000);
 
                 Map = RT_IN;

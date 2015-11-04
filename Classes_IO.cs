@@ -338,11 +338,7 @@ namespace Pachyderm_Acoustic
                 sw.Close();
             }
 
-            /// <summary>
-            /// reads a file and populates the map receiver instance.
-            /// </summary>
-            /// <returns></returns>
-            public static bool Read_pachm(out Mapping.PachMapReceiver[] Map)
+            public static bool Read_pachm(ref Mapping.PachMapReceiver[] Map)
             {
                 System.Windows.Forms.OpenFileDialog of = new System.Windows.Forms.OpenFileDialog();
                 of.DefaultExt = ".pachm";
@@ -353,7 +349,17 @@ namespace Pachyderm_Acoustic
                     Map = null;
                     return false;
                 }
-                System.IO.BinaryReader sr = new System.IO.BinaryReader(System.IO.File.Open(of.FileName, System.IO.FileMode.Open));
+
+                return Read_pachm(of.FileName, ref Map);
+            }
+
+            /// <summary>
+            /// reads a file and populates the map receiver instance.
+            /// </summary>
+            /// <returns></returns>
+            public static bool Read_pachm(string path, ref Mapping.PachMapReceiver[] Map)
+            {
+                System.IO.BinaryReader sr = new System.IO.BinaryReader(System.IO.File.Open(path, System.IO.FileMode.Open));
                 //1. Write calculation type. (string)
                 string CalcType = sr.ReadString();
                 if (CalcType != "Type;Map_Data" && CalcType != "Type;Map_Data_NoDir") throw new Exception("Map Data File Expected");
