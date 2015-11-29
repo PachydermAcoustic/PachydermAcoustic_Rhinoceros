@@ -1295,37 +1295,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[0] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[0].Pt));
-                                (Links2[0] as RDD_Node).Links2[5] = new Null_Node();
-                                Links2[0] = new Null_Node();
-                                //(Links2[0] as RDD_Node).Links2[5] = (Links2[0] as RDD_Node).Links2[0];
-                                //Links2[0] = Links2[5];
+                                //(Links2[0] as RDD_Node).Links2[5] = new Null_Node();
+                                //Links2[0] = new Null_Node();
+                                if ((Links2[0] as RDD_Node).Links2[5] == this) (Links2[0] as RDD_Node).Links2[5] = (Links2[0] as RDD_Node).Links2[0];
+                                Links2[0] = Links2[5];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYNegZNeg)
                             {
                                 if (Links2[1] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[1].Pt));
-                                (Links2[1] as RDD_Node).Links2[4] = new Null_Node();
-                                Links2[1] = new Null_Node();
-                                //(Links2[1] as RDD_Node).Links2[4] = (Links2[1] as RDD_Node).Links2[1];
-                                //Links2[1] = Links2[4];
+                                //(Links2[1] as RDD_Node).Links2[4] = new Null_Node();
+                                //Links2[1] = new Null_Node();
+                                if ((Links2[1] as RDD_Node).Links2[4] == this) (Links2[1] as RDD_Node).Links2[4] = (Links2[1] as RDD_Node).Links2[1];
+                                Links2[1] = Links2[4];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYNegZPos)
                             {
                                 if (Links2[2] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[2].Pt));
-                                (Links2[2] as RDD_Node).Links2[7] = new Null_Node();
-                                Links2[2] = new Null_Node();
-                                //(Links2[2] as RDD_Node).Links2[7] = (Links2[2] as RDD_Node).Links2[2];
-                                //Links2[2] = Links2[7];
+                                //(Links2[2] as RDD_Node).Links2[7] = new Null_Node();
+                                //Links2[2] = new Null_Node();
+                                if ((Links2[2] as RDD_Node).Links2[7] == this) (Links2[2] as RDD_Node).Links2[7] = (Links2[2] as RDD_Node).Links2[2];
+                                Links2[2] = Links2[7];
                             }
                             else if (b == Bound_Node.Boundary.DXPosYPosZNeg)
                             {
                                 if (Links2[3] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[3].Pt));
-                                (Links2[3] as RDD_Node).Links2[6] = new Null_Node();
-                                Links2[3] = new Null_Node();
-                                //(Links2[3] as RDD_Node).Links2[6] = (Links2[3] as RDD_Node).Links2[3];
-                                //Links2[3] = Links2[6];
+                                //(Links2[3] as RDD_Node).Links2[6] = new Null_Node();
+                                //Links2[3] = new Null_Node();
+                                if ((Links2[3] as RDD_Node).Links2[6] == this) (Links2[3] as RDD_Node).Links2[6] = (Links2[3] as RDD_Node).Links2[3];
+                                Links2[3] = Links2[6];
                             }
                             /*
                             [4] = x-y+z+
@@ -1337,37 +1337,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[4] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[4].Pt));
-                                (Links2[4] as RDD_Node).Links2[1] = new Null_Node();
-                                Links2[4] = new Null_Node();
-                                //(Links2[4] as RDD_Node).Links2[1] = (Links2[4] as RDD_Node).Links2[4];
-                                //Links2[4] = Links2[1];
+                                //(Links2[4] as RDD_Node).Links2[1] = new Null_Node();
+                                //Links2[4] = new Null_Node();
+                                if ((Links2[4] as RDD_Node).Links2[1] == this) (Links2[4] as RDD_Node).Links2[1] = (Links2[4] as RDD_Node).Links2[4];
+                                Links2[4] = Links2[1];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYNegZNeg)
                             {
                                 if (Links2[5] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[5].Pt));
-                                (Links2[5] as RDD_Node).Links2[0] = new Null_Node();
-                                Links2[5] = new Null_Node();
-                                //(Links2[5] as RDD_Node).Links2[0] = (Links2[5] as RDD_Node).Links2[5];
-                                //Links2[5] = Links2[0];
+                                //(Links2[5] as RDD_Node).Links2[0] = new Null_Node();
+                                //Links2[5] = new Null_Node();
+                                if ((Links2[5] as RDD_Node).Links2[0] == this) (Links2[5] as RDD_Node).Links2[0] = (Links2[5] as RDD_Node).Links2[5];
+                                Links2[5] = Links2[0];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYNegZPos)
                             {
                                 if (Links2[6] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[6].Pt));
-                                (Links2[6] as RDD_Node).Links2[3] = new Null_Node();
-                                Links2[6] = new Null_Node();
-                                //(Links2[6] as RDD_Node).Links2[3] = (Links2[6] as RDD_Node).Links2[6];
-                                //Links2[6] = Links2[3];
+                                //(Links2[6] as RDD_Node).Links2[3] = new Null_Node();
+                                //Links2[6] = new Null_Node();
+                                if ((Links2[6] as RDD_Node).Links2[3] == this) (Links2[6] as RDD_Node).Links2[3] = (Links2[6] as RDD_Node).Links2[6];
+                                Links2[6] = Links2[3];
                             }
                             else if (b == Bound_Node.Boundary.DXNegYPosZNeg)
                             {
                                 if (Links2[7] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[7].Pt));
-                                (Links2[7] as RDD_Node).Links2[2] = new Null_Node();
-                                Links2[7] = new Null_Node();
-                                //(Links2[7] as RDD_Node).Links2[2] = (Links2[7] as RDD_Node).Links2[7];
-                                //Links2[7] = Links2[2];
+                                //(Links2[7] as RDD_Node).Links2[2] = new Null_Node();
+                                //Links2[7] = new Null_Node();
+                                if ((Links2[7] as RDD_Node).Links2[2] == this) (Links2[7] as RDD_Node).Links2[2] = (Links2[7] as RDD_Node).Links2[7];
+                                Links2[7] = Links2[2];
                             }
                             /*
                             [8] = y+
@@ -1379,37 +1379,37 @@ namespace Pachyderm_Acoustic
                             {
                                 if (Links2[8] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[8].Pt));
-                                (Links2[8] as RDD_Node).Links2[9] = new Null_Node();
-                                Links2[8] = new Null_Node();
-                            //    (Links2[8] as RDD_Node).Links2[9] = (Links2[8] as RDD_Node).Links2[8];
-                            //    Links2[8] = Links2[9];
+                                //(Links2[8] as RDD_Node).Links2[9] = new Null_Node();
+                                //Links2[8] = new Null_Node();
+                                if ((Links2[8] as RDD_Node).Links2[9] == this) (Links2[8] as RDD_Node).Links2[9] = (Links2[8] as RDD_Node).Links2[8];
+                                Links2[8] = Links2[9];
                             }
                             else if (b == Bound_Node.Boundary.AYNeg)
                             {
                                 if (Links2[9] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[9].Pt));
-                                (Links2[9] as RDD_Node).Links2[8] = new Null_Node();
-                                Links2[9] = new Null_Node();
-                                //(Links2[9] as RDD_Node).Links2[8] = (Links2[9] as RDD_Node).Links2[9];
-                                //Links2[9] = Links2[8];
+                                //(Links2[9] as RDD_Node).Links2[8] = new Null_Node();
+                                //Links2[9] = new Null_Node();
+                                if ((Links2[9] as RDD_Node).Links2[8] == this) (Links2[9] as RDD_Node).Links2[8] = (Links2[9] as RDD_Node).Links2[9];
+                                Links2[9] = Links2[8];
                             }
                             else if (b == Bound_Node.Boundary.AZPos)
                             {
                                 if (Links2[10] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[10].Pt));
-                                (Links2[10] as RDD_Node).Links2[11] = new Null_Node();
-                                Links2[10] = new Null_Node();
-                                //(Links2[10] as RDD_Node).Links2[11] = (Links2[10] as RDD_Node).Links2[10];
-                                //Links2[10] = Links2[11];
+                                //(Links2[10] as RDD_Node).Links2[11] = new Null_Node();
+                                //Links2[10] = new Null_Node();
+                                if ((Links2[10] as RDD_Node).Links2[11] == this) (Links2[10] as RDD_Node).Links2[11] = (Links2[10] as RDD_Node).Links2[10];
+                                Links2[10] = Links2[11];
                             }
                             else if (b == Bound_Node.Boundary.AZNeg)
                             {
                                 if (Links2[11] is Null_Node) continue;
                                 //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(Utilities.PachTools.HPttoRPt(Pt), Utilities.PachTools.HPttoRPt(Links2[11].Pt));
-                                (Links2[11] as RDD_Node).Links2[10] = new Null_Node();
-                                Links2[11] = new Null_Node();
-                                //(Links2[11] as RDD_Node).Links2[10] = (Links2[11] as RDD_Node).Links2[11];
-                                //Links2[11] = Links2[10];
+                                //(Links2[11] as RDD_Node).Links2[10] = new Null_Node();
+                                //Links2[11] = new Null_Node();
+                                if ((Links2[11] as RDD_Node).Links2[10] == this) (Links2[11] as RDD_Node).Links2[10] = (Links2[11] as RDD_Node).Links2[11];
+                                Links2[11] = Links2[10];
                             }
                         }
                         /*

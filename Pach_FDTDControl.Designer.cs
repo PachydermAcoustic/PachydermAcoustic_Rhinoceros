@@ -338,7 +338,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 42F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 239F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 240F));
             this.tableLayoutPanel3.Controls.Add(this.Frequencies, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.Analysis_View, 0, 2);
             this.tableLayoutPanel3.Controls.Add(this.LockUserScale, 1, 1);
@@ -410,7 +410,7 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.AutoSize = true;
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Normalize_Graph.Location = new System.Drawing.Point(301, 198);
+            this.Normalize_Graph.Location = new System.Drawing.Point(300, 198);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(6);
             this.Normalize_Graph.Name = "Normalize_Graph";
             this.Normalize_Graph.Size = new System.Drawing.Size(233, 29);
