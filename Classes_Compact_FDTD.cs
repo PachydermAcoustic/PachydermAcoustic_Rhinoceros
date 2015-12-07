@@ -184,7 +184,7 @@ namespace Pachyderm_Acoustic
 
                 public void RuntoCompletion()
                 {
-                    for(time_ms = 0; time_ms < tmax*0.001; time_ms+= dt)
+                    for(time_ms = 0; time_ms < tmax/1000; time_ms+= dt)
                     {
                         Increment();
                     }
@@ -207,9 +207,6 @@ namespace Pachyderm_Acoustic
                     zDim = (int)Math.Ceiling(z_length / dx);                              //set number of nodes in z direction
                     double dz = z_length / zDim;
 
-                    dt = dx / (Math.Sqrt(1.0 / 3.0) * (Rm.Sound_speed(0)));                           //set time step small enough to satisfy courrant condition
-                    dt = dx / (Rm.Sound_speed(0));                           //set time step small enough to satisfy courrant condition
-                    //dt = dx / (Math.Sqrt(.75) * (Rm.Sound_speed));                           //set time step small enough to satisfy courrant condition
                     double rt2 = Math.Sqrt(2);
                     double rt3 = Math.Sqrt(3);
                     dxrt2 = dx * rt2;
@@ -288,10 +285,19 @@ namespace Pachyderm_Acoustic
                         }
                     }//);
 
+                    //dt = dx / (Math.Sqrt(1.0 / 3.0) * (Rm.Sound_speed(0)));                           //set time step small enough to satisfy courrant condition
+                    //dt = dx / (Rm.Sound_speed(0));                           //set time step small enough to satisfy courrant condition
+                    //dt = dx / (Math.Sqrt(.75) * (Rm.Sound_speed));                           //set time step small enough to satisfy courrant condition
+                    dt = Math.Sqrt(dx * dx + dy * dy + dz * dz) / Rm.Sound_speed(0);
                     if (failed) return;
 
                     SD.Connect_Grid(PFrame, Bounds, dx, dy, dz, tmax, dt, 0);
                     Mic.Connect_Grid(PFrame, Bounds, dx, tmax, dt, 0);
+                }
+
+                public double SampleFrequency
+                {
+                    get { return 1f / dt; }
                 }
 
                 public void reset(double frequency, Signal_Driver_Compact.Signal_Type s)
@@ -339,7 +345,7 @@ namespace Pachyderm_Acoustic
                     SD.Drive(n);
                     Mic.Record(n);
                     n += 1;
-                    time_ms = n * dt * 1000;
+                    time_ms = n * dt;
                     return time_ms;
                 }
 
@@ -1448,6 +1454,14 @@ namespace Pachyderm_Acoustic
                         }
                         else n.Pn = 0;
                     }
+                }
+
+                public System.Numerics.Complex[] Frequency_Response(int length)
+                {
+                    if (signal.Length > length) length = signal.Length;
+                    double[] signal_clone = new double[length];
+                    Array.Copy(signal, signal_clone, signal.Length);
+                    return Audio.Pach_SP.FFT_General(signal_clone, 0);
                 }
 
                 public double frequency

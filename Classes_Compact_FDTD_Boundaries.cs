@@ -1252,8 +1252,8 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < Rcoef.Count; i++) R += Rcoef[i];
                         R /= Rcoef.Count;
 
-                        double[] abs_zeros = new double[2] { 1, 0 };
-                        double[] abs_poles = new double[2] { 1, 0 };
+                        double[] abs_zeros = new double[2] { 0,0};
+                        double[] abs_poles = new double[2] { 0,0};
 
                         filter = new DIF_IWB_2p(abs_zeros, abs_poles, 0.81, IIR_DIF.IWB_Mask.Axial);
 
