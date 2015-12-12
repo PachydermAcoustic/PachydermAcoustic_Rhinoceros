@@ -163,6 +163,22 @@ namespace Pachyderm_Acoustic
                     Time_Preview.Text = Math.Round(t, 3).ToString();
                 });
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+
+                ////////////////////////
+                if (Folder_Status.Text != "")
+                {
+                    int j = (int)Math.Round(t / FDTD.dt);
+                    string number;
+                    if (j < 100)
+                    {
+                        if (t < 10) number = "00" + j.ToString();
+                        else number = "0" + j.ToString();
+                    }
+                    else number = j.ToString();
+
+                    this.Invoke((MethodInvoker)delegate { Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true); });
+                }
+                /////////////////////////
             }
 
             bool Running = false;
@@ -505,6 +521,15 @@ namespace Pachyderm_Acoustic
                 Update_Graph(sender, e);
                 Frequency_Selection.Value = (decimal)Chosenfreq;
                 Freq_Max.Value = (decimal)(62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Selected_Extent.SelectedIndex));
+            }
+
+            private FolderBrowserDialog FileLocation = new FolderBrowserDialog();
+            private void SetFolder_Click(object sender, EventArgs e)
+            {
+                if (FileLocation.ShowDialog() == DialogResult.OK)
+                {
+                    Folder_Status.Text = FileLocation.SelectedPath;
+                }
             }
         }
     }

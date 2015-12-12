@@ -118,7 +118,7 @@ namespace Pachyderm_Acoustic
             // FromPointInputToolStripMenuItem
             // 
             this.FromPointInputToolStripMenuItem.Name = "FromPointInputToolStripMenuItem";
-            this.FromPointInputToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
+            this.FromPointInputToolStripMenuItem.Size = new System.Drawing.Size(311, 38);
             this.FromPointInputToolStripMenuItem.Text = "From Point Input";
             // 
             // DirectionalSourceToolStripMenuItem
@@ -130,7 +130,7 @@ namespace Pachyderm_Acoustic
             // FromMeshSphereToolStripMenuItem
             // 
             this.FromMeshSphereToolStripMenuItem.Name = "FromMeshSphereToolStripMenuItem";
-            this.FromMeshSphereToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
+            this.FromMeshSphereToolStripMenuItem.Size = new System.Drawing.Size(311, 38);
             this.FromMeshSphereToolStripMenuItem.Text = "From MeshSphere";
             // 
             // ToolStripMenuItem1
@@ -145,7 +145,7 @@ namespace Pachyderm_Acoustic
             // FromPointInputToolStripMenuItem2
             // 
             this.FromPointInputToolStripMenuItem2.Name = "FromPointInputToolStripMenuItem2";
-            this.FromPointInputToolStripMenuItem2.Size = new System.Drawing.Size(179, 22);
+            this.FromPointInputToolStripMenuItem2.Size = new System.Drawing.Size(329, 38);
             this.FromPointInputToolStripMenuItem2.Text = "From Point Input";
             // 
             // SelectASphereToolStripMenuItem
@@ -160,7 +160,7 @@ namespace Pachyderm_Acoustic
             // FromSphereObjectToolStripMenuItem1
             // 
             this.FromSphereObjectToolStripMenuItem1.Name = "FromSphereObjectToolStripMenuItem1";
-            this.FromSphereObjectToolStripMenuItem1.Size = new System.Drawing.Size(179, 22);
+            this.FromSphereObjectToolStripMenuItem1.Size = new System.Drawing.Size(329, 38);
             this.FromSphereObjectToolStripMenuItem1.Text = "From Sphere Object";
             // 
             // Forw
@@ -202,7 +202,7 @@ namespace Pachyderm_Acoustic
             "Sphere"});
             this.comboBox1.Location = new System.Drawing.Point(61, 70);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(213, 21);
+            this.comboBox1.Size = new System.Drawing.Size(213, 33);
             this.comboBox1.TabIndex = 32;
             this.comboBox1.Text = "Tetrahedron";
             // 
@@ -234,7 +234,7 @@ namespace Pachyderm_Acoustic
             "From Source Directivity Data"});
             this.SourceSelection.Location = new System.Drawing.Point(61, 43);
             this.SourceSelection.Name = "SourceSelection";
-            this.SourceSelection.Size = new System.Drawing.Size(213, 21);
+            this.SourceSelection.Size = new System.Drawing.Size(213, 33);
             this.SourceSelection.TabIndex = 27;
             this.SourceSelection.Text = "Select Source...";
             // 
@@ -248,7 +248,7 @@ namespace Pachyderm_Acoustic
             "Select Surfaces"});
             this.RoomSelection.Location = new System.Drawing.Point(61, 16);
             this.RoomSelection.Name = "RoomSelection";
-            this.RoomSelection.Size = new System.Drawing.Size(213, 21);
+            this.RoomSelection.Size = new System.Drawing.Size(213, 33);
             this.RoomSelection.TabIndex = 26;
             this.RoomSelection.Text = "Use Entire Model";
             // 
@@ -258,10 +258,12 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.groupBox4, 2);
             this.groupBox4.Controls.Add(this.Time_Preview);
-            this.groupBox4.Location = new System.Drawing.Point(3, 63);
+            this.groupBox4.Location = new System.Drawing.Point(6, 122);
+            this.groupBox4.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Padding = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.tableLayoutPanel1.SetRowSpan(this.groupBox4, 2);
-            this.groupBox4.Size = new System.Drawing.Size(146, 34);
+            this.groupBox4.Size = new System.Drawing.Size(292, 65);
             this.groupBox4.TabIndex = 104;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Current Time (ms)";
@@ -269,9 +271,10 @@ namespace Pachyderm_Acoustic
             // Time_Preview
             // 
             this.Time_Preview.AutoSize = true;
-            this.Time_Preview.Location = new System.Drawing.Point(25, 16);
+            this.Time_Preview.Location = new System.Drawing.Point(50, 31);
+            this.Time_Preview.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Time_Preview.Name = "Time_Preview";
-            this.Time_Preview.Size = new System.Drawing.Size(74, 13);
+            this.Time_Preview.Size = new System.Drawing.Size(147, 25);
             this.Time_Preview.TabIndex = 106;
             this.Time_Preview.Text = "Time_Preview";
             // 
@@ -292,9 +295,10 @@ namespace Pachyderm_Acoustic
             "4 kHz.",
             "8 kHz.",
             "Unified Filter"});
-            this.Octave.Location = new System.Drawing.Point(3, 193);
+            this.Octave.Location = new System.Drawing.Point(6, 373);
+            this.Octave.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Octave.Name = "Octave";
-            this.Octave.Size = new System.Drawing.Size(146, 21);
+            this.Octave.Size = new System.Drawing.Size(292, 33);
             this.Octave.TabIndex = 103;
             this.Octave.Text = "Summation: All Octaves";
             // 
@@ -304,9 +308,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left)));
             this.label22.AutoSize = true;
             this.tableLayoutPanel1.SetColumnSpan(this.label22, 2);
-            this.label22.Location = new System.Drawing.Point(3, 160);
+            this.label22.Location = new System.Drawing.Point(6, 309);
+            this.label22.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(117, 30);
+            this.label22.Size = new System.Drawing.Size(231, 58);
             this.label22.TabIndex = 102;
             this.label22.Text = "Octave Band Selection";
             this.label22.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -317,9 +322,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left)));
             this.label23.AutoSize = true;
             this.tableLayoutPanel1.SetColumnSpan(this.label23, 2);
-            this.label23.Location = new System.Drawing.Point(3, 100);
+            this.label23.Location = new System.Drawing.Point(6, 193);
+            this.label23.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(78, 30);
+            this.label23.Size = new System.Drawing.Size(158, 58);
             this.label23.TabIndex = 101;
             this.label23.Text = "Color Selection";
             this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -336,9 +342,10 @@ namespace Pachyderm_Acoustic
             "Y-G-B",
             "W-B",
             "R-B"});
-            this.Color_Selection.Location = new System.Drawing.Point(3, 133);
+            this.Color_Selection.Location = new System.Drawing.Point(6, 257);
+            this.Color_Selection.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Color_Selection.Name = "Color_Selection";
-            this.Color_Selection.Size = new System.Drawing.Size(146, 21);
+            this.Color_Selection.Size = new System.Drawing.Size(292, 33);
             this.Color_Selection.TabIndex = 100;
             this.Color_Selection.Text = "R-O-Y-G-B-I-V";
             this.Color_Selection.SelectedIndexChanged += new System.EventHandler(this.Color_Selection_SelectedIndexChanged);
@@ -348,9 +355,10 @@ namespace Pachyderm_Acoustic
             this.Param1_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Param1_4.AutoSize = true;
-            this.Param1_4.Location = new System.Drawing.Point(206, 160);
+            this.Param1_4.Location = new System.Drawing.Point(414, 309);
+            this.Param1_4.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Param1_4.Name = "Param1_4";
-            this.Param1_4.Size = new System.Drawing.Size(19, 30);
+            this.Param1_4.Size = new System.Drawing.Size(36, 58);
             this.Param1_4.TabIndex = 99;
             this.Param1_4.Text = "00";
             this.Param1_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -360,9 +368,10 @@ namespace Pachyderm_Acoustic
             this.Param1_2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Param1_2.AutoSize = true;
-            this.Param1_2.Location = new System.Drawing.Point(206, 130);
+            this.Param1_2.Location = new System.Drawing.Point(414, 251);
+            this.Param1_2.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Param1_2.Name = "Param1_2";
-            this.Param1_2.Size = new System.Drawing.Size(19, 30);
+            this.Param1_2.Size = new System.Drawing.Size(36, 58);
             this.Param1_2.TabIndex = 98;
             this.Param1_2.Text = "00";
             this.Param1_2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -371,9 +380,10 @@ namespace Pachyderm_Acoustic
             // 
             this.Param_Min.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.Param_Min.DecimalPlaces = 1;
-            this.Param_Min.Location = new System.Drawing.Point(174, 197);
+            this.Param_Min.Location = new System.Drawing.Point(348, 388);
+            this.Param_Min.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Param_Min.Name = "Param_Min";
-            this.Param_Min.Size = new System.Drawing.Size(51, 20);
+            this.Param_Min.Size = new System.Drawing.Size(102, 31);
             this.Param_Min.TabIndex = 97;
             this.Param_Min.ValueChanged += new System.EventHandler(this.Param_Max_ValueChanged);
             // 
@@ -382,14 +392,15 @@ namespace Pachyderm_Acoustic
             this.Param_Max.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Param_Max.DecimalPlaces = 1;
-            this.Param_Max.Location = new System.Drawing.Point(174, 73);
+            this.Param_Max.Location = new System.Drawing.Point(348, 141);
+            this.Param_Max.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Param_Max.Maximum = new decimal(new int[] {
             200,
             0,
             0,
             0});
             this.Param_Max.Name = "Param_Max";
-            this.Param_Max.Size = new System.Drawing.Size(51, 20);
+            this.Param_Max.Size = new System.Drawing.Size(102, 31);
             this.Param_Max.TabIndex = 96;
             this.Param_Max.Value = new decimal(new int[] {
             120,
@@ -403,9 +414,10 @@ namespace Pachyderm_Acoustic
             this.Param3_4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Param3_4.AutoSize = true;
-            this.Param3_4.Location = new System.Drawing.Point(206, 100);
+            this.Param3_4.Location = new System.Drawing.Point(414, 193);
+            this.Param3_4.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Param3_4.Name = "Param3_4";
-            this.Param3_4.Size = new System.Drawing.Size(19, 30);
+            this.Param3_4.Size = new System.Drawing.Size(36, 58);
             this.Param3_4.TabIndex = 95;
             this.Param3_4.Text = "00";
             this.Param3_4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -415,10 +427,11 @@ namespace Pachyderm_Acoustic
             this.Param_Scale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Param_Scale.Location = new System.Drawing.Point(231, 73);
+            this.Param_Scale.Location = new System.Drawing.Point(462, 141);
+            this.Param_Scale.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Param_Scale.Name = "Param_Scale";
             this.tableLayoutPanel1.SetRowSpan(this.Param_Scale, 5);
-            this.Param_Scale.Size = new System.Drawing.Size(70, 144);
+            this.Param_Scale.Size = new System.Drawing.Size(140, 278);
             this.Param_Scale.TabIndex = 94;
             this.Param_Scale.TabStop = false;
             // 
@@ -428,10 +441,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.Preview, 4);
-            this.Preview.Location = new System.Drawing.Point(2, 32);
-            this.Preview.Margin = new System.Windows.Forms.Padding(2);
+            this.Preview.Location = new System.Drawing.Point(4, 62);
+            this.Preview.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Preview.Name = "Preview";
-            this.Preview.Size = new System.Drawing.Size(300, 26);
+            this.Preview.Size = new System.Drawing.Size(600, 50);
             this.Preview.TabIndex = 87;
             this.Preview.Text = "Preview";
             this.Preview.UseVisualStyleBackColor = true;
@@ -444,9 +457,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.Loop, 2);
             this.Loop.Enabled = false;
-            this.Loop.Location = new System.Drawing.Point(79, 3);
+            this.Loop.Location = new System.Drawing.Point(158, 6);
+            this.Loop.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Loop.Name = "Loop";
-            this.Loop.Size = new System.Drawing.Size(146, 24);
+            this.Loop.Size = new System.Drawing.Size(292, 46);
             this.Loop.TabIndex = 35;
             this.Loop.Text = "Loop";
             this.Loop.UseVisualStyleBackColor = true;
@@ -458,9 +472,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.BackButton.Enabled = false;
-            this.BackButton.Location = new System.Drawing.Point(3, 3);
+            this.BackButton.Location = new System.Drawing.Point(6, 6);
+            this.BackButton.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.BackButton.Name = "BackButton";
-            this.BackButton.Size = new System.Drawing.Size(70, 24);
+            this.BackButton.Size = new System.Drawing.Size(140, 46);
             this.BackButton.TabIndex = 33;
             this.BackButton.Text = "<<";
             this.BackButton.UseVisualStyleBackColor = true;
@@ -471,9 +486,11 @@ namespace Pachyderm_Acoustic
             this.GroupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.GroupBox2.Controls.Add(this.SourceSelect);
-            this.GroupBox2.Location = new System.Drawing.Point(8, 3);
+            this.GroupBox2.Location = new System.Drawing.Point(16, 6);
+            this.GroupBox2.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.GroupBox2.Name = "GroupBox2";
-            this.GroupBox2.Size = new System.Drawing.Size(304, 43);
+            this.GroupBox2.Padding = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.GroupBox2.Size = new System.Drawing.Size(608, 83);
             this.GroupBox2.TabIndex = 71;
             this.GroupBox2.TabStop = false;
             this.GroupBox2.Text = "Visualisation Type";
@@ -487,9 +504,10 @@ namespace Pachyderm_Acoustic
             "Smart Particle Wave",
             "Particle Wave",
             "Mesh Wave"});
-            this.SourceSelect.Location = new System.Drawing.Point(9, 13);
+            this.SourceSelect.Location = new System.Drawing.Point(18, 25);
+            this.SourceSelect.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.SourceSelect.Name = "SourceSelect";
-            this.SourceSelect.Size = new System.Drawing.Size(289, 21);
+            this.SourceSelect.Size = new System.Drawing.Size(574, 33);
             this.SourceSelect.TabIndex = 27;
             this.SourceSelect.Text = "Smart Particle Wave";
             this.SourceSelect.SelectedIndexChanged += new System.EventHandler(this.SourceSelect_SelectedIndexChanged);
@@ -508,9 +526,11 @@ namespace Pachyderm_Acoustic
             this.groupBox1.Controls.Add(this.Air_Temp);
             this.groupBox1.Controls.Add(this.label10);
             this.groupBox1.Controls.Add(this.RT_Count);
-            this.groupBox1.Location = new System.Drawing.Point(8, 49);
+            this.groupBox1.Location = new System.Drawing.Point(16, 94);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(304, 147);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.groupBox1.Size = new System.Drawing.Size(608, 283);
             this.groupBox1.TabIndex = 94;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Simulation Settings";
@@ -518,9 +538,10 @@ namespace Pachyderm_Acoustic
             // Label3
             // 
             this.Label3.AutoSize = true;
-            this.Label3.Location = new System.Drawing.Point(6, 122);
+            this.Label3.Location = new System.Drawing.Point(12, 235);
+            this.Label3.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Label3.Name = "Label3";
-            this.Label3.Size = new System.Drawing.Size(62, 13);
+            this.Label3.Size = new System.Drawing.Size(124, 25);
             this.Label3.TabIndex = 103;
             this.Label3.Text = "Frame Rate";
             // 
@@ -528,7 +549,8 @@ namespace Pachyderm_Acoustic
             // 
             this.Frame_Rate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Frame_Rate.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Frame_Rate.Location = new System.Drawing.Point(246, 120);
+            this.Frame_Rate.Location = new System.Drawing.Point(492, 231);
+            this.Frame_Rate.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Frame_Rate.Maximum = new decimal(new int[] {
             80,
             0,
@@ -540,7 +562,7 @@ namespace Pachyderm_Acoustic
             0,
             -2147483648});
             this.Frame_Rate.Name = "Frame_Rate";
-            this.Frame_Rate.Size = new System.Drawing.Size(52, 20);
+            this.Frame_Rate.Size = new System.Drawing.Size(104, 31);
             this.Frame_Rate.TabIndex = 102;
             this.Frame_Rate.UseWaitCursor = true;
             this.Frame_Rate.Value = new decimal(new int[] {
@@ -552,9 +574,10 @@ namespace Pachyderm_Acoustic
             // Label1
             // 
             this.Label1.AutoSize = true;
-            this.Label1.Location = new System.Drawing.Point(6, 96);
+            this.Label1.Location = new System.Drawing.Point(12, 185);
+            this.Label1.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Label1.Name = "Label1";
-            this.Label1.Size = new System.Drawing.Size(96, 13);
+            this.Label1.Size = new System.Drawing.Size(194, 25);
             this.Label1.TabIndex = 101;
             this.Label1.Text = "Duration (seconds)";
             // 
@@ -562,7 +585,8 @@ namespace Pachyderm_Acoustic
             // 
             this.Seconds.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Seconds.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Seconds.Location = new System.Drawing.Point(246, 94);
+            this.Seconds.Location = new System.Drawing.Point(492, 181);
+            this.Seconds.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Seconds.Maximum = new decimal(new int[] {
             80,
             0,
@@ -574,7 +598,7 @@ namespace Pachyderm_Acoustic
             0,
             -2147483648});
             this.Seconds.Name = "Seconds";
-            this.Seconds.Size = new System.Drawing.Size(52, 20);
+            this.Seconds.Size = new System.Drawing.Size(104, 31);
             this.Seconds.TabIndex = 100;
             this.Seconds.UseWaitCursor = true;
             this.Seconds.Value = new decimal(new int[] {
@@ -586,9 +610,10 @@ namespace Pachyderm_Acoustic
             // COTime
             // 
             this.COTime.AutoSize = true;
-            this.COTime.Location = new System.Drawing.Point(6, 44);
+            this.COTime.Location = new System.Drawing.Point(12, 85);
+            this.COTime.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.COTime.Name = "COTime";
-            this.COTime.Size = new System.Drawing.Size(88, 13);
+            this.COTime.Size = new System.Drawing.Size(180, 25);
             this.COTime.TabIndex = 83;
             this.COTime.Text = "Cut Off Time (ms)";
             // 
@@ -596,7 +621,8 @@ namespace Pachyderm_Acoustic
             // 
             this.CO_TIME.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.CO_TIME.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.CO_TIME.Location = new System.Drawing.Point(231, 42);
+            this.CO_TIME.Location = new System.Drawing.Point(462, 81);
+            this.CO_TIME.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.CO_TIME.Maximum = new decimal(new int[] {
             8000,
             0,
@@ -608,7 +634,7 @@ namespace Pachyderm_Acoustic
             0,
             0});
             this.CO_TIME.Name = "CO_TIME";
-            this.CO_TIME.Size = new System.Drawing.Size(67, 20);
+            this.CO_TIME.Size = new System.Drawing.Size(134, 31);
             this.CO_TIME.TabIndex = 82;
             this.CO_TIME.UseWaitCursor = true;
             this.CO_TIME.Value = new decimal(new int[] {
@@ -620,9 +646,10 @@ namespace Pachyderm_Acoustic
             // AirTemp
             // 
             this.AirTemp.AutoSize = true;
-            this.AirTemp.Location = new System.Drawing.Point(6, 70);
+            this.AirTemp.Location = new System.Drawing.Point(12, 135);
+            this.AirTemp.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.AirTemp.Name = "AirTemp";
-            this.AirTemp.Size = new System.Drawing.Size(98, 13);
+            this.AirTemp.Size = new System.Drawing.Size(201, 25);
             this.AirTemp.TabIndex = 81;
             this.AirTemp.Text = "Air Temperature (C)";
             // 
@@ -630,7 +657,8 @@ namespace Pachyderm_Acoustic
             // 
             this.Air_Temp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Air_Temp.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Air_Temp.Location = new System.Drawing.Point(246, 68);
+            this.Air_Temp.Location = new System.Drawing.Point(492, 131);
+            this.Air_Temp.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Air_Temp.Maximum = new decimal(new int[] {
             80,
             0,
@@ -642,7 +670,7 @@ namespace Pachyderm_Acoustic
             0,
             -2147483648});
             this.Air_Temp.Name = "Air_Temp";
-            this.Air_Temp.Size = new System.Drawing.Size(52, 20);
+            this.Air_Temp.Size = new System.Drawing.Size(104, 31);
             this.Air_Temp.TabIndex = 80;
             this.Air_Temp.UseWaitCursor = true;
             this.Air_Temp.Value = new decimal(new int[] {
@@ -654,9 +682,10 @@ namespace Pachyderm_Acoustic
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(6, 18);
+            this.label10.Location = new System.Drawing.Point(12, 35);
+            this.label10.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(83, 13);
+            this.label10.Size = new System.Drawing.Size(166, 25);
             this.label10.TabIndex = 79;
             this.label10.Text = "Number of Rays";
             // 
@@ -669,7 +698,8 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
-            this.RT_Count.Location = new System.Drawing.Point(231, 16);
+            this.RT_Count.Location = new System.Drawing.Point(462, 31);
+            this.RT_Count.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.RT_Count.Maximum = new decimal(new int[] {
             10000000,
             0,
@@ -681,7 +711,7 @@ namespace Pachyderm_Acoustic
             0,
             0});
             this.RT_Count.Name = "RT_Count";
-            this.RT_Count.Size = new System.Drawing.Size(67, 20);
+            this.RT_Count.Size = new System.Drawing.Size(134, 31);
             this.RT_Count.TabIndex = 78;
             this.RT_Count.UseWaitCursor = true;
             this.RT_Count.Value = new decimal(new int[] {
@@ -695,9 +725,10 @@ namespace Pachyderm_Acoustic
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(3, 250);
+            this.label2.Location = new System.Drawing.Point(6, 482);
+            this.label2.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(45, 25);
+            this.label2.Size = new System.Drawing.Size(90, 48);
             this.label2.TabIndex = 87;
             this.label2.Text = "Particle:";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -713,9 +744,10 @@ namespace Pachyderm_Acoustic
             "Icosahedron",
             "Cube",
             "Geodesic Sphere"});
-            this.ParticleChoice.Location = new System.Drawing.Point(79, 253);
+            this.ParticleChoice.Location = new System.Drawing.Point(158, 488);
+            this.ParticleChoice.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.ParticleChoice.Name = "ParticleChoice";
-            this.ParticleChoice.Size = new System.Drawing.Size(222, 21);
+            this.ParticleChoice.Size = new System.Drawing.Size(444, 33);
             this.ParticleChoice.TabIndex = 86;
             this.ParticleChoice.Text = "Tetrahedron";
             // 
@@ -725,9 +757,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left)));
             this.Label14.AutoSize = true;
             this.tableLayoutPanel1.SetColumnSpan(this.Label14, 2);
-            this.Label14.Location = new System.Drawing.Point(3, 275);
+            this.Label14.Location = new System.Drawing.Point(6, 530);
+            this.Label14.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.Label14.Name = "Label14";
-            this.Label14.Size = new System.Drawing.Size(104, 25);
+            this.Label14.Size = new System.Drawing.Size(209, 48);
             this.Label14.TabIndex = 85;
             this.Label14.Text = "Select Output Folder";
             this.Label14.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -737,10 +770,11 @@ namespace Pachyderm_Acoustic
             this.Folder_Status.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.Folder_Status, 4);
-            this.Folder_Status.Location = new System.Drawing.Point(3, 311);
+            this.Folder_Status.Location = new System.Drawing.Point(6, 599);
+            this.Folder_Status.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Folder_Status.Name = "Folder_Status";
             this.Folder_Status.ReadOnly = true;
-            this.Folder_Status.Size = new System.Drawing.Size(298, 20);
+            this.Folder_Status.Size = new System.Drawing.Size(596, 31);
             this.Folder_Status.TabIndex = 84;
             // 
             // OpenFolder
@@ -749,9 +783,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.OpenFolder, 2);
-            this.OpenFolder.Location = new System.Drawing.Point(155, 278);
+            this.OpenFolder.Location = new System.Drawing.Point(310, 536);
+            this.OpenFolder.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.OpenFolder.Name = "OpenFolder";
-            this.OpenFolder.Size = new System.Drawing.Size(146, 19);
+            this.OpenFolder.Size = new System.Drawing.Size(292, 36);
             this.OpenFolder.TabIndex = 83;
             this.OpenFolder.Text = "Open...";
             this.OpenFolder.UseVisualStyleBackColor = true;
@@ -763,10 +798,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel1.SetColumnSpan(this.Calculate, 4);
-            this.Calculate.Location = new System.Drawing.Point(2, 336);
-            this.Calculate.Margin = new System.Windows.Forms.Padding(2);
+            this.Calculate.Location = new System.Drawing.Point(4, 647);
+            this.Calculate.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Calculate.Name = "Calculate";
-            this.Calculate.Size = new System.Drawing.Size(300, 47);
+            this.Calculate.Size = new System.Drawing.Size(600, 89);
             this.Calculate.TabIndex = 82;
             this.Calculate.Text = "Animate";
             this.Calculate.UseVisualStyleBackColor = true;
@@ -805,25 +840,26 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel1.Controls.Add(this.Octave, 0, 7);
             this.tableLayoutPanel1.Controls.Add(this.Loop, 1, 0);
             this.tableLayoutPanel1.Controls.Add(this.groupBox4, 0, 2);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(8, 202);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(16, 388);
+            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 15;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 8F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(304, 385);
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 19F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 19F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 38F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(608, 740);
             this.tableLayoutPanel1.TabIndex = 96;
             // 
             // label5
@@ -832,9 +868,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left)));
             this.label5.AutoSize = true;
             this.tableLayoutPanel1.SetColumnSpan(this.label5, 2);
-            this.label5.Location = new System.Drawing.Point(3, 230);
+            this.label5.Location = new System.Drawing.Point(6, 444);
+            this.label5.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(83, 20);
+            this.label5.Size = new System.Drawing.Size(166, 38);
             this.label5.TabIndex = 96;
             this.label5.Text = "Render Settings";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -845,9 +882,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.ForwButton.Enabled = false;
-            this.ForwButton.Location = new System.Drawing.Point(231, 3);
+            this.ForwButton.Location = new System.Drawing.Point(462, 6);
+            this.ForwButton.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.ForwButton.Name = "ForwButton";
-            this.ForwButton.Size = new System.Drawing.Size(70, 24);
+            this.ForwButton.Size = new System.Drawing.Size(140, 46);
             this.ForwButton.TabIndex = 34;
             this.ForwButton.Text = ">>";
             this.ForwButton.UseVisualStyleBackColor = true;
@@ -855,13 +893,14 @@ namespace Pachyderm_Acoustic
             // 
             // Pach_Visual_Control
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.GroupBox2);
+            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Name = "Pach_Visual_Control";
-            this.Size = new System.Drawing.Size(315, 590);
+            this.Size = new System.Drawing.Size(630, 1135);
             this.groupBox4.ResumeLayout(false);
             this.groupBox4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Param_Min)).EndInit();

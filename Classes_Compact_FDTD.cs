@@ -14,7 +14,7 @@ namespace Pachyderm_Acoustic
                 Polygon_Scene Rm;
                 public double tmax;       //seconds
                 private double rho0 = 1.21;    //density of air kg/m^3
-                double dt;
+                public double dt;
                 public double dx, dy, dz;
                 public readonly int xDim, yDim, zDim;
                 Node[][][] PFrame;            //pressure scalar field initialisation

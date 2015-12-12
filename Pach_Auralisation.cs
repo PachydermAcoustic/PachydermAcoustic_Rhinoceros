@@ -335,26 +335,26 @@ namespace Pachyderm_Acoustic
                     return;
                 }
                 byte[] temp = new byte[4];
-                int c = (int)DryChannel.Value-1;
-                double Max;
+                int c = (int)DryChannel.Value - 1;
+                //double Max;
 
-                switch (WP.WaveFormat.BitsPerSample)
-                {
-                    case 32:
-                        Max = Int32.MaxValue;
-                        break;
-                    case 24:
-                        Max = BitConverter.ToInt32(new byte[] { 0, byte.MaxValue, byte.MaxValue, byte.MaxValue }, 0);
-                        break;
-                    case 16:
-                        Max = Int16.MaxValue;
-                        break;
-                    case 8:
-                        Max = BitConverter.ToInt16(new byte[] { 0, byte.MaxValue }, 0);
-                        break;
-                    default:
-                        throw new Exception("Invalid bit depth variable... Where did you get this audio file again?");
-                }
+                //switch (WP.WaveFormat.BitsPerSample)
+                //{
+                //    case 32:
+                //        Max = Int32.MaxValue;
+                //        break;
+                //    case 24:
+                //        Max = BitConverter.ToInt32(new byte[] { 0, byte.MaxValue, byte.MaxValue, byte.MaxValue }, 0);
+                //        break;
+                //    case 16:
+                //        Max = Int16.MaxValue;
+                //        break;
+                //    case 8:
+                //        Max = BitConverter.ToInt16(new byte[] { 0, byte.MaxValue }, 0);
+                //        break;
+                //    default:
+                //        throw new Exception("Invalid bit depth variable... Where did you get this audio file again?");
+                //}
 
                 for (int i = 0; i < WP.SampleCount; i++)
                 {
@@ -379,7 +379,20 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
+                SignalETC = new double[SignalInt.Length];
+
+                double Max = double.NegativeInfinity;
+                for(int i = 0; i < SignalInt.Length; i++)
+                {
+                    Max = Math.Max(Max, Math.Abs(SignalInt[i]));
+                }
+
+                for(int i = 0; i < SignalInt.Length; i++)
+                {
+                    SignalETC[i] = SignalInt[i] / Max;
+                }
                 SignalETC = SignalInt;
+
             }
 
             int[] SrcRendered;
@@ -417,20 +430,21 @@ namespace Pachyderm_Acoustic
 
                 int SamplesPerSec;
                 double[] SignalBuffer;
-                this.OpenWaveFile(out SamplesPerSec, out SignalBuffer);
+                OpenWaveFile(out SamplesPerSec, out SignalBuffer);
 
                 float maxvalue = 0;
                 //Normalize input signal...
                 for (int j = 0; j < SignalBuffer.Length; j++) maxvalue = (float)Math.Max(maxvalue, Math.Abs(SignalBuffer[j]));
                 for (int j = 0; j < SignalBuffer.Length; j++) SignalBuffer[j] /= maxvalue;
                 //Convert pressure response to a 24-bit dynamic range:
-                double mod24 = Math.Pow(10, -50 / 10);
-                for (int i = 0; i < Response.Length; i++) for(int j = 0; j < Response[i].Length; j++) Response[i][j] *= mod24;
+                //double mod24 = Math.Pow(10, -50 / 10);
+                //for (int i = 0; i < Response.Length; i++) for(int j = 0; j < Response[i].Length; j++) Response[i][j] *= mod24;
 
                 float[][] NewSignal = new float[(int)Response.Length][];
                 for (int i = 0; i < Response.Length; i++)
                 {
                     NewSignal[i] = Pach_SP.FFT_Convolution(SignalBuffer, Response[i], 0);
+                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= 1E-5f;
                 }
 
                 SrcRendered = new int[SourceList.CheckedIndices.Count];
@@ -442,7 +456,7 @@ namespace Pachyderm_Acoustic
                 SFreq_Rendered = SamplesPerSec;
 
                 SaveFileDialog SaveWave = new SaveFileDialog();
-                if (DryChannel.Maximum < 4)
+                if (NewSignal.Length < 4)
                 {
                     SaveWave.Filter = " Wave Audio (*.wav) |*.wav";
                 }
@@ -458,9 +472,9 @@ namespace Pachyderm_Acoustic
                         Rhino.RhinoApp.WriteLine("No impulse response found to render...");
                         return;
                     }
-                    NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(SamplesPerSec, 24, Channel_View.Items.Count));
+                    NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(SamplesPerSec, 24, NewSignal.Length));
 
-                    for (int j = 0; j < NewSignal[0].Length-1; j++)
+                    for (int j = 0; j < NewSignal[0].Length; j++)
                     {
                         for (int i = 0; i < Channel_View.Items.Count; i++) Writer.WriteSample(NewSignal[i][j]);
                     }
@@ -474,7 +488,7 @@ namespace Pachyderm_Acoustic
             private void ExportFilter(object sender, EventArgs e)
             {
                 SaveFileDialog SaveWave = new SaveFileDialog();
-                if (DryChannel.Maximum < 4)
+                if (Response.Length < 4)
                 {
                     SaveWave.Filter = " Wave Audio (*.wav) |*.wav";
                 }
