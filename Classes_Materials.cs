@@ -498,7 +498,7 @@ namespace Pachyderm_Acoustic
                 //the current version...
                 Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, Samplefreq, 343, Layers, ref frequency, ref Angles);
                 //the goal...
-                //Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Alpha(false, true, 44100, 343, Layers, ref frequency, ref Angles);
+                //Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Alpha(false, true, Samplefreq, 343, Layers, ref frequency, ref Angles);
                 
                 Reflection_Coefficient = Pachyderm_Acoustic.AbsorptionModels.Operations.Reflection_Coef(Z, Air_Density, SoundSpeed);
 
@@ -680,6 +680,12 @@ namespace Pachyderm_Acoustic
                     }
                     return Zr;
                 }
+            }
+
+            public System.Numerics.Complex Admittance (double frequency)
+            {
+                System.Numerics.Complex R = new System.Numerics.Complex (Transfer_FunctionR[17].Interpolate(frequency), Transfer_FunctionI[17].Interpolate(frequency));
+                return (1 - R) / (rho * c * (1 + R));
             }
 
             public override System.Numerics.Complex[] Reflection_Spectrum(int sample_frequency, int length, Hare.Geometry.Vector Normal, Hare.Geometry.Vector Dir, int threadid)

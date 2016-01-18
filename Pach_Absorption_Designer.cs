@@ -226,6 +226,9 @@ namespace Pachyderm_Acoustic
                 Impedance_Graph.Series[0].Points.DataBindXY(sm.frequency, real);
                 Impedance_Graph.Series[1].Points.DataBindXY(sm.frequency, imag);
 
+                Impedance_Graph.ChartAreas[0].AxisY.Maximum = 4000;
+                Impedance_Graph.ChartAreas[0].AxisY.Minimum = -6000;
+
                 Alpha_Normal.Series[0].Points.Clear();
                 Alpha_Normal.Series[1].Points.Clear();
                 RI_Absorption = sm.RI_Coef;

@@ -162,8 +162,56 @@ namespace Pachyderm_Acoustic
                         throw new Exception("Unknown Layer Type");
                 }
             }
-        }
 
+            public static ABS_Layer Airspace(double depth)
+            {
+                return new ABS_Layer(LayerType.AirSpace, depth, 0, 0, 0, 0);
+            }
+
+            public static ABS_Layer Porous_DelaneyBazley(double depth, double flow_resistivity)
+            {
+                return new ABS_Layer(LayerType.PorousDB, depth, 0, 0, flow_resistivity, 0);
+            }
+
+            public static ABS_Layer Porous_Miki(double depth, double flow_resistivity)
+            {
+                return new ABS_Layer(LayerType.PorousM, depth, 0, 0, flow_resistivity, 0);
+            }
+
+            public static ABS_Layer Porous_ChampouxAllard(double depth, double flow_resistivity)
+            {
+                return new ABS_Layer(LayerType.PorousCA, depth, 0, 0, flow_resistivity, 0);
+            }
+            public static ABS_Layer Perforated_Modal(double depth, double hole_pitch, double hole_width)
+            {
+                return new ABS_Layer(LayerType.Perforated_Modal, depth, hole_pitch, hole_width, 0, 0);
+            }
+
+            public static ABS_Layer Slotted_Modal(double depth, double slot_pitch, double slot_width)
+            {
+                return new ABS_Layer(LayerType.Slotted_Modal, depth, slot_pitch, slot_width, 0, 0);
+            }
+
+            public static ABS_Layer Perforated_EndCorrection(double depth, double hole_pitch, double hole_width)
+            {
+                return new ABS_Layer(LayerType.CircularPerforations, depth, hole_pitch, hole_width, 0, 0);
+            }
+
+            public static ABS_Layer Slotted_EndCorrection(double depth, double slot_pitch, double slot_width)
+            {
+                return new ABS_Layer(LayerType.Slots, depth, slot_pitch, slot_width, 0, 0);
+            }
+
+            public static ABS_Layer MicroPerf_EndCorrection(double depth, double hole_pitch, double hole_width)
+            {
+                return new ABS_Layer(LayerType.MicroPerforated, depth, hole_pitch, hole_width, 0, 0);
+            }
+
+            public static ABS_Layer MicroSlot_EndCorrection(double depth, double slot_pitch, double slot_width)
+            {
+                return new ABS_Layer(LayerType.Microslit, depth, slot_pitch, slot_width, 0, 0);
+            }
+        }
         public static class Operations
         {
             public static double[] Random_Incidence_Paris_Finite(double[][] absorption_Coefficient)
@@ -175,7 +223,7 @@ namespace Pachyderm_Acoustic
                 {
                     double theta = a * dt - (Math.PI / 2);
                     double d_mod = Math.Abs(Math.Sin(theta) * dt);//; * Math.Abs(dt);
-                    //denominator += d_mod;
+                                                                  //denominator += d_mod;
                     for (int f = 0; f < absorption_Coefficient[a].Length; f++)
                     {
                         numerator[f] += Math.Abs(absorption_Coefficient[a][f] * d_mod);
@@ -194,22 +242,22 @@ namespace Pachyderm_Acoustic
             {
                 double dt = Math.PI / (absorption_Coefficient.Length);
                 double[] numerator = new double[absorption_Coefficient[0].Length];
-                //double denominator = 0;
+                double denominator = 0;
                 for (int a = 0; a < absorption_Coefficient.Length; a++)
                 {
                     double theta = a * dt - (Math.PI / 2);
-                    double d_mod = Math.Abs(Math.Sin(theta) * Math.Cos(theta) * dt);
-                    //denominator += d_mod;
+                    double d_mod = Math.Abs(Math.Cos(theta) * dt);
+                    denominator += d_mod;
                     for (int f = 0; f < absorption_Coefficient[a].Length; f++)
                     {
                         numerator[f] += absorption_Coefficient[a][f] * d_mod;
                     }
                 }
 
-                //for (int f = 0; f < absorption_Coefficient[0].Length; f++)
-                //{
-                //    numerator[f] /= denominator;
-                //}
+                for (int f = 0; f < absorption_Coefficient[0].Length; f++)
+                {
+                    numerator[f] /= denominator;
+                }
 
                 return numerator;
             }
@@ -226,7 +274,7 @@ namespace Pachyderm_Acoustic
                     //denominator += d_mod;
                     for (int f = 0; f < absorption_Coefficient[a].Length; f++)
                     {
-                        numerator[f] += absorption_Coefficient[a][f] * d_mod / (Zr[f][a].Real/rho_C);
+                        numerator[f] += absorption_Coefficient[a][f] * d_mod / (Zr[f][a].Real / rho_C);
                     }
                 }
 
@@ -246,7 +294,7 @@ namespace Pachyderm_Acoustic
                 double mod78 = 78 % dt;
                 for (int a = 0; a < absorption_Coefficient.Length; a++)
                 {
-                    double theta = Math.Abs(a * dt-90);
+                    double theta = Math.Abs(a * dt - 90);
                     if (theta > 78)
                     {
                         if (theta < 80)
@@ -258,7 +306,8 @@ namespace Pachyderm_Acoustic
                             }
                         }
                         else continue;
-                    }else
+                    }
+                    else
                     {
                         denominator += dt;
                         for (int f = 0; f < absorption_Coefficient[a].Length; f++)
@@ -349,7 +398,7 @@ namespace Pachyderm_Acoustic
                     denominator++;
                     for (int f = 0; f < absorption_Coefficient[a].Length; f++)
                     {
-                        numerator[f] += absorption_Coefficient[a][f] / (Zr[f][a].Real/Rho_C);
+                        numerator[f] += absorption_Coefficient[a][f] / (Zr[f][a].Real / Rho_C);
                     }
                 }
 
@@ -421,9 +470,9 @@ namespace Pachyderm_Acoustic
                         Complex Zrn = Zr[i][j] / (rho * c_sound);
                         double a_denom = (Za + Zrn).Magnitude;// *Math.Cos(theta);
                         Alpha[j][i] = 8 * Za.Real * Math.Sin(theta) / (a_denom * a_denom); // * Math.Abs(Math.Sin(theta))
-                        //Alpha[j][i] = 4 * Za.Real / (a_denom * a_denom);                        
-                        //Alpha[j][i] = Absorption_Coef(Reflection_Coef(Za + Zrn, rho * c_sound));
-                        //Alpha[j][i] = Absorption_Coef(Reflection_Coef(Z[j][i], rho * c_sound) * Reflection_Coef(Zr[i][j], rho * c_sound));
+                                                                                           //Alpha[j][i] = 4 * Za.Real / (a_denom * a_denom);                        
+                                                                                           //Alpha[j][i] = Absorption_Coef(Reflection_Coef(Za + Zrn, rho * c_sound));
+                                                                                           //Alpha[j][i] = Absorption_Coef(Reflection_Coef(Z[j][i], rho * c_sound) * Reflection_Coef(Zr[i][j], rho * c_sound));
                     }
                 }
 
@@ -442,7 +491,7 @@ namespace Pachyderm_Acoustic
                 double phistep = Utilities.Numerics.PiX2 / 36;
 
                 int ct = 0;
-                Complex integral_Mod = new Complex(0, 1.2 * Utilities.Numerics.PiX2 * freq / (M.Vertices.Count-1));
+                Complex integral_Mod = new Complex(0, 1.2 * Utilities.Numerics.PiX2 * freq / (M.Vertices.Count - 1));
                 double kt = Utilities.Numerics.PiX2 * freq * Math.Cos(angles * Math.PI / 180);
                 for (double phi = 0; phi < Utilities.Numerics.PiX2; phi += phistep)
                 {
@@ -477,7 +526,7 @@ namespace Pachyderm_Acoustic
                 double[][] alpha = new double[Z.Length][];
 
                 //Complex[] Zc = Equivalent_Fluids.DB_Miki_Impedance(1.2, 343, 25000, freq);
-                
+
                 for (int a = 0; a < Z.Length; a++)
                 {
                     double theta = a * dt - (Math.PI / 2);
@@ -489,7 +538,7 @@ namespace Pachyderm_Acoustic
                         //Za /= Za.Magnitude();
                         Complex Za = Z[a][f] / Z[a][f].Magnitude;
                         //Za = 1 / Za;
-                        double denom_rt2 = (Za*Math.Cos(theta)+1).Magnitude;
+                        double denom_rt2 = (Za * Math.Cos(theta) + 1).Magnitude;
                         alpha[a][f] = (4 * Za.Real) * Math.Cos(theta) / (denom_rt2 * denom_rt2);
                     }
                 }
@@ -509,28 +558,28 @@ namespace Pachyderm_Acoustic
                 Complex integral_Mod = Complex.ImaginaryOne * Utilities.Numerics.PiX2 * freq * 1.2 / A;
                 List<double> Areas = new List<double>();
                 List<Rhino.Geometry.Point3d> pts = new List<Rhino.Geometry.Point3d>();
-                for(int f = 0; f < M.Faces.Count; f++)
+                for (int f = 0; f < M.Faces.Count; f++)
                 {
                     if (M.Faces[f].IsQuad)
                     {
                         Hare.Geometry.Point[][] verts = new Hare.Geometry.Point[1][];
                         verts[0] = new Hare.Geometry.Point[]{
-                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].A].X, M.Vertices[M.Faces[f].A].Y, M.Vertices[M.Faces[f].A].Z),    
-                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].B].X, M.Vertices[M.Faces[f].B].Y, M.Vertices[M.Faces[f].B].Z),    
-                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].C].X, M.Vertices[M.Faces[f].C].Y, M.Vertices[M.Faces[f].C].Z),    
+                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].A].X, M.Vertices[M.Faces[f].A].Y, M.Vertices[M.Faces[f].A].Z),
+                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].B].X, M.Vertices[M.Faces[f].B].Y, M.Vertices[M.Faces[f].B].Z),
+                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].C].X, M.Vertices[M.Faces[f].C].Y, M.Vertices[M.Faces[f].C].Z),
                             new Hare.Geometry.Point(M.Vertices[M.Faces[f].D].X, M.Vertices[M.Faces[f].D].Y, M.Vertices[M.Faces[f].D].Z)};
                         Areas.Add(new Hare.Geometry.Topology(verts).Polygon_Area(0));
                     }
-                    else 
+                    else
                     {
                         Hare.Geometry.Point[][] verts = new Hare.Geometry.Point[1][];
                         verts[0] = new Hare.Geometry.Point[]{
-                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].A].X, M.Vertices[M.Faces[f].A].Y, M.Vertices[M.Faces[f].A].Z),    
-                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].B].X, M.Vertices[M.Faces[f].B].Y, M.Vertices[M.Faces[f].B].Z),    
+                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].A].X, M.Vertices[M.Faces[f].A].Y, M.Vertices[M.Faces[f].A].Z),
+                            new Hare.Geometry.Point(M.Vertices[M.Faces[f].B].X, M.Vertices[M.Faces[f].B].Y, M.Vertices[M.Faces[f].B].Z),
                             new Hare.Geometry.Point(M.Vertices[M.Faces[f].C].X, M.Vertices[M.Faces[f].C].Y, M.Vertices[M.Faces[f].C].Z)};
                         Areas.Add(new Hare.Geometry.Topology(verts).Polygon_Area(0));
-                    }                    
-                    
+                    }
+
                     pts.Add(M.Faces.GetFaceCenter(f));
                 }
 
@@ -540,26 +589,25 @@ namespace Pachyderm_Acoustic
                     double kt = k * Math.Sin(Math.Abs(altitude[j]) * Math.PI / 180);
                     Zr[j] = new Complex[azimuth.Length];
                     for (int phi = 0; phi < azimuth.Length; phi++) //Parallel.For(0, 16, phi =>
-                    {
+                        {
                         double cosphi = Math.Cos(azimuth[phi] * Math.PI / 180), sinphi = Math.Sin(azimuth[phi] * Math.PI / 180);
-                        for(int i = 0; i < pts.Count; i++)
-                            {
-                                double xd = pts[i].X - x, yd = pts[i].Y - y;
-                                double R = Math.Sqrt(xd * xd + yd * yd);
-                                Complex GMM = Complex.Exp(-Complex.ImaginaryOne * k * freq * R) / (Utilities.Numerics.PiX2 * R);
-                                Complex PiMPiM0 = Complex.Exp(Complex.ImaginaryOne * kt * freq * (cosphi * xd + sinphi * yd));
-                                Zr[j][phi] += GMM * PiMPiM0 * Areas[i];
-                            }
-                        ///By distributive property, all multipliers moved to outer loop.
-                        Zr[j][phi] *= integral_Mod;
-                        //Zr[j][35 - phi] = Zr[j][phi];
-                        ///this is now Zr for a given angle theta.
-                    }
+                        for (int i = 0; i < pts.Count; i++)
+                        {
+                            double xd = pts[i].X - x, yd = pts[i].Y - y;
+                            double R = Math.Sqrt(xd * xd + yd * yd);
+                            Complex GMM = Complex.Exp(-Complex.ImaginaryOne * k * freq * R) / (Utilities.Numerics.PiX2 * R);
+                            Complex PiMPiM0 = Complex.Exp(Complex.ImaginaryOne * kt * freq * (cosphi * xd + sinphi * yd));
+                            Zr[j][phi] += GMM * PiMPiM0 * Areas[i];
+                        }
+                            ///By distributive property, all multipliers moved to outer loop.
+                            Zr[j][phi] *= integral_Mod;
+                            //Zr[j][35 - phi] = Zr[j][phi];
+                            ///this is now Zr for a given angle theta.
+                        }
                 });
 
                 return Zr;
             }
-
 
             public static Complex[][] Finite_Radiation_Impedance_Rect_Longhand(double x, double y, double Xdim, double Ydim, double freq, double[] altitude, double[] azimuth, double C_Sound)
             {
@@ -578,22 +626,23 @@ namespace Pachyderm_Acoustic
                     double kt = k * Math.Sin(Math.Abs(altitude[j]) * Math.PI / 180);
                     Zr[j] = new Complex[azimuth.Length];
                     for (int phi = 0; phi < azimuth.Length; phi++) //Parallel.For(0, 16, phi =>
+                        {
+                        double cosphi = Math.Cos(azimuth[phi] * Math.PI / 180), sinphi = Math.Sin(azimuth[phi] * Math.PI / 180);
+                        for (double x0 = -Xdim / 2; x0 < Xdim / 2; x0 += step)
+                            for (double y0 = -Ydim / 2; y0 < Ydim / 2; y0 += step)
                             {
-                                double cosphi = Math.Cos(azimuth[phi] * Math.PI / 180), sinphi = Math.Sin(azimuth[phi] * Math.PI / 180);
-                                for (double x0 = -Xdim/2; x0 < Xdim/2; x0 += step) for (double y0 = -Ydim/2; y0 < Ydim/2; y0 += step)
-                                {
-                                    if (x == x0 && y == y0) continue;
-                                    double xd = x0 - x, yd = y0 - y;
-                                    double R = Math.Sqrt(xd * xd + yd * yd);
-                                    Complex GMM = Complex.Exp(-Complex.ImaginaryOne * k * freq * R) / (Utilities.Numerics.PiX2 * R);
-                                    Complex PiMPiM0 = Complex.Exp(Complex.ImaginaryOne * kt * freq * (cosphi * xd + sinphi * yd ));
-                                    Zr[j][phi] += GMM * PiMPiM0;
-                                }
-                                ///By distributive property, all multipliers moved to outer loop.
-                                Zr[j][phi] *= integral_Mod;
-                                //Zr[j][35 - phi] = Zr[j][phi];
-                                ///this is now Zr for a given angle theta.
+                                if (x == x0 && y == y0) continue;
+                                double xd = x0 - x, yd = y0 - y;
+                                double R = Math.Sqrt(xd * xd + yd * yd);
+                                Complex GMM = Complex.Exp(-Complex.ImaginaryOne * k * freq * R) / (Utilities.Numerics.PiX2 * R);
+                                Complex PiMPiM0 = Complex.Exp(Complex.ImaginaryOne * kt * freq * (cosphi * xd + sinphi * yd));
+                                Zr[j][phi] += GMM * PiMPiM0;
                             }
+                            ///By distributive property, all multipliers moved to outer loop.
+                            Zr[j][phi] *= integral_Mod;
+                            //Zr[j][35 - phi] = Zr[j][phi];
+                            ///this is now Zr for a given angle theta.
+                        }
                 });
 
                 return Zr;
@@ -605,87 +654,88 @@ namespace Pachyderm_Acoustic
                 double phistep = Utilities.Numerics.PiX2 / 16;
                 double mindim = Math.Min(Xdim, Ydim);
 
-                    double lambda = C_Sound / freq[freq.Length - 1];
-                    double step = lambda / 20;
-                    Complex integral_Mod = Complex.ImaginaryOne * 1.2 * Utilities.Numerics.PiX2 * step * step * 0.0625 / (Xdim * Ydim);// / Area_step);
-                    for (int i = 0; i < freq.Length; i++)
-                    {
-                        Zr[i] = new Complex[angles.Length];
-                        for(int j = 0; j < angles.Length; j++) Zr[i][j] = new Complex();
-                    }
-                    int ct = 0;
-                    //for (int j = 0; j < angles.Length/2; j++)
-                    Parallel.For(0, (int)Math.Ceiling((double)angles.Length / 2), j =>
-                    {
-                        ct++;
+                double lambda = C_Sound / freq[freq.Length - 1];
+                double step = lambda / 20;
+                Complex integral_Mod = Complex.ImaginaryOne * 1.2 * Utilities.Numerics.PiX2 * step * step * 0.0625 / (Xdim * Ydim);// / Area_step);
+                for (int i = 0; i < freq.Length; i++)
+                {
+                    Zr[i] = new Complex[angles.Length];
+                    for (int j = 0; j < angles.Length; j++) Zr[i][j] = new Complex();
+                }
+                int ct = 0;
+                //for (int j = 0; j < angles.Length/2; j++)
+                Parallel.For(0, (int)Math.Ceiling((double)angles.Length / 2), j =>
+                {
+                    ct++;
                         //Rhino.RhinoApp.CommandPrompt = string.Format("Radiation Impedance {0}% complete", Math.Round((double)ct * 200 / (double)angles.Length-1));
                         //Progress = (double)j / (double)angles.Length;
                         double k = Utilities.Numerics.PiX2 / C_Sound;
-                        double kt = k * Math.Sin(Math.Abs(angles[j]) * Math.PI / 180);
+                    double kt = k * Math.Sin(Math.Abs(angles[j]) * Math.PI / 180);
                         //Parallel.For(0, (int)(Xdim / step), x =>
                         //{
-                        for (double x = step/2; x < Xdim; x += step)
-                            for (double y = step/2; y < Ydim; y += step)
-                            {
-                                for (double phi = 0; phi < Utilities.Numerics.PiX2; phi += phistep) //Parallel.For(0, 16, phi =>
+                        for (double x = step / 2; x < Xdim; x += step)
+                        for (double y = step / 2; y < Ydim; y += step)
+                        {
+                            for (double phi = 0; phi < Utilities.Numerics.PiX2; phi += phistep) //Parallel.For(0, 16, phi =>
                                 {
-                                    double cosphi = Math.Cos(phi), sinphi = Math.Sin(phi);
+                                double cosphi = Math.Cos(phi), sinphi = Math.Sin(phi);
 
-                                    for (double x0 = 0; x0 < Xdim; x0 += step) for (double y0 = 0; y0 < Ydim; y0 += step)
+                                for (double x0 = 0; x0 < Xdim; x0 += step)
+                                    for (double y0 = 0; y0 < Ydim; y0 += step)
+                                    {
+                                        if (x == x0 && y == y0) continue;
+                                        double xd = x0 - x, yd = y0 - y;
+                                        double R = Math.Sqrt(xd * xd + yd * yd);
+                                        Complex[] GMM = new Complex[freq.Length];
+                                        Complex[] PiMPiM0 = new Complex[freq.Length];
+                                        for (int i = 0; i < freq.Length; i++)
                                         {
-                                            if (x == x0 && y == y0) continue;
-                                            double xd = x0 - x, yd = y0 - y;
-                                            double R = Math.Sqrt(xd * xd + yd * yd);
-                                            Complex[] GMM = new Complex[freq.Length]; 
-                                            Complex[] PiMPiM0 = new Complex[freq.Length];    
-                                            for (int i = 0; i < freq.Length; i++)
-                                            {
-                                                GMM[i] = Complex.Exp(-Complex.ImaginaryOne * k * freq[i] * R) / (Utilities.Numerics.PiX2 * R);
-                                                PiMPiM0[i] = Complex.Exp(Complex.ImaginaryOne * kt * freq[i] * (cosphi * xd + sinphi * yd));
-                                            }
-                                            for (int i = 0; i < freq.Length; i++)
-                                            {
-                                                Zr[i][j] += GMM[i] * PiMPiM0[i];
-                                            }
+                                            GMM[i] = Complex.Exp(-Complex.ImaginaryOne * k * freq[i] * R) / (Utilities.Numerics.PiX2 * R);
+                                            PiMPiM0[i] = Complex.Exp(Complex.ImaginaryOne * kt * freq[i] * (cosphi * xd + sinphi * yd));
                                         }
-                                }
+                                        for (int i = 0; i < freq.Length; i++)
+                                        {
+                                            Zr[i][j] += GMM[i] * PiMPiM0[i];
+                                        }
+                                    }
                             }
+                        }
                         //}//);
                         ///multiply by phistep...
                         ///By distributive property, all multipliers moved to outer loop.
                         for (int i = 0; i < freq.Length; i++)
-                        {
-                            Zr[i][j] *= freq[i] * integral_Mod * step * step;
-                            Zr[i][35 - j] = Zr[i][j];
-                        }
+                    {
+                        Zr[i][j] *= freq[i] * integral_Mod * step * step;
+                        Zr[i][35 - j] = Zr[i][j];
+                    }
                         ///this is now Zr for a given angle theta.
                     });
 
-                    //////////////////////
-                    VisualizationBox B = new VisualizationBox(-90, 90, -30, 10);
-                    double[] rad_eff = new double[angles.Length];
-                    double[] rad_effI = new double[angles.Length];
-                    double[] rad_effM = new double[angles.Length];
-                    B.Show();
+                //////////////////////
+                VisualizationBox B = new VisualizationBox(-90, 90, -30, 10);
+                double[] rad_eff = new double[angles.Length];
+                double[] rad_effI = new double[angles.Length];
+                double[] rad_effM = new double[angles.Length];
+                B.Show();
 
-                    double[] ComparisonCurve = new double[angles.Length];
+                double[] ComparisonCurve = new double[angles.Length];
 
+                for (int j = 0; j < angles.Length; j++)
+                {
+                    //angles[j] += 90;
+                    ComparisonCurve[j] = 10 * Math.Log10(1 / (Math.Cos(angles[j] * Math.PI / 180)));
+                }
+                for (int i = 0; i < Zr.Length; i++)
+                {
                     for (int j = 0; j < angles.Length; j++)
                     {
-                        //angles[j] += 90;
-                        ComparisonCurve[j] = 10 * Math.Log10(1 / (Math.Cos(angles[j] * Math.PI / 180)));
+                        rad_eff[j] = 10 * Math.Log10(Zr[i][j].Real / (1.2 * C_Sound));
+                        rad_effI[j] = 10 * Math.Log10(Zr[i][j].Imaginary / (1.2 * C_Sound));
+                        rad_effM[j] = 10 * Math.Log10(Zr[i][j].Magnitude / (1.2 * C_Sound));
                     }
-                    for (int i = 0; i < Zr.Length; i++)
-                    {
-                        for (int j = 0; j < angles.Length; j++)
-                        {
-                            rad_eff[j] = 10 * Math.Log10(Zr[i][j].Real / (1.2 * C_Sound));
-                            rad_effI[j] = 10 * Math.Log10(Zr[i][j].Imaginary / (1.2 * C_Sound));
-                            rad_effM[j] = 10 * Math.Log10(Zr[i][j].Magnitude / (1.2 * C_Sound));
-                        }
-                        B.Populate(angles, rad_eff, angles, rad_effI, angles, rad_effM, angles, "Angle of Incidence (theta)", "Radiation Efficiency (dB)", ComparisonCurve, 750, 100);
-                    }
-                    //////////////////////
+                    B.Populate(angles, rad_eff, angles, rad_effI, angles, rad_effM, angles, "Angle of Incidence (theta)", "Radiation Efficiency (dB)", ComparisonCurve, 750, 100);
+                }
+                //////////////////////
 
                 return Zr;
             }
@@ -706,7 +756,7 @@ namespace Pachyderm_Acoustic
                     cosphi.Add(Math.Cos(phi)); sinphi.Add(Math.Sin(phi)); phi_ct++;
                     AnglePhi.Add(phi);
                 }
-                
+
                 for (int i = 0; i < angles.Length; i++)
                 {
                     sintheta.Add(Math.Abs(Math.Sin(Math.PI * angles[i] / 180)));
@@ -733,40 +783,41 @@ namespace Pachyderm_Acoustic
                     Parallel.For(0, angles.Length, j =>
                     {
                         Complex FnMod = Kmod * sintheta[j];
-                        for (double u = -1 + stepx / 2; u < 1; u += stepx) for (double u_ = -1; u_ < 1; u_ += stepy)
-                        {                  
-                            Complex[] Zphi = new Complex[cosphi.Count];
-                            double[] real = new double[cosphi.Count];
-                            double[] imag = new double[cosphi.Count];
-                            double u1 = u + 1, u_1 = u_ + 1;
-                            double rtR = Math.Sqrt((u1) * (u1) + ((u_1 * u_1) / (r * r)));
-                            Complex K = Complex.Exp(-Kmod * rtR) / rtR; //Typographical Error Identified and Fixed.
-                                        
-                            for (int phi = 0; phi < cosphi.Count; phi++)
+                        for (double u = -1 + stepx / 2; u < 1; u += stepx)
+                            for (double u_ = -1; u_ < 1; u_ += stepy)
                             {
-                                Complex Fn = Complex.Exp(FnMod * (u1 * cosphi[phi] + (u_1 / r) * sinphi[phi]));
-                                Zr[i][j] += K * Fn * (1 - u) * (1 - u_);
+                                Complex[] Zphi = new Complex[cosphi.Count];
+                                double[] real = new double[cosphi.Count];
+                                double[] imag = new double[cosphi.Count];
+                                double u1 = u + 1, u_1 = u_ + 1;
+                                double rtR = Math.Sqrt((u1) * (u1) + ((u_1 * u_1) / (r * r)));
+                                Complex K = Complex.Exp(-Kmod * rtR) / rtR; //Typographical Error Identified and Fixed.
+
+                                    for (int phi = 0; phi < cosphi.Count; phi++)
+                                {
+                                    Complex Fn = Complex.Exp(FnMod * (u1 * cosphi[phi] + (u_1 / r) * sinphi[phi]));
+                                    Zr[i][j] += K * Fn * (1 - u) * (1 - u_);
+                                }
                             }
-                        }
                         Zr[i][j] *= integral_Mod;
-                        /////////////
-                        //Let's just try this for a moment:
-                        //Zr[i][j] *= Math.Cos((angles[j]) * Math.PI / 180);
-                        /////////////
-                    });
+                            /////////////
+                            //Let's just try this for a moment:
+                            //Zr[i][j] *= Math.Cos((angles[j]) * Math.PI / 180);
+                            /////////////
+                        });
 
                     double[] rad_eff = new double[angles.Length];
                     double[] rad_effI = new double[angles.Length];
                     double[] rad_effM = new double[angles.Length];
-                    
-                    for (int j = 0; j < angles.Length; j++)                    
+
+                    for (int j = 0; j < angles.Length; j++)
                     {
                         rad_eff[j] = 10 * Math.Log10(Zr[i][j].Real / (Rho0 * C_Sound));
                         rad_effI[j] = 10 * Math.Log10(Zr[i][j].Imaginary / (Rho0 * C_Sound));
-                        rad_effM[j] = 10 * Math.Log10(Zr[i][j].Magnitude / (Rho0 * C_Sound));    
+                        rad_effM[j] = 10 * Math.Log10(Zr[i][j].Magnitude / (Rho0 * C_Sound));
                     }
 
-                    B.Populate(angles, rad_eff, angles, rad_effI, angles, rad_effM, angles, "Angle of Incidence (theta)", "Radiation Efficiency (dB)", ComparisonCurve, 0, (int)(100f*i/freq.Length));
+                    B.Populate(angles, rad_eff, angles, rad_effI, angles, rad_effM, angles, "Angle of Incidence (theta)", "Radiation Efficiency (dB)", ComparisonCurve, 0, (int)(100f * i / freq.Length));
                 }
 
                 return Zr;
@@ -823,7 +874,7 @@ namespace Pachyderm_Acoustic
                 Complex[][] R = new Complex[Specific_Impedance.Length][];
                 for (int i = 0; i < Specific_Impedance.Length; i++)
                 {
-                    double theta = (double)(i * Math.PI + (2*Math.PI/180))/ (double)Specific_Impedance.Length;
+                    double theta = (double)(i * Math.PI + (2 * Math.PI / 180)) / (double)Specific_Impedance.Length;
                     R[i] = new Complex[Specific_Impedance[i].Length];
                     //for (int j = 0; j < Specific_Impedance[i].Length; j++) R[i][j] = (Specific_Impedance[i][j]/rho_c + Radiation_Impedance[j][i]/rho_c) / (2 * Math.Sqrt(Specific_Impedance[i][j].Real/rho_c * Radiation_Impedance[j][i].Real/rho_c));
                     //for (int j = 0; j < Specific_Impedance[i].Length; j++) R[i][j] = ((Specific_Impedance[i][j] * Math.Cos(theta) + Radiation_Impedance[j][i]) - rho_c) / ((Specific_Impedance[i][j] * Math.Cos(theta) + Radiation_Impedance[j][i]) + rho_c);
@@ -1039,25 +1090,6 @@ namespace Pachyderm_Acoustic
                 return Z_trans;
             }
 
-            //public static Complex[] Transfer(Complex[] Z1, Complex[] Z0, Complex[] k1, Complex[] kxi, double depth, int f_lower)
-            //{
-            //    if (Z1.Length != Z0.Length || Z1.Length != k1.Length) throw new Exception("Impedance and wave number arrays must be equal in length");
-            //    //if (!in_radians) psi *= Math.PI / 180;
-
-            //    Complex[] Z_trans = new Complex[Z1.Length];
-
-            //    for (int i = 0, f = f_lower; i < Z1.Length; i++, f++)
-            //    {
-            //        //Complex kxi = Complex.Sqrt(k1[i] * k1[i] - k2[i] * k2[i] * Complex.Sin(psi));
-            //        Complex ki_kxi = k1[i] / kxi[i];
-            //        Complex cotkd = 1 / Complex.Tan(kxi[i] * depth);
-
-            //        Complex Zi = Complex.ImaginaryOne * Z1[i] * ki_kxi * cotkd;
-            //        Z_trans[i] = (Z1[i] * Z1[i] * ki_kxi * ki_kxi - Z0[i] * Zi) / (Z0[i] - Zi);
-            //    }
-            //    return Z_trans;
-            //}
-
             public static Complex[][] Rigid_Backed(Complex[] Z1, Complex[] k1, Complex[][] kxi, double depth)
             {
                 if (Z1.Length != k1.Length) throw new Exception("Impedance and wave number arrays must be equal in length");
@@ -1077,57 +1109,10 @@ namespace Pachyderm_Acoustic
                 return Z_trans;
             }
 
-            //public static Complex[] Rigid_Backed(Complex[] Z1, Complex[] k1, Complex[] kxi, double depth)
-            //{
-            //    if (Z1.Length != k1.Length) throw new Exception("Impedance and wave number arrays must be equal in length");
-            //    //if (!in_radians) psi *= Math.PI / 180;
-
-            //    Complex[] Z_trans = new Complex[Z1.Length];
-
-            //    for (int i = 0; i < Z1.Length; i++)
-            //    {
-            //        //Complex kxi = Complex.Sqrt(k1[i] * k1[i] - k2[i] * k2[i] * Complex.Sin(psi));
-            //        Z_trans[i] = -Complex.ImaginaryOne * Z1[i] * k1[i] / (Complex.Tan(kxi[i] * depth) * kxi[i]);
-            //    }
-            //    return Z_trans;
-            //}
-
-            //public static Complex[] Rigid_Backed(Complex[] Z1, Complex[] k2, Complex[] k1, Complex psi, double depth, bool in_radians)
-            //{
-            //    if (Z1.Length != k1.Length || k2.Length != k1.Length) throw new Exception("Impedance and wave number arrays must be equal in length");
-            //    if (!in_radians) psi *= Math.PI / 180;
-
-            //    Complex[] Z_trans = new Complex[Z1.Length];
-
-            //    for (int i = 0; i < Z1.Length; i++)
-            //    {
-            //        Complex kxi = Complex.Sqrt(k1[i] * k1[i] - k2[i] * k2[i] * Complex.Sin(psi));
-            //        Z_trans[i] = -Complex.ImaginaryOne * Z1[i] * k1[i] / (Complex.Tan(kxi * depth) * kxi);
-            //    }
-            //    return Z_trans;
-            //}
-
-            //public static Complex[][] WaveNumber_NormalComponent(Complex[] K, Complex[][] kyi)
-            //{
-            //    if (K.Length != kyi[0].Length) throw new Exception("For full spectrum angles, number of wavenumbers and number of angle spectra must match.");
-
-            //    Complex[][] Kx = new Complex[kyi.Length][];
-            //    for (int i = 0; i < kyi.Length; i++)
-            //    {
-            //        Kx[i] = new Complex[K.Length];
-            //        for (int k = 0; k < K.Length; k++)
-            //        {
-            //            Kx[i][k] = Complex.Sqrt(K[k] * K[k] - kyi[i][k] * kyi[i][k]);
-            //        }
-            //    }
-
-            //    return Kx;
-            //}
-
             public static Complex[][] WaveNumber_NormalComponent(Complex[] K, Complex[] Angles)
             {
                 Complex[][] Kx = new Complex[Angles.Length][];
-                
+
                 for (int i = 0; i < Angles.Length; i++)
                 {
                     Kx[i] = new Complex[K.Length];
@@ -1146,11 +1131,12 @@ namespace Pachyderm_Acoustic
                     //3rd octave band frequencies...
                     List<double> freq = new List<double>();
                     double f = 15.625;
+
                     int ct = 1;
                     while (f < sample_Freq / 2)
                     {
                         ct++;
-                        f = 15.625 * Math.Pow(2, ct / 3);
+                        f = 15.625 * Math.Pow(2, (double)ct / 3f);
                         freq.Add(f);
                     }
                     frequency = freq.ToArray();
@@ -1159,8 +1145,8 @@ namespace Pachyderm_Acoustic
                 {
                     //Linear frequency scale
                     frequency = new double[4096];
-                    double step = (sample_Freq / 2) / 4096;
-                    for (int i = 0; i < frequency.Length; i++) frequency[i] = (i + .5) * step;
+                    double step = ((double)sample_Freq) / 4096d;
+                    for (int i = 0; i < frequency.Length; i++) frequency[i] = ((double)i + .5) * step;
                 }
 
                 anglesdeg = new Complex[(int)(180 / 5)];
@@ -1170,88 +1156,102 @@ namespace Pachyderm_Acoustic
                 Complex[][][] Angle_Inc = new Complex[LayerList.Count][][];
                 Complex[] K_Air = AbsorptionModels.Operations.Air_Wavenumber(c_sound, frequency);
                 Complex[] Zc_Air = AbsorptionModels.Operations.Air_CharImpedance(1.2, c_sound, frequency);
+                Complex[][] kxi = new Complex[anglesdeg.Length][];
 
                 for (double a = 2.5, i = 0; a <= 180; a += 5, i++)
                 {
                     sintheta_inc[(int)i] = new Complex[frequency.Length];
                     anglesdeg[(int)i] = 90 - a;
                     if (a <= 90) Angle[(int)i] = (90 - a) * Utilities.Numerics.Pi_180;
-                    sintheta_inc[(int)i][0] = Complex.Sin(a <= 90 ? Angle[(int)i] : Angle[36 - (int)i]);
-                    for (int j = 1; j < sintheta_inc[(int)i].Length; j++) sintheta_inc[(int)i][j] = sintheta_inc[(int)i][0];
+                    sintheta_inc[(int)i][0] = Complex.Sin(Angle[(int)i]);//a <= 90 ? Angle[(int)i] : Angle[36 - (int)i]);
+                    kxi[(int)i] = new Complex[frequency.Length];
+                    for (int j = 1; j < sintheta_inc[(int)i].Length; j++)
+                    {
+                        sintheta_inc[(int)i][j] = sintheta_inc[(int)i][0];
+                        kxi[(int)i][j] = sintheta_inc[(int)i][j] * K_Air[j];
+                    }
                 }
 
                 SparseMatrix[][][] T = new SparseMatrix[LayerList.Count][][];
-
-
-                for (int a = 0; a < anglesdeg.Length; a++)
-                {
-                    
-                    //sintheta_trans[i][j] = K0[j] * sintheta_inc[i][j] / K[j];
-                    //Kxi[i][j] = Complex.Sqrt(K[j] * K[j] * (1 - sintheta_trans[i][j] * sintheta_trans[i][j]));
-
-                }
-
                 for (int i = LayerList.Count - 1; i >= 0; i--)
                 {
                     ABS_Layer Layer_i = (LayerList[i] as ABS_Layer);
                     T[i] = new SparseMatrix[anglesdeg.Length][];
-                    for(int a = 0; a < anglesdeg.Length; a++)
+                    for (int a = 0; a < anglesdeg.Length; a++)
                     {
                         T[i][a] = new SparseMatrix[4096];
-                        double sintheta =  Math.Sin(Angle[a]);
-                        
-                            switch (Layer_i.T)
-                            {
-                                case ABS_Layer.LayerType.AirSpace:
-                                    for(int f = 0; f < 4096; f++)    
-                                    {
-                                        Complex Ksintheta = K_Air[f] * sintheta;
-                                        T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth * 1000, Complex.Sqrt(K_Air[f] * K_Air[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
-                                    }
-                                    break;
-                                case ABS_Layer.LayerType.PorousDB:
-                                    Complex[] Kdb = Equivalent_Fluids.DelaneyBazley_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 4096; f++)    
-                                    {
-                                        Complex Ksintheta = K_Air[f] * sintheta;
-                                        T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Kdb[f] * Kdb[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
-                                    }
-                                    break;
-                                case ABS_Layer.LayerType.PorousCA:
-                                    Complex[] Kca = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 4096; f++)    
-                                    {
-                                        Complex Ksintheta = K_Air[f] * sintheta;
-                                        T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Kca[f] * Kca[f] - Ksintheta * Ksintheta), frequency[f], 1.2);
-                                    }
-                                    break;
-                                case ABS_Layer.LayerType.PorousM:
-                                    Complex[] Km = Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
-                                    for(int f = 0; f < 4096; f++)    
-                                    {                                        
-                                        //Complex Ksintheta = K_Air[f] * sintheta;
-                                        T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Km[f] * Km[f] * (1 - sintheta * sintheta)), frequency[f], 1.2);
-                                    }
-                                    break;
-                                //case ABS_Layer.LayerType.Perforated_Modal:
-                        
-                                //case ABS_Layer.LayerType.Slotted_Modal:
-                        
-                                //case ABS_Layer.LayerType.CircularPerforations:
-                        
-                                //case ABS_Layer.LayerType.SquarePerforations:
-                        
-                                //case ABS_Layer.LayerType.Slots:
-                        
-                                //case ABS_Layer.LayerType.MicroPerforated:
-                            
-                                //case ABS_Layer.LayerType.Microslit:
-                        
-                                default:
-                                    throw new Exception("Unknown Layer Type");
-                            }
+
+                        switch (Layer_i.T)
+                        {
+                            case ABS_Layer.LayerType.AirSpace:
+                                Complex[] Zc0 = Operations.Air_CharImpedance(1.2, c_sound, frequency);
+
+                                for (int f = 0; f < 4096; f++)
+                                {
+                                    Complex Ksintheta = kxi[a][f] / K_Air[f];
+                                    Complex kzi = Complex.Sqrt(K_Air[f] * K_Air[f] * (1 - Ksintheta * Ksintheta));
+                                    T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi, K_Air[f], Zc0[f]);
+                                }
+
+                                break;
+                            case ABS_Layer.LayerType.PorousDB:
+                                Complex[] Kdb = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                Complex[] Zcdb = Equivalent_Fluids.DBAllardChampoux_Impedance(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                for (int f = 0; f < 4096; f++)
+                                {
+                                    Complex Ksintheta = kxi[a][f] / Kdb[f];
+                                    Complex kzi = Complex.Sqrt(Kdb[f] * Kdb[f] * (1 - Ksintheta * Ksintheta));
+                                    T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi, Kdb[f], Zcdb[f]);
+                                }
+
+                                break;
+                            case ABS_Layer.LayerType.PorousCA:
+                                Complex[] Kca = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                Complex[] Zcca = Equivalent_Fluids.DBAllardChampoux_Impedance(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                for (int f = 0; f < 4096; f++)
+                                {
+                                    Complex Ksintheta = kxi[a][f] / Kca[f];
+                                    Complex kzi = Complex.Sqrt(Kca[f] * Kca[f] * (1 - Ksintheta * Ksintheta));
+                                    T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi, Kca[f], Zcca[f]);
+                                }
+                                break;
+                            case ABS_Layer.LayerType.PorousM:
+                                Complex[] Km = Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                Complex[] Zcm = Equivalent_Fluids.DB_Miki_Impedance(1.2, c_sound, Layer_i.Flow_Resist, frequency);
+                                for (int f = 0; f < 4096; f++)
+                                {
+                                    Complex Ksintheta = kxi[a][f] / Km[f];
+                                    Complex kzi = Complex.Sqrt(Km[f] * Km[f] * (1 - Ksintheta * Ksintheta));
+                                    T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi, Km[f], Zcm[f]);
+                                }
+                                break;
+                            //case ABS_Layer.LayerType.SolidPlate:
+                            //    Complex[] Km = Explicit_TMM.Solid_Matrix(, Layer_i.depth,);
+                            //    for (int f = 0; f < 4096; f++)
+                            //    {
+                            //        //Complex Ksintheta = K_Air[f] * sintheta;
+                            //        T[i][a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, Complex.Sqrt(Km[f] * Km[f] * (1 - sintheta * sintheta)), frequency[f], 1.2);
+                            //    }
+                            //    break;
+                            //case ABS_Layer.LayerType.Perforated_Modal:
+
+                            //case ABS_Layer.LayerType.Slotted_Modal:
+
+                            //case ABS_Layer.LayerType.CircularPerforations:
+
+                            //case ABS_Layer.LayerType.SquarePerforations:
+
+                            //case ABS_Layer.LayerType.Slots:
+
+                            //case ABS_Layer.LayerType.MicroPerforated:
+
+                            //case ABS_Layer.LayerType.Microslit:
+
+                            default:
+                                throw new Exception("Unknown Layer Type");
                         }
                     }
+                }
 
                 SparseMatrix[] I = new SparseMatrix[LayerList.Count];
                 SparseMatrix[] J = new SparseMatrix[LayerList.Count];
@@ -1276,7 +1276,7 @@ namespace Pachyderm_Acoustic
 
                 //Get Interface Matrices
 
-                for (int i = 0; i < LayerList.Count; i++)
+                for (int i = LayerList.Count - 1; i >= 0; i--)
                 {
                     if (i == LayerList.Count - 1)
                     {
@@ -1369,13 +1369,55 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-                //List<SparseMatrix[][]> T = Layer(LayerList.Count - 1, LayerList, K_Air, sintheta_inc, K_Air, c_sound, frequency);
-
                 Complex[][] Z = new Complex[sintheta_inc.Length][];
+
+                SparseMatrix Y;
+                switch (T.First()[0][0].RowCount)
+                {
+                    case 2:
+                        Y = Explicit_TMM.RigidTerminationF();
+                        break;
+                    case 4:
+                        Y = Explicit_TMM.RigidTerminationS();
+                        break;
+                    case 6:
+                        Y = Explicit_TMM.RigidTerminationP();
+                        break;
+                    default:
+                        throw new Exception("How can you have a matrix that is not 2, 4, or 6 rows?");
+                }
+
+                //for (int a = 0; a < sintheta_inc.Length; a++)
+                //{
+                //    Z[a] = new Complex[sintheta_inc[a].Length];
+
+                //    for (int f = 0; f < sintheta_inc[a].Length; f++)
+                //    {
+                //        SparseMatrix D1 = J[0] * T[0][a][f];
+                //        SparseMatrix D2 = I[0];
+
+                //        for (int i = 1; i < T.Length; i++)
+                //        {
+                //            SparseMatrix JT = J[i] * T[i][a][f];
+                //            D1 = JT * D1;
+                //            D2 = JT * D2;
+                //        }
+
+                //        //D1 = Y * D1;
+                //        //D2 = Y * D2;
+
+                //        SparseMatrix Det = Y * (-1 * (D1 * (D2.Inverse() as SparseMatrix)));
+                //    }
+                //}
+
+                //Complex[][] Z = new Complex[sintheta_inc.Length][];
+
+                for (int i = 0; i < I.Length; i++) I[i] = I[i].Inverse() as SparseMatrix;
+
                 for (int a = 0; a < sintheta_inc.Length; a++)
                 {
                     Z[a] = new Complex[sintheta_inc[a].Length];
-                    for(int f = 0; f < sintheta_inc[a].Length; f++)
+                    for (int f = 0; f < sintheta_inc[a].Length; f++)
                     {
                         SparseMatrix V;
                         if (T.First()[a][f].RowCount == 2)
@@ -1395,20 +1437,17 @@ namespace Pachyderm_Acoustic
                             V[0, 0] = 1;
                             V[1, 0] = 1;
                             V[2, 0] = 1;
+
                         }
 
                         for (int i = 0; i < T.Length; i++)
                         {
-                            V = -((J[i] * T[i][a][f]) * I[i].Inverse() as SparseMatrix) * V;
-                            //V = T[i][a][f] * V;
+                            V = ((J[i] * T[i][a][f]) * I[i]) * V;
                         }
 
-                        V = -(J.Last() * I.Last().Inverse() as SparseMatrix) * V;
-
-                        Z[a][f] = V[0, 0] * 100000 / V[1, 0];
+                        Z[a][f] = V[0, 0] / V[1, 0];
                     }
                 }
-
                 return Z;
             }
 
@@ -1419,7 +1458,7 @@ namespace Pachyderm_Acoustic
                     //3rd octave band frequencies...
                     List<double> freq = new List<double>();
                     double f = 15.625;
-                    
+
                     int ct = 1;
                     while (f < sample_Freq / 2)
                     {
@@ -1434,12 +1473,12 @@ namespace Pachyderm_Acoustic
                     //Linear frequency scale
                     frequency = new double[4096];
                     double step = ((double)sample_Freq) / 4096d;
-                    for (int i = 0; i < frequency.Length; i++) frequency[i] = ((double)i+.5) * step;
+                    for (int i = 0; i < frequency.Length; i++) frequency[i] = ((double)i + .5) * step;
                 }
 
                 if (anglesdeg == null)
                 {
-                    anglesdeg = new Complex[(int)(180/5)];
+                    anglesdeg = new Complex[(int)(180 / 5)];
                     anglesdeg[0] = -87.5;
                     for (int i = 1; i < anglesdeg.Length; i++) anglesdeg[i] += 5;
                 }
@@ -1450,7 +1489,6 @@ namespace Pachyderm_Acoustic
                 Complex[][][] Angle_Inc = new Complex[LayerList.Count][][];
                 Complex[] K_Air = AbsorptionModels.Operations.Air_Wavenumber(c_sound, frequency);
                 Complex[] Zc_Air = AbsorptionModels.Operations.Air_CharImpedance(1.2, c_sound, frequency);
-
 
                 for (int a = 0, i = 0; a < 180; a += 5, i++)
                 {
@@ -1590,7 +1628,7 @@ namespace Pachyderm_Acoustic
                         double R, S, s;
                         R = width / 2;
                         int nx = 0;
-                        for (; ; )
+                        for (;;)
                         {
                             nx++;
                             if (171.5 * Math.Sqrt(nx * nx / (pitch * pitch)) > 16000) break;
@@ -1639,7 +1677,7 @@ namespace Pachyderm_Acoustic
                                     if (m == 0 && n == 0)
                                     {
                                         Zmn = LayerEF(layer_no - 1, LayerList, K_Air, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
-                                        for (int j = 0; j < Zmn.Length; j++)
+                                            for (int j = 0; j < Zmn.Length; j++)
                                         {
                                             for (int i = 0; i < freq.Length; i++)
                                             {
@@ -1654,7 +1692,7 @@ namespace Pachyderm_Acoustic
                                     double N_TERM = Utilities.Numerics.PiX2 * n / pitch;
                                     Zmn = LayerEF_postperf(layer_no - 1, LayerList, K_Air, N_TERM, M_TERM, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
 
-                                    for (int j = 0; j < Zmn.Length; j++)
+                                        for (int j = 0; j < Zmn.Length; j++)
                                     {
                                         for (int i = 0; i < freq.Length; i++)
                                         {
@@ -1921,7 +1959,7 @@ namespace Pachyderm_Acoustic
                         D = AL.pitch;
                         R = AL.width / 2;
                         int nx = 0;
-                        for (; ; )
+                        for (;;)
                         {
                             nx++;
                             if (171.5 * Math.Sqrt(nx * nx / (D * D)) > 16000) break;
@@ -2000,35 +2038,31 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-                //            SparseMatrix V;
-                //if (Rigid_Backed)
-                //{
-                //    if ((int)LayerList[i].T <= 10)
-                //    {
-                //    }
-                //    else if ((int)(int)LayerList[i+1].T == 15)
-                //    {
-                //        //Biot Porous absorbers
-                //        V = Explicit_TMM.RigidTerminationP();
-                //    }
-                //    else
-                //    {
-                //        //Solid Layer
-                //        V = Explicit_TMM.RigidTerminationS();
-                //    }
-                //}
-                //else
-                //{
-                //    //Transmission case: Start with a fluid - air
-                //    //V = (-1, (1.2*c_sound)/Math.Cos(theta));//(1, 1 / (1.2 * c_sound));
-                //    throw new NotImplementedException("Working on intialization condition for Transfer Matrix for Transmssion Case");
-                //}
+            //            SparseMatrix V;
+            //if (Rigid_Backed)
+            //{
+            //    if ((int)LayerList[i].T <= 10)
+            //    {
+            //    }
+            //    else if ((int)(int)LayerList[i+1].T == 15)
+            //    {
+            //        //Biot Porous absorbers
+            //        V = Explicit_TMM.RigidTerminationP();
+            //    }
+            //    else
+            //    {
+            //        //Solid Layer
+            //        V = Explicit_TMM.RigidTerminationS();
+            //    }
+            //}
+            //else
+            //{
+            //    //Transmission case: Start with a fluid - air
+            //    //V = (-1, (1.2*c_sound)/Math.Cos(theta));//(1, 1 / (1.2 * c_sound));
+            //    throw new NotImplementedException("Working on intialization condition for Transfer Matrix for Transmssion Case");
+            //}
 
             //Set up transfer function as a recursive function...
-
-
-
-
 
             private static List<SparseMatrix[][]> Layer(int layer_no, List<ABS_Layer> LayerList, Complex[] K0, Complex[][] sintheta_inc, Complex[] K_Air, double c_sound, double[] freq)//, ref double[] D, ref double[] T)
             {
@@ -2060,11 +2094,11 @@ namespace Pachyderm_Acoustic
                     case ABS_Layer.LayerType.BiotPorousAbsorber_Limp:
 
                         K = AbsorptionModels.Biot_Porous_Absorbers.WaveNumber_Fluid(1.2, Layer_i.porosity, Layer_i.Thermal_Permeability, freq);
-                        
+
                         for (int i = 0; i < sintheta_inc.Length; i++)
                         {
                             Kxi[i] = new Complex[freq.Length];
-                            sintheta_trans[i] = new Complex[freq.Length];                        
+                            sintheta_trans[i] = new Complex[freq.Length];
                             for (int j = 0; j < sintheta_inc[0].Length; j++)
                             {
                                 sintheta_trans[i][j] = K0[j] * sintheta_inc[i][j] / K[j];
@@ -2135,7 +2169,7 @@ namespace Pachyderm_Acoustic
 
                         Tlist.Add(T);
                         return Tlist;
-    
+
                     case ABS_Layer.LayerType.PorousDB:
                         K = AbsorptionModels.Equivalent_Fluids.DelaneyBazley_WNumber(1.2, c_sound, Layer_i.Flow_Resist, freq);
 
@@ -2151,7 +2185,7 @@ namespace Pachyderm_Acoustic
                         }
 
                         if (layer_no > 0) Tlist = Layer(layer_no - 1, LayerList, K_Air, sintheta_trans, K_Air, c_sound, freq);
-                        
+
                         for (int i = 0; i < sintheta_inc.Length; i++)
                         {
                             for (int j = 0; j < sintheta_inc[i].Length; j++)
@@ -2159,13 +2193,13 @@ namespace Pachyderm_Acoustic
                                 T[i][j] = Explicit_TMM.FluidMatrix(depth, Kxi[i][j], freq[j], 1.2);
                             }
                         }
-                        
+
                         Tlist.Add(T);
                         return Tlist;
 
                     case ABS_Layer.LayerType.PorousCA:
                         K = AbsorptionModels.Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, freq);
-                        
+
                         for (int i = 0; i < sintheta_inc.Length; i++)
                         {
                             Kxi[i] = new Complex[freq.Length];
@@ -2191,7 +2225,7 @@ namespace Pachyderm_Acoustic
 
                     case ABS_Layer.LayerType.PorousM:
                         K = AbsorptionModels.Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, freq);
-                        
+
                         for (int i = 0; i < sintheta_inc.Length; i++)
                         {
                             Kxi[i] = new Complex[freq.Length];
@@ -2204,7 +2238,7 @@ namespace Pachyderm_Acoustic
                         }
 
                         if (layer_no > 0) Tlist = Layer(layer_no - 1, LayerList, K_Air, sintheta_trans, K_Air, c_sound, freq);
-                        
+
                         for (int i = 0; i < sintheta_inc.Length; i++)
                         {
                             for (int j = 0; j < sintheta_inc[i].Length; j++)
@@ -2433,7 +2467,7 @@ namespace Pachyderm_Acoustic
                         throw new NotImplementedException();
                 }
             }
-            
+
             private static SparseMatrix[][] Layer(int layer_no, bool Rigid_Backed, List<ABS_Layer> LayerList, SparseMatrix[] J, SparseMatrix[] I, Complex[] K0, Complex[][] sintheta_inc, Complex[] K_Air, double c_sound, double[] freq, ref SparseMatrix Denom)//, ref double[] D, ref double[] T)
             {
                 ABS_Layer Layer_i = LayerList[layer_no] as ABS_Layer;
@@ -2454,14 +2488,14 @@ namespace Pachyderm_Acoustic
                 }
 
                 switch (Layer_i.T)
-                {    
+                {
                     case ABS_Layer.LayerType.BiotPorousAbsorber_Limp:
-                    
+
                         K = AbsorptionModels.Biot_Porous_Absorbers.WaveNumber_Fluid(1.2, Layer_i.porosity, Layer_i.Thermal_Permeability, freq);
-                        
+
                         for (int j = 0; j < sintheta_inc[0].Length; j++)
                         {
-                            for(int i = 0; i < sintheta_inc.Length; i++)
+                            for (int i = 0; i < sintheta_inc.Length; i++)
                             {
                                 sintheta_trans[i][j] = K0[j] * sintheta_inc[i][j] / K[j];
                                 Kxi[i][j] = Complex.Sqrt(K[j] * K[j] * (1 - sintheta_trans[i][j] * sintheta_trans[i][j]));
@@ -2475,7 +2509,7 @@ namespace Pachyderm_Acoustic
                             for (int a = 0; a < sintheta_inc.Length; a++)
                             {
                                 for (int f = 0; f < sintheta_inc[a].Length; f++)
-                                {   
+                                {
                                     SparseMatrix T = Explicit_TMM.PorousMatrix(false, depth, K0[f], sintheta_trans[a][f], freq[f], LayerList[layer_no].porosity, LayerList[layer_no].tortuosity, LayerList[layer_no].YoungsModulus, LayerList[layer_no].PoissonsRatio, LayerList[layer_no].Viscous_Characteristic_Length, LayerList[layer_no].Flow_Resist, LayerList[layer_no].density, LayerList[layer_no].Thermal_Permeability, 101325);
                                     V[a][f] = Transfer(V[a][f], T, J[layer_no], I[layer_no]);
                                 }
@@ -2513,10 +2547,10 @@ namespace Pachyderm_Acoustic
                     //    
                     case ABS_Layer.LayerType.SolidPlate:
                         K = AbsorptionModels.Solids.WaveNumber(freq, LayerList[layer_no].SpeedOfSound);
-                        
+
                         for (int j = 0; j < sintheta_inc[0].Length; j++)
                         {
-                            for(int i = 0; i < sintheta_inc.Length; i++)
+                            for (int i = 0; i < sintheta_inc.Length; i++)
                             {
                                 sintheta_trans[i][j] = K0[j] * sintheta_inc[i][j] / K[j];
                                 Kxi[i][j] = Complex.Sqrt(K[j] * K[j] * (1 - sintheta_trans[i][j] * sintheta_trans[i][j]));
@@ -2530,7 +2564,7 @@ namespace Pachyderm_Acoustic
                             for (int a = 0; a < sintheta_inc.Length; a++)
                             {
                                 for (int f = 0; f < sintheta_inc[a].Length; f++)
-                                {   
+                                {
                                     SparseMatrix T = Explicit_TMM.Solid_Matrix(K[f], K0[f], sintheta_trans[a][f], depth, freq[f], LayerList[layer_no].density, LayerList[layer_no].PoissonsRatio, LayerList[layer_no].YoungsModulus); //(false, depth, K0, sintheta_trans[a][f], freq[f], LayerList[layer_no].porosity, LayerList[layer_no].tortuosity, LayerList[layer_no].YougsModulus, LayerList[layer_no].PoissonRatio, LayerList[layer_no].Viscous_CharacteristicLength, LayerList[layer_no].Flow_Resist, LayerList[layer_no].FrameRho, LayerList[layer_no].Thermal_Permeability, 101325);
                                     V[a][f] = Transfer(V[a][f], T, J[layer_no], I[layer_no]);
                                 }
@@ -2547,7 +2581,7 @@ namespace Pachyderm_Acoustic
                                     {
                                         V[a][f] = Explicit_TMM.RigidTerminationS();
                                         SparseMatrix T = Explicit_TMM.Solid_Matrix(K[f], K0[f], sintheta_trans[a][f], depth, freq[f], LayerList[layer_no].density, LayerList[layer_no].PoissonsRatio, LayerList[layer_no].YoungsModulus); //(false, depth, K0, sintheta_trans[a][f], freq[f], LayerList[layer_no].porosity, LayerList[layer_no].tortuosity, LayerList[layer_no].YougsModulus, LayerList[layer_no].PoissonRatio, LayerList[layer_no].Viscous_CharacteristicLength, LayerList[layer_no].Flow_Resist, LayerList[layer_no].FrameRho, LayerList[layer_no].Thermal_Permeability, 101325);
-                                        //V[a][f] = Explicit_TMM.Solid_Matrix(K[f], K0[f], sintheta_trans[a][f], depth, freq[f], LayerList[layer_no].density, LayerList[layer_no].PoissonsRatio, LayerList[layer_no].YoungsModulus); //(false, depth, K0, sintheta_trans[a][f], freq[f], LayerList[layer_no].porosity, LayerList[layer_no].tortuosity, LayerList[layer_no].YougsModulus, LayerList[layer_no].PoissonRatio, LayerList[layer_no].Viscous_CharacteristicLength, LayerList[layer_no].Flow_Resist, LayerList[layer_no].FrameRho, LayerList[layer_no].Thermal_Permeability, 101325);
+                                                                                                                                                                                                                                          //V[a][f] = Explicit_TMM.Solid_Matrix(K[f], K0[f], sintheta_trans[a][f], depth, freq[f], LayerList[layer_no].density, LayerList[layer_no].PoissonsRatio, LayerList[layer_no].YoungsModulus); //(false, depth, K0, sintheta_trans[a][f], freq[f], LayerList[layer_no].porosity, LayerList[layer_no].tortuosity, LayerList[layer_no].YougsModulus, LayerList[layer_no].PoissonRatio, LayerList[layer_no].Viscous_CharacteristicLength, LayerList[layer_no].Flow_Resist, LayerList[layer_no].FrameRho, LayerList[layer_no].Thermal_Permeability, 101325);
                                         if (J[layer_no] != null) V[a][f] = J[layer_no] * V[a][f] * T;
                                     }
                                 }
@@ -2740,7 +2774,7 @@ namespace Pachyderm_Acoustic
                                     V[a][f] = Transfer(V[a][f], T, J[layer_no], I[layer_no]);
                                 }
                             }
-                            if (I[layer_no] != null)Denom = I[layer_no] * Denom;
+                            if (I[layer_no] != null) Denom = I[layer_no] * Denom;
                         }
                         else
                         {
@@ -2767,133 +2801,133 @@ namespace Pachyderm_Acoustic
                         return V;
                     //case ABS_Layer.LayerType.Perforated_Modal:
                     //case ABS_Layer.LayerType.Slotted_Modal:
-                        //Todo: work out TMM perforated panels.
-                        //double R, S, s;
-                        //R = width / 2;
-                        //int nx = 0;
-                        //for (; ; )
-                        //{
-                        //    nx++;
-                        //    if (171.5 * Math.Sqrt(nx * nx / (pitch * pitch)) > 16000) break;
-                        //}
-                        //int m_min, m_max, n_min, n_max;
+                    //Todo: work out TMM perforated panels.
+                    //double R, S, s;
+                    //R = width / 2;
+                    //int nx = 0;
+                    //for (; ; )
+                    //{
+                    //    nx++;
+                    //    if (171.5 * Math.Sqrt(nx * nx / (pitch * pitch)) > 16000) break;
+                    //}
+                    //int m_min, m_max, n_min, n_max;
 
-                        //if (Layer_i.T == ABS_Layer.LayerType.Perforated_Modal)
-                        //{
-                        //    m_min = 0; m_max = nx; n_min = -nx; n_max = nx;
-                        //    S = Math.PI * R * R;
-                        //    s = S / (pitch * pitch);
-                        //}
-                        //else
-                        //{
-                        //    m_min = 0; m_max = 0; n_min = -nx; n_max = nx;
-                        //    S = 2 * R * pitch;
-                        //    s = 2 * R / pitch;
-                        //}
+                    //if (Layer_i.T == ABS_Layer.LayerType.Perforated_Modal)
+                    //{
+                    //    m_min = 0; m_max = nx; n_min = -nx; n_max = nx;
+                    //    S = Math.PI * R * R;
+                    //    s = S / (pitch * pitch);
+                    //}
+                    //else
+                    //{
+                    //    m_min = 0; m_max = 0; n_min = -nx; n_max = nx;
+                    //    S = 2 * R * pitch;
+                    //    s = 2 * R / pitch;
+                    //}
 
-                        //double vpm;
-                        //porosity = (LayerList[layer_no - 1] as ABS_Layer).porosity;
-                        //double Eta = 0.48 * Math.Sqrt(S) * (1 - 1.14 * Math.Sqrt(s));
+                    //double vpm;
+                    //porosity = (LayerList[layer_no - 1] as ABS_Layer).porosity;
+                    //double Eta = 0.48 * Math.Sqrt(S) * (1 - 1.14 * Math.Sqrt(s));
 
-                        //if (layer_no < 1)
-                        //{
-                        //    Complex[][] Z = new Complex[37][];
-                        //    for (int i = 0; i < 37; i++)
-                        //    {
-                        //        Z[i] = new Complex[freq.Length];
-                        //        for (int j = 0; j < freq.Length; j++) Z[i][j] = 0;
-                        //    }
-                        //    return Z;
-                        //}
-                        //else
-                        //{
-                        //    Complex[][] Z = new Complex[37][];
-                        //    for (int j = 0; j < 37; j++) Z[j] = new Complex[freq.Length];
+                    //if (layer_no < 1)
+                    //{
+                    //    Complex[][] Z = new Complex[37][];
+                    //    for (int i = 0; i < 37; i++)
+                    //    {
+                    //        Z[i] = new Complex[freq.Length];
+                    //        for (int j = 0; j < freq.Length; j++) Z[i][j] = 0;
+                    //    }
+                    //    return Z;
+                    //}
+                    //else
+                    //{
+                    //    Complex[][] Z = new Complex[37][];
+                    //    for (int j = 0; j < 37; j++) Z[j] = new Complex[freq.Length];
 
-                        //    Parallel.For(m_min, m_max + 1, m =>
-                        //    //for (int m = m_min; m <= m_max; m++)
-                        //    {
-                        //        for (int n = n_min; n <= n_max; n++)
-                        //        {
-                        //            Complex[][] Zmn;
+                    //    Parallel.For(m_min, m_max + 1, m =>
+                    //    //for (int m = m_min; m <= m_max; m++)
+                    //    {
+                    //        for (int n = n_min; n <= n_max; n++)
+                    //        {
+                    //            Complex[][] Zmn;
 
-                        //            if (m == 0 && n == 0)
-                        //            {
-                        //                Zmn = Layer(layer_no - 1, LayerList, J, I_inv, K_Air, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
-                        //                for (int j = 0; j < Zmn.Length; j++)
-                        //                {
-                        //                    for (int i = 0; i < freq.Length; i++)
-                        //                    {
-                        //                        Z[j][i] += s / porosity * Zmn[j][i];
-                        //                    }
-                        //                }
-                        //                continue;
-                        //            }
+                    //            if (m == 0 && n == 0)
+                    //            {
+                    //                Zmn = Layer(layer_no - 1, LayerList, J, I_inv, K_Air, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
+                    //                for (int j = 0; j < Zmn.Length; j++)
+                    //                {
+                    //                    for (int i = 0; i < freq.Length; i++)
+                    //                    {
+                    //                        Z[j][i] += s / porosity * Zmn[j][i];
+                    //                    }
+                    //                }
+                    //                continue;
+                    //            }
 
-                        //            if (m == 0 || n == 0) vpm = .5; else vpm = 1;
-                        //            double M_TERM = Utilities.Numerics.PiX2 * m / pitch;
-                        //            double N_TERM = Utilities.Numerics.PiX2 * n / pitch;
-                        //            Zmn = Layer_postperf(layer_no - 1, LayerList, J, I_inv, K_Air, N_TERM, M_TERM, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
+                    //            if (m == 0 || n == 0) vpm = .5; else vpm = 1;
+                    //            double M_TERM = Utilities.Numerics.PiX2 * m / pitch;
+                    //            double N_TERM = Utilities.Numerics.PiX2 * n / pitch;
+                    //            Zmn = Layer_postperf(layer_no - 1, LayerList, J, I_inv, K_Air, N_TERM, M_TERM, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
 
-                        //            for (int j = 0; j < Zmn.Length; j++)
-                        //            {
-                        //                for (int i = 0; i < freq.Length; i++)
-                        //                {
-                        //                    Z[j][i] += vpm * Zmn[j][i] * Complex.Pow(Utilities.Numerics.jBessel(1, 2 * Math.PI * R * Complex.Sqrt((m * m / (pitch * pitch)) + Complex.Pow(n / pitch - K_Air[i] * sintheta_inc[j][i] / Utilities.Numerics.PiX2, 2))) / (m * m + Complex.Pow(n - pitch * K_Air[i] * sintheta_inc[j][i] / Utilities.Numerics.PiX2, 2)), 2);
-                        //                }
-                        //            }
-                        //        }
-                        //    });
+                    //            for (int j = 0; j < Zmn.Length; j++)
+                    //            {
+                    //                for (int i = 0; i < freq.Length; i++)
+                    //                {
+                    //                    Z[j][i] += vpm * Zmn[j][i] * Complex.Pow(Utilities.Numerics.jBessel(1, 2 * Math.PI * R * Complex.Sqrt((m * m / (pitch * pitch)) + Complex.Pow(n / pitch - K_Air[i] * sintheta_inc[j][i] / Utilities.Numerics.PiX2, 2))) / (m * m + Complex.Pow(n - pitch * K_Air[i] * sintheta_inc[j][i] / Utilities.Numerics.PiX2, 2)), 2);
+                    //                }
+                    //            }
+                    //        }
+                    //    });
 
-                        //    for (int j = 0; j < Z.Length; j++)
-                        //    {
-                        //        for (int i = 0; i < freq.Length; i++)
-                        //        {
-                        //            Z[j][i] *= 2 / (Math.PI * porosity);
-                        //            Z[j][i] += new Complex(0, (Eta + depth) * 1.2 * freq[i] * Utilities.Numerics.PiX2);
-                        //            Z[j][i] /= (Math.PI * R * R / (pitch * pitch));
-                        //        }
-                        //    }
-                        //    return Z;
-                        //}
+                    //    for (int j = 0; j < Z.Length; j++)
+                    //    {
+                    //        for (int i = 0; i < freq.Length; i++)
+                    //        {
+                    //            Z[j][i] *= 2 / (Math.PI * porosity);
+                    //            Z[j][i] += new Complex(0, (Eta + depth) * 1.2 * freq[i] * Utilities.Numerics.PiX2);
+                    //            Z[j][i] /= (Math.PI * R * R / (pitch * pitch));
+                    //        }
+                    //    }
+                    //    return Z;
+                    //}
                     //case ABS_Layer.LayerType.CircularPerforations:
                     //case ABS_Layer.LayerType.SquarePerforations:
-                        //double w = Layer_i.width;
-                        //double p = Layer_i.pitch;
-                        //double d = Layer_i.depth;
-                        //if (Layer_i.T == ABS_Layer.LayerType.CircularPerforations)
-                        //{
-                        //    porosity = Math.PI * width * width * .25 / (pitch * pitch);
-                        //}
-                        //else
-                        //{
-                        //    porosity = width * width / (pitch * pitch);
-                        //}
+                    //double w = Layer_i.width;
+                    //double p = Layer_i.pitch;
+                    //double d = Layer_i.depth;
+                    //if (Layer_i.T == ABS_Layer.LayerType.CircularPerforations)
+                    //{
+                    //    porosity = Math.PI * width * width * .25 / (pitch * pitch);
+                    //}
+                    //else
+                    //{
+                    //    porosity = width * width / (pitch * pitch);
+                    //}
 
-                        //if (layer_no < 1)
-                        //{
-                        //    Complex[][] Z = new Complex[37][];
-                        //    for (int i = 0; i < 37; i++)
-                        //    {
-                        //        Z[i] = new Complex[freq.Length];
-                        //        for (int j = 0; j < freq.Length; j++) Z[i][j] = 0;
-                        //    }
-                        //    return Z;
-                        //}
-                        //else
-                        //{
-                        //    Complex[][] Z = Layer(layer_no - 1, LayerList, J, I_inv, K_Air, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
-                        //    Complex[] Zmpa = AbsorptionModels.Perforated_Membranes.PerforatedPlate_Impedance(1.2, porosity, w, p, d, freq);
+                    //if (layer_no < 1)
+                    //{
+                    //    Complex[][] Z = new Complex[37][];
+                    //    for (int i = 0; i < 37; i++)
+                    //    {
+                    //        Z[i] = new Complex[freq.Length];
+                    //        for (int j = 0; j < freq.Length; j++) Z[i][j] = 0;
+                    //    }
+                    //    return Z;
+                    //}
+                    //else
+                    //{
+                    //    Complex[][] Z = Layer(layer_no - 1, LayerList, J, I_inv, K_Air, sintheta_inc, K_Air, c_sound, freq);//, ref D, ref T);
+                    //    Complex[] Zmpa = AbsorptionModels.Perforated_Membranes.PerforatedPlate_Impedance(1.2, porosity, w, p, d, freq);
 
-                        //    for (int j = 0; j < sintheta_inc[0].Length; j++)
-                        //    {
-                        //        for (int i = 0; i < sintheta_inc.Length; i++)
-                        //        {
-                        //            Z[i][j] += Zmpa[j] * (1 - sintheta_inc[i][j] * sintheta_inc[i][j]);
-                        //        }
-                        //    }
-                        //    return Z;
-                        //}
+                    //    for (int j = 0; j < sintheta_inc[0].Length; j++)
+                    //    {
+                    //        for (int i = 0; i < sintheta_inc.Length; i++)
+                    //        {
+                    //            Z[i][j] += Zmpa[j] * (1 - sintheta_inc[i][j] * sintheta_inc[i][j]);
+                    //        }
+                    //    }
+                    //    return Z;
+                    //}
                     //case ABS_Layer.LayerType.Slots:
                     //    if (layer_no < 1)
                     //    {
@@ -3041,9 +3075,9 @@ namespace Pachyderm_Acoustic
                         {
                             return AbsorptionModels.Operations.Rigid_Backed(Zc, K, Kmn, depth);
                         }
-                        //K[i] = AbsorptionModels.Porous_Absorbers.DelaneyBazley_WNumber(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
-                        //Zc[i] = AbsorptionModels.Porous_Absorbers.DelaneyBazley_Impedance(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
-                        //Screens[i] = i > 0 ? Screens[i - 1] : 0;
+                    //K[i] = AbsorptionModels.Porous_Absorbers.DelaneyBazley_WNumber(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
+                    //Zc[i] = AbsorptionModels.Porous_Absorbers.DelaneyBazley_Impedance(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
+                    //Screens[i] = i > 0 ? Screens[i - 1] : 0;
                     case ABS_Layer.LayerType.PorousCA:
                         K = AbsorptionModels.Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, freq);
                         Zc = AbsorptionModels.Equivalent_Fluids.DBAllardChampoux_Impedance(1.2, c_sound, Layer_i.Flow_Resist, freq);
@@ -3069,9 +3103,9 @@ namespace Pachyderm_Acoustic
                             return AbsorptionModels.Operations.Rigid_Backed(Zc, K, Kmn, depth);
                         }
 
-                        //K[i] = AbsorptionModels.Porous_Absorbers.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
-                        //Zc[i] = AbsorptionModels.Porous_Absorbers.DBAllardChampoux_Impedance(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
-                        //Screens[i] = i > 0 ? Screens[i - 1] : 0;
+                    //K[i] = AbsorptionModels.Porous_Absorbers.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
+                    //Zc[i] = AbsorptionModels.Porous_Absorbers.DBAllardChampoux_Impedance(1.2, c_sound, Layer_i.Flow_Resist, 40, 11314);
+                    //Screens[i] = i > 0 ? Screens[i - 1] : 0;
                     case ABS_Layer.LayerType.PorousM:
                         K = AbsorptionModels.Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, freq);
                         Zc = AbsorptionModels.Equivalent_Fluids.DB_Miki_Impedance(1.2, c_sound, Layer_i.Flow_Resist, freq);
@@ -3102,7 +3136,7 @@ namespace Pachyderm_Acoustic
                         D = AL.pitch;
                         R = AL.width / 2;
                         int nx = 0;
-                        for (; ; )
+                        for (;;)
                         {
                             nx++;
                             if (171.5 * Math.Sqrt(nx * nx / (D * D)) > 16000) break;
@@ -3171,9 +3205,9 @@ namespace Pachyderm_Acoustic
                                 }
                             }
                             return Z;
-                        }    
+                        }
                     case ABS_Layer.LayerType.Microslit:
-                        return null;    
+                        return null;
                     case ABS_Layer.LayerType.MicroPerforated:
                         return null;
                     default:
@@ -3237,10 +3271,10 @@ namespace Pachyderm_Acoustic
 
                 double rho_c = air_density * c_sound;
 
-                for (int i = 0; i <freq.Length; i++)
+                for (int i = 0; i < freq.Length; i++)
                 {
-                    double f_sigmaX1000 = 1000 * freq[i]/airflow_resisitivity;
-                    Zc[i] = new Complex(rho_c * (1 + 9.08 * Math.Pow(f_sigmaX1000, -0.75)), rho_c *(-11.9 * Math.Pow(f_sigmaX1000, -0.73)));
+                    double f_sigmaX1000 = 1000 * freq[i] / airflow_resisitivity;
+                    Zc[i] = new Complex(rho_c * (1 + 9.08 * Math.Pow(f_sigmaX1000, -0.75)), rho_c * (-11.9 * Math.Pow(f_sigmaX1000, -0.73)));
                 }
 
                 //Valid where f_sigma is greater than 0.01, but less than 1.//
@@ -3277,82 +3311,6 @@ namespace Pachyderm_Acoustic
                 return Zc;
             }
 
-            //public static Complex[] 
-            //{
-                
-            //}
-
-            //public static double Tortuosity_LimitHi()
-            //{
-
-            //}
-
-            //public static Complex[] Biot_Impedance_Incompressible(double porosity, double FrameShearModulus, double FramePoissonCoefficient, double AmbientMeanPressure, double characteristic_length_Volume, double characteristic_length_Thermal, double[] freq)
-            //{
-            //    double phi_1 = (1-porosity);
-            //    double Kb = 2 * FrameShearModulus * (FramePoissonCoefficient + 1) / (3 * (1 - 2 * FramePoissonCoefficient));
-            //    //double Ks;
-            //    double gamma = 1.4;//Ratio of specific heats (Cp / Cv)
-            //    Complex[] Kf = new Complex[freq.Length];
-            //    ////Iterate through frequencies here.
-            //    for(int f = 0; f < freq.Length; f++)
-            //    {
-            //        double w = Utilities.Numerics.PiX2 * freq[f];
-                    
-            //        double v_prime = 0;//TODO - solve this mystery...
-            //        Complex alpha = 8 * v_prime / (Complex.ImaginaryOne * Utilities.Numerics.PiX2 * freq[f] * characteristic_length*characteristic_length) * Complex.Sqrt(1 + characteristic_length*characteristic_length/16 * Complex.ImaginaryOne * Utilities.Numerics.PiX2 * freq[f] / v_prime ) + 1;
-            //        Kf[f] = AmbientMeanPressure / (1 - (gamma - 1) / (gamma * alpha));
-                
-            //    //double Kb_Ks = Kb / Ks;
-            //    //double Ks_Kf = Ks / Kf;
-            //    //double denom = phi_1 - Kb_Ks + porosity * Ks_Kf;
-            //    //double numterm = (phi_1 - Kb_Ks) * Ks;
-            //    ////double P =  (phi_1* numterm + porosity * Ks_Kf * Kb) / denom;
-            //    //double Q = (numterm * porosity)/ denom;
-            //    //double R = porosity * porosity * Ks / denom;
-            //        Complex R = porosity * Kf[f];
-            //        Complex Q = Kf[f] * (1-porosity);
-            //        Complex P = 4 * FrameShearModulus / 3 + Kb + (phi_1* phi_1) * Kf[f] / porosity;
-
-            //        double rho11;
-            //        double rho12;
-            //        double rho22;
-
-            //        double u1;
-            //        double u2;
-
-            //        Complex PR_QQ = P * R - Q * Q;
-            //        Complex del = (w * w) / (2 * (PR_QQ))
-            //        Complex ta = P * rho22 + R * rho11 - 2 * Q * rho12;
-            //        Complex DELTA = ta * ta - 4 * (PR_QQ) * (rho11 * rho22 - rho12 * rho12);
-            //        //Compression Wave 1
-            //        Complex delta1 = Complex.Sqrt(del*(ta - Complex.Sqrt(DELTA)));
-            //        Complex Z1f = (R + Q / u1) * delta1 / (porosity * w);
-            //        //Compression Wave 2
-            //        Complex delta2 = Complex.Sqrt(del*(ta + Complex.Sqrt(DELTA)));
-            //        Complex Z2f = (R + Q / u2) * delta2 / (porosity * w);
-            //        //Frame Impedance
-            //        Complex Zs1 = (P + Q * u1) * delta1 / w;
-            //        Complex Zs2 = (P + Q * u2) * delta2 / w;
-
-            //        Complex Kaprime = Complex.Sqrt(w * (rho22 / R));
-            //    }
-
-            //    return null;
- 
-            //}
-
-            //public static void Characteristic_Length(double fibre_length, double pore_radius, out double Volume, out double thermal)
-            //{
-            //    Volume = 1 / (Utilities.Numerics.PiX2 * fibre_length * pore_radius);
-            //    thermal = 2 * Volume;
-            //}
-
-            //public static double FibreRadius(double flow_resistivity, double density)
-            //{
-            //    return Math.Sqrt(.79E-9/(density * flow_resistivity));
-            //}
-
             public static Complex[] DBAllardChampoux_WNumber(double air_density, double c_sound, double airflow_resisitivity, double[] freq)
             {
                 Complex[] K = new Complex[freq.Length];
@@ -3380,7 +3338,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 //Valid where f_sigma is greater than 0.01, but less than 1.//
-                return Zc;                
+                return Zc;
             }
 
             public static Complex[] DB_Miki_WNumber(double air_density, double c_sound, double airflow_resisitivity, double[] freq)
@@ -3397,7 +3355,7 @@ namespace Pachyderm_Acoustic
             }
         }
 
-        public static class Biot_Porous_Absorbers 
+        public static class Biot_Porous_Absorbers
         {
             public static double Shear_Viscosity = 1.84E-5;///kg / m s, for standard conditions in air, Atalla, 2009
             public static double Thermal_Conductivity = 2.6E-1;// w / m k, for standard conditions in air, Atalla, 2009
@@ -3459,7 +3417,7 @@ namespace Pachyderm_Acoustic
                 return 2 * Viscous_Characteristic_Length;
             }
 
-            public static Complex Dynamic_Tortuosity_Pride_LaFarge(double w, double v, double porosity,double Tortuosity, double Static_Tortuosity, double Viscous_Permeability,  double Viscous_Length)
+            public static Complex Dynamic_Tortuosity_Pride_LaFarge(double w, double v, double porosity, double Tortuosity, double Static_Tortuosity, double Viscous_Permeability, double Viscous_Length)
             {
                 Complex b = 2 * Viscous_Permeability * Tortuosity * Tortuosity / (porosity * Viscous_Length * Viscous_Length * (Static_Tortuosity - Tortuosity));
                 Complex term1 = (2 * Tortuosity * Viscous_Permeability / (b * porosity * Viscous_Length));
@@ -3489,8 +3447,8 @@ namespace Pachyderm_Acoustic
             }
 
             public static Complex BulkMod_Fluid(double w, double AmbientMeanPressure, double porosity, double Thermal_Permeability_0)
-            {   
-                return  AmbientMeanPressure * (1 + ((Ratio_of_SpecificHeats_Air - 1) / Ratio_of_SpecificHeats_Air) * Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity));
+            {
+                return AmbientMeanPressure * (1 + ((Ratio_of_SpecificHeats_Air - 1) / Ratio_of_SpecificHeats_Air) * Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity));
             }
 
             public static double v()
@@ -3542,7 +3500,7 @@ namespace Pachyderm_Acoustic
             {
                 return -rhoa + Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
             }
-            
+
             public static Complex rho22eff(double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq)
             {
                 return porosity * 1.2 + rhoa - Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
@@ -3592,7 +3550,7 @@ namespace Pachyderm_Acoustic
         {
             static double nu = 1.789e-5;//Coefficient of viscosity of air in kg/ms
             static double kv = 0.000019;//Kinematic Viscosity in sq.m./s
-            
+
             public static Complex[][] SquareGrid_CircPerfs_Impedance(double air_density, double c_sound, double diameter, double depth, double period, int f_lower, int f_upper)
             {
                 double radius = diameter * .5;
@@ -3601,22 +3559,22 @@ namespace Pachyderm_Acoustic
 
                 Complex[][] Z = new Complex[19][];
 
-                for (int a = 0; a < 90/5+1; a ++)
+                for (int a = 0; a < 90 / 5 + 1; a++)
                 {
-                    Z[a] = new Complex[f_upper - f_lower +1];
+                    Z[a] = new Complex[f_upper - f_lower + 1];
                     for (int f = f_lower, i = 0; f <= f_upper; f++, i++)
                     {
                         double w = Utilities.Numerics.PiX2 * f;
                         double s = s_ww * Math.Sqrt(w);
                         double k0 = w / c_sound;
-                        double angle = a*5 * Utilities.Numerics.Pi_180;
+                        double angle = a * 5 * Utilities.Numerics.Pi_180;
                         Complex eta = 0;
 
                         //sum over all modes
                         for (int n = -10; n < 10; n++)
                         {
                             Complex kmn = -Utilities.Numerics.PiX2 * n / period - k0 * Math.Sin(angle) * Complex.ImaginaryOne;
-                            
+
                             //m = 0
                             Complex J1 = Utilities.Numerics.jBessel(1, Utilities.Numerics.PiX2 * radius * (n / period - k0 * Math.Sin(angle) / Utilities.Numerics.PiX2));
                             Complex add = J1 * J1 / (n - k0 * period * Math.Sin(angle) / Utilities.Numerics.PiX2);
@@ -3631,20 +3589,21 @@ namespace Pachyderm_Acoustic
                         Z[a][f - f_lower] *= .5;
 
                         //all other values of m...
-                        for (int m = 1; m < 10; m++) for (int n = -10; n < 10; n++)
-                        {
-                            Complex kmn = Utilities.Numerics.PiX2 * n / period - k0 * Math.Sin(angle);
-                            kmn *= kmn;
-                            kmn += 4 * Math.PI*Math.PI * m * m / (period * period);
-                            kmn = - Complex.Sqrt(kmn) * Complex.ImaginaryOne;
+                        for (int m = 1; m < 10; m++)
+                            for (int n = -10; n < 10; n++)
+                            {
+                                Complex kmn = Utilities.Numerics.PiX2 * n / period - k0 * Math.Sin(angle);
+                                kmn *= kmn;
+                                kmn += 4 * Math.PI * Math.PI * m * m / (period * period);
+                                kmn = -Complex.Sqrt(kmn) * Complex.ImaginaryOne;
 
-                            double t = (n / period - k0 * Math.Sin(angle) / Utilities.Numerics.PiX2);
-                            Complex J1 = Utilities.Numerics.jBessel(1, Utilities.Numerics.PiX2 * radius * Math.Sqrt(m * m / (period * period) + t * t));
-                            Complex denom = (n - k0 * period * Math.Sin(angle) / Utilities.Numerics.PiX2);
-                            Complex add = J1 * J1 / (m * m + denom * denom);
-                            eta += add;
-                            //Z[a][f - f_lower] += Zmn * add;
-                        }
+                                double t = (n / period - k0 * Math.Sin(angle) / Utilities.Numerics.PiX2);
+                                Complex J1 = Utilities.Numerics.jBessel(1, Utilities.Numerics.PiX2 * radius * Math.Sqrt(m * m / (period * period) + t * t));
+                                Complex denom = (n - k0 * period * Math.Sin(angle) / Utilities.Numerics.PiX2);
+                                Complex add = J1 * J1 / (m * m + denom * denom);
+                                eta += add;
+                                //Z[a][f - f_lower] += Zmn * add;
+                            }
                         //v'm = 1. No application needed.
                         //Complete all sums
                         eta *= period / (Math.PI * Math.PI);
@@ -3667,14 +3626,14 @@ namespace Pachyderm_Acoustic
                     double theta = 1 - 1.47 * Math.Sqrt(porosity) + 0.47 * Math.Pow(porosity, 1.5);
                     double viscous_boundary_layer = 0.85 * diameter * theta;
                     double angular_frequency = Utilities.Numerics.PiX2 * freq[i];
-                    Zp[i] = new Complex((air_density / porosity)*Math.Sqrt(8 * kv * angular_frequency) * (1 + thickness/diameter), (angular_frequency * air_density/ porosity) * (Math.Sqrt(8 * kv / porosity) * (1 + thickness / diameter) + thickness + viscous_boundary_layer));
+                    Zp[i] = new Complex((air_density / porosity) * Math.Sqrt(8 * kv * angular_frequency) * (1 + thickness / diameter), (angular_frequency * air_density / porosity) * (Math.Sqrt(8 * kv / porosity) * (1 + thickness / diameter) + thickness + viscous_boundary_layer));
                 }
                 return Zp;
             }
 
             public static Complex[] MicroPerforatedPlate_Impedance(double air_density, double c_sound, double diameter, double pitch, double thickness, double[] freq)
             {
-                Complex rtnj = Complex.Sqrt (new Complex(0, -1));
+                Complex rtnj = Complex.Sqrt(new Complex(0, -1));
                 double radius = diameter / 2;
                 double porosity = Math.PI * radius * radius / (pitch * pitch);
                 Complex[] Zmp = new Complex[freq.Length];
@@ -3687,11 +3646,11 @@ namespace Pachyderm_Acoustic
                     Complex B0 = Utilities.Numerics.jBessel(0, k_prime_rtnj);
                     Complex B1 = Utilities.Numerics.jBessel(1, k_prime_rtnj);
 
-                    Complex Zm = new Complex(0, w * air_density * thickness) * ((k_prime_rtnj * B0) / (1 - 2*B1));
+                    Complex Zm = new Complex(0, w * air_density * thickness) * ((k_prime_rtnj * B0) / (1 - 2 * B1));
                     Complex end_correction = new Complex(0, 1.7 * w * air_density * radius / porosity);
                     double rad_reactance = Math.Sqrt(air_density * w * nu / porosity);
                     Zmp[i] = Zm / porosity + rad_reactance + end_correction;
-                }   
+                }
 
                 return Zmp;
             }
@@ -3705,10 +3664,10 @@ namespace Pachyderm_Acoustic
                 {
                     double w = Utilities.Numerics.PiX2 * freq[i];
                     Complex kp = Complex.Sqrt(new Complex(0, air_density * w / nu));
-                    Complex rho_e = air_density / ( 1 - 2 * Complex.Tan(kp * width * .5) / (kp * width));
-                    Zms[i] =  (width * rho_e * thickness / porosity - 2 * air_density * w * thickness * Math.Log10(Math.Sin(Math.PI * porosity / 2))) * Complex.ImaginaryOne;
+                    Complex rho_e = air_density / (1 - 2 * Complex.Tan(kp * width * .5) / (kp * width));
+                    Zms[i] = (width * rho_e * thickness / porosity - 2 * air_density * w * thickness * Math.Log10(Math.Sin(Math.PI * porosity / 2))) * Complex.ImaginaryOne;
                 }
- 
+
                 return Zms;
             }
 
@@ -3720,9 +3679,9 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < freq.Length; i++)
                 {
                     double angular_frequency = Utilities.Numerics.PiX2 * freq[i];
-                    double rmem = Math.Sqrt(2 * air_density * nu * angular_frequency) / (2*porosity);
-                    double corr = (-1/Math.PI) * Math.Log10(Math.Sin(.5 * Math.PI * porosity));       // slot absorber correction
-                    Zp[i] =  new Complex(rmem, angular_frequency  * (air_density/porosity) * (depth + 2 * corr * width) - air_density * c_sound / Math.Tan(width/c_sound * depth));
+                    double rmem = Math.Sqrt(2 * air_density * nu * angular_frequency) / (2 * porosity);
+                    double corr = (-1 / Math.PI) * Math.Log10(Math.Sin(.5 * Math.PI * porosity));       // slot absorber correction
+                    Zp[i] = new Complex(rmem, angular_frequency * (air_density / porosity) * (depth + 2 * corr * width) - air_density * c_sound / Math.Tan(width / c_sound * depth));
                 }
                 return Zp;
             }
@@ -3739,7 +3698,7 @@ namespace Pachyderm_Acoustic
                     double x = radius * Math.Sqrt(w * air_density / 17.9);//acoustic Reynold's number
                     if (x < 1)
                     {
-                        Zmp[i] = new Complex(8 * nu * thickness / r2, 1.3333333333 * w * air_density * thickness); 
+                        Zmp[i] = new Complex(8 * nu * thickness / r2, 1.3333333333 * w * air_density * thickness);
                     }
                     else if (x < 10)
                     {
@@ -3747,7 +3706,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        Zmp[i] = new Complex(Math.Sqrt(2 * nu * air_density * thickness / radius), air_density * w * thickness * (1 + Math.Sqrt(2 * nu / (air_density * w))/radius));
+                        Zmp[i] = new Complex(Math.Sqrt(2 * nu * air_density * thickness / radius), air_density * w * thickness * (1 + Math.Sqrt(2 * nu / (air_density * w)) / radius));
                     }
                 }
 
@@ -3757,7 +3716,7 @@ namespace Pachyderm_Acoustic
             public static double Rayleigh_EndCorrection(double radius)
             {
                 return 16 * radius / (3 * Math.PI);
-            } 
+            }
 
             //For circular opening/cavity, square opening/cavity, circular opening/square cavity...
             public static double Ingard_EndCorrection(double radius, double l_opening, double l_cavity)
