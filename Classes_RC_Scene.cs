@@ -18,9 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Rhino;
 using Rhino.Geometry;
 using Hare.Geometry;
 
@@ -108,7 +105,7 @@ namespace Pachyderm_Acoustic
                                 List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                                 string[] Buildup = layer.GetUserString("Buildup").Split(new char[]{';'}, StringSplitOptions.RemoveEmptyEntries);
                                 foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                                AbsorptionData.Add(new Smart_Material(Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                                AbsorptionData.Add(new Smart_Material(false ,Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
                             }
                             if (!string.IsNullOrEmpty(AcousticsData))
                             {

@@ -193,6 +193,11 @@ namespace Pachyderm_Acoustic
             this.label22 = new System.Windows.Forms.Label();
             this.IIR_Order = new System.Windows.Forms.NumericUpDown();
             this.label23 = new System.Windows.Forms.Label();
+            this.label24 = new System.Windows.Forms.Label();
+            this.Chart_Contents = new System.Windows.Forms.ComboBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.Air_Term = new System.Windows.Forms.RadioButton();
+            this.Rigid_Term = new System.Windows.Forms.RadioButton();
             Cancel = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.Polar_Absorption)).BeginInit();
             this.Porous_1Param.SuspendLayout();
@@ -216,6 +221,7 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.SoundSpeed)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Impedance_Graph)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.IIR_Order)).BeginInit();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // Cancel
@@ -233,9 +239,9 @@ namespace Pachyderm_Acoustic
             this.LayerList.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.LayerList.FormattingEnabled = true;
-            this.LayerList.Location = new System.Drawing.Point(882, 34);
+            this.LayerList.Location = new System.Drawing.Point(882, 60);
             this.LayerList.Name = "LayerList";
-            this.LayerList.Size = new System.Drawing.Size(565, 173);
+            this.LayerList.Size = new System.Drawing.Size(565, 147);
             this.LayerList.TabIndex = 0;
             this.LayerList.SelectedIndexChanged += new System.EventHandler(this.LayerList_SelectedIndexChanged);
             // 
@@ -1557,7 +1563,7 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label21.AutoSize = true;
-            this.label21.Location = new System.Drawing.Point(918, 12);
+            this.label21.Location = new System.Drawing.Point(918, 28);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(193, 13);
             this.label21.TabIndex = 58;
@@ -1565,9 +1571,7 @@ namespace Pachyderm_Acoustic
             // 
             // label22
             // 
-            this.label22.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label22.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.label22.AutoSize = true;
             this.label22.Location = new System.Drawing.Point(918, 210);
             this.label22.Name = "label22";
@@ -1600,11 +1604,75 @@ namespace Pachyderm_Acoustic
             this.label23.TabIndex = 62;
             this.label23.Text = "IIR Filter Order";
             // 
+            // label24
+            // 
+            this.label24.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(631, 245);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(77, 13);
+            this.label24.TabIndex = 63;
+            this.label24.Text = "Chart Contents";
+            // 
+            // Chart_Contents
+            // 
+            this.Chart_Contents.DisplayMember = "0";
+            this.Chart_Contents.FormattingEnabled = true;
+            this.Chart_Contents.Items.AddRange(new object[] {
+            "Absorption",
+            "Transmission"});
+            this.Chart_Contents.Location = new System.Drawing.Point(714, 242);
+            this.Chart_Contents.Name = "Chart_Contents";
+            this.Chart_Contents.Size = new System.Drawing.Size(132, 21);
+            this.Chart_Contents.TabIndex = 64;
+            this.Chart_Contents.Text = "Absorption";
+            this.Chart_Contents.ValueMember = "0";
+            this.Chart_Contents.SelectedIndexChanged += new System.EventHandler(this.Chart_Contents_SelectedIndexChanged);
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.Air_Term);
+            this.groupBox2.Controls.Add(this.Rigid_Term);
+            this.groupBox2.Location = new System.Drawing.Point(1129, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(312, 42);
+            this.groupBox2.TabIndex = 65;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Termination Type";
+            // 
+            // Air_Term
+            // 
+            this.Air_Term.AutoSize = true;
+            this.Air_Term.Location = new System.Drawing.Point(174, 19);
+            this.Air_Term.Name = "Air_Term";
+            this.Air_Term.Size = new System.Drawing.Size(131, 17);
+            this.Air_Term.TabIndex = 1;
+            this.Air_Term.Text = "Air Termination (Trans)";
+            this.Air_Term.UseVisualStyleBackColor = true;
+            // 
+            // Rigid_Term
+            // 
+            this.Rigid_Term.AutoSize = true;
+            this.Rigid_Term.Checked = true;
+            this.Rigid_Term.Location = new System.Drawing.Point(7, 19);
+            this.Rigid_Term.Name = "Rigid_Term";
+            this.Rigid_Term.Size = new System.Drawing.Size(161, 17);
+            this.Rigid_Term.TabIndex = 0;
+            this.Rigid_Term.TabStop = true;
+            this.Rigid_Term.Text = "Rigid Termination (ABS Only)";
+            this.Rigid_Term.UseVisualStyleBackColor = true;
+            this.Rigid_Term.CheckedChanged += new System.EventHandler(this.Rigid_Term_CheckedChanged);
+            // 
             // Pach_Absorption_Designer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1462, 742);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.Chart_Contents);
+            this.Controls.Add(this.label24);
             this.Controls.Add(this.label23);
             this.Controls.Add(this.label22);
             this.Controls.Add(this.label21);
@@ -1647,6 +1715,8 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.SoundSpeed)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Impedance_Graph)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.IIR_Order)).EndInit();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1717,6 +1787,11 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label label22;
             private System.Windows.Forms.NumericUpDown IIR_Order;
             private System.Windows.Forms.Label label23;
+            private System.Windows.Forms.Label label24;
+            private System.Windows.Forms.ComboBox Chart_Contents;
+            private System.Windows.Forms.GroupBox groupBox2;
+            private System.Windows.Forms.RadioButton Air_Term;
+            private System.Windows.Forms.RadioButton Rigid_Term;
         }
     }
 }

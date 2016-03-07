@@ -25,7 +25,6 @@ namespace Pachyderm_Acoustic
     {
         public static class Explicit_TMM
         {
-
             public static SparseMatrix PorousMatrix(bool Rigid, double d, Complex k, Complex sin_theta, double freq, double porosity, double tortuosity, double YoungsModulus, double PoissonRatio, double Viscous_Characteristic_Length, double flow_resistivity, double FrameDensity, double Thermal_Permeability_0, double AmbientMeanPressure)
             {
                 double w = Utilities.Numerics.PiX2 * freq;
@@ -81,7 +80,6 @@ namespace Pachyderm_Acoustic
                 SparseMatrix G0T = Gamma0T_P(kt, w, FrameShear, P, Q, R, k13, k23, k33, Mu1, Mu2, Mu3);
 
                 return GH * G0T;
-
             }
 
             public static SparseMatrix GammaH_P(Complex kt, double w, double h, double ShearModulus, Complex P, Complex Q, Complex R, Complex k13, Complex k23, Complex k33, Complex Mu1, Complex Mu2, Complex Mu3)
@@ -131,14 +129,14 @@ namespace Pachyderm_Acoustic
 
                 //Taken from Lauriks, et. al 1990.
                 M[0, 0] = w * kt * Complex.Cos(k13 * h);
-                M[1, 0] = -Complex.ImaginaryOne * k13 * Complex.Sin(k13 * h);
-                M[2, 0] = -Complex.ImaginaryOne * k13 * Mu1 * Complex.Sin(k13 * h);
+                M[1, 0] = -Complex.ImaginaryOne * w * k13 * Complex.Sin(k13 * h);
+                M[2, 0] = -Complex.ImaginaryOne * w * k13 * Mu1 * Complex.Sin(k13 * h);
                 M[3, 0] = -D1 * Complex.Cos(k13 * h);
                 M[4, 0] = 2 * Complex.ImaginaryOne * ShearModulus * kt * k13 * Complex.Sin(k13 * h);
                 M[5, 0] = -E1 * Complex.Cos(k13 * h);
                 M[0, 1] = -Complex.ImaginaryOne * w * kt * Complex.Sin(k13 * h);
-                M[1, 1] = w * k13 * Complex.Sin(k13 * h);
-                M[2, 1] = w * k13 * Mu1 * Complex.Sin(k13 * h);
+                M[1, 1] = w * k13 * Complex.Cos(k13 * h);
+                M[2, 1] = w * k13 * Mu1 * Complex.Cos(k13 * h);
                 M[3, 1] = Complex.ImaginaryOne * D1 * Complex.Sin(k13 * h);
                 M[4, 1] = -2 * ShearModulus * kt * k13 * Complex.Cos(k13 * h);
                 M[5, 1] = Complex.ImaginaryOne * E1 * Complex.Sin(k13 * h);
@@ -150,13 +148,13 @@ namespace Pachyderm_Acoustic
                 M[4, 2] = 2 * Complex.ImaginaryOne * ShearModulus * kt * k23 * Complex.Sin(k23 * h);
                 M[5, 2] = -E2 * Complex.Cos(k23 * h);
                 M[0, 3] = -Complex.ImaginaryOne * w * kt * Complex.Sin(k23 * h);
-                M[1, 3] = w * k23 * Complex.Sin(k23 * h);
-                M[2, 3] = w * k23 * Mu2 * Complex.Sin(k23 * h);
-                M[3, 3] = Complex.ImaginaryOne * D1 * Complex.Sin(k23 * h);
+                M[1, 3] = w * k23 * Complex.Cos(k23 * h);
+                M[2, 3] = w * k23 * Mu2 * Complex.Cos(k23 * h);
+                M[3, 3] = Complex.ImaginaryOne * D2 * Complex.Sin(k23 * h);
                 M[4, 3] = -2 * ShearModulus * kt * k23 * Complex.Cos(k23 * h);
                 M[5, 3] = Complex.ImaginaryOne * E2 * Complex.Sin(k23 * h);
 
-                M[0, 4] = Complex.ImaginaryOne * k33 * Complex.Sin(k33 * h);
+                M[0, 4] = Complex.ImaginaryOne * w * k33 * Complex.Sin(k33 * h);
                 M[1, 4] = w * kt * Complex.Cos(k33 * h);
                 M[2, 4] = w * kt * Mu3 * Complex.Cos(k33 * h);
                 M[3, 4] = 2 * Complex.ImaginaryOne * ShearModulus * k33 * kt * Complex.Sin(k33 * h);
@@ -164,7 +162,7 @@ namespace Pachyderm_Acoustic
                 M[5, 4] = 0;
                 M[0, 5] = -w * k33 * Complex.Cos(k33 * h);
                 M[1, 5] = -Complex.ImaginaryOne * w * kt * Complex.Sin(k33 * h);
-                M[2, 5] = -Complex.ImaginaryOne * 2 * kt * Mu3 * Complex.Sin(k33 * h);
+                M[2, 5] = -Complex.ImaginaryOne * w * kt * Mu3 * Complex.Sin(k33 * h);
                 M[3, 5] = -2 * ShearModulus * k33 * kt * Complex.Cos(k33 * h);
                 M[4, 5] = -Complex.ImaginaryOne * ShearModulus * (k33 * k33 - kt * kt) * Complex.Sin(k33 * h);
                 M[5, 5] = 0;
@@ -184,6 +182,8 @@ namespace Pachyderm_Acoustic
                 Complex Y = X - 2 * ShearModulus * w * w * kt * kt * (B1 - B2);
                 Complex Mu21 = Mu2 - Mu1;
                 Complex Mu31 = Mu3 - Mu1;
+
+                //  gamma = kt?
 
                 M[0, 0] = -B2 * 2 * ShearModulus * w * kt / (Complex.ImaginaryOne * Y);
                 //M[0,1] = 
@@ -242,22 +242,74 @@ namespace Pachyderm_Acoustic
                 return M;
             }
 
-            public static SparseMatrix Solid_Matrix(Complex ksolid, Complex kprev, Complex SinTheta, double h, double freq, double density, double PoissonRatio, double ModulusElasticity)
+            public static SparseMatrix Solid_Matrix(Complex kt, double h, double freq, double density, double Youngs_Modulus, double Poisson_Ratio)
             {
                 h *= -1;
-                //Complex k_inc_x = kfluid * SinTheta;
-                //Complex k_inc_x = 
+
+                double Shear_Modulus = Youngs_Modulus / (2 * (1 + Poisson_Ratio));
+
                 double w = Utilities.Numerics.PiX2 * freq;
-                Complex LameL = ModulusElasticity * PoissonRatio / ((1 + PoissonRatio) * (1 - 2 * PoissonRatio));
-                Complex LameMu = ModulusElasticity / (2 * (1 + PoissonRatio));
-                Complex delta21 = w * w * density;
-                Complex delta23 = delta21 / LameMu;
-                delta21 /= (LameL + 2 * LameMu);
-                Complex k1 = ksolid * SinTheta;
+
+                Complex kcis2 = w * w * density / Shear_Modulus;
+                Complex kcomp2 = kcis2 * ((1 - 2 * Poisson_Ratio) / (2 - 2 * Poisson_Ratio));
+
+                Complex kphi3 = Complex.Sqrt(kcomp2 - kt * kt);
+                Complex kpsi3 = Complex.Sqrt(kcis2 - kt * kt);
+
+                Complex cosk13h = Complex.Cos(kphi3 * h);
+                Complex sink13h = Complex.Sin(kphi3 * h);
+                Complex cosk33h = Complex.Cos(kpsi3 * h);
+                Complex sink33h = Complex.Sin(kpsi3 * h);
+                Complex KK = kphi3 * kphi3 + (Poisson_Ratio / (1-2*Poisson_Ratio))*(kt*kt + kphi3*kphi3);
+
+                SparseMatrix MH = new SparseMatrix(4, 4);
+                MH[0, 0] = -Complex.ImaginaryOne * kt * cosk13h;
+                MH[0, 1] = - kt * sink13h;
+                MH[0, 2] = -kpsi3 * sink33h;
+                MH[0, 3] = -Complex.ImaginaryOne * kpsi3 * cosk33h;
+                MH[1, 0] = -kphi3 * sink13h;
+                MH[1, 1] = -Complex.ImaginaryOne * kphi3 * cosk13h;
+                MH[1, 2] = Complex.ImaginaryOne * kt * cosk33h;
+                MH[1, 3] = kt * sink33h;
+                MH[2, 0] = -2 * Shear_Modulus * cosk13h * KK / (Complex.ImaginaryOne * w);
+                MH[2, 1] = 2 * Shear_Modulus * sink13h * KK / (Complex.ImaginaryOne * w);
+                MH[2, 2] = -(2 * Shear_Modulus * kt * kpsi3 * sink33h / w);
+                MH[2, 3] = -(Complex.ImaginaryOne * 2 * Shear_Modulus * kt * kpsi3 * cosk33h / w);
+                MH[3, 0] = 2 * Shear_Modulus * kt * kphi3 * sink13h / w;
+                MH[3, 1] = Complex.ImaginaryOne * 2 * Shear_Modulus * kt * kphi3 * cosk13h / w;
+                MH[3, 2] = -Complex.ImaginaryOne * Shear_Modulus * cosk33h * (kt * kt - kpsi3 * kpsi3) / w;
+                MH[3, 3] = -Shear_Modulus * sink33h * (kt * kt - kpsi3 * kpsi3) / w;
+
+                SparseMatrix M0 = new SparseMatrix(4, 4);
+                M0[0, 0] = -Complex.ImaginaryOne * kt;
+                M0[0, 3] = -Complex.ImaginaryOne * kpsi3;
+                M0[1, 1] = -Complex.ImaginaryOne * kphi3;
+                M0[1, 2] = Complex.ImaginaryOne * kt;
+                M0[2, 0] = -2 * Shear_Modulus * KK / (Complex.ImaginaryOne * w);
+                M0[2, 3] = -(Complex.ImaginaryOne * 2 * Shear_Modulus * kt * kpsi3 / w);
+                M0[3, 1] = Complex.ImaginaryOne * 2 * Shear_Modulus * kt * kphi3 / w;
+                M0[3, 2] = -Complex.ImaginaryOne * Shear_Modulus * (kt * kt - kpsi3 * kpsi3) / w;
+                
+                return MH * M0.Inverse() as SparseMatrix;
+            }
+
+            public static SparseMatrix Solid_Matrix(Complex ksolid, Complex k0, Complex kt, double h, double freq, double density, Complex LameMu, Complex LameL)
+            {
+                h *= -1;
+                double w = Utilities.Numerics.PiX2 * freq;
+
+                double delta21 = w * w * density;
+                //Complex k1 = ksolid;
+                double delta23 = delta21 / LameMu.Real;
+                delta21 /= (LameL.Real + 2 * LameMu.Real);
+                //double k1 = System.Math.Sqrt(delta21);
+                //Complex k1 = ksolid * kt / k0;
+                Complex k1 = kt;
                 //Complex k3 = Complex.Sqrt( - k1 * k1);
-                Complex k13 = Complex.Sqrt(delta21 - k1 * k1);
-                Complex k33 = Complex.Sqrt(delta23 - k1 * k1);
-                Complex D1 = LameMu * (k13 * k13 - kprev * kprev); //ksolid could also be k_air, or k of the previous layer (not clear).
+                Complex k13 = Complex.Sqrt(delta21 - k1 * k1);//kt
+                Complex k33 = Complex.Sqrt(delta23 - k1 * k1);//kt
+                Complex D1 = LameL * (ksolid * ksolid + k13 * k13) + 2 * LameMu * k13 * k13;
+                //Complex D1 = LameMu * (k13 * k13 - k0 * k0); //ksolid could also be k_air, or k of the previous layer (not clear).
                 Complex D2 = 2 * LameMu * ksolid;
 
                 Complex cosk13h = Complex.Cos(k13 * h);
@@ -277,7 +329,7 @@ namespace Pachyderm_Acoustic
                 MH[0, 1] = -Complex.ImaginaryOne * wk1 * sink13h;
                 MH[0, 2] = Complex.ImaginaryOne * wk33 * sink33h;
                 MH[0, 3] = -wk33 * cosk33h;
-                MH[1, 0] = -Complex.ImaginaryOne * wk1 * cosk13h;
+                MH[1, 0] = -Complex.ImaginaryOne * wk13 * sink13h;
                 MH[1, 1] = wk13 * cosk13h;
                 MH[1, 2] = wk1 * cosk33h;
                 MH[1, 3] = -Complex.ImaginaryOne * wk1 * sink33h;
@@ -295,8 +347,8 @@ namespace Pachyderm_Acoustic
                 M0[0, 2] = -1 / (LameMu * delta23);
                 M0[1, 1] = (k33 * k33 - k1 * k1) / (w * k13 * delta23);
                 M0[1, 3] = -k1 / (LameMu * k13 * delta23);
+                M0[2, 1] = k1 / (w * delta23);
                 M0[2, 3] = 1 / (LameMu * delta23);
-                M0[2, 1] = (k1) / (w * delta23);
                 M0[3, 0] = (k33 * k33 - k1 * k1) / (w * k33 * delta23);
                 M0[3, 2] = -k1 / (LameMu * k33 * delta23);
 

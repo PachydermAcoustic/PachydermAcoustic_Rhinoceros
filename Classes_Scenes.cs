@@ -471,7 +471,7 @@ namespace Pachyderm_Acoustic
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
                         foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Mat_Layer.Add(new Environment.Smart_Material(Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                        Mat_Layer.Add(new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
 
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
@@ -779,7 +779,7 @@ namespace Pachyderm_Acoustic
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
                         foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Mat_Layer.Add(new Environment.Smart_Material(Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                        Mat_Layer.Add(new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
 
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
@@ -794,7 +794,7 @@ namespace Pachyderm_Acoustic
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
                         foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Environment.Smart_Material sm = new Environment.Smart_Material(Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2);
+                        Environment.Smart_Material sm = new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2);
                         Mat_Layer.Add(sm);
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);

@@ -19,8 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+ using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -351,13 +350,15 @@ namespace Pachyderm_Acoustic
             public MathNet.Numerics.Interpolation.CubicSpline[] Transfer_FunctionR;
             public MathNet.Numerics.Interpolation.CubicSpline[] Transfer_FunctionI;
             public System.Numerics.Complex[][] Reflection_Coefficient;
+            public System.Numerics.Complex[][] Trans_Loss;
+            public System.Numerics.Complex[][] Trans_Coefficient;
             public double[] NI_Coef;
             public double[][] Ang_Coef_Oct;//[oct][angle]
             public double[] RI_Coef = new double[8];
             
             private double angle_incr;
             
-            public Smart_Material(List<AbsorptionModels.ABS_Layer> Layers, int Samplefreq, double Air_Density, double SoundSpeed, Finite_Field_Impedance Zr, double step, int Averaging_Choice, int Zf_incorp_Choice)
+            public Smart_Material(bool Trans, List<AbsorptionModels.ABS_Layer> Layers, int Samplefreq, double Air_Density, double SoundSpeed, Finite_Field_Impedance Zr, double step, int Averaging_Choice, int Zf_incorp_Choice)
             {
                 Buildup = Layers;
                 Fs = Samplefreq;
@@ -368,10 +369,25 @@ namespace Pachyderm_Acoustic
                 if (Layers.Count < 1) return;
 
                 //the current version...
-                Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, 10000, 343, Layers, ref frequency, ref Angles);
+                //Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, 10000, 343, Layers, ref frequency, ref Angles);
                 //the goal...
-                //Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Alpha(false, true, 44100, 343, Layers, ref frequency, ref Angles);
-                
+                if (Trans)
+                {
+                    Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Tau(false, 44100, 343, Layers, ref frequency, ref Angles, ref Trans_Loss, ref Reflection_Coefficient);
+                    Trans_Coefficient = new System.Numerics.Complex[Trans_Loss.Length][];
+                    for(int i = 0; i < Trans_Loss.Length; i++)
+                    {
+                        Trans_Coefficient[i] = new System.Numerics.Complex[Trans_Loss[i].Length];
+                        for(int j = 0; j < Trans_Coefficient[i].Length; j++)
+                        {
+                            Trans_Coefficient[i][j] = Trans_Loss[i][j] * Trans_Loss[i][j];
+                        }
+                    }
+                }
+                else
+                {
+                    Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Z(false, 44100, 343, Layers, ref frequency, ref Angles);
+                }
                 //////////////////Radiation Impedance///////////////////////
                 double[] a_real = new double[Angles.Length]; //prop;
                 for (int i = 0; i < Angles.Length; i++) a_real[i] = Angles[i].Real;
@@ -483,7 +499,7 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public Smart_Material(List<AbsorptionModels.ABS_Layer> Layers, int Samplefreq, double Air_Density, double SoundSpeed, int Averaging_Choice)
+            public Smart_Material(bool Trans, List<AbsorptionModels.ABS_Layer> Layers, int Samplefreq, double Air_Density, double SoundSpeed, int Averaging_Choice)
             {
                 Buildup = Layers;
                 Fs = Samplefreq;
@@ -496,10 +512,26 @@ namespace Pachyderm_Acoustic
                 if (Layers.Count < 1) return;
 
                 //the current version...
-                Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, Samplefreq, 343, Layers, ref frequency, ref Angles);
+                //Z = AbsorptionModels.Operations.Recursive_Transfer_Matrix(false, Samplefreq, 343, Layers, ref frequency, ref Angles);
                 //the goal...
-                //Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Alpha(false, true, Samplefreq, 343, Layers, ref frequency, ref Angles);
-                
+                if (Trans)
+                {
+                    Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Tau(false, 44100, 343, Layers, ref frequency, ref Angles, ref Trans_Loss, ref Reflection_Coefficient);
+                    Trans_Coefficient = new System.Numerics.Complex[Trans_Loss.Length][];
+                    for (int i = 0; i < Trans_Loss.Length; i++)
+                    {
+                        Trans_Coefficient[i] = new System.Numerics.Complex[Trans_Loss[i].Length];
+                        for (int j = 0; j < Trans_Coefficient[i].Length; j++)
+                        {
+                            Trans_Coefficient[i][j] = Trans_Loss[i][j] * Trans_Loss[i][j];
+                        }
+                    }
+                }
+                else
+                {
+                    Z = AbsorptionModels.Operations.Transfer_Matrix_Explicit_Z(false, 44100, 343, Layers, ref frequency, ref Angles);
+                }
+
                 Reflection_Coefficient = Pachyderm_Acoustic.AbsorptionModels.Operations.Reflection_Coef(Z, Air_Density, SoundSpeed);
 
                 Transfer_FunctionR = new MathNet.Numerics.Interpolation.CubicSpline[Angles.Length / 2];

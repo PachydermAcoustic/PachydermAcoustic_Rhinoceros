@@ -538,7 +538,7 @@ namespace Pachyderm_Acoustic
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                    Environment.Smart_Material sm = new Smart_Material(Layers, 44100, 1.2, 343, 2);
+                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343, 2);
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                     for (int i = 0; i < 8; i++) SmartMat_Display.Series[0].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[i]);
@@ -550,7 +550,7 @@ namespace Pachyderm_Acoustic
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                    Environment.Smart_Material sm = new Smart_Material(Layers, 44100, 1.2, 343, 2);
+                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343, 2);
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                     for (int i = 0; i < 8; i++) SmartMat_Display.Series[0].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[i]);

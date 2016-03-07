@@ -49,6 +49,7 @@ namespace Pachyderm_Acoustic
             public Pach_Absorption_Designer()
             {
                 InitializeComponent();
+                this.Chart_Contents.SelectedIndex = 0;
                 this.Averaging.SelectedIndex = 0;
                 this.Zf_Incorp_Method.SelectedIndex = 0;
             }
@@ -188,59 +189,121 @@ namespace Pachyderm_Acoustic
 
             private void Update_Graphs()
             {
-                if (Fin_Sample.Checked && Zr == null) return;
-
-                List<ABS_Layer> Layers = Material_Layers();
-
-                if (Layers.Count == 0) return;
-
-                if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Layers, 16000, 1.2, 343, Averaging.SelectedIndex);
-                else sm = new Environment.Smart_Material(Layers, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
-
-                double[] AnglesDeg = new double[sm.Angles.Length];
-                for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
-
-                RI_Absorption = new double[8];
-                double root2 = Math.Sqrt(2);
-
-                Polar_Absorption.ChartAreas[0].AxisY.Minimum = 0;
-                Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1;
-
-                for (int oct = 0; oct < 8; oct++)
+                if (Chart_Contents.SelectedIndex == 0)
                 {
-                    Polar_Absorption.Series[oct].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[oct]);
-                    for (int a = 0; a < sm.Ang_Coef_Oct[oct].Length; a++)
+                    Alpha_Normal.ChartAreas[0].AxisY.Title = "Alpha (0 to 1)";
+
+                    if (Fin_Sample.Checked && Zr == null) return;
+
+                    List<ABS_Layer> Layers = Material_Layers();
+
+                    if (Layers.Count == 0) return;
+
+                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Averaging.SelectedIndex);
+                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
+
+                    //Polar Graph
+                    double[] AnglesDeg = new double[sm.Angles.Length];
+                    for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
+
+                    RI_Absorption = new double[8];
+                    
+                    Polar_Absorption.ChartAreas[0].AxisY.Minimum = 0;
+                    Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1;
+
+                    for (int oct = 0; oct < 8; oct++)
                     {
-                        if (Polar_Absorption.ChartAreas[0].AxisY.Maximum < sm.Ang_Coef_Oct[oct][a]) Polar_Absorption.ChartAreas[0].AxisY.Maximum = Math.Ceiling(sm.Ang_Coef_Oct[oct][a] * 10) / 10;
+                        Polar_Absorption.Series[oct].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[oct]);
+                        for (int a = 0; a < sm.Ang_Coef_Oct[oct].Length; a++)
+                        {
+                            if (Polar_Absorption.ChartAreas[0].AxisY.Maximum < sm.Ang_Coef_Oct[oct][a]) Polar_Absorption.ChartAreas[0].AxisY.Maximum = Math.Ceiling(sm.Ang_Coef_Oct[oct][a] * 10) / 10;
+                        }
                     }
-                }
-                double[] real = new double[sm.Z[18].Length];
-                double[] imag = new double[sm.Z[18].Length];
 
-                for (int i = 0; i < sm.Z[18].Length; i++)
+                    //Z Graph
+                    double[] real = new double[sm.Z[18].Length];
+                    double[] imag = new double[sm.Z[18].Length];
+
+                    for (int i = 0; i < sm.Z[18].Length; i++)
+                    {
+                        real[i] = sm.Z[18][i].Real;
+                        imag[i] = sm.Z[18][i].Imaginary;
+                    }
+
+                    Impedance_Graph.Series[0].Points.DataBindXY(sm.frequency, real);
+                    Impedance_Graph.Series[1].Points.DataBindXY(sm.frequency, imag);
+
+                    Impedance_Graph.ChartAreas[0].AxisY.Maximum = 4000;
+                    Impedance_Graph.ChartAreas[0].AxisY.Minimum = -6000;
+
+                    //Alpha Normal graph
+                    Alpha_Normal.Series[0].Points.Clear();
+                    Alpha_Normal.Series[1].Points.Clear();
+                    RI_Absorption = sm.RI_Coef;
+
+                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = 1;
+                    if (Fin_Sample.Checked) { foreach (double a in RI_Absorption) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10) / 10; }
+                    foreach (double a in sm.NI_Coef) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10) / 10;
+
+                    for(int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
+                    
+                    for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
+                }
+                else
                 {
-                    real[i] = sm.Z[18][i].Real;
-                    imag[i] = sm.Z[18][i].Imaginary;
+                    if (Rigid_Term.Checked) return;
+
+                    Alpha_Normal.ChartAreas[0].AxisY.Title = "Transmission Loss (dB)";
+
+                    if (Fin_Sample.Checked && Zr == null) return;
+
+                    List<ABS_Layer> Layers = Material_Layers();
+
+                    if (Layers.Count == 0) return;
+
+                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Averaging.SelectedIndex);
+                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
+
+                    double[] AnglesDeg = new double[sm.Angles.Length];
+                    for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
+
+
+                    //Z graph...
+                    RI_Absorption = new double[8];
+                    
+                    double[] real = new double[sm.Z[18].Length];
+                    double[] imag = new double[sm.Z[18].Length];
+
+                    for (int i = 0; i < sm.Z[18].Length; i++)
+                    {
+                        real[i] = sm.Z[18][i].Real;
+                        imag[i] = sm.Z[18][i].Imaginary;
+                    }
+
+                    Impedance_Graph.Series[0].Points.DataBindXY(sm.frequency, real);
+                    Impedance_Graph.Series[1].Points.DataBindXY(sm.frequency, imag);
+
+                    Impedance_Graph.ChartAreas[0].AxisY.Maximum = 40000;
+                    Impedance_Graph.ChartAreas[0].AxisY.Minimum = -60000;
+
+                    //T graph...
+                    Alpha_Normal.Series[0].Points.Clear();
+                    Alpha_Normal.Series[1].Points.Clear();
+                    
+                    double[] TL = new double[sm.frequency.Length];
+
+                    double max = double.NegativeInfinity;
+
+                    for (int i = 0; i < sm.frequency.Length; i++)
+                    {
+                        TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[19][i]).Real;                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
+                        max = Math.Max(TL[i], max);
+                    }
+
+                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = max;
+
+                    for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], TL[i]);
                 }
-
-                Impedance_Graph.Series[0].Points.DataBindXY(sm.frequency, real);
-                Impedance_Graph.Series[1].Points.DataBindXY(sm.frequency, imag);
-
-                Impedance_Graph.ChartAreas[0].AxisY.Maximum = 4000;
-                Impedance_Graph.ChartAreas[0].AxisY.Minimum = -6000;
-
-                Alpha_Normal.Series[0].Points.Clear();
-                Alpha_Normal.Series[1].Points.Clear();
-                RI_Absorption = sm.RI_Coef;
-
-                Alpha_Normal.ChartAreas[0].AxisY.Maximum = 1;
-                if (Fin_Sample.Checked) { foreach (double a in RI_Absorption) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10)/10; }
-                foreach (double a in sm.NI_Coef) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10) / 10;
-
-                if (Fin_Sample.Checked) for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
-                else for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
-                
-                for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
 
                 //Estimate_IIR();
             }
@@ -357,7 +420,7 @@ namespace Pachyderm_Acoustic
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.AirSpace, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
                         break;
                     case 1:
-                        LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.BiotPorousAbsorber_Rigid, (double)depth.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)YoungsModulus.Value / 1E9, (double)Solid_Density.Value, (double)PoissonsRatio.Value, (double)Tortuosity.Value, (double)ViscousCharacteristicLength.Value * 1E6, (double)ThermalPermeability.Value, (double)SoundSpeed.Value));
+                        LayerList.Items.Add( ABS_Layer.CreateBiot(true, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value ));
                         break;
                     case 2:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.PorousDB, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
@@ -369,7 +432,7 @@ namespace Pachyderm_Acoustic
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.PorousM, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
                         break;
                     case 5:
-                        LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.SolidPlate, (double)depth.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)YoungsModulus.Value / 1E9, (double)Solid_Density.Value, (double)PoissonsRatio.Value, (double)Tortuosity.Value, (double)ViscousCharacteristicLength.Value * 1E6, (double)ThermalPermeability.Value, (double)SoundSpeed.Value));
+                        LayerList.Items.Add(ABS_Layer.CreateSolid((double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9,  (double)PoissonsRatio.Value));
                         break;
                     case 6:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.Perforated_Modal, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
@@ -379,7 +442,7 @@ namespace Pachyderm_Acoustic
                         break;
                     case 8:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.CircularPerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
-                        break;
+                        break; 
                     case 9:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.SquarePerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
                         break;
@@ -525,7 +588,18 @@ namespace Pachyderm_Acoustic
             {
                 Update_Graphs();
                 Is_Finite = Fin_Sample.Checked;
-            } 
+            }
+
+            private void Chart_Contents_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                Update_Graphs();
+            }
+
+            private void Rigid_Term_CheckedChanged(object sender, EventArgs e)
+            {
+                if (Rigid_Term.Checked) { label21.Text = "-- Rigid Substrate (Infinite Impedance) --"; }
+                else { label21.Text = "-- Receiving Sppce (Semi-Infinite Air Medium) -- "; }
+            }
         }
     }
 }
