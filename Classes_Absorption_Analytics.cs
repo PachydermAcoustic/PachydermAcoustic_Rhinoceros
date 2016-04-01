@@ -227,7 +227,7 @@ namespace Pachyderm_Acoustic
                         return new ABS_Layer(LayerType.MicroPerforated, double.Parse(elements[1]), double.Parse(elements[3]), double.Parse(elements[2]), 0, 0);
                     case "10":
                         return new ABS_Layer(LayerType.Microslit, double.Parse(elements[1]), double.Parse(elements[3]), double.Parse(elements[2]), 0, 0);
-                    case "!1":
+                    case "11":
                         return ABS_Layer.CreateSolid(double.Parse(elements[1]), double.Parse(elements[2]), double.Parse(elements[3]), double.Parse(elements[4]));
                     case "12":
                         return ABS_Layer.CreateBiot(bool.Parse(elements[1]), double.Parse(elements[2]), double.Parse(elements[3]), double.Parse(elements[4]), double.Parse(elements[5]), double.Parse(elements[6]), double.Parse(elements[7]), double.Parse(elements[8]), double.Parse(elements[9]), double.Parse(elements[10]), double.Parse(elements[11]));
@@ -1291,7 +1291,7 @@ namespace Pachyderm_Acoustic
                                 Complex[] kbl = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
                                 for (int f = 0; f < 4096; f++)
                                 {
-                                    tn[a][f] = Explicit_TMM.PorousMatrix(false, Layer_i.depth, kbl[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, Layer_i.Thermal_Permeability, 101325);
+                                    tn[a][f] = Explicit_TMM.PorousMatrix(false, Layer_i.depth, kbl[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, 101325);
                                 }
                                 K0 = kbl;
                                 break;
@@ -1299,7 +1299,7 @@ namespace Pachyderm_Acoustic
                                 Complex[] kbr = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
                                 for (int f = 0; f < 4096; f++)
                                 {
-                                    tn[a][f] = Explicit_TMM.PorousMatrix(true, Layer_i.depth, kbr[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, Layer_i.Thermal_Permeability, 101325);
+                                    tn[a][f] = Explicit_TMM.PorousMatrix(true, Layer_i.depth, kbr[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, 101325);
                                 }
                                 K0 = kbr;
                                 break;
@@ -3601,7 +3601,7 @@ namespace Pachyderm_Acoustic
             /// <summary>
             /// Thermal characteristic length for heterogeneous materials.
             /// </summary>
-            /// <param name="Viscoust_Characteristic_Length"></param>
+            /// <param name="Viscous_Characteristic_Length"></param>
             /// <returns></returns>
             public static double Thermal_Characteristic_Length(double Viscous_Characteristic_Length)
             {
@@ -3637,9 +3637,15 @@ namespace Pachyderm_Acoustic
                 return Youngs_Modulus / (3 * (1 - 2 * Poissons_Ratio));
             }
 
-            public static Complex BulkMod_Fluid(double w, double AmbientMeanPressure, double porosity, double Thermal_Permeability_0)
+            public static Complex BulkMod_Fluid(double w, double AmbientMeanPressure, double porosity, double Viscous_Length)
             {
-                return AmbientMeanPressure * (1 + ((Ratio_of_SpecificHeats_Air - 1) / Ratio_of_SpecificHeats_Air) * Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity));
+                double Thermal_Length = Thermal_Characteristic_Length(Viscous_Length);
+                double vp = vprime();
+                double q0p = porosity * Thermal_Length * Thermal_Length / 8;
+                //Complex awp = vp * porosity / Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity);
+                Complex awp = 8 * vp / (Complex.ImaginaryOne * w * Thermal_Length * Thermal_Length) * Complex.Sqrt(1 + (Thermal_Length * Thermal_Length / 16) * Complex.ImaginaryOne * 2 / vp) + 1;
+                //return AmbientMeanPressure * (1 - ((Ratio_of_SpecificHeats_Air - 1) / (Ratio_of_SpecificHeats_Air * Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity));
+                return AmbientMeanPressure / (1 - ((Ratio_of_SpecificHeats_Air - 1) / (Ratio_of_SpecificHeats_Air * awp)));
             }
 
             public static double v()
@@ -3649,7 +3655,7 @@ namespace Pachyderm_Acoustic
 
             public static double vprime()
             {
-                return Shear_Viscosity / 1.2 / (Prandtl_no * Prandtl_no);
+                return Shear_Viscosity / 1.2 / Prandtl_no;
             }
 
             //public static double vprime(double v, double Prandtl_no)
@@ -3667,9 +3673,73 @@ namespace Pachyderm_Acoustic
                 return Shear_Viscosity / Flow_Resistivity;
             }
 
-            public static Complex G_w(double tortuosity, double porosity, double Viscous_Permeability, double Length_Viscous, double freq, double v)
+            /// <summary>
+            /// The Johnson G parameter
+            /// </summary>
+            /// <param name="tortuosity"></param>
+            /// <param name="porosity"></param>
+            /// <param name="Viscous_Permeability"></param>
+            /// <param name="Length_Viscous"></param>
+            /// <param name="freq"></param>
+            /// <param name="v"></param>
+            /// <returns></returns>
+            public static Complex G_w(double tortuosity, double porosity, double Viscous_Permeability, double Length_Viscous, double w)
             {
-                return Complex.Sqrt(1 + (2 * tortuosity * Viscous_Permeability / (porosity * Length_Viscous)) * Complex.ImaginaryOne * Utilities.Numerics.PiX2 * freq / v);
+                //Johnson
+                Complex term = (2 * tortuosity * Viscous_Permeability / (porosity * Length_Viscous));
+                return Complex.Sqrt(1 + term * term * Complex.ImaginaryOne * w / v());
+            }
+
+            /// <summary>
+            /// The Champoux-Allard G Parameter
+            /// </summary>
+            /// <param name="tortuosity"></param>
+            /// <param name="porosity"></param>
+            /// <param name="Thermal_Permeability"></param>
+            /// <param name="Length_Thermal"></param>
+            /// <param name="freq"></param>
+            /// <param name="vp"></param>
+            /// <returns></returns>
+            public static Complex G_w_prime(double porosity, double Thermal_Permeability, double Length_Thermal, double w)
+            {
+                //Champoux - Allard
+                Complex term = (2 * Thermal_Permeability / (porosity * Length_Thermal));
+                return Complex.Sqrt(1 + term * term * Complex.ImaginaryOne * w / vprime());
+            }
+
+            /// <summary>
+            /// The Pride G parameter
+            /// </summary>
+            /// <param name="b"></param>
+            /// <param name="tortuosity"></param>
+            /// <param name="Viscous_Permeability"></param>
+            /// <param name="porosity"></param>
+            /// <param name="Length_Viscous"></param>
+            /// <param name="freq"></param>
+            /// <param name="v"></param>
+            /// <returns></returns>
+            public static Complex Gp_w(Complex b, double tortuosity, double Viscous_Permeability, double porosity, double Length_Viscous, double w)
+            {
+                //Pride
+                Complex term = 2 * tortuosity * Viscous_Permeability / (b * porosity * Length_Viscous);
+                return 1 - b + b * Complex.Sqrt(1 + term * term * Complex.ImaginaryOne * w / v());
+            }
+
+            /// <summary>
+            /// The LaFarge G parameter
+            /// </summary>
+            /// <param name="b"></param>
+            /// <param name="Viscous_Permeability"></param>
+            /// <param name="porosity"></param>
+            /// <param name="Length_Viscous"></param>
+            /// <param name="freq"></param>
+            /// <param name="v"></param>
+            /// <returns></returns>
+            public static Complex Gp_w_prime(Complex bp, double Thermal_Permeability, double porosity, double Length_Thermal, double w)
+            {
+                //LaFarge
+                Complex term = 2 * Thermal_Permeability / (bp * porosity * Length_Thermal);
+                return 1 - bp + bp * Complex.Sqrt(1 + term * term * Complex.ImaginaryOne * w / vprime());
             }
 
             public static double rhoA(double porosity, double tortuosity)
@@ -3682,28 +3752,28 @@ namespace Pachyderm_Acoustic
                 return -rho12;
             }
 
-            public static Complex rho11eff(double framedensity, double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq)
+            public static Complex rho11eff(double framedensity, double rhoa, double porosity, double flow_resistivity, Complex Gw, double w)
             {
-                return framedensity + rhoa - Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
+                return framedensity + rhoa - Complex.ImaginaryOne * flow_resistivity * porosity * porosity * Gw / w;
             }
 
-            public static Complex rho12eff(double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq)
+            public static Complex rho12eff(double rhoa, double porosity, double flow_resistivity, Complex Gw, double w)
             {
-                return -rhoa + Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
+                return -rhoa + Complex.ImaginaryOne * flow_resistivity * porosity * porosity * Gw / w;
             }
 
-            public static Complex rho22eff(double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq)
+            public static Complex rho22eff(double rhoa, double porosity, double flow_resistivity, Complex Gw, double w)
             {
-                return porosity * 1.2 + rhoa - Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
+                return porosity * 1.2 + rhoa - Complex.ImaginaryOne * flow_resistivity * porosity * porosity * Gw / w;
             }
 
-            public static void rho11eff(double framedensity, double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq, out Complex rho11eff, out Complex rho12eff, out Complex rho22eff)
-            {
-                Complex jspgw_w = Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
-                rho11eff = framedensity * rhoa - jspgw_w;
-                rho12eff = -rhoa + jspgw_w;
-                rho22eff = porosity * 1.2 + rhoa - jspgw_w;
-            }
+            //public static void rho11eff(double framedensity, double rhoa, double porosity, double flow_resistivity, Complex Gw, double freq, out Complex rho11eff, out Complex rho12eff, out Complex rho22eff)
+            //{
+            //    Complex jspgw_w = Complex.ImaginaryOne * porosity * porosity * Gw / (Utilities.Numerics.PiX2 * freq);
+            //    rho11eff = framedensity * rhoa - jspgw_w;
+            //    rho12eff = -rhoa + jspgw_w;
+            //    rho22eff = porosity * 1.2 + rhoa - jspgw_w;
+            //}
             /// <summary>
             /// densities related to the geometry of the frame. (Atalla, 2009)
             /// </summary>

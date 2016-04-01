@@ -1683,7 +1683,8 @@ namespace Pachyderm_Acoustic
                 double[] MTI = new double[7];
                 double[] fm = new double[14] { .63, .8, 1.0, 1.25, 1.6, 2.0, 2.5, 3.15, 4.0, 5.0, 6.3, 8.0, 10.0, 12.5 };
                 double I_LowerBand = 0;
-                double[] etc = AcousticalMath.Add_Noise_I(ETC[0], Noise[0]);
+                //double[] etc = AcousticalMath.Add_Noise_I(ETC[0], Noise[0]);
+                double[] etc = ETC[0];
 
                 for (int s = 0; s < ETC[0].Length; s++)
                 {
@@ -1694,7 +1695,7 @@ namespace Pachyderm_Acoustic
 
                 for (int oct = 1; oct < 8; oct++)
                 {
-                    etc = AcousticalMath.Add_Noise_I(ETC[oct], Noise[oct]);
+                    etc = ETC[oct];// AcousticalMath.Add_Noise_I(ETC[oct], Noise[oct]);
                     double[] mk = new double[14];
                     double[] ISin = new double[14], ICos = new double[14];
                     double sumI = 0;
@@ -1739,13 +1740,16 @@ namespace Pachyderm_Acoustic
                     {
                         amf = Math.Pow(10,-10/10);
                     }
-                    
-                    double Iamk = I_LowerBand * amf;
+
+                    double I_noise = Math.Pow(10, Noise[oct] / 10) * 1E-12 * rhoC;
+                    double Iamk = (I_LowerBand + I_noise) * amf;
+
+                    double Msnr = 1d / (1 + I_noise / sumI);
 
                     for (int mct = 0; mct < 14; mct++)
                     {
                         mk[mct] = Math.Sqrt(ISin[mct] * ISin[mct] + ICos[mct] * ICos[mct]) / sumI;
-                        mk[mct] *= sumI / (sumI + Iamk +Irtk);
+                        mk[mct] *= sumI / (sumI + Iamk +Irtk) * Msnr;
                         double TI = ((10 * Math.Log10(mk[mct] / (1 - mk[mct])) + 15.0) / 30.0);
                         MTI[oct - 1] += TI < 0 ? 0 : TI > 1 ? 1 : TI;
                     }
@@ -1755,21 +1759,6 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < MTI.Length; i++) MTI[i] /= 14;
                 return MTI;
-            }
-
-            public static double[] Add_Noise_I(double[] etc, double Noise)
-            {
-                double i = 1e-12 * Math.Pow(10, (Noise + 5) / 10);
-
-                Random r = new Random();
-
-                for (int t = 0; t < etc.Length; t++) 
-                {
-                    double n = r.NextDouble();
-                    etc[t] += i * n * n / 413;
-                }
-
-                return etc;
             }
 
             public static double[] Speech_Transmission_Index(double[][] ETC, double rhoC, double[] Noise, int samplefreq)

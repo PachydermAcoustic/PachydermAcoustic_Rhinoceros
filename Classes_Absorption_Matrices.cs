@@ -25,37 +25,27 @@ namespace Pachyderm_Acoustic
     {
         public static class Explicit_TMM
         {
-            public static SparseMatrix PorousMatrix(bool Rigid, double d, Complex k, Complex sin_theta, double freq, double porosity, double tortuosity, double YoungsModulus, double PoissonRatio, double Viscous_Characteristic_Length, double flow_resistivity, double FrameDensity, double Thermal_Permeability_0, double AmbientMeanPressure)
+            public static SparseMatrix PorousMatrix(bool Rigid, double d, Complex k, Complex sin_theta, double freq, double porosity, double tortuosity, double YoungsModulus, double PoissonRatio, double Viscous_Characteristic_Length, double flow_resistivity, double FrameDensity, double AmbientMeanPressure)
             {
+                //Complex LameL = Solids.Lame_Lambda(YoungsModulus, PoissonRatio);
+                //Complex LameMu = Solids.Lame_Mu(YoungsModulus, PoissonRatio);
+                Viscous_Characteristic_Length *= 1E-6;
                 double w = Utilities.Numerics.PiX2 * freq;
-                double v = Biot_Porous_Absorbers.v();
                 double FrameShear = AbsorptionModels.Biot_Porous_Absorbers.Shear_Modulus(YoungsModulus, PoissonRatio);
                 double kb = 2 * FrameShear * (PoissonRatio + 1) / (3 * (1 - 2 * PoissonRatio));
-                double BulkMod_Frame = AbsorptionModels.Biot_Porous_Absorbers.BulkMod_Solid(YoungsModulus, PoissonRatio);
-                Complex Kf = Biot_Porous_Absorbers.BulkMod_Fluid(w, AmbientMeanPressure, porosity, Thermal_Permeability_0);//AmbientMeanPressure / (1 - (gamma - 1) / (gamma * alpha));
-                Complex LameL = YoungsModulus * PoissonRatio / ((1 + PoissonRatio) * (1 - 2 * PoissonRatio));
-                Complex LameMu = YoungsModulus / (2 * (1 + PoissonRatio));
-                Complex delta21 = w * w * FrameDensity;
-                Complex delta22 = w * w * FrameDensity;
-                Complex delta23 = delta21 / LameMu;
-                delta21 /= (LameL + 2 * LameMu);
-                delta22 /= (LameL + 2 * LameMu);
-
-                //Taken from Lauriks, et. al., 1990.
+                Complex Kf = Biot_Porous_Absorbers.BulkMod_Fluid(w, AmbientMeanPressure, porosity, Viscous_Characteristic_Length);//AmbientMeanPressure / (1 - (gamma - 1) / (gamma * alpha));
                 double rho12 = Biot_Porous_Absorbers.rho12(porosity, tortuosity);
                 double rhoa = Biot_Porous_Absorbers.rhoA(rho12);
                 double Viscous_Permeability = Biot_Porous_Absorbers.Viscous_Permeability(flow_resistivity);
-                Complex Gw = Biot_Porous_Absorbers.G_w(tortuosity, porosity, Viscous_Permeability, Viscous_Characteristic_Length, freq, v);
-
-                //Complex rho12eff = Biot_Porous_Absorbers.rho12eff(rhoa, porosity, flow_resistivity, Gw, freq);
-                Complex rho22eff = Biot_Porous_Absorbers.rho22eff(rhoa, porosity, flow_resistivity, Gw, freq);
-                Complex rho11eff = Biot_Porous_Absorbers.rho11eff(FrameDensity, rhoa, porosity, flow_resistivity, Gw, freq);
+                double Thermal_Characteristic_Length = Biot_Porous_Absorbers.Thermal_Characteristic_Length(Viscous_Characteristic_Length);
+                double Thermal_Permeability = porosity * Thermal_Characteristic_Length * Thermal_Characteristic_Length / 8;
+                Complex Gw = Biot_Porous_Absorbers.G_w(tortuosity, porosity, Viscous_Permeability, Viscous_Characteristic_Length, w);
 
                 Complex P, Q, R;
-
                 if (!Rigid)
                 {
                     //Universal (Limp) Frame Case:
+                    double BulkMod_Frame = AbsorptionModels.Biot_Porous_Absorbers.BulkMod_Solid(YoungsModulus, PoissonRatio);
                     P = ((1 - porosity) * (1 - kb / BulkMod_Frame) * BulkMod_Frame + porosity * BulkMod_Frame * kb / Kf) / (1 - porosity - kb / BulkMod_Frame + porosity * BulkMod_Frame / Kf);
                     Q = (1 - porosity - kb / BulkMod_Frame) * porosity * BulkMod_Frame / (1 - porosity - kb / BulkMod_Frame + porosity * BulkMod_Frame / Kf);
                     R = porosity * porosity * BulkMod_Frame / (1 - porosity - kb / BulkMod_Frame + porosity * BulkMod_Frame / Kf);
@@ -63,10 +53,28 @@ namespace Pachyderm_Acoustic
                 else
                 {
                     //Rigid Frame Case:
-                    P = 4 * FrameShear / 3 + kb + (porosity * porosity) * Kf / porosity;
+                    P = 4 * FrameShear / 3 + kb + ((1 - porosity) * (1 - porosity)) * Kf / porosity;
                     R = porosity * Kf;
                     Q = Kf * (1 - porosity);
                 }
+
+                Complex rho12eff = Biot_Porous_Absorbers.rho12eff(rhoa, porosity, flow_resistivity, Gw, freq);
+                Complex rho22eff = Biot_Porous_Absorbers.rho22eff(rhoa, porosity, flow_resistivity, Gw, freq);
+                Complex rho11eff = Biot_Porous_Absorbers.rho11eff(FrameDensity, rhoa, porosity, flow_resistivity, Gw, freq);
+
+                //Complex delta21 = w * w * FrameDensity;
+                //Complex delta22 = w * w * FrameDensity;
+                //Complex delta23 = delta21 / LameMu;
+                //delta21 /= (LameL + 2 * LameMu);
+                //delta22 /= (LameL + 2 * LameMu);
+
+                Complex D = (P * rho22eff + R * rho11eff - 2 * Q * rho12eff);
+                Complex rtDELTA = D * D - 4 * (P * R - Q * Q) * (rho11eff * rho22eff - rho12eff * rho12eff);
+                Complex delta = w * w / (2 * (P * R - Q * Q));
+                Complex drho = P * rho22eff + R * rho11eff - Q * rho12eff;
+                Complex delta21 = D * (drho - rtDELTA);
+                Complex delta22 = D * (drho + rtDELTA);
+                Complex delta23 = (w * w / FrameShear) * ((rho11eff * rho22eff - rho12eff * rho12eff) / rho22eff);
 
                 Complex kt = k * sin_theta;
                 Complex k13 = Complex.Sqrt(delta21 - kt * kt);
@@ -77,7 +85,8 @@ namespace Pachyderm_Acoustic
                 Complex Mu3 = FrameShear * delta23 - w * w * rho11eff / (w * w * rho22eff);
 
                 SparseMatrix GH = GammaH_P(kt, w, d, FrameShear, P, Q, R, k13, k23, k33, Mu1, Mu2, Mu3);
-                SparseMatrix G0T = Gamma0T_P(kt, w, FrameShear, P, Q, R, k13, k23, k33, Mu1, Mu2, Mu3);
+                SparseMatrix G0T = GammaH_P(kt, w, 0, FrameShear, P, Q, R, k13, k23, k33, Mu1, Mu2, Mu3).Inverse() as SparseMatrix;
+                //SparseMatrix G0T = Gamma0T_P(kt, w, FrameShear, P, Q, R, k13, k23, k33, Mu1, Mu2, Mu3);
 
                 return GH * G0T;
             }

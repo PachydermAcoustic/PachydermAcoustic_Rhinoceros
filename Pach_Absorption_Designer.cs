@@ -359,7 +359,7 @@ namespace Pachyderm_Acoustic
                         if (L.T != ABS_Layer.LayerType.AirSpace) return;
                         break;
                     case 1:
-                        if (L.T != ABS_Layer.LayerType.BiotPorousAbsorber_Rigid) return;
+                        if (L.T != ABS_Layer.LayerType.BiotPorousAbsorber_Limp) return;
                         break;
                     case 2:
                         if (L.T != ABS_Layer.LayerType.PorousDB) return;
@@ -420,7 +420,7 @@ namespace Pachyderm_Acoustic
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.AirSpace, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
                         break;
                     case 1:
-                        LayerList.Items.Add( ABS_Layer.CreateBiot(true, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value ));
+                        LayerList.Items.Add( ABS_Layer.CreateBiot(false, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value ));
                         break;
                     case 2:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.PorousDB, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
