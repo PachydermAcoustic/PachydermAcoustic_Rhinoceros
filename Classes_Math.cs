@@ -386,7 +386,8 @@ namespace Pachyderm_Acoustic
                 {
                     if (RTData[Src_ID] != null)
                     {
-                        RTData[Src_ID].GetPressure(Rec_ID, out P);//8,
+                        if (!RTData[Src_ID].HasPressure()) RTData[Src_ID].Create_Pressure();
+                        RTData[Src_ID].GetPressure(Rec_ID, out P);                
                     }
                     else
                     {
@@ -395,6 +396,7 @@ namespace Pachyderm_Acoustic
 
                     if (Direct[Src_ID] != null && Direct[Src_ID].IsOccluded(Rec_ID))
                     {
+                        if (Direct[Src_ID].P == null) Direct[Src_ID].Create_Pressure();
                         int D_Start = 0;
                         if (!Start_at_Zero) D_Start = (int)Math.Ceiling(Direct[Src_ID].Time(Rec_ID) * Sampling_Frequency);
                             
@@ -406,6 +408,7 @@ namespace Pachyderm_Acoustic
 
                     if (ISData[Src_ID] != null)
                     {
+                        if (ISData[Src_ID].Paths[0][0].Pressure == null) ISData[Src_ID].Create_Pressure(Sampling_Frequency, 4096);
                         foreach (Deterministic_Reflection value in ISData[Src_ID].Paths[Rec_ID])
                         {
                             if (Math.Ceiling(Sampling_Frequency * value.TravelTime) < P.Length - 1)
@@ -1899,6 +1902,7 @@ namespace Pachyderm_Acoustic
 
                 for (int t = (int)(Direct_Time * sample_freq); t < PTC.Length; t++)
                 {
+                    if (t == 0) continue;
                     time[t] = time[t-1] + 1 / (double)sample_freq;
                     double Pn = Math.Pow(Math.Abs(PTC[t]), n);
                     denom[t] = denom[t-1] + Pn;

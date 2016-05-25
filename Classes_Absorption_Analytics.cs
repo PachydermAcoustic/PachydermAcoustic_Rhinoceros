@@ -285,6 +285,7 @@ namespace Pachyderm_Acoustic
                 return new ABS_Layer(LayerType.Microslit, depth, slot_pitch, slot_width, 0, 0);
             }
         }
+
         public static class Operations
         {
             public static double[] Random_Incidence_Paris_Finite(double[][] absorption_Coefficient)
@@ -1262,7 +1263,7 @@ namespace Pachyderm_Acoustic
                 int tc = 0;
                 Complex[][] kzi = new Complex[anglesdeg.Length][];
                 List<SparseMatrix[][]> T = new List<SparseMatrix[][]>();
-                Complex[] K0 = K_Air;
+                //Complex[] K0 = K_Air;
 
                 for (int i = LayerList.Count - 1; i >= 0; i--)
                 {
@@ -1285,23 +1286,25 @@ namespace Pachyderm_Acoustic
                                     kzi[a][f] = Complex.Sqrt(K_Air[f] * K_Air[f] * (1 - Ksintheta * Ksintheta));
                                     tn[a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi[a][f], K_Air[f], Zc0[f]);
                                 }
-                                K0 = K_Air;
+                                //K0 = K_Air;
                                 break;
                             case ABS_Layer.LayerType.BiotPorousAbsorber_Limp:
-                                Complex[] kbl = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
+                                //Complex[] kbl = K_Air;
+                                //Complex[] kbl = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
                                 for (int f = 0; f < 4096; f++)
                                 {
-                                    tn[a][f] = Explicit_TMM.PorousMatrix(false, Layer_i.depth, kbl[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, 101325);
+                                    tn[a][f] = Explicit_TMM.PorousMatrix(false, Layer_i.depth, kxi[a][f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Flow_Resist, Layer_i.density, 101325); //Layer_i.Viscous_Characteristic_Length,
                                 }
-                                K0 = kbl;
+                                //K0 = kbl;
                                 break;
                             case ABS_Layer.LayerType.BiotPorousAbsorber_Rigid:
-                                Complex[] kbr = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
+                                //Complex[] kbr = K_Air;
+                                //Complex[] kbr = Biot_Porous_Absorbers.WaveNumber_Fluid(Layer_i.density, Layer_i.porosity, Layer_i.Thermal_Permeability, fr);
                                 for (int f = 0; f < 4096; f++)
                                 {
-                                    tn[a][f] = Explicit_TMM.PorousMatrix(true, Layer_i.depth, kbr[f], kxi[a][f] / K_Air[f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Viscous_Characteristic_Length, Layer_i.Flow_Resist, Layer_i.density, 101325);
+                                    tn[a][f] = Explicit_TMM.PorousMatrix(true, Layer_i.depth, kxi[a][f], fr[f], Layer_i.porosity, Layer_i.tortuosity, Layer_i.YoungsModulus, Layer_i.PoissonsRatio, Layer_i.Flow_Resist, Layer_i.density, 101325); //Layer_i.Viscous_Characteristic_Length,
                                 }
-                                K0 = kbr;
+                                //K0 = kbr;
                                 break;
                             case ABS_Layer.LayerType.PorousDB:
                                 Complex[] Kdb = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, fr);
@@ -1312,7 +1315,7 @@ namespace Pachyderm_Acoustic
                                     kzi[a][f] = Complex.Sqrt(Kdb[f] * Kdb[f] * (1 - Ksintheta * Ksintheta));
                                     tn[a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi[a][f], Kdb[f], Zcdb[f]);
                                 }
-                                K0 = Kdb;
+                                //K0 = Kdb;
                                 break;
                             case ABS_Layer.LayerType.PorousCA:
                                 Complex[] Kca = Equivalent_Fluids.DBAllardChampoux_WNumber(1.2, c_sound, Layer_i.Flow_Resist, fr);
@@ -1323,7 +1326,7 @@ namespace Pachyderm_Acoustic
                                     kzi[a][f] = Complex.Sqrt(Kca[f] * Kca[f] * (1 - Ksintheta * Ksintheta));
                                     tn[a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi[a][f], Kca[f], Zcca[f]);
                                 }
-                                K0 = Kca;
+                                //K0 = Kca;
                                 break;
                             case ABS_Layer.LayerType.PorousM:
                                 Complex[] Km = Equivalent_Fluids.DB_Miki_WNumber(1.2, c_sound, Layer_i.Flow_Resist, fr);
@@ -1334,20 +1337,20 @@ namespace Pachyderm_Acoustic
                                     kzi[a][f] = Complex.Sqrt(Km[f] * Km[f] * (1 - Ksintheta * Ksintheta));
                                     tn[a][f] = Explicit_TMM.FluidMatrix(Layer_i.depth, kzi[a][f], Km[f], Zcm[f]);
                                 }
-                                K0 = Km;
+                                //K0 = Km;
                                 break;
                             case ABS_Layer.LayerType.SolidPlate:
-                                Complex LameL = Solids.Lame_Lambda(Layer_i.YoungsModulus, Layer_i.PoissonsRatio);
-                                Complex LameMu = Solids.Lame_Mu(Layer_i.YoungsModulus, Layer_i.PoissonsRatio);
+                                double LameL = Solids.Lame_Lambda(Layer_i.YoungsModulus, Layer_i.PoissonsRatio);
+                                double LameMu = Solids.Lame_Mu(Layer_i.YoungsModulus, Layer_i.PoissonsRatio);
                                 Complex[] Ks = Solids.WaveNumber(fr, Layer_i.density, LameL, LameMu);
                                 for (int f = 0; f < 4096; f++)
                                 {
                                     //Complex Ksintheta = kxi[a][f] / Ks[
                                     //kzi[a][f] = Complex.Sqrt(Ks[f] * Ks[f] * (1 - Ksintheta * Ksintheta));
-                                    //tn[a][f] =  Explicit_TMM.Solid_Matrix(Ks[f], K0[f], kxi[a][f], Layer_i.depth, frequency[f], Layer_i.density, LameMu, LameL);
-                                    tn[a][f] = Explicit_TMM.Solid_Matrix(Ks[f] * kxi[a][f] / K_Air[f], Layer_i.depth, fr[f], Layer_i.density, Layer_i.YoungsModulus, Layer_i.PoissonsRatio);
+                                    //tn[a][f] =  Explicit_TMM.Solid_Matrix(K_Air[f], kxi[a][f], Layer_i.depth, fr[f], Layer_i.density, LameMu, LameL);
+                                    tn[a][f] = Explicit_TMM.Solid_Matrix(kxi[a][f], Layer_i.depth, fr[f], Layer_i.density, Layer_i.YoungsModulus, Layer_i.PoissonsRatio); //Ks[f] * kxi[a][f] / K_Air[f]
                                 }
-                                K0 = Ks;
+                                //K0 = Ks;
                                 break;
                             //case ABS_Layer.LayerType.Perforated_Modal:
 
@@ -1396,7 +1399,8 @@ namespace Pachyderm_Acoustic
 
                 SparseMatrix[] I = new SparseMatrix[LayerList.Count];
                 SparseMatrix[] J = new SparseMatrix[LayerList.Count];
-                
+                //T.Reverse();
+
                 for (int i = 0; i < T.Count; i++)
                 {
                     if (i == 0)
@@ -1537,6 +1541,19 @@ namespace Pachyderm_Acoustic
                             Complex D2 = (GT.RemoveColumn(1) as SparseMatrix).Determinant();
 
                             Z[a][f] = -D1 / D2;
+
+                            ///Checking Values...///
+                            if (a == 18 && f == 2000)
+                            {
+                                for (int i = 0; i < GT.RowCount; i++)
+                                {
+                                    string line = "| ";
+                                    for (int j = 0; j < GT.ColumnCount; j++) line += GT[i, j].ToString() + " ";
+                                    line += " |";
+                                    Rhino.RhinoApp.WriteLine(line);
+                                }
+                            }
+                            ////////////////////////
                         }
                     });
                 }
@@ -1546,8 +1563,10 @@ namespace Pachyderm_Acoustic
 
                     if (T.Last()[0][0].RowCount == 2)
                     {
-                        ILast = SparseMatrix.CreateIdentity(2);
-                        JLast = SparseMatrix.CreateIdentity(2);
+                        ILast = null;
+                        JLast = null;
+                        //ILast = SparseMatrix.CreateIdentity(2);
+                        //JLast = SparseMatrix.CreateIdentity(2);
                     }
                     else if (T.Last()[0][0].RowCount == 4)
                     {
@@ -1560,7 +1579,7 @@ namespace Pachyderm_Acoustic
                         JLast = Explicit_TMM.Interfacepf_Fluid(LayerList.Last().porosity);
                     }
 
-                    N += JLast.RowCount;
+                    if(ILast != null) N += JLast.RowCount;
 
                     Parallel.For(0, sintheta_inc.Length, a =>
                     //for (int a = 0; a < sintheta_inc.Length; a++)
@@ -1583,9 +1602,11 @@ namespace Pachyderm_Acoustic
                                 r += subJT.RowCount;
                             }
 
-                            GT.SetSubMatrix(r, c, ILast);
-                            GT.SetSubMatrix(r, c + ILast.ColumnCount, JLast);
-
+                            if (ILast != null)
+                            {
+                                GT.SetSubMatrix(r, c, ILast);
+                                GT.SetSubMatrix(r, c + ILast.ColumnCount, JLast);
+                            }
                             Complex costheta = Complex.Sqrt(1 - sintheta_inc[a][f] * sintheta_inc[a][f]);
 
                             GT[N - 1, N - 1] = -1;
@@ -1610,8 +1631,8 @@ namespace Pachyderm_Acoustic
                             }
                             ////////////////////////
 
-                            Complex D7 = (GT.RemoveColumn(GT.ColumnCount - 1) as SparseMatrix).Determinant();
-                            Trans_Loss[a][f] = (-(1 + Reflection_Coef[a][f]) * D7 / D1) * Zc_Air[f];
+                            Complex Dnt1 = (GT.RemoveColumn(GT.ColumnCount - 2) as SparseMatrix).Determinant();
+                            Trans_Loss[a][f] = ((1 + Reflection_Coef[a][f]) * Dnt1 / D1);// * Zc_Air[f];
                         }
                     });
                 }
@@ -3549,16 +3570,24 @@ namespace Pachyderm_Acoustic
         public static class Biot_Porous_Absorbers
         {
             public static double Shear_Viscosity = 1.84E-5;///kg / m s, for standard conditions in air, Atalla, 2009
-            public static double Thermal_Conductivity = 2.6E-1;// w / m k, for standard conditions in air, Atalla, 2009
-            public static double Prandtl_no = 0.707;
+            public static double Thermal_Conductivity = 2.6E-2;// w / m k, for standard conditions in air, Atalla, 2009
             public static double Ratio_of_SpecificHeats_Air = 1.4;//Ratio of specific heats (Cp / Cv)
 
-            public static Complex[] WaveNumber_Fluid(double density, double porosity, double ThermalPermeability, double[] freq)
+            public static double Prandtl_no()
+            {
+                double specific_heat = 1.005;
+                double vp = Thermal_Conductivity / (1.2 * specific_heat);
+                return Shear_Viscosity / (1.2 * vp);
+            }
+
+            public static Complex[] WaveNumber_Fluid(double density, double porosity, double Thermal_Characteristic_Length, double ThermalPermeability, double[] freq)
             {
                 Complex[] k = new Complex[freq.Length];
                 for (int f = 0; f < freq.Length; f++)
                 {
-                    Complex Kf = Biot_Porous_Absorbers.BulkMod_Fluid(Utilities.Numerics.PiX2 * freq[f], 101325, porosity, ThermalPermeability);
+                    Complex GPW = Gp_w_prime(1, ThermalPermeability, porosity, Thermal_Characteristic_Length, Utilities.Numerics.PiX2 * freq[f]);
+                    //Complex GPW = G_w_prime(porosity, ThermalPermeability, Thermal_Characteristic_Length, f * Utilities.Numerics.PiX2);
+                    Complex Kf = Biot_Porous_Absorbers.BulkMod_Fluid(Utilities.Numerics.PiX2 * freq[f], 101325, porosity, ThermalPermeability, GPW);
                     k[f] = Utilities.Numerics.PiX2 * freq[f] / Complex.Sqrt(Kf / density);
                 }
                 return k;
@@ -3608,6 +3637,17 @@ namespace Pachyderm_Acoustic
                 return 2 * Viscous_Characteristic_Length;
             }
 
+            public static double Viscous_Skin_Depth(double w)
+            {
+                return Math.Sqrt(2 * Shear_Viscosity / (2 * 1.2));
+            }
+
+            public static double Thermal_Skin_Depth(double w)
+            {
+                //return Math.Sqrt(2 * Shear_Viscosity / (w * Prandtl_no() * 1.2));
+                return Math.Sqrt(2 * Thermal_Conductivity / (w * 1.2 * 1.005));
+            }
+
             public static Complex Dynamic_Tortuosity_Pride_LaFarge(double w, double v, double porosity, double Tortuosity, double Static_Tortuosity, double Viscous_Permeability, double Viscous_Length)
             {
                 Complex b = 2 * Viscous_Permeability * Tortuosity * Tortuosity / (porosity * Viscous_Length * Viscous_Length * (Static_Tortuosity - Tortuosity));
@@ -3637,15 +3677,15 @@ namespace Pachyderm_Acoustic
                 return Youngs_Modulus / (3 * (1 - 2 * Poissons_Ratio));
             }
 
-            public static Complex BulkMod_Fluid(double w, double AmbientMeanPressure, double porosity, double Viscous_Length)
+            public static Complex BulkMod_Fluid(double w, double AmbientMeanPressure, double porosity, double Thermal_Permeability, Complex Gpw)
             {
-                double Thermal_Length = Thermal_Characteristic_Length(Viscous_Length);
-                double vp = vprime();
-                double q0p = porosity * Thermal_Length * Thermal_Length / 8;
+                double specific_heat = 1.005;
+                double vp = Thermal_Conductivity / (1.2 * specific_heat);
                 //Complex awp = vp * porosity / Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity);
-                Complex awp = 8 * vp / (Complex.ImaginaryOne * w * Thermal_Length * Thermal_Length) * Complex.Sqrt(1 + (Thermal_Length * Thermal_Length / 16) * Complex.ImaginaryOne * 2 / vp) + 1;
-                //return AmbientMeanPressure * (1 - ((Ratio_of_SpecificHeats_Air - 1) / (Ratio_of_SpecificHeats_Air * Complex.ImaginaryOne * Prandtl_no * w * 1.2 * Thermal_Permeability_0 / (porosity * Shear_Viscosity));
-                return AmbientMeanPressure / (1 - ((Ratio_of_SpecificHeats_Air - 1) / (Ratio_of_SpecificHeats_Air * awp)));
+                //Complex awp = 8 * vp / (Complex.ImaginaryOne * w * Thermal_Length * Thermal_Length) * Complex.Sqrt(1 + (Thermal_Length * Thermal_Length / 16) * Complex.ImaginaryOne * 2 / vp) + 1;
+                //return AmbientMeanPressure * (1 + ((Ratio_of_SpecificHeats_Air - 1) / Ratio_of_SpecificHeats_Air) * Complex.ImaginaryOne * Prandtl_no() * w * 1.2 * q0p / (porosity * Shear_Viscosity));
+                //return AmbientMeanPressure / (1 - ((Ratio_of_SpecificHeats_Air - 1) / (Ratio_of_SpecificHeats_Air * awp)));
+                return Ratio_of_SpecificHeats_Air * AmbientMeanPressure / (Ratio_of_SpecificHeats_Air - (Ratio_of_SpecificHeats_Air - 1) / (1 + (vp * porosity / (Complex.ImaginaryOne * w * Thermal_Permeability) * Gpw)));
             }
 
             public static double v()
@@ -3655,13 +3695,8 @@ namespace Pachyderm_Acoustic
 
             public static double vprime()
             {
-                return Shear_Viscosity / 1.2 / Prandtl_no;
+                return Shear_Viscosity / 1.2 / Prandtl_no();
             }
-
-            //public static double vprime(double v, double Prandtl_no)
-            //{
-            //    return v / (Prandtl_no * Prandtl_no);
-            //}
 
             /// <summary>
             /// Variable q0 in Allard & Atalla.
@@ -3705,6 +3740,11 @@ namespace Pachyderm_Acoustic
                 //Champoux - Allard
                 Complex term = (2 * Thermal_Permeability / (porosity * Length_Thermal));
                 return Complex.Sqrt(1 + term * term * Complex.ImaginaryOne * w / vprime());
+            }
+
+            public static Complex b_pride(double thermal_permeability, double thermal_length, double porosity, double tortuosity, double tortuosity_low)
+            {
+                return 2 * thermal_permeability * tortuosity * tortuosity / (porosity * thermal_length * thermal_length * (tortuosity_low - tortuosity));
             }
 
             /// <summary>

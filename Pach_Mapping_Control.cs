@@ -416,7 +416,7 @@ namespace Pachyderm_Acoustic
                                 return;
                             }
                             int SrcID = SelectedSources()[0];
-                            Mesh_Map = PachMapReceiver.Get_G_Map(Map, new double[] { Current_GMin, Current_GMax }, c_scale, PachTools.OctaveStr2Int(Octave.Text), Source[SrcID].SWL(PachTools.OctaveStr2Int(Octave.Text)), SrcID, Coherent.Checked, PlotNumbers);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
+                            Mesh_Map = PachMapReceiver.Get_G_Map(Map, new double[] { Current_GMin, Current_GMax }, c_scale, PachTools.OctaveStr2Int(Octave.Text), Map[SrcID].SourceLevel(PachTools.OctaveStr2Int(Octave.Text)), SrcID, Coherent.Checked, PlotNumbers);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
                         }
                         break;

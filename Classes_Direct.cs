@@ -386,7 +386,6 @@ namespace Pachyderm_Acoustic
                         Dir_Rec_Pos[i][oct][0] = new float[3];
                         Dir_Rec_Neg[i][oct][0] = new float[3];
                     }
-                    //P[i] = new double[1];
                     double[] transmod;
                     Check_Validity(i, rnd.Next(), out transmod);
                     Rho_C[i] = Room.Rho_C(Receiver[i]);
@@ -397,7 +396,6 @@ namespace Pachyderm_Acoustic
 
                     double[] Power = Src.DirPower(0, rnd.Next(), dir);
                     double[] phase_in = Src.Phase(dir, ref rnd);
-                    //for (int o = 0; o < 8; o++) Phase[i][0, o] = phase_in[o];
 
                     Io[i][0][0] = Power[0] * Math.Pow(10, -.1 * Room.Attenuation(0)[0] * Length) * transmod[0] / (4 * Math.PI * Length * Length);
                     Io[i][1][0] = Power[1] * Math.Pow(10, -.1 * Room.Attenuation(0)[1] * Length) * transmod[1] / (4 * Math.PI * Length * Length);
@@ -409,12 +407,9 @@ namespace Pachyderm_Acoustic
                     Io[i][7][0] = Power[7] * Math.Pow(10, -.1 * Room.Attenuation(0)[7] * Length) * transmod[7] / (4 * Math.PI * Length * Length);
 
                     float time = (float)(Length / C_Sound) + (float)Src.Delay;
-                    //float real, imag;
 
                     for (int oct = 0; oct < 8; oct++)
                     {
-                        //Utilities.Numerics.ExpComplex(0, (float)(Utilities.Numerics.angularFrequency[oct] * time + phase_in[oct]), out real, out imag);
-                        //P[i][0, oct] = Math.Sqrt(Io[i][0, oct] * Room.Rho_C(Receiver[i]));
                         Vector V = dir * Io[i][oct][0];
 
                         if (V.x > 0) Dir_Rec_Pos[i][oct][0][0] += (float)V.x; else Dir_Rec_Neg[i][oct][0][0] += (float)V.x;

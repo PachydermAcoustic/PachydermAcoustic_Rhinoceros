@@ -127,7 +127,6 @@ namespace Pachyderm_Acoustic
                 public override BroadRay Directions(int index, int thread, ref Random random, ref Curve Curves, ref double[] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
                 {
                     double pos = random.NextDouble();
-                    int i;
 
                     Interval t = Curves.Domain;
                     double x = random.NextDouble() * (t[1] - t[0]) + t[0];
@@ -193,7 +192,7 @@ namespace Pachyderm_Acoustic
                 public override BroadRay Directions(int index, int thread, ref Random random, ref Curve Curves, ref double[] DomainPower, ref double Delay, ref Phase_Regime ph, ref int S_ID)
                 {
                     double pos = random.NextDouble();
-                    int i;
+                    //int i;
 
                     Interval t = Curves.Domain;
                     double x = random.NextDouble() * (t[1] - t[0]) + t[0];

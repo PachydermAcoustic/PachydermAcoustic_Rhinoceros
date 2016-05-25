@@ -198,6 +198,8 @@ namespace Pachyderm_Acoustic
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.Air_Term = new System.Windows.Forms.RadioButton();
             this.Rigid_Term = new System.Windows.Forms.RadioButton();
+            this.Direction_choice = new System.Windows.Forms.ComboBox();
+            this.label25 = new System.Windows.Forms.Label();
             Cancel = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.Polar_Absorption)).BeginInit();
             this.Porous_1Param.SuspendLayout();
@@ -1665,11 +1667,57 @@ namespace Pachyderm_Acoustic
             this.Rigid_Term.UseVisualStyleBackColor = true;
             this.Rigid_Term.CheckedChanged += new System.EventHandler(this.Rigid_Term_CheckedChanged);
             // 
+            // Direction_choice
+            // 
+            this.Direction_choice.DisplayMember = "0";
+            this.Direction_choice.FormattingEnabled = true;
+            this.Direction_choice.Items.AddRange(new object[] {
+            "Normal",
+            "2.5 degrees",
+            "7.5 degrees",
+            "12.5 degrees",
+            "17.5 degrees",
+            "22.5 degrees",
+            "27.5 degrees",
+            "32.5 degrees",
+            "37.5 degrees",
+            "42.5 degrees",
+            "47.5 degrees",
+            "52.5 degrees",
+            "57.5 degrees",
+            "62.5 degrees",
+            "67.5 degrees",
+            "72.5 degrees",
+            "77.5 degrees",
+            "82.5 degrees",
+            "87.5 degrees"});
+            this.Direction_choice.Location = new System.Drawing.Point(127, 12);
+            this.Direction_choice.Name = "Direction_choice";
+            this.Direction_choice.Size = new System.Drawing.Size(132, 21);
+            this.Direction_choice.TabIndex = 67;
+            this.Direction_choice.Text = "Normal";
+            this.Direction_choice.ValueMember = "0";
+            this.Direction_choice.SelectedIndexChanged += new System.EventHandler(this.Direction_choice_SelectedIndexChanged);
+            // 
+            // label25
+            // 
+            this.label25.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label25.AutoSize = true;
+            this.label25.Location = new System.Drawing.Point(44, 15);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(52, 13);
+            this.label25.TabIndex = 66;
+            this.label25.Text = "Direction:";
+            // 
             // Pach_Absorption_Designer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1462, 742);
+            this.Controls.Add(this.Direction_choice);
+            this.Controls.Add(this.label25);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.Chart_Contents);
             this.Controls.Add(this.label24);
@@ -1792,6 +1840,8 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.GroupBox groupBox2;
             private System.Windows.Forms.RadioButton Air_Term;
             private System.Windows.Forms.RadioButton Rigid_Term;
+            private System.Windows.Forms.ComboBox Direction_choice;
+            private System.Windows.Forms.Label label25;
         }
     }
 }

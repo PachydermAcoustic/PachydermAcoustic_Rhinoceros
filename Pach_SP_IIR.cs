@@ -158,7 +158,7 @@ namespace Pachyderm_Acoustic
                 {
                     int fs;
                     int n;
-                    int[] sampled;
+                    //int[] sampled;
                     Complex[] Spectrum;
                     Complex[] sel_Spectrum;
                     Complex[] abs;
@@ -752,85 +752,85 @@ namespace Pachyderm_Acoustic
                     return prod;
                 }
 
-                public static void OptimizeIIR(Complex[] Spectrum, int Sample_Freq, int filter_order, out double[] a, out double[] b)
-                {
-                    IIR_Spectrum_Objective obj = new IIR_Spectrum_Objective(filter_order, Spectrum, Sample_Freq);
-                    //LibOptimization.Optimization.clsOptRealGAREX SA = new LibOptimization.Optimization.clsOptRealGAREX(obj);
-                    //LibOptimization.Optimization.clsOptRealGABLX SA = new LibOptimization.Optimization.clsOptRealGABLX(obj);
-                    LibOptimization.Optimization.clsOptSimulatedAnnealing SA = new LibOptimization.Optimization.clsOptSimulatedAnnealing(obj);
-                    //LibOptimization.Optimization.clsOptNelderMead SA = new LibOptimization.Optimization.clsOptNelderMead(obj);
-                    //SA.UseEliteStrategy(10);
-                    //SA.PARAM_PopulationSize = Filter_Order * 50;
-                    SA.PARAM_NEIGHBOR_RANGE = 0.00001;
-                    //SA.PARAM_InitRange = 1;
-                    //SA.PARAM_ChildrenSize = 20;
-                    //SA.PARAM_MAX_ITERATION = 1000;
-                    SA.Init();
-                    SA.DoIteration();
+                //public static void OptimizeIIR(Complex[] Spectrum, int Sample_Freq, int filter_order, out double[] a, out double[] b)
+                //{
+                //    IIR_Spectrum_Objective obj = new IIR_Spectrum_Objective(filter_order, Spectrum, Sample_Freq);
+                //    //LibOptimization.Optimization.clsOptRealGAREX SA = new LibOptimization.Optimization.clsOptRealGAREX(obj);
+                //    //LibOptimization.Optimization.clsOptRealGABLX SA = new LibOptimization.Optimization.clsOptRealGABLX(obj);
+                //    LibOptimization.Optimization.clsOptSimulatedAnnealing SA = new LibOptimization.Optimization.clsOptSimulatedAnnealing(obj);
+                //    //LibOptimization.Optimization.clsOptNelderMead SA = new LibOptimization.Optimization.clsOptNelderMead(obj);
+                //    //SA.UseEliteStrategy(10);
+                //    //SA.PARAM_PopulationSize = Filter_Order * 50;
+                //    SA. = 0.00001;
+                //    //SA.PARAM_InitRange = 1;
+                //    //SA.PARAM_ChildrenSize = 20;
+                //    //SA.PARAM_MAX_ITERATION = 1000;
+                //    SA.Init();
+                //    SA.DoIteration();
 
-                    DW2AB( SA.Result.ToArray(), null, out a, out b);
-                }
+                //    DW2AB( SA.Result.ToArray(), null, out a, out b);
+                //}
 
-                public static void OptimizeIIR(Complex[] Spectrum, int Filter_Order, int Sample_Freq, out Complex[] a, out Complex[] b)
-                {
-                    IIR_Spectrum_Objective obj = new IIR_Spectrum_Objective(Filter_Order, Spectrum, Sample_Freq);
-                    //LibOptimization.Optimization.clsOptRealGAREX SA = new LibOptimization.Optimization.clsOptRealGAREX(obj);
-                    LibOptimization.Optimization.clsOptRealGABLX SA = new LibOptimization.Optimization.clsOptRealGABLX(obj);
-                    //SA.UseEliteStrategy(10);
-                    //SA.PARAM_PopulationSize = Filter_Order * 50;
+                //public static void OptimizeIIR(Complex[] Spectrum, int Filter_Order, int Sample_Freq, out Complex[] a, out Complex[] b)
+                //{
+                //    IIR_Spectrum_Objective obj = new IIR_Spectrum_Objective(Filter_Order, Spectrum, Sample_Freq);
+                //    //LibOptimization.Optimization.clsOptRealGAREX SA = new LibOptimization.Optimization.clsOptRealGAREX(obj);
+                //    LibOptimization.Optimization.clsOptRealGABLX SA = new LibOptimization.Optimization.clsOptRealGABLX(obj);
+                //    //SA.UseEliteStrategy(10);
+                //    //SA.PARAM_PopulationSize = Filter_Order * 50;
 
-                    SA.PARAM_InitRange = 1;
-                    SA.PARAM_ChildrenSize = 20;
-                    //SA.PARAM_MAX_ITERATION = 1000;
-                    SA.Init();
-                    SA.DoIteration();
+                //    SA. = 1;
+                //    SA.PARAM_ChildrenSize = 20;
+                //    //SA.PARAM_MAX_ITERATION = 1000;
+                //    SA.Init();
+                //    SA.DoIteration();
 
-                    Filter_Order = obj.pzct;
+                //    Filter_Order = obj.pzct;
 
-                    //Complex[] p = new Complex[(int)Math.Floor((double)SA.Result.Count / 4)];
-                    //Complex[] z = new Complex[(int)Math.Ceiling((double)SA.Result.Count / 4)];
-                    Complex[] p = new Complex[Filter_Order];
-                    Complex[] z = new Complex[Filter_Order];
+                //    //Complex[] p = new Complex[(int)Math.Floor((double)SA.Result.Count / 4)];
+                //    //Complex[] z = new Complex[(int)Math.Ceiling((double)SA.Result.Count / 4)];
+                //    Complex[] p = new Complex[Filter_Order];
+                //    Complex[] z = new Complex[Filter_Order];
 
-                    int pzct = Filter_Order;
-                    int pno_conj = (int)Math.Floor((double)pzct / 2);
-                    int pno_conj_phase = pno_conj - obj.pole_phase.Length;
-                    int pno_real = pzct % 2;
-                    int zno_real = pzct;
+                //    int pzct = Filter_Order;
+                //    int pno_conj = (int)Math.Floor((double)pzct / 2);
+                //    int pno_conj_phase = pno_conj - obj.pole_phase.Length;
+                //    int pno_real = pzct % 2;
+                //    int zno_real = pzct;
 
-                    for (int i = 0; i < obj.pole_phase.Length; i++)
-                    {
-                        p[2 * i] = Complex.FromPolarCoordinates(SA.Result[i], obj.pole_phase[i]);
-                        p[2 * i + 1] = Complex.Conjugate(p[2*i]);
-                    }
-                    for (int i = 0; i < pno_conj_phase; i++)
-                    {
-                        p[2 * i + obj.pole_phase.Length] = Complex.FromPolarCoordinates(SA.Result[obj.pole_phase.Length + 2 * i], SA.Result[obj.pole_phase.Length + 2 * i + 1] * Math.PI * 2);
-                        p[2 * i + obj.pole_phase.Length + 1] = Complex.Conjugate(p[i]);
-                    }
-                    for (int i = 0; i < pno_real; i++)
-                    {
-                        p[i + pno_conj] = SA.Result[pno_conj + pno_conj_phase + i];
-                    }
+                //    for (int i = 0; i < obj.pole_phase.Length; i++)
+                //    {
+                //        p[2 * i] = Complex.FromPolarCoordinates(SA.Result[i], obj.pole_phase[i]);
+                //        p[2 * i + 1] = Complex.Conjugate(p[2*i]);
+                //    }
+                //    for (int i = 0; i < pno_conj_phase; i++)
+                //    {
+                //        p[2 * i + obj.pole_phase.Length] = Complex.FromPolarCoordinates(SA.Result[obj.pole_phase.Length + 2 * i], SA.Result[obj.pole_phase.Length + 2 * i + 1] * Math.PI * 2);
+                //        p[2 * i + obj.pole_phase.Length + 1] = Complex.Conjugate(p[i]);
+                //    }
+                //    for (int i = 0; i < pno_real; i++)
+                //    {
+                //        p[i + pno_conj] = SA.Result[pno_conj + pno_conj_phase + i];
+                //    }
 
-                    for (int i = 0; i < zno_real; i++)
-                    {
-                        z[i] = SA.Result[pno_conj + pno_conj_phase + pno_real + i];
-                    }
+                //    for (int i = 0; i < zno_real; i++)
+                //    {
+                //        z[i] = SA.Result[pno_conj + pno_conj_phase + pno_real + i];
+                //    }
                     
-                    //for (int i = 0; i < p.Length; i++) p[i] = Complex.FromPolarCoordinates(SA.Result[2 * i], SA.Result[2 * i + 1] * Math.PI * 2);
-                    //for (int i = p.Length; i < 2 * p.Length; i++) z[i-p.Length] = Complex.FromPolarCoordinates(SA.Result[2 * i], SA.Result[2 * i + 1] * Math.PI * 2);
-                    PZ2AB(p, z, 1, out a, out b);
+                //    //for (int i = 0; i < p.Length; i++) p[i] = Complex.FromPolarCoordinates(SA.Result[2 * i], SA.Result[2 * i + 1] * Math.PI * 2);
+                //    //for (int i = p.Length; i < 2 * p.Length; i++) z[i-p.Length] = Complex.FromPolarCoordinates(SA.Result[2 * i], SA.Result[2 * i + 1] * Math.PI * 2);
+                //    PZ2AB(p, z, 1, out a, out b);
 
-                    //Normalize
-                    //Complex[] spec = SpectrumFromIIR(a, b, Sample_Freq, Spectrum.Length);
-                    //double ms = 0;
-                    //foreach (Complex s in spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
-                    //double mb = 0;
-                    //foreach (Complex s in Spectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
+                //    //Normalize
+                //    //Complex[] spec = SpectrumFromIIR(a, b, Sample_Freq, Spectrum.Length);
+                //    //double ms = 0;
+                //    //foreach (Complex s in spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
+                //    //double mb = 0;
+                //    //foreach (Complex s in Spectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
 
-                    //b[0] *= mb / ms;
-                }
+                //    //b[0] *= mb / ms;
+                //}
 
                 //                public static void invfreq(Complex[] Freq_Response, double[] Frequencies, int nB, int nA, out double[] b, out double[] a)
                 //                {

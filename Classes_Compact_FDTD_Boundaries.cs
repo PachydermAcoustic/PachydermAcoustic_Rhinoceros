@@ -1237,7 +1237,7 @@ namespace Pachyderm_Acoustic
 
                     //Kowalczyk Boundary Filter Node.
                     IIR_DIF filter;
-                    List<double[]> acoef;
+                    //List<double[]> acoef;
                     double ab1 = 0;
                     double abDenom = 0;
 

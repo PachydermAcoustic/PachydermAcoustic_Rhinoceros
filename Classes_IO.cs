@@ -290,6 +290,7 @@ namespace Pachyderm_Acoustic
                     ///////////////////////
                     sw.Write(Rec_List[i].SrcType);
                     sw.Write(Rec_List[i].delay_ms);//v.2.0.0.1
+                    for (int j = 0; j < 8; j++) sw.Write(Rec_List[i].SWL[j]);//v.2.0.0.2
                 }
 
                 //8. Announce that the following data pertains to the receiver histograms (string)
@@ -299,6 +300,7 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Rec_List.Length; s++)
                 {
+                    
                     for (int i = 0; i < Rec_Ct; i++)
                     {
                         //Write Receiver Index (int)
@@ -381,7 +383,7 @@ namespace Pachyderm_Acoustic
                 //Map[0] = new Pach_Map_Receiver();        
                 //double[] Rho_C = null;
                 double[] delay;
-                 
+
                 do
                 {
                     switch (sr.ReadString())
@@ -435,6 +437,12 @@ namespace Pachyderm_Acoustic
                                 {
                                     delay[s] = sr.ReadDouble();
                                 }
+                                Map[s].SWL = new double[8];
+                                if (version > 2.0 || (version == 2.0 && rev >= 2))
+                                {
+                                    for (int j = 0; j < 8; j++) Map[s].SWL[j] = sr.ReadDouble();//v.2.0.0.2
+                                }
+                                else Map[s].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
                             }
                             break;
                         case "SourceswLoc":
@@ -459,6 +467,12 @@ namespace Pachyderm_Acoustic
                                 {
                                     delay[s] = sr.ReadDouble();
                                 }
+                                Map[s].SWL = new double[8];
+                                if (version > 2.0 || (version == 2.0 && rev >= 2))
+                                {
+                                    for (int j = 0; j < 8; j++) Map[s].SWL[j] = sr.ReadDouble();//v.2.0.0.2
+                                }
+                                else Map[s].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
                             }
                             break;
                         case "Receiver Hit Data":

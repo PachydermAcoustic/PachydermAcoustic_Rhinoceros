@@ -51,6 +51,7 @@ namespace Pachyderm_Acoustic
             public bool Mesh_Offset;
             public bool Time1Pt;
             public Point3d Src;
+            public double[] SWL;
             Scene _Sc;
             //Task Checkout System
             //int ctr;
@@ -268,6 +269,8 @@ namespace Pachyderm_Acoustic
             /// <param name="S">the source object</param>
             public void AddDirect(Direct_Sound D, Source S)
             {
+                SWL = new double[8];
+                for (int i = 0; i < 8; i++) SWL[i] = S.SWL(i);
                 for (int i = 0; i < Rec_List.Length; i++)
                 {
                     Vector dir = S.H_Origin() - Rec_List[i].H_Origin;
@@ -345,6 +348,16 @@ namespace Pachyderm_Acoustic
                         Rec_List[Voxel_Inv[X, Y, Z][i]].Ray_ID[R.ThreadID] = R.Ray_ID;
                     }
                 }
+            }
+
+
+            public double SourceLevel(int Octave)
+            {
+                if (Octave == 8)
+                {
+                    return 10 * Math.Log10(Math.Pow(10, SWL[0] / 10) + Math.Pow(10, SWL[1] / 10) + Math.Pow(10, SWL[2] / 10) + Math.Pow(10, SWL[3] / 10) + Math.Pow(10, SWL[4] / 10) + Math.Pow(10, SWL[5] / 10) + Math.Pow(10, SWL[6] / 10) + Math.Pow(10, SWL[7] / 10));
+                }
+                return SWL[Octave];
             }
 
             /// <summary>
@@ -702,7 +715,7 @@ namespace Pachyderm_Acoustic
                     }
                     zero = (int)(z * Rec_List[0].SampleRate * 44.1);
 
-                    hist = new double[(int)Math.Ceiling(Rec_List[0].SampleCT * 44.1)];
+                    hist = new double[(int)Math.Ceiling(Rec_List[0].SampleCT * 44.1) + 4096];
 
                     foreach (int S_ID in SrcID)
                     {
@@ -710,7 +723,7 @@ namespace Pachyderm_Acoustic
 
                         Rec_List[S_ID].GetPressure(i, out P);
 
-                        int arrival = (int)((Rec_List[S_ID].Rec_List[i] as Map_Receiver).Direct_Time * Rec_List[0].SampleRate) - zero;
+                        int arrival = (int)((Rec_List[S_ID].Rec_List[i] as Map_Receiver).Direct_Time * Rec_List[0].SampleRate * 44.1) - zero;
 
                         for (int j = 0; j < P.Length; j++)
                         {
@@ -808,7 +821,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Rec_List[0].Rec_List.Length; i++)
                     {
-                        C_Values[i] = AcousticalMath.Clarity(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, C_Cutoff / 1000, 0, false);
+                        C_Values[i] = AcousticalMath.Clarity(AcousticalMath.ETCurve(null, null, Rec_List, Rec_List[0].CutOffTime, Rec_List[0].SampleRate, Octave, i, SrcID, true), Rec_List[0].SampleRate, (double)C_Cutoff / 1000, 0, false);
                     }
                 }
                 //Create the output...
