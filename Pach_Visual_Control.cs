@@ -521,7 +521,7 @@ namespace Pachyderm_Acoustic
                     {
                         //energy *= Math.Pow(10,-.1 * Room.Attenuation[oct] * u) / (4 * Math.PI * u * u);
                         Point3d Point = RayList[Index].PointAt(q + ((u - (S_Length - Modifier)) / Modifier));
-                        energy = Power[Index][q] * Math.Pow(10,-.1 * Room.Attenuation(Utilities.PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier)  / (4*Math.PI * u * u);
+                        energy = Power[Index][q] * Math.Pow(10, -.1 * Room.Attenuation(Utilities.PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier);//  / (4*Math.PI * u * u);
                         Next = RayList[Index][q + 1];
                         Result = Point;
                         return true;
