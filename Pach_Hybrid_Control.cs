@@ -931,9 +931,10 @@ namespace Pachyderm_Acoustic
                 {
                     Receiver_Choice.Items.Clear();
 
-                    if (Receiver != null && Receiver.Length > 0 && Receiver[0] != null)
+
+                    if (Direct_Data != null && Direct_Data[0] != null)
                     {
-                        for (int i = 0; i < Receiver[0].Count; i++)
+                        for (int i = 0; i < Direct_Data[0].Rec_Origin.Count(); i++)
                         {
                             Receiver_Choice.Items.Add(i.ToString());
                         }
