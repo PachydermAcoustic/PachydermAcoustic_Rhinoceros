@@ -424,6 +424,23 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            public override bool shoot(Ray R, int top_id, out X_Event XPT)
+            {
+                double u, v, t;
+                int SurfID;
+                Hare.Geometry.Point Xpt;
+                if (shoot(R, out u, out v, out SurfID, out Xpt, out t))
+                {
+                    XPT = new X_Event(Xpt, u, v, t, SurfID);
+                    return true;
+                }
+                else
+                {
+                    XPT = new X_Event();
+                    return false;
+                }
+            }
+
             public override void partition()
             {
                 Partitioned = true;

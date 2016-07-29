@@ -146,6 +146,15 @@ namespace Pachyderm_Acoustic
             /// <returns>true if successful, false if no hit</returns>
             public abstract bool shoot(Ray R, out double u, out double v, out int Poly_ID, out List<Hare.Geometry.Point> X_PT, out List<double> t, out List<int> code);
             /// <summary>
+            /// Limited applicability shoot function.
+            /// </summary>
+            /// <param name="R"></param>
+            /// <param name="Random"></param>
+            /// <param name="top_id"></param>
+            /// <param name="XPT"></param>
+            /// <returns></returns>
+            public abstract bool shoot(Ray R, int top_id, out Hare.Geometry.X_Event XPT);
+            /// <summary>
             /// The local normal of a surface.
             /// </summary>
             /// <param name="i">surface index</param>
@@ -392,6 +401,186 @@ namespace Pachyderm_Acoustic
 
             public abstract Hare.Geometry.Point Min();
             public abstract Hare.Geometry.Point Max();
+        }
+
+        public class Empty_Scene : Scene
+        {
+            Hare.Geometry.Point minpt;
+            Hare.Geometry.Point maxpt;
+            
+            public Empty_Scene(double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic, Hare.Geometry.Point min, Hare.Geometry.Point max)
+                :base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
+            {
+                minpt = min;
+                maxpt = max;
+            }
+
+            public override void Absorb(ref BroadRay Ray, out double cos_theta, double u, double v)
+            {
+                cos_theta = 0;
+            }
+
+            public override void Absorb(ref OctaveRay Ray, out double cos_theta, double u, double v)
+            {
+                cos_theta = 0;
+            }
+
+            public override Hare.Geometry.Point ClosestPt(Hare.Geometry.Point P, ref double D)
+            {
+                return new Hare.Geometry.Point(0, 0, 0);
+            }
+            public override Point3d ClosestPt(Point3d P, ref double D)
+            {
+                return new Point3d();
+            }
+
+            public override int Count()
+            {
+                return 0;
+            }
+
+            public override void EdgeFrame_Tangents(Hare.Geometry.Point Origin, Vector Normal, int[] SrfIDs, ref List<double> dist2, List<Vector> Dir, List<int> IDs)
+            {
+                return;
+            }
+
+            public override bool IsPlanar(int i)
+            {
+                return false;
+            }
+
+            public override Hare.Geometry.Point Max()
+            {
+                return maxpt;
+            }
+
+            public override Hare.Geometry.Point Min()
+            {
+                return minpt;
+            }
+
+            public override Vector Normal(int i)
+            {
+                return new Vector(0, 0, 0);
+            }
+
+            public override void partition()
+            {
+                return;
+            }
+
+            public override void partition(Hare.Geometry.Point[] P, int SP_PARAM)
+            {
+                return;
+            }
+
+            public override void partition(int SP_Param)
+            {
+                return;
+            }
+
+            public override void partition(List<Hare.Geometry.Point> P, int SP_PARAM)
+            {
+                return;
+            }
+
+            public override void partition(List<Point3d> P, int SP_PARAM)
+            {
+                return;
+            }
+
+            public override void partition(Point3d[] P, int SP_PARAM)
+            {
+                return;
+            }
+
+            public override Vector Normal(int i, double u, double v)
+            {
+                return new Vector(0, 0, 0);
+            }
+
+            public override bool PointsInScene(List<Hare.Geometry.Point> PTS)
+            {
+                return false;
+            }
+
+            public override void Register_Edges(IEnumerable<Hare.Geometry.Point> S, IEnumerable<Hare.Geometry.Point> R)
+            {
+                return;
+            }
+
+            public override void Scatter_Early(ref BroadRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v)
+            {
+                return;
+            }
+
+            public override void Scatter_Late(ref OctaveRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v)
+            {
+                return;
+            }
+
+            public override void Scatter_Simple(ref OctaveRay Ray, ref Random rand, double cos_theta, double u, double v)
+            {
+                return;
+            }
+
+            public override string Scene_Type()
+            {
+                return "Empty Scene";
+            }
+
+            public override bool shoot(Ray R, int top_id, out X_Event XPT)
+            {
+                XPT = new X_Event();
+                return false;
+            }
+
+            public override bool shoot(Point3d Start, Vector3d Dir, int Random, out double u, out double v, out int Srf_ID, out List<Point3d> X_PT, out List<double> t, out List<int> code)
+            {
+                u = -1;
+                v = -1;
+                Srf_ID = -1;
+                X_PT = new List<Point3d>();
+                t = new List<double>();
+                code = new List<int>();
+                return false;
+            }
+
+            public override bool shoot(Ray R, out double u, out double v, out int Poly_ID, out Hare.Geometry.Point X_PT, out double t)
+            {
+                u = -1;
+                v = -1;
+                Poly_ID = -1;
+                X_PT = new Hare.Geometry.Point();
+                t = -1;
+                return false;
+            }
+
+            public override bool shoot(Ray R, out double u, out double v, out int Poly_ID, out List<Hare.Geometry.Point> X_PT, out List<double> t, out List<int> code)
+            {
+                u = -1;
+                v = -1;
+                Poly_ID = -1;
+                X_PT = new List<Hare.Geometry.Point>();
+                t = new List<double>();
+                code = new List<int>();
+                return false;
+            }
+
+            public override double Sound_speed(Hare.Geometry.Point pt)
+            {
+                return Env_Prop.Sound_Speed(pt);
+            }
+
+            public override double Sound_speed(int arg)
+            {
+                return Env_Prop.Sound_Speed(arg);
+            }
+
+            public override double SurfaceArea(int x)
+            {
+                return 0;
+            }
         }
 
         [Serializable]
@@ -1094,306 +1283,6 @@ namespace Pachyderm_Acoustic
                 //Utilities.PachTools.Plot_Hare_Topology(Topo[0]);
             }
 
-            //private void Construct(List<Rhino.DocObjects.RhinoObject> ObjectList)
-            //{
-            //    BoundingBox Box = ObjectList[0].Geometry.GetBoundingBox(true);
-            //    for (int i = 1; i < ObjectList.Count; i++) Box.Union(ObjectList[i].Geometry.GetBoundingBox(true));
-
-            //    //List<Hare.Geometry.Point[]> FaceList = new List<Hare.Geometry.Point[]>();
-            //    //int p = -1;
-            //    List<GeometryBase> BList = new List<GeometryBase>();
-            //    //List<string> AcousticsData = new List<string>();
-                
-            //    Brep_ids = new List<int>();
-
-            //    List<Material> Mat_Layer = new List<Material>();
-            //    List<Scattering> Scat_Layer = new List<Scattering>();
-            //    List<Material> Mat_Obj = new List<Material>();
-            //    List<Scattering> Scat_Obj = new List<Scattering>();
-            //    List<double[]> Trans_Layer = new List<double[]>();
-            //    List<double[]>Trans_Obj = new List<double[]>();
-            //    //Organize the geometry into Breps
-            //    //Get materials for each layer:
-            //    for (int l = 0; l < Rhino.RhinoDoc.ActiveDoc.Layers.Count; l++)
-            //    {
-            //        Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[l];
-            //        string abstype = Layer.GetUserString("ABSType");
-            //        if (abstype == "Buildup")
-            //        {
-            //            string BU = Layer.GetUserString("BuildUp");
-            //            string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            //            List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
-            //            foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-            //            Mat_Layer.Add(new Environment.Smart_Material(Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
-
-            //            double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
-            //            Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
-            //            ///Other properties are still coefficient based...
-            //            Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
-            //            Trans_Layer.Add(Trans);
-            //        }
-            //        else
-            //        {
-            //            string spec = Layer.GetUserString("Acoustics");
-
-            //            if(spec == "")
-            //            {
-            //                ///Layer is not used. As long as there is no geometry for pachyderm on this layer without object set properties, this is ok.
-            //                Mat_Layer.Add(null);
-            //                Scat_Layer.Add(null);
-            //                Trans_Layer.Add(null);
-            //                continue;
-            //            }
-
-            //            double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
-            //            Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(spec, ref Abs, ref Scat, ref Trans);
-            //            Mat_Layer.Add(new Environment.Basic_Material(Abs, new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 }));
-            //            Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
-            //            Trans_Layer.Add(Trans);
-            //        }
-            //    }
-
-            //    for (int q = 0; q <= ObjectList.Count - 1; q++)
-            //    {
-            //        List<Brep> B = new List<Brep>();
-            //        if (ObjectList[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
-            //        {
-            //            Rhino.DocObjects.BrepObject BObj = ((Rhino.DocObjects.BrepObject)ObjectList[q]);
-            //            B.Add(BObj.BrepGeometry.DuplicateBrep());
-            //            //string m = ObjectList[q].Geometry.GetUserString("Acoustics_User");
-            //            if (ObjectList[q].Geometry.GetUserString("Acoustics_User") == "yes")
-            //            {
-            //                double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
-            //                Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
-            //                Mat_Obj.Add(new Basic_Material(ABS, new double[]{0,0,0,0,0,0,0,0}));
-            //                Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
-            //                Trans_Obj.Add(TRANS);
-            //            }
-            //            else
-            //            {
-            //                //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-            //                //AcousticsData.Add(Layer.GetUserString("Acoustics"));
-            //                Mat_Obj.Add(Mat_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //                Scat_Obj.Add(Scat_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //                Trans_Obj.Add(Trans_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //            }
-            //        }
-            //        else if (ObjectList[q].ObjectType == Rhino.DocObjects.ObjectType.Extrusion)
-            //        {
-            //            Rhino.Geometry.Brep BObj = ((Rhino.DocObjects.ExtrusionObject)ObjectList[q]).ExtrusionGeometry.ToBrep();
-            //            for (int i = 0; i < BObj.Faces.Count; i++)
-            //            {
-            //                if (ObjectList[q].Geometry.GetUserString("Acoustics_User") == "yes")
-            //                {
-            //                    //AcousticsData.Add(ObjectList[q].Geometry.GetUserString("Acoustics"));
-            //                    double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
-            //                    Pachyderm_Acoustic.UI.PachydermAc_PlugIn.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
-            //                    Mat_Obj.Add(new Basic_Material(ABS, new double[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
-            //                    Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
-            //                    Trans_Obj.Add(TRANS);
-            //                }
-            //                else
-            //                {
-            //                    //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-            //                    //AcousticsData.Add(Layer.GetUserString("Acoustics"));
-            //                    //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-            //                    //AcousticsData.Add(Layer.GetUserString("Acoustics"));
-            //                    Mat_Obj.Add(Mat_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //                    Scat_Obj.Add(Scat_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //                    Trans_Obj.Add(Trans_Layer[ObjectList[q].Attributes.LayerIndex]);
-            //                }
-
-            //                //B.Add(BObj.Faces[0].ToBrep());
-            //                //for (int i = 1; i < BObj.Faces.Count; i++)
-            //                //{
-            //                //    if (ObjectList[q].Geometry.GetUserString("Acoustics_User") == "yes")
-            //                //    {
-            //                //        AcousticsData.Add(ObjectList[q].Geometry.GetUserString("Acoustics"));
-            //                //    }
-            //                //    else
-            //                //    {
-            //                //        Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-            //                //        AcousticsData.Add(Layer.GetUserString("Acoustics"));
-            //                //    }
-            //                B.Add(BObj.Faces[i].ToBrep());
-            //            }
-            //        }
-            //        else
-            //        {
-            //            continue;
-            //        }
-            //        BList.AddRange(B);
-            //    }
-
-            //    ////////////////////////////////////////
-            //    Topo = new Hare.Geometry.Topology[1];
-            //    Topo[0] = new Topology(Utilities.PachTools.RPttoHPt(Box.Min), Utilities.PachTools.RPttoHPt(Box.Max));
-            //    ////////////////////////////////////////
-            //    for (int q = 0; q < BList.Count; q++)
-            //    {
-            //        BrepList.Add((Brep)BList[q]);
-
-            //        //Material Abs = null ;
-            //        //Scattering Scat = null;
-
-            //        //double[] Transparency = new double[8];
-            //        double[] Transmission = new double[8];
-                    
-            //        //double[] Scat = new double[8];
-            //        //if (!string.IsNullOrEmpty(AcousticsData[q]))
-            //        //if (Mat_Obj[q] != null)
-            //        //{
-            //        //    //double[] Absorption = new double[8];
-            //        //    //double[] phase = new double[8];
-            //        //    //double[] Scattering = new double[8];
-            //        //    ////double[,] Scattering = new double[8, 3];
-            //        //    //double[] Reflection = new double[8];
-            //        //    //UI.PachydermAc_PlugIn.DecodeAcoustics(AcousticsData[q], ref Absorption, ref Scattering, ref Transparency);
-            //        //    Abs = Mat_Obj[q];
-            //        //    Scat = Scat_Obj[q];
-            //        //    Transmission = Trans_Obj[q];
-            //        //}
-            //        //else
-            //        if ((Mat_Obj[q] == null) || (Scat_Obj[q] == null) || (Trans_Obj[q] == null))
-            //        {
-            //            if (!Custom_Method)
-            //            {
-            //                Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
-            //                Complete = false;
-            //                return;
-            //            }
-            //            ///Materails do not need to be specified, as it will not be used for an acoustical simulation... (hopefully...)
-            //        }
-
-            //        //for (int i = 0; i < 8; i++)
-            //        //{
-            //        //    Reflection[i] = (1 - Absorption[i]);
-            //        //    Transmission[i] = Transparency[i];
-            //        //    Scattering[i, 1] = Scat[i];
-            //        //    double Mod = ((Scattering[i, 1] < (1 - Scattering[i, 1])) ? (Scattering[i, 1] * SplitRatio / 2) : ((1 - Scattering[i, 1]) * SplitRatio / 2));
-            //        //    Scattering[i, 0] = Scattering[i, 1] - Mod;
-            //        //    Scattering[i, 2] = Scattering[i, 1] + Mod;
-            //        //    phase[i] = 0;
-            //        //}
-                    
-            //        Mesh[] meshes;
-            //        MeshingParameters mp = new MeshingParameters();
-            //        mp.MinimumEdgeLength = 0.1;
-            //        mp.SimplePlanes = true;
-            //        meshes = Rhino.Geometry.Mesh.CreateFromBrep((Brep)BList[q],mp);
-            //        if (meshes == null) throw new Exception("Problem with meshes");
-
-            //        for (int t = 0; t < meshes.Length; t++)
-            //        {
-            //            if (meshes[t].Faces.Count < 1)
-            //            {
-            //                Status = System.Windows.Forms.MessageBox.Show("A surface in the model does not generate a rendermesh. This surface will not be represented in the simulation. It is recommended that you cancel this simulation and repair the affected surface. It can be located in shaded view by finding the surface which generates boundary and isoparm lines, but does not generate a fill. It can sometimes be repaired by running the command 'ShrinkTrimmedSurface'. If this does not work, it will have to be replaced by some means which would generate a proper surface.", "Surface without Rendermesh", System.Windows.Forms.MessageBoxButtons.OKCancel);
-            //                if (Status == System.Windows.Forms.DialogResult.Cancel)
-            //                {
-            //                    Complete = false;
-            //                    return;
-            //                }
-            //                continue;
-            //            }
-                     
-            //            for (int u = 0; u < meshes[t].Faces.Count; u++)
-            //            {
-            //                Hare.Geometry.Point[] P;
-            //                if (meshes[t].Faces[u].IsQuad)
-            //                {
-            //                    P = new Hare.Geometry.Point[4];
-            //                    Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-            //                    P[0] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                    FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-            //                    P[1] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                    FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-            //                    P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                    FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
-            //                    P[3] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                }
-            //                else
-            //                {
-            //                    P = new Hare.Geometry.Point[3];
-            //                    Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-            //                    P[0] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                    FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-            //                    P[1] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                    FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-            //                    P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-            //                }
-
-            //                //ReflectionData.Add(Reflection);
-            //                AbsorptionData.Add(Mat_Obj[q]);
-            //                ScatteringData.Add(Scat_Obj[q]);
-            //                TransmissionData.Add(Trans_Obj[q]);
-            //                //PhaseData.Add(phase);
-
-            //                bool Trans = false;
-            //                for (int t_oct = 0; t_oct < 8; t_oct++)
-            //                {
-            //                    if (Transmission[t_oct] > 0)
-            //                    {
-            //                        Trans = true;
-            //                        break;
-            //                    }
-            //                }
-            //                Transmissive.Add(Trans);
-            //                if (BrepList[q].Faces[t].IsPlanar())
-            //                {
-            //                    Topo[0].Add_Polygon(P);
-            //                    Brep_ids.Add(q);
-            //                }
-            //                else
-            //                {
-            //                    Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[1], P[2] });
-            //                    Brep_ids.Add(q);
-            //                    //ReflectionData.Add(Reflection);
-            //                    AbsorptionData.Add(Mat_Obj[q]);
-            //                    ScatteringData.Add(Scat_Obj[q]);
-            //                    TransmissionData.Add(Trans_Obj[q]);
-            //                    Transmissive.Add(Trans);
-            //                    //PhaseData.Add(phase);
-            //                    if (P.Length > 3) Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
-            //                }
-            //            }
-            //        }
-            //    }
-                
-            //    //Set up a system to find random points on planes.//
-            //    Plane_Area = new double[Topo[0].Plane_Members.Length];
-            //    PolyPlaneFract = new double[Topo[0].Plane_Members.Length][];
-
-            //    for (int q = 0; q < Topo[0].Plane_Members.Length; q++)
-            //    {
-            //        foreach (int t in Topo[0].Plane_Members[q])
-            //        {
-            //            Plane_Area[q] += Topo[0].Polygon_Area(t);
-            //        }
-            //    }
-
-            //    //////////////////////////
-            //    for (int i = 0; i < Topo[0].planeList.Count; i++)
-            //        for (int j = 0; j < Topo[0].Plane_Members[i].Count; j++)
-            //        {
-            //            Point3d pt= Utilities.PachTools.HPttoRPt(Topo[0].Polygon_Centroid(Topo[0].Plane_Members[i][j]));
-            //            string n = Topo[0].Polys[Topo[0].Plane_Members[i][j]].Plane_ID.ToString();
-            //        }
-            //    //////////////////////////
-
-            //    for (int q = 0; q < Topo[0].Plane_Members.Length; q++)
-            //    {
-            //        PolyPlaneFract[q] = new double[Topo[0].Plane_Members[q].Count];
-            //        PolyPlaneFract[q][0] = Topo[0].Polygon_Area(Topo[0].Plane_Members[q][0]) / Plane_Area[q];
-            //        for (int t = 1; t < Topo[0].Plane_Members[q].Count; t++)
-            //        {
-            //            PolyPlaneFract[q][t] += PolyPlaneFract[q][t - 1] + Topo[0].Polygon_Area(Topo[0].Plane_Members[q][t]) / Plane_Area[q];
-            //        }
-            //    }
-            //    Valid = true;
-
-            //    Utilities.PachTools.Plot_Hare_Topology(Topo[0]);
-            //}
-
             public override void Absorb(ref OctaveRay Ray, out double cos_theta, double u, double v)
             {
                 AbsorptionData[Ray.Surf_ID].Absorb(ref Ray, out cos_theta, Normal(Ray.Surf_ID, u, v));
@@ -1965,9 +1854,17 @@ namespace Pachyderm_Acoustic
                 return false;
             }
 
-            public bool shoot(Hare.Geometry.Ray R, int top_id, out Hare.Geometry.X_Event X)
+            public override bool shoot(Hare.Geometry.Ray R, int top_id, out Hare.Geometry.X_Event X)
             {
-                if (SP.Shoot(R, top_id, out X)) return true;
+                try
+                {
+                    if (SP.Shoot(R, top_id, out X)) return true;
+                }
+                catch
+                {
+                    X = new X_Event();
+                    return false;
+                }
                 return false;
             }
 
