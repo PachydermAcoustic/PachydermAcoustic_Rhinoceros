@@ -31,8 +31,8 @@ namespace Pachyderm_Acoustic
                 double time_ms;
 
                 //PML Settings
-                int PML_LayerNo = 50;
-                double PML_MaxAtten = 0.13;
+                int PML_LayerNo = 0;//50;
+                double PML_MaxAtten = 0;//0.13;
                 
                 public enum GridType
                 {
@@ -118,28 +118,11 @@ namespace Pachyderm_Acoustic
                     zDim = (int)Math.Ceiling(z_length / dydz);                                //set number of nodes in z direction
                     dz = z_length / zDim;
 
-                    //dt = dx / (Math.Sqrt(1.0 / 3.0) * (Rm.Sound_speed(0)));                           //set time step small enough to satisfy courrant condition
                     dt = dy / (Rm.Sound_speed(0));                           //set time step small enough to satisfy courrant condition
-                    //dt = dx / (Math.Sqrt(.75) * (Rm.Sound_speed));                           //set time step small enough to satisfy courrant condition
                     dxrt2 = dx * rt2;
                     dxrt3 = dx * rt3;
 
                     Dir = new Vector[13]{
-                        //new Vector(-1,double.Epsilon,double.Epsilon),
-                        //new Vector(double.Epsilon,-1,double.Epsilon),
-                        //new Vector(double.Epsilon,double.Epsilon,-1),
-
-                        //new Vector(-1/rt2,-1/rt2,double.Epsilon),
-                        //new Vector(1/rt2, -1/rt2,double.Epsilon),
-                        //new Vector(-1/rt2, double.Epsilon, 1/rt2),
-                        //new Vector(double.Epsilon, -1/rt2, 1/rt2),
-                        //new Vector(1/rt2, double.Epsilon, 1/rt2),
-                        //new Vector(double.Epsilon, 1/rt2, 1/rt2),
-
-                        //new Vector(-1/rt2,-1/rt2,1/rt2),
-                        //new Vector(1/rt2,-1/rt2,1/rt2),
-                        //new Vector(1/rt2,1/rt2,1/rt2),
-                        //new Vector(-1/rt2,1/rt2,1/rt2)
                         new Vector(-1, 0, 0),
                         new Vector(0, -1, 0),
                         new Vector(0, 0, -1),
@@ -155,16 +138,9 @@ namespace Pachyderm_Acoustic
                         new Vector(dx, -dy, dz),
                         new Vector(dx, dy, dz),
                         new Vector(-dx, dy, dz)
-
-                        //new Vector(-dx, -dy/rt2, dz/rt2),
-                        //new Vector(dx, -dy/rt2, dz/rt2),
-                        //new Vector(dx, dy/rt2, dz/rt2),
-                        //new Vector(-dx, dy/rt2, dz/rt2)
                     };
 
                     foreach (Vector V in Dir) V.Normalize();
-
-//                    xDim = (int)Math.Ceiling((double)xDim * rt2 / 2);
 
                     PFrame = new Node[xDim][][];// yDim, zDim];                               //pressure scalar field initialisation
 
@@ -174,12 +150,11 @@ namespace Pachyderm_Acoustic
                     int yDimt = yDim;
                     int zDimt = zDim;
 
-                    //dx = dx/rt2;
                     MinPt -= new Point(dx * no_of_Layers / 2, dy * no_of_Layers, 0);
                     Bounds = new AABB(MinPt, MinPt + new Point(x_length, y_length, z_length));
 
-                    System.Threading.Tasks.Parallel.For(0, xDim, (x) =>
-                    //for (int x = 0; x < PFrame.Length; x++)
+                    //System.Threading.Tasks.Parallel.For(0, xDim, (x) =>
+                    for (int x = 0; x < PFrame.Length; x++)
                     {
                         int mod = x % 2;
                         PFrame[x] = new Node[(int)(Math.Floor((double)yDimt / 2) + yDimt % 2 * mod)][];
@@ -204,7 +179,7 @@ namespace Pachyderm_Acoustic
                                 }
                             }
                         }
-                    });
+                    }//);
 
                     Node.Attenuation = Math.Sqrt(Math.Pow(10, -.1 * Rm.AttenuationPureTone(Bounds.Min_PT, SD.frequency) * dt));//PFrame[0][0][0].Pt, SD.frequency
 
@@ -231,10 +206,6 @@ namespace Pachyderm_Acoustic
 
                     //Set up PML...
                     Layers = new Acoustic_Compact_FDTD.PML(no_of_Layers, max_Layer, PFrame, false);
-
-                    //Connect Sources and Receivers...
-                    //SD.Connect_Grid_Laboratory(PFrame, Bounds, dx, dy, dz, tmax, dt, no_of_Layers);
-                    //Mic.Connect_Grid_Laboratory(PFrame, Bounds, dx, tmax, dt, no_of_Layers);
                 }
 
                 public void Build_Freefield_FVM13(ref int xDim, ref int yDim, ref int zDim, bool PML, double xmin, double ymin, double zmin)
@@ -286,28 +257,11 @@ namespace Pachyderm_Acoustic
                     zDim = (int)Math.Ceiling(z_length / dydz);                                //set number of nodes in z direction
                     dz = z_length / zDim;
 
-                    //dt = dx / (Math.Sqrt(1.0 / 3.0) * (Rm.Sound_speed(0)));                           //set time step small enough to satisfy courrant condition
                     dt = dy / (Rm.Sound_speed(0));                           //set time step small enough to satisfy courrant condition
-                    //dt = dx / (Math.Sqrt(.75) * (Rm.Sound_speed));                           //set time step small enough to satisfy courrant condition
                     dxrt2 = dx * rt2;
                     dxrt3 = dx * rt3;
 
                     Dir = new Vector[13]{
-                        //new Vector(-1,double.Epsilon,double.Epsilon),
-                        //new Vector(double.Epsilon,-1,double.Epsilon),
-                        //new Vector(double.Epsilon,double.Epsilon,-1),
-
-                        //new Vector(-1/rt2,-1/rt2,double.Epsilon),
-                        //new Vector(1/rt2, -1/rt2,double.Epsilon),
-                        //new Vector(-1/rt2, double.Epsilon, 1/rt2),
-                        //new Vector(double.Epsilon, -1/rt2, 1/rt2),
-                        //new Vector(1/rt2, double.Epsilon, 1/rt2),
-                        //new Vector(double.Epsilon, 1/rt2, 1/rt2),
-
-                        //new Vector(-1/rt2,-1/rt2,1/rt2),
-                        //new Vector(1/rt2,-1/rt2,1/rt2),
-                        //new Vector(1/rt2,1/rt2,1/rt2),
-                        //new Vector(-1/rt2,1/rt2,1/rt2)
                         new Vector(-1, 0, 0),
                         new Vector(0, -1, 0),
                         new Vector(0, 0, -1),
@@ -323,18 +277,18 @@ namespace Pachyderm_Acoustic
                         new Vector(dx, -dy, dz),
                         new Vector(dx, dy, dz),
                         new Vector(-dx, dy, dz)
-
                     };
 
                     foreach (Vector V in Dir) V.Normalize();
-
-//                    xDim = (int)Math.Ceiling((double)xDim * rt2 / 2);
-
+                    
                     PFrame = new Node[xDim][][];// yDim, zDim];                               //pressure scalar field initialisation
 
                     List<Bound_Node_RDD> Bound = new List<Bound_Node_RDD>();
 
-                    //dx = dx/rt2;
+                    int xDimt = xDim;
+                    int yDimt = yDim;
+                    int zDimt = zDim;
+
                     MinPt -= new Point(dx * no_of_Layers / 2, dy * no_of_Layers, dz * no_of_Layers);
                     Bounds = new AABB(MinPt, MinPt + new Point(x_length, y_length, z_length));
 
@@ -342,16 +296,16 @@ namespace Pachyderm_Acoustic
                     for (int x = 0; x < PFrame.Length; x++)
                     {
                         int mod = x % 2;
-                        PFrame[x] = new Node[(int)(Math.Floor((double)yDim / 2) + yDim % 2 * mod)][];
+                        PFrame[x] = new Node[(int)(Math.Floor((double)yDimt / 2) + yDimt % 2 * mod)][];
                         Random Rnd = new Random(x);
                         for (int y = 0; y < PFrame[x].Length; y++)
                         {
-                            PFrame[x][y] = new Node[(int)(Math.Floor((double)zDim / 2) + yDim % 2 * mod)];
+                            PFrame[x][y] = new Node[(int)(Math.Floor((double)zDimt / 2) + yDimt % 2 * mod)];
                             for (int z = 0; z < PFrame[x][y].Length; z++)
                             {
                                 List<double> abs;
                                 List<Bound_Node.Boundary> BDir;
-                                Point Loc = new Point(MinPt.x + 2 * (((double)x - 0.5) * dx), MinPt.y + 2 * (((double)y + (0.5 - 0.5 * mod)) * dy), MinPt.z + 2 * (((double)z + (0.5 - 0.5 * mod)) * dz));
+                                Point Loc = Acoustic_Compact_FDTD.RDD_Location(MinPt, x, y, z, dx, dy, dz); //new Point(MinPt.x + 2 * (((double)x - 0.5) * dx), MinPt.y + 2 * (((double)y + (0.5 - 0.5 * mod)) * dy), MinPt.z + 2 * (((double)z + (0.5 - 0.5 * mod)) * dz));
                                 if (!Intersect_13Pt(Loc, SD.frequency, out BDir, out abs, ref Rnd))
                                 {
                                     PFrame[x][y][z] = new RDD_Node(Loc);//, rho0, dt, dx, Rm.Sound_speed, new int[] { x, y, z });
@@ -386,16 +340,11 @@ namespace Pachyderm_Acoustic
                     yDim = PFrame[0].Length;
                     zDim = PFrame[0][0].Length;
 
-                    foreach (Bound_Node_RDD b in Bound) b.Complete_Boundary();
+                    for (int i = 0; i < Bound.Count; i++) if (Bound[i] != null) Bound[i].Complete_Boundary();
                     if (failed) return;
 
                     //Set up PML...
                     Layers = new Acoustic_Compact_FDTD.PML(no_of_Layers, max_Layer, PFrame, true);
-
-                    //Connect Sources and Receivers...
-                    //SD.Connect_Grid_Freefield(PFrame, Bounds, dx, dy, dz, tmax, dt, no_of_Layers);
-                    //Mic.Connect_Grid_Freefield(PFrame, Bounds, dx, tmax, dt, no_of_Layers);
-
                 }
 
                 public void RuntoCompletion()

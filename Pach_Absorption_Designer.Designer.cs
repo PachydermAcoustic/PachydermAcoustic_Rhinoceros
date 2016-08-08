@@ -1268,7 +1268,7 @@ namespace Pachyderm_Acoustic
             this.depth.DecimalPlaces = 3;
             this.depth.Location = new System.Drawing.Point(145, 3);
             this.depth.Maximum = new decimal(new int[] {
-            1000,
+            10000,
             0,
             0,
             0});

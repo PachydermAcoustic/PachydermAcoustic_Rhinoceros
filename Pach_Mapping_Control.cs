@@ -562,6 +562,8 @@ namespace Pachyderm_Acoustic
                 {
                     SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
                 }
+
+                WC = new WaveConduit(c_scale, new double[] { Current_SPLMin, Current_SPLMax });
             }
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)
