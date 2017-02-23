@@ -85,10 +85,20 @@ namespace Pachyderm_Acoustic
         {
             private bool m_bHandlerAdded = false;
             private List<System.Guid> m_id_list = new List<System.Guid>();
+            DisplayBitmap RS;
+            DisplayBitmap RU;
+            Rhino.Geometry.Line Dir;
 
             public ReceiverConduit()
             :base()
             {
+                System.Drawing.Bitmap RSbmp = Properties.Resources.Receiver_Selected;
+                System.Drawing.Bitmap RUbmp = Properties.Resources.Receiver;
+                RSbmp.MakeTransparent(System.Drawing.Color.Black);
+                RUbmp.MakeTransparent(System.Drawing.Color.Black);
+                RS = new DisplayBitmap(RSbmp);
+                RU = new DisplayBitmap(RUbmp);
+
                 Instance = this;
             }
 
@@ -207,10 +217,6 @@ namespace Pachyderm_Acoustic
                     if (!m_id_list.Contains(rhino_object.Attributes.ObjectId)) m_id_list.Add(rhino_object.Attributes.ObjectId);
                 }
             }
-
-            DisplayBitmap RS = new DisplayBitmap(Pachyderm_Acoustic.Properties.Resources.Receiver_Selected);
-            DisplayBitmap RU = new DisplayBitmap(Pachyderm_Acoustic.Properties.Resources.Receiver);
-            Rhino.Geometry.Line Dir;
 
             protected override void DrawForeground(DrawEventArgs e)
             {

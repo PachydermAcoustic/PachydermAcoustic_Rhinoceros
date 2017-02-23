@@ -56,7 +56,7 @@ namespace Pachyderm_Acoustic
             Direct_Sound[] Direct_Data;
             ImageSourceData[] IS_Data;
             Receiver_Bank[] Receiver;
-            Mapping.PachMapReceiver[] Maps;
+            PachMapReceiver[] Maps;
             Hare.Geometry.Point[] Srcs;
             Hare.Geometry.Point[] Recs;
             int SampleRate;
@@ -101,16 +101,24 @@ namespace Pachyderm_Acoustic
                 if (Hybrid_Select.Checked)
                 {
                     if (Pach_Hybrid_Control.Instance != null && !Pach_Hybrid_Control.Instance.Auralisation_Ready() || Receiver_Choice.SelectedIndex < 0) return;
-                    Point3d[] rec = new Point3d[Recs.Length];
-                    for (int i = 0; i < Recs.Length; i++) rec[i] = Utilities.PachTools.HPttoRPt(Recs[i]);
+                    Hare.Geometry.Point[] rec = new Hare.Geometry.Point[Recs.Length];
+                    for (int i = 0; i < Recs.Length; i++) rec[i] = Recs[i];
                     AuralisationConduit.Instance.add_Receivers(rec);
-                    List<Point3d> pts = new List<Point3d>();
-                    foreach(Direct_Sound D in Direct_Data) pts.Add(D.Src_Origin);
+                    List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
+                    foreach (Direct_Sound D in Direct_Data) pts.Add(D.Src_Origin);
                     AuralisationConduit.Instance.add_Sources(pts);
                     List<Deterministic_Reflection> Paths = new List<Deterministic_Reflection>();
                     List<Polyline> Lines = new List<Polyline>();
                     foreach (ImageSourceData I in IS_Data) if (I != null) Paths.AddRange(I.Paths[Receiver_Choice.SelectedIndex]);
-                    foreach (Deterministic_Reflection p in Paths) foreach (Polyline P in p.PolyLine) Lines.Add(P);
+                    foreach (Deterministic_Reflection p in Paths) foreach (Hare.Geometry.Point[] P in p.Path)
+                        {
+                            List<Rhino.Geometry.Point3d> PTS = new List<Rhino.Geometry.Point3d>();
+                            foreach (Hare.Geometry.Point hpt in P)
+                            {
+                                PTS.Add(Utilities.RC_PachTools.HPttoRPt(hpt));
+                            }
+                            Lines.Add(new Polyline(PTS));
+                        }
                     AuralisationConduit.Instance.add_Reflections(Lines);
                     pts.Clear();
                     List<Vector3d> Dirs = new List<Vector3d>();
@@ -119,11 +127,11 @@ namespace Pachyderm_Acoustic
                         Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
                         //Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, -(double)Azi_Choice.Value, -(double)Alt_Choice.Value, true);
                         TempDir.Normalize();
-                        pts.Add(Utilities.PachTools.HPttoRPt(Recs[0]) + (Utilities.PachTools.HPttoRPt(TempDir) * -.343 * Math.Max(5,((channel)Channel_View.Items[i]).delay)));
+                        pts.Add(Recs[0] + (TempDir) * -.343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
                         Dirs.Add(new Vector3d(TempDir.x, TempDir.y, TempDir.z));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
-                    AuralisationConduit.Instance.set_direction(Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
+                    AuralisationConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RC_PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
                     //AuralisationConduit.Instance.set_direction(Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), -(double)Azi_Choice.Value, -(double)Alt_Choice.Value, true)));
                 }
                 else if (Mapping_Select.Checked)
@@ -131,8 +139,8 @@ namespace Pachyderm_Acoustic
                     if (Pach_Mapping_Control.Instance != null && !Pach_Mapping_Control.Instance.Auralisation_Ready() && Receiver_Choice.SelectedIndex < 0) return;
                     if (Maps == null || Maps[0] == null) return;
                     AuralisationConduit.Instance.add_Receivers(Maps[0].Origins());
-                    List<Point3d> pts = new List<Point3d>();
-                    foreach (Mapping.PachMapReceiver m in Maps) pts.Add(m.Src);
+                    List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
+                    foreach (PachMapReceiver m in Maps) pts.Add(m.Src);
                     AuralisationConduit.Instance.add_Sources(pts);
                 }
                 else
@@ -531,7 +539,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
                 double azi, alt;
 
-                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), true, out alt, out azi);
+                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
 
                 Alt_Choice.Value = (decimal)alt;
                 Azi_Choice.Value = (decimal)azi;

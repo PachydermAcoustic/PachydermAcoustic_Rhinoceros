@@ -31,7 +31,6 @@ namespace Pachyderm_Acoustic
         public class WaveConduit : DisplayConduit
         {
             List<double> SPLList;
-            //List<Point3d> particles;
             ParticleRays[] PR;
             System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, 2, 2);
             Rhino.Geometry.PointCloud PC = new PointCloud();
@@ -51,7 +50,7 @@ namespace Pachyderm_Acoustic
 
             public WaveConduit(Pach_Graphics.colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.PachTools.HPttoRPt(S.Min());
+                min = Utilities.RC_PachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.x);
                 ny = (int)System.Math.Ceiling(range.y);
@@ -72,7 +71,7 @@ namespace Pachyderm_Acoustic
 
             public WaveConduit(ParticleRays[] PR_in, Pach_Graphics.colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.PachTools.HPttoRPt(S.Min());
+                min = Utilities.RC_PachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.x);
                 ny = (int)System.Math.Ceiling(range.y);

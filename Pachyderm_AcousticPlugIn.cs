@@ -20,7 +20,6 @@ using Rhino.PlugIns;
 using Rhino.Geometry;
 using System.Collections.Generic;
 using System;
-using System.Configuration;
 
 namespace Pachyderm_Acoustic
 {
@@ -40,12 +39,45 @@ namespace Pachyderm_Acoustic
                 new SourceConduit();
                 new ReceiverConduit();
                 new CellConduit();
-                Special_Status p = new Special_Status();
                 Audio.Pach_SP.Initialize_FFTW();
+                System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
                 Instance = this;
-
             }
-            
+
+            public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
+            {
+                string PachPath;
+
+                PachPath = this.GetPluginPath();
+                if (PachPath == null || PachPath == "")
+                {
+                    if (Rhino.PlugIns.PlugIn.LoadPlugIn(new Guid("25895777-97d3-4058-8753-503183d4bc01")))
+                    {
+                        PachPath = Pachyderm_Acoustic.UI.PachydermAc_PlugIn.Instance.GetPluginPath();
+                    }
+                }
+
+                PachPath = PachPath.Remove(PachPath.Length - 22);
+
+                switch (e.Name)
+                {
+
+                    case "Hare":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "Hare.dll");
+                    case "CLF_Read":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "CLF_Read.dll");
+                    case "MathNet.Numerics":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "MathNet.Numerics.dll");
+                    case "NAudio":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "NAudio.dll");
+                    case "Pachyderm_Acoustic_Universal":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "Pachyderm_Acoustic_Universal.dll");
+                    case "ZedGraph":
+                        return System.Reflection.Assembly.LoadFile(PachPath + "ZedGraph.dll");
+                }
+                return null;
+            }
+
             public Guid InstanceID
             {
                 get
@@ -68,7 +100,6 @@ namespace Pachyderm_Acoustic
                 splash.Show();
                 splash.Refresh();
                 System.Threading.Thread.Sleep(2000);
-                new Pach_Properties();
 
                 //TODO: find out if we can now create arrays greater than 2 GB...
                 //Register the UserControl "Panels"
@@ -157,55 +188,29 @@ namespace Pachyderm_Acoustic
                 return false;
             }
 
-            public bool SourceOrigin(out Point3d[] Points)
+            public bool SourceOrigin(out Hare.Geometry.Point[] Points)
             {
                 //Pach_Source_Object c = Pach_Source_Object.Instance;
-                Points = new Point3d[SourceConduit.Instance.UUID.Count];
+                Points = new Hare.Geometry.Point[SourceConduit.Instance.UUID.Count];
                 for (int i = 0; i < SourceConduit.Instance.UUID.Count; i++)
                 {
                     System.Guid S_ID = SourceConduit.Instance.UUID[i];
                     if (S_ID == System.Guid.Empty || S_ID == System.Guid.NewGuid()) break;
-                    Points[i] = Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min;
+                    Points[i] = Utilities.RC_PachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min);
                 }
 
                 if (Points.Length > 0) return true;
                 return false;
             }
 
-            private bool Check_Special(ref Environment.Source[] S)
+            public string GetPluginPath()
             {
-                //an interface to create overriding conditions for source objects... Was originally used to quickly insert line-source conditions. Now can be used by anyone to put together interesting overrides.
-                switch (SpecialCode)
-                {
-                    //case "Streets":
-                        //Rhino.DocObjects.RhinoObject[] objs = Rhino.RhinoDoc.ActiveDoc.Objects.FindByObjectType(Rhino.DocObjects.ObjectType.Curve);
-                        //Curve ObjectList = new List<Rhino.Geometry.Curve>();
-                        //List<String> CodeList = new List<string>();
-                        //foreach (Rhino.DocObjects.RhinoObject stuff in objs)
-                        //{
-                        //    if (stuff.ObjectType == Rhino.DocObjects.ObjectType.Curve)
-                        //    {
-                        //        ObjectList.Add(((Rhino.DocObjects.CurveObject)stuff).DuplicateCurveGeometry().DuplicateCurve());
-                        //        CodeList.Add(stuff.Attributes.GetUserString("Sound_Power"));
-                        //    }
-                        //}
-                        //S = new Environment.Source[1];
-                        //// Waterfall Power Spectrum = new double[] {25, 50, 75, 104, 102, 100, 94, 88}
-                        //// Measured Daytime Central London Street Noise 2012 = new double[] {81.9, 74.3, 71.5, 68.1, 66.7, 63.5, 59.8, 55.4}
-                        //// F1 Power Spectrum new double[] {120, 120, 136, 134, 130, 130, 124, 115},
-                        //S[0] = new Environment.LineSource(ObjectList, CodeList, 16, 0, Environment.Source.Phase_Regime.Random);
-                        //return true;
-                    default:
-                        return false;
-                }
+                return System.Reflection.Assembly.GetExecutingAssembly().Location;
             }
 
             public bool Source(out Environment.Source[] S)
             {
                 S = new Environment.Source[0];
-                if (Check_Special(ref S)) return true;
-                //UI.Pach_Source_Object S_command = UI.Pach_Source_Object.Instance;
-                //S_command = UI.Pach_Source_Object.Instance;
                 System.Guid[] S_ID = SourceConduit.Instance.UUID.ToArray();
                 S = new Environment.Source[S_ID.Length];
                 for (int id = 0; id < S_ID.Length; id++)
@@ -233,32 +238,38 @@ namespace Pachyderm_Acoustic
                         {
                             case "":
                             case "0":
-                                S[id] = new Environment.GeodesicSource(SWL_Values, phase, Origin.Geometry.GetBoundingBox(true).Min, delay, id);
+                                S[id] = new Environment.GeodesicSource(SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
                                 break;
                             case "1":
-                                S[id] = new Environment.RandomSource(SWL_Values, phase, Origin.Geometry.GetBoundingBox(true).Min, delay, id);
+                                S[id] = new Environment.RandomSource(SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
                                 break;
                             case "2":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
                                 string[] B = Bands.Split(';');
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.SpeakerSource(SC.m_Balloons[id], SWL_Values, phase, Origin.Geometry.GetBoundingBox(true).Min, new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
+                                S[id] = new Environment.SpeakerSource(SC.m_Balloons[id], SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
                                 break;
                         }
                     }
                     else if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Brep)
                     {
-                        string SWL = Origin.Geometry.GetUserString("SWL");
+                        //string SWL = Origin.Geometry.GetUserString("SWL");
 
-                        string Ph = Origin.Geometry.GetUserString("Phase");
-                        double[] phase = new double[8];
-                        if (Ph != "")
-                        {
-                            string[] phstr = Ph.Split(";"[0]);
-                            for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
-                        }              
-          
-                        S[id] = new Environment.SurfaceSource(new Brep[]{(Origin.Geometry as Brep)}, new List<string>{SWL}, 1, id, Environment.Source.Phase_Regime.Random); 
+                        //string Ph = Origin.Geometry.GetUserString("Phase");
+                        //double[] phase = new double[8];
+                        //if (Ph != "")
+                        //{
+                        //    string[] phstr = Ph.Split(";"[0]);
+                        //    for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
+                        //}
+                        //double el_m;
+                        //double area = Brep.GetArea();
+                        //Hare.Geometry.Topology t = new Hare.Geometry.Topology();
+                        //Hare.Geometry.Point Samples;
+                        ////TODO: develope discretization of surface
+                        ////new Brep[] { (Origin.Geometry as Brep) };
+
+                        //S[id] = new Environment.SurfaceSource(Samples, t, SWL, area, el_m, id, Environment.Source.Phase_Regime.Random); 
                     }
                     else if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Curve)
                     {
@@ -272,23 +283,28 @@ namespace Pachyderm_Acoustic
                             for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
                         }
 
-                        S[id] = new Environment.LineSource(Origin.Geometry as Curve, SWL, 1, id, Environment.Source.Phase_Regime.Random);                         
+                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1 / 4);
+                        Hare.Geometry.Point[] Samples = new Hare.Geometry.Point[pts.Length];
+
+                        for (int i = 0; i < pts.Length; i++) Samples[i] = Utilities.RC_PachTools.RPttoHPt(pts[i]);
+
+                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, Environment.Source.Phase_Regime.Random);                         
                     }
                 }
                 if (S == null) return false;
                 return true;
             }
 
-            public bool Receiver(out List<Point3d> Point)
+            public bool Receiver(out List<Hare.Geometry.Point> Point)
             {
                 UI.Pach_Receiver_Object c = Pach_Receiver_Object.Instance;
-                Point = new List<Point3d>();
+                Point = new List<Hare.Geometry.Point>();
 
                 for (int i = 0; i < ReceiverConduit.Instance.UUID.Count; i++)
                 {
                     System.Guid R_ID = ReceiverConduit.Instance.UUID[i];
                     if (R_ID == System.Guid.Empty || R_ID == System.Guid.NewGuid()) break;
-                    Point.Add(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min);
+                    Point.Add(Utilities.RC_PachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
                 }
                 return true;
             }
@@ -396,114 +412,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 while (objectId != null);
-            }
-
-            public static string EncodeAcoustics(int[] Absorption, int[] Scattering, int[] Transparency)
-            {
-                string Code = "";
-                for (int q = 0; q < 8; q++)
-                {
-                    string Temp = null;
-                    if (Absorption[q] > 99)
-                    {
-                        Temp = "xx";
-                    }
-                    else if (Absorption[q] < 10)
-                    {
-                        Temp = string.Concat("0", Absorption[q]);
-                    }
-                    else
-                    {
-                        Temp = Absorption[q].ToString();
-                    }
-                    Code = string.Concat(Code, Temp);
-                }
-                for (int q = 0; q < 8; q++)
-                {
-                    string Temp = null;
-                    if (Scattering[q] > 99)
-                    {
-                        Temp = "xx";
-                    }
-                    else if (Scattering[q] < 10)
-                    {
-                        Temp = string.Concat("0", Scattering[q].ToString());
-                    }
-                    else
-                    {
-                        Temp = Scattering[q].ToString();
-                    }
-                    Code = string.Concat(Code, Temp);
-                }
-
-                if (Transparency != null && Transparency.Length == 8)
-
-                    for (int q = 0; q < 8; q++)
-                    {
-                        string Temp = null;
-                        if (Transparency[q] > 99)
-                        {
-                            Temp = "xx";
-                        }
-                        else if (Transparency[q] < 10)
-                        {
-                            Temp = string.Concat("0", Transparency[q].ToString());
-                        }
-                        else
-                        {
-                            Temp = Transparency[q].ToString();
-                        }
-                        Code = string.Concat(Code, Temp);
-                    }
-                return Code;
-            }
-
-            public static bool DecodeAcoustics(string Code, ref double[] Absorption, ref double[] Scattering, ref double[] Transparency)
-            {
-                Absorption = new double[8];
-                Scattering = new double[8];
-                Transparency = new double[8];
-                    
-                for (int q = 0; q < 8; q++)
-                {
-                    string Temp = string.Concat(Code[2 * q], Code[2 * q + 1]);
-                    if (Temp == "xx")
-                    {
-                        Absorption[q] = 1;
-                    }
-                    else
-                    {
-                        Absorption[q] = Double.Parse(Temp) / 100;
-                    }
-                }
-                for (int q = 0; q < 8; q++)
-                {
-                    string Temp = string.Concat(Code[2 * q + 16], Code[2 * q + 17]);
-                    if (Temp == "xx")
-                    {
-                        Scattering[q] = 1;
-                    }
-                    else
-                    {
-                        Scattering[q] = Double.Parse(Temp) / 100;
-                    }
-                }
-                if (Code.Length == 48)
-                {
-                    for (int q = 0; q < 8; q++)
-                    {
-                        string Temp = string.Concat(Code[2 * q + 32], Code[2 * q + 33]);
-                        if (Temp == "xx")
-                        {
-                            Transparency[q] = 1;
-                        }
-                        else
-                        {
-                            Transparency[q] = Double.Parse(Temp) / 100;
-                        }
-                    }
-                }
-                return true;
             }
 
             /// <summary>

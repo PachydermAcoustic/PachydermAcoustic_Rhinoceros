@@ -1,4 +1,4 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
@@ -69,10 +69,19 @@ namespace Pachyderm_Acoustic
             List<Line> Speakers;
             Line Dir;
 
-            public void add_Receivers(IEnumerable<Rhino.Geometry.Point3d> pts)
+            public void add_Receivers(IEnumerable<Hare.Geometry.Point> pts)
             {
                 this.Enabled = true;
-                Recs = new PointCloud(pts);
+                List<Point3d> PTS = new List<Point3d>();
+                foreach (Hare.Geometry.Point p in pts) PTS.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                Recs = new PointCloud(PTS);
+            }
+
+            public void add_Sources(IEnumerable<Hare.Geometry.Point> pts)
+            {
+                List<Rhino.Geometry.Point3d> PTS = new List<Point3d>();
+                foreach(Hare.Geometry.Point p in pts) PTS.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                add_Sources(PTS);
             }
 
             public void add_Sources(IEnumerable<Rhino.Geometry.Point3d> pts)
@@ -87,14 +96,14 @@ namespace Pachyderm_Acoustic
                 Reflections = refs.ToList<Rhino.Geometry.Polyline>();
             }
 
-            public void add_Speakers(IEnumerable<Rhino.Geometry.Point3d> pts, IEnumerable<Rhino.Geometry.Vector3d> vec)
+            public void add_Speakers(IEnumerable<Hare.Geometry.Point> pts, IEnumerable<Rhino.Geometry.Vector3d> vec)
             {
                 this.Enabled = true;
                 Speakers = new List<Line>();
-                for (int i = 0; i < pts.Count<Rhino.Geometry.Point3d>(); i++)
+                for (int i = 0; i < pts.Count<Hare.Geometry.Point>(); i++)
                 {
                     Hare.Geometry.Vector V = new Hare.Geometry.Vector(vec.ElementAt<Vector3d>(i).X, vec.ElementAt<Vector3d>(i).Y, vec.ElementAt<Vector3d>(i).Z);
-                    Speakers.Add(new Line(pts.ElementAt<Point3d>(i), pts.ElementAt<Point3d>(i) + Utilities.PachTools.HPttoRPt(V)));
+                    Speakers.Add(new Line(Utilities.RC_PachTools.HPttoRPt(pts.ElementAt(i)), Utilities.RC_PachTools.HPttoRPt(pts.ElementAt(i) + V)));
                 }
             }
 

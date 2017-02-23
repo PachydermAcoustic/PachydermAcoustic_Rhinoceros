@@ -50,17 +50,17 @@ namespace Pachyderm_Acoustic
                     sw.Write((double)CO_TIME.Value);
                     sw.Write(SampleRate);
                     //4.0 Source Count(int)
-                    Rhino.Geometry.Point3d[] SRC;
+                    Hare.Geometry.Point[] SRC;
                     plugin.SourceOrigin(out SRC);
                     sw.Write(SRC.Length);
                     for(int i = 0; i < SRC.Length; i++)
                     {
                         //4.1 Source Location x (double)    
-                        sw.Write(SRC[i].X);
+                        sw.Write(SRC[i].x);
                         //4.2 Source Location y (double)
-                        sw.Write(SRC[i].Y);
+                        sw.Write(SRC[i].y);
                         //4.3 Source Location z (double)
-                        sw.Write(SRC[i].Z);
+                        sw.Write(SRC[i].z);
                     }
                     //5. No of Receivers
                     sw.Write(Recs.Length);
@@ -125,7 +125,7 @@ namespace Pachyderm_Acoustic
                     CutoffTime = Direct_Data[0].Cutoff_Time;
                     SampleRate = (int)Direct_Data[0].SampleRate;
 
-                    for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].H_Origin;
+                    for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].Origin;
                     return true;
                 }
                 else 
@@ -250,7 +250,7 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
                             double azi, alt;
-                            PachTools.World_Angles(Direct_Data[s].Src.Origin(), Utilities.PachTools.HPttoRPt(Recs[r]), true, out alt, out azi);
+                            PachTools.World_Angles(Direct_Data[s].Src.Origin(), Recs[r], true, out alt, out azi);
                             double[][] Lateral_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
                             ParamValues[s, r, oct, 6] = AcousticalMath.Lateral_Fraction(ETC, Lateral_ETC, SampleRate, Direct_Data[s].Min_Time(r), false);
                         }

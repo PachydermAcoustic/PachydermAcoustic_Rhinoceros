@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -16,7 +16,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -61,33 +61,22 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AForge, Version=2.2.5.0, Culture=neutral, PublicKeyToken=c1db6ff4eaa06aeb, processorArchitecture=MSIL">
-      <HintPath>packages\AForge.2.2.5\lib\AForge.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="AForge.Math, Version=2.2.5.0, Culture=neutral, PublicKeyToken=abba2e25397ee8c9, processorArchitecture=MSIL">
-      <HintPath>packages\AForge.Math.2.2.5\lib\AForge.Math.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="CLF_Read">
       <HintPath>Resources\CLF_Read.dll</HintPath>
     </Reference>
     <Reference Include="Hare">
       <HintPath>Resources\Hare.dll</HintPath>
     </Reference>
-    <Reference Include="i4Ds.GAFramework, Version=1.0.0.3, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\i4Ds.GAFramework.1.0.0.3\lib\net40\i4Ds.GAFramework.dll</HintPath>
+    <Reference Include="LibOptimization, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\LibOptimization.1.8.1\lib\net40\LibOptimization.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="LibOptimization, Version=1.7.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\LibOptimization.1.7.2.1\lib\net40\LibOptimization.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=3.17.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\MathNet.Numerics.3.17.0\lib\net40\MathNet.Numerics.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="MathNet.Numerics">
-      <HintPath>packages\MathNet.Numerics.3.7.0\lib\net40\MathNet.Numerics.dll</HintPath>
-    </Reference>
-    <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\NAudio.1.7.3\lib\net35\NAudio.dll</HintPath>
+    <Reference Include="NAudio, Version=1.8.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\NAudio.1.8.0\lib\net35\NAudio.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="RhinoCommon">
@@ -112,47 +101,26 @@
     <Reference Include="WindowsBase">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="ZedGraph, Version=5.1.6.417, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
-      <HintPath>packages\ZedGraph.5.1.6\lib\net35-Client\ZedGraph.dll</HintPath>
+    <Reference Include="ZedGraph, Version=5.1.7.430, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ZedGraph.5.1.7\lib\net35-Client\ZedGraph.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
-    <Compile Include="Pach_SP_IIR.cs" />
-    <Compile Include="Classes_Absorption_Matrices.cs" />
-    <Compile Include="Classes_Compact_FDTD.cs" />
-    <Compile Include="Classes_Compact_FDTD_Boundaries.cs" />
-    <Compile Include="Classes_Materials.cs" />
-    <Compile Include="Classes_Special.cs" />
-    <Compile Include="Classes_Absorption_Analytics.cs" />
-    <Compile Include="Classes_Medium_Props.cs" />
-    <Compile Include="Classes_VoxelGrid_PolyRefractive.cs" />
-    <Compile Include="Classes_RC_Scene.cs" />
+    <Compile Include="Pach_Props_Page.cs" />
+    <Compile Include="Rhino_RC_Scene.cs" />
     <Compile Include="Classes_RCVoxel.cs" />
-    <Compile Include="Classes_IO.cs" />
-    <Compile Include="FFTW_Interop.cs" />
-    <Compile Include="FFTW_Managed.cs" />
-    <Compile Include="ProgressBox.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ProgressBox.Designer.cs">
-      <DependentUpon>ProgressBox.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Pach_Properties.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Properties.Designer.cs">
-      <DependentUpon>Pach_Properties.cs</DependentUpon>
-    </Compile>
     <Compile Include="Pach_MapCustom.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Pach_MapCustom.Designer.cs">
       <DependentUpon>Pach_MapCustom.cs</DependentUpon>
     </Compile>
+    <Compile Include="Rhino_Absorption_Analytics.cs" />
+    <Compile Include="Rhino_Compact_FDTD.cs" />
+    <Compile Include="Rhino_Pach_Tools.cs" />
     <Compile Include="VoxelConduit.cs" />
-    <Compile Include="SrfSources.cs" />
     <Compile Include="Pach_Absorption_Designer.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -190,20 +158,8 @@
     <Compile Include="Pach_Visual_Control.Designer.cs">
       <DependentUpon>Pach_Visual_Control.cs</DependentUpon>
     </Compile>
-    <Compile Include="LineSources.cs" />
-    <Compile Include="Classes_Balloons.cs" />
-    <Compile Include="Classes_Complete_Trace.cs" />
-    <Compile Include="Classes_Direct.cs" />
-    <Compile Include="Classes_Edges.cs" />
-    <Compile Include="Classes_ImageSource.cs" />
-    <Compile Include="Classes_IS_Trace.cs" />
-    <Compile Include="Classes_Math.cs" />
+    <Compile Include="Rhino_Balloons.cs" />
     <Compile Include="Classes_Particles.cs" />
-    <Compile Include="Classes_Rays.cs" />
-    <Compile Include="Classes_Receivers.cs" />
-    <Compile Include="Classes_Scenes.cs" />
-    <Compile Include="Classes_Simulation_Type.cs" />
-    <Compile Include="Classes_Sources.cs" />
     <Compile Include="Pach_Obj_Props.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -213,10 +169,8 @@
     <Compile Include="GetModel.cs" />
     <Compile Include="Insert_Receiver_Command.cs" />
     <Compile Include="Insert_Source_Command.cs" />
-    <Compile Include="Materials.cs" />
     <Compile Include="Pachyderm_AcousticPlugIn.cs" />
     <Compile Include="Pachyderm_Acoustic_command.cs" />
-    <Compile Include="Pach_Graphics.cs" />
     <Compile Include="Pach_Hybrid_Control.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -226,9 +180,7 @@
     <Compile Include="Pach_Hybrid_UI_IO.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Pach_Map_Receiver.cs" />
     <Compile Include="Pach_RunSim_Command.cs" />
-    <Compile Include="Pach_SP.cs" />
     <Compile Include="ParticleConduit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -241,9 +193,6 @@
     </Compile>
     <Compile Include="Pach_Mapping_Control.Designer.cs">
       <DependentUpon>Pach_Mapping_Control.cs</DependentUpon>
-    </Compile>
-    <Compile Include="VisualizeGraph.cs">
-      <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -277,9 +226,6 @@
     <EmbeddedResource Include="Pach_Absorption_Designer.resx">
       <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Properties.resx">
-      <DependentUpon>Pach_Properties.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Pach_Auralisation.resx">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -290,9 +236,6 @@
     <EmbeddedResource Include="Pach_Hybrid_Control.resx">
       <DependentUpon>Pach_Hybrid_Control.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="ProgressBox.resx">
-      <DependentUpon>ProgressBox.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -311,9 +254,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Pach_Visual_Control.resx">
       <DependentUpon>Pach_Visual_Control.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="VisualizeGraph.resx">
-      <DependentUpon>VisualizeGraph.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -340,6 +280,12 @@
     <Content Include="Resources\Icon1.png" />
     <Content Include="Resources\Source.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj">
+      <Project>{95032bc9-057a-42e1-a698-82a64db1a360}</Project>
+      <Name>Pachyderm_Acoustic_Universal</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -350,7 +296,7 @@
   -->
   <PropertyGroup>
     <PostBuildEvent>Copy "$(TargetPath)" "$(TargetDir)$(ProjectName).rhp"
-Copy "$(SolutionDir)Resources\libfftw3-3.dll" "$(TargetDir)"
+Copy "$(ProjectDir)Resources\libfftw3-3.dll" "$(TargetDir)"
 </PostBuildEvent>
     <PreBuildEvent>
     </PreBuildEvent>

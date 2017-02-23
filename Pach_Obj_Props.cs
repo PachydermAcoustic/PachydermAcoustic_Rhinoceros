@@ -226,7 +226,7 @@ namespace Pachyderm_Acoustic
                 TrnDet += Trn[7];
 
                 if (TrnDet < 1) Trn = new int[1];
-                MaterialCode = PachydermAc_PlugIn.EncodeAcoustics(Abs, Sct, Trn);
+                MaterialCode = Utilities.RC_PachTools.EncodeAcoustics(Abs, Sct, Trn);
 
                 UpdateValues();
             }
@@ -317,7 +317,7 @@ namespace Pachyderm_Acoustic
                             //And if there is a predefined value... 
                             if (Code != null)
                             {
-                                PachydermAc_PlugIn.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
+                                Utilities.RC_PachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
                                 MaterialCode = Code;
                                 Abs63.Value = (int)(Absorption[0] * 100);
                                 Abs125.Value = (int)(Absorption[1] * 100);

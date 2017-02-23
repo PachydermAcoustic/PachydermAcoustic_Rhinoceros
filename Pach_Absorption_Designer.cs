@@ -336,10 +336,10 @@ namespace Pachyderm_Acoustic
 
                 //for (int i = 0; i < IIR_spec.Length; i++) IIR_spec[i] *= mb / ms;
 
-                double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
+                ////double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
 
-                Alpha_Normal.Series[2].Points.Clear();
-                for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Series[2].Points.AddXY((double)(i + 1)* 16000 / alpha.Length, alpha[i]);
+                ////Alpha_Normal.Series[2].Points.Clear();
+                ////for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Series[2].Points.AddXY((double)(i + 1)* 16000 / alpha.Length, alpha[i]);
             }
 
             public Chart Polar_Plot()

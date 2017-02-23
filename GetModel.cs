@@ -56,6 +56,7 @@ namespace Pachyderm_Acoustic
             public double Atm_pressure = 0;
             public double Air_Temp = 0;
             public bool Edge_Freq = false;
+            public bool Register_Edges = false;
 
             public RhCommon_Scene Ret_NURBS_Scene;
             public Polygon_Scene Ret_Mesh_Scene;
@@ -84,7 +85,7 @@ namespace Pachyderm_Acoustic
                 {
                     Ret_NURBS_Scene = new RhCommon_Scene(RC_List, Air_Temp, Rel_Humidity, Atm_pressure, Atten_Choice, Edge_Freq, false);
                     if (!Ret_NURBS_Scene.Valid) return Rhino.Commands.Result.Failure;
-                    Ret_Mesh_Scene = new Polygon_Scene(RC_List, Air_Temp, Rel_Humidity, Atm_pressure, Atten_Choice, Edge_Freq, false);
+                    Ret_Mesh_Scene = new RhCommon_PolygonScene(RC_List, Register_Edges, Air_Temp, Rel_Humidity, Atm_pressure, Atten_Choice, Edge_Freq, false);
                     if (!Ret_Mesh_Scene.Valid) return Rhino.Commands.Result.Failure;
                 }
                 C_Result = Rhino.Commands.Result.Success;

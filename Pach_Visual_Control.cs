@@ -54,24 +54,22 @@ namespace Pachyderm_Acoustic
                 Calculate.Enabled = false;
                 PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
                 Scene Sc;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) Sc = PachTools.Get_NURBS_Scene(0, (double)Air_Temp.Value, 0, 0, false);
-                else Sc = PachTools.Get_Poly_Scene(0, (double)Air_Temp.Value, 0, 0, false);
+                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) Sc = RC_PachTools.Get_NURBS_Scene(0, (double)Air_Temp.Value, 0, 0, false);
+                else Sc = RC_PachTools.Get_Poly_Scene(0, false, (double)Air_Temp.Value, 0, 0, false);
                 
                 for (int i = 0; i < Source.Length; i++)
                 {
                     if (Source != null)
                     {
-                        List<Point3d> L = new List<Point3d>();
-                        List<Rhino.Geometry.Point3d> L_RC = new List<Rhino.Geometry.Point3d>();
+                        List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
                         for (int j = 0; j < Source.Length; j++)
                         {
                             L.Add(Source[j].Origin());
-                            L_RC.Add(new Rhino.Geometry.Point3d(Source[j].Origin().X, Source[j].Origin().Y, Source[j].Origin().Z));
                         }
 
                         if (plugin.Geometry_Spec() == 0)
                         {
-                            Sc.partition(L_RC, 15);
+                            Sc.partition(L, 15);
                             RTParticles[i] = new ParticleRays(Source[i], Sc, (int)RT_Count.Value, CutOffLength());
                         }
                         else if (plugin.Geometry_Spec() == 1)
@@ -177,7 +175,7 @@ namespace Pachyderm_Acoustic
 
                 max = (int)(Frame_Rate.Value * Seconds.Value);
 
-                Point3d[] SPT;
+                Hare.Geometry.Point[] SPT;
 
                 if (!plugin.SourceOrigin(out SPT))
                 {
@@ -206,7 +204,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];
-                List<Point3d> L = new List<Point3d>();
+                List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
                 for (int i = 0; i < Source.Length; i++)
                 {
                     L.Add(Source[i].Origin());
@@ -217,17 +215,18 @@ namespace Pachyderm_Acoustic
                     {
                         Model.Ret_NURBS_Scene.partition(L);
                         RTParticles[j] = new ParticleRays(Source[j], Model.Ret_NURBS_Scene, (int)RT_Count.Value, CutOffLength());
+                        PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_NURBS_Scene);
                     }
                     else
                     {
                         Model.Ret_Mesh_Scene.partition(L);
                         RTParticles[j] = new ParticleRays(Source[j], Model.Ret_Mesh_Scene, (int)RT_Count.Value, CutOffLength());
+                        PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_Mesh_Scene);
                     }
 
                     RTParticles[j].Begin();
                 }
 
-                PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_Mesh_Scene);
                 ForwButton.Enabled = true;
                 BackButton.Enabled = true;
                 Loop.Enabled = true;
@@ -287,7 +286,7 @@ namespace Pachyderm_Acoustic
                 }
                 if (MeshWave)
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), ((GeodesicMeshSource)Source[0]).GeoMesh);
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RC_PachTools.Hare_to_RhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
                 }
                 else
                 {
@@ -421,7 +420,7 @@ namespace Pachyderm_Acoustic
                     List<int> code = new List<int> { 0 };
                     List<Hare.Geometry.Point> Start;
                     //List<int> IDs = new List<int>();
-                    Ray.Add(PachTools.HPttoRPt(R.origin));
+                    Ray.Add(RC_PachTools.HPttoRPt(R.origin));
                     List<double> P = new List<double> { R.Intensity };
                     do
                     {
@@ -433,7 +432,7 @@ namespace Pachyderm_Acoustic
 
                             for (int i = 0; i < Start.Count; i++)
                             {
-                                Ray.Add(PachTools.HPttoRPt(Start[i]));
+                                Ray.Add(RC_PachTools.HPttoRPt(Start[i]));
                                 //IDs.Add(-1);
                                 R.Intensity *= Math.Pow(10,-.1 * Room.Attenuation(code[i])[5] * leg[i]);
                                 SumLength += leg[i];
@@ -495,7 +494,7 @@ namespace Pachyderm_Acoustic
                     }
                     while (SumLength < CutoffLength);
                     //Poly_ID.Add(IDs);
-                    if (SumLength > CutoffLength) Ray.Add(PachTools.HPttoRPt(R.origin));
+                    if (SumLength > CutoffLength) Ray.Add(RC_PachTools.HPttoRPt(R.origin));
                     RayList.Add(Ray);
                     Power.Add(P);
                 }
@@ -521,7 +520,7 @@ namespace Pachyderm_Acoustic
                     {
                         //energy *= Math.Pow(10,-.1 * Room.Attenuation[oct] * u) / (4 * Math.PI * u * u);
                         Point3d Point = RayList[Index].PointAt(q + ((u - (S_Length - Modifier)) / Modifier));
-                        energy = Power[Index][q] * Math.Pow(10,-.1 * Room.Attenuation(Utilities.PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier)  / (4*Math.PI * u * u);
+                        energy = Power[Index][q] * Math.Pow(10,-.1 * Room.Attenuation(RC_PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier)  / (4*Math.PI * u * u);
                         Next = RayList[Index][q + 1];
                         Result = Point;
                         return true;

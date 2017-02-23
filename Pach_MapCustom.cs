@@ -50,7 +50,7 @@ namespace Pachyderm_Acoustic
             {
                 Update_Scale();
                 ParaMesh P = Collection[MeshList.SelectedIndex];
-                Utilities.PachTools.CreateMap(P.M, Color_Selection.SelectedIndex, P.Params, (double)Param_Min.Value, (double)Param_Max.Value);
+                Utilities.RC_PachTools.CreateMap(P.M, Color_Selection.SelectedIndex, P.Params, (double)Param_Min.Value, (double)Param_Max.Value);
             }
 
             public static Pach_MapCustom Instance

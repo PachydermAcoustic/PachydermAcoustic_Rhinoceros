@@ -65,7 +65,6 @@ namespace Pachyderm_Acoustic
             private void Calculate_Click(object sender, System.EventArgs e)
             {
                 string SavePath = null;
-
                 CutoffTime = (double)this.CO_TIME.Value;
 
                 if (plugin.Save_Results())
@@ -87,7 +86,7 @@ namespace Pachyderm_Acoustic
 
                 IS_Data = null;
                 Direct_Data = null;
-                List<Point3d> RPT;
+                List<Hare.Geometry.Point> RPT;
 
                 if (!(plugin.Receiver(out RPT) && plugin.Source(out Source)))
                 {
@@ -95,7 +94,7 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                List<Point3d> SPT = new List<Point3d>();
+                List<Hare.Geometry.Point> SPT = new List<Hare.Geometry.Point>();
                 foreach (Source S in Source)
                 {
                     S.AppendPts(ref SPT);
@@ -106,11 +105,11 @@ namespace Pachyderm_Acoustic
                 Calculate.Enabled = false;
                 IS_Path_Box.Items.Clear();
 
-                List<Point3d> P = new List<Point3d>();
+                List<Hare.Geometry.Point> P = new List<Hare.Geometry.Point>();
                 P.AddRange(RPT);
                 P.AddRange(SPT);
 
-                Polygon_Scene PScene = Utilities.PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                Polygon_Scene PScene = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, this.BTM_ED.Checked, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                 if (PScene == null || !PScene.Complete)
                 {
                     CancelCalc();
@@ -118,6 +117,15 @@ namespace Pachyderm_Acoustic
                 }
                 PScene.partition(P);
 
+                ////////////////////////////////////////////////
+                //in order to check coefficients for all polygons
+                //for (int i = 0; i < PScene.Count(); i++)
+                //{
+                //    Hare.Geometry.Point p = PScene.polygon_centroid(i);
+                //    double coef = PScene.AbsorptionValue[i].Coefficient_A_Broad(4);
+                //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
+                //}
+                ////////////////////////////////////////////////
                 ///////////////
                 if (BTM_ED.Checked) PScene.Register_Edges(SPT, RPT);
                 ///////////////
@@ -125,7 +133,7 @@ namespace Pachyderm_Acoustic
                 Scene Flex_Scene;
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0)
                 {
-                    RhCommon_Scene NScene = Utilities.PachTools.Get_NURBS_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                    RhCommon_Scene NScene = RC_PachTools.Get_NURBS_Scene((double)Rel_Humidity.Value, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                     if (!NScene.Complete)
                     {
                         CancelCalc();
@@ -233,12 +241,12 @@ namespace Pachyderm_Acoustic
 
                 if (Source != null)
                 {
-                    List<Point3d> R;
+                    List<Hare.Geometry.Point> R;
                     plugin.Receiver(out R);
                     Recs = new Hare.Geometry.Point[R.Count];
                     for (int q = 0; q < R.Count; q++)
                     {
-                        Recs[q] = PachTools.RPttoHPt(R[q]);
+                        Recs[q] = R[q];
                     }
 
                     if (SavePath != null) Utilities.FileIO.Write_Pac1(SavePath, Direct_Data, IS_Data, Receiver);
@@ -485,7 +493,7 @@ namespace Pachyderm_Acoustic
                     Trn[7] = (int)Trans_8k_Out.Value;
                 }
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
-                layer.SetUserString("Acoustics", PachydermAc_PlugIn.EncodeAcoustics(Abs, Sct, Trn));
+                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Sct, Trn));
                 Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
             }
 
@@ -565,7 +573,7 @@ namespace Pachyderm_Acoustic
                     double[] Abs = new double[8];
                     double[] Sct = new double[8];
                     double[] Trn = new double[1];
-                    PachydermAc_PlugIn.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
+                    RC_PachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
                     Abs63.Value = (int)(Abs[0] * 100);
                     Abs125.Value = (int)(Abs[1] * 100);
                     Abs250.Value = (int)(Abs[2] * 100);
@@ -1533,7 +1541,12 @@ namespace Pachyderm_Acoustic
                     {
                         //Polyline P = IS_Data[s].GetPLINE(pathid, int.Parse(Receiver_Choice.Text));
                         //if (P == null) continue;
-                        foreach( Polyline P in Path.PolyLine) ShownPaths.Add(Rhino.RhinoDoc.ActiveDoc.Objects.AddPolyline(P));
+                        foreach (Hare.Geometry.Point[] P in Path.Path)
+                        {
+                            List<Point3d> pts = new List<Point3d>();
+                            foreach (Hare.Geometry.Point p in P) pts.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                            ShownPaths.Add(Rhino.RhinoDoc.ActiveDoc.Objects.AddPolyline(new Polyline(pts)));
+                        }
                     }
                 }
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
@@ -1694,7 +1707,7 @@ namespace Pachyderm_Acoustic
                     
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
-                    if (Receiver_Choice.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
+                    if (Receiver_Choice.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch(Exception x)
@@ -1733,7 +1746,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
                 double azi, alt;
 
-                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), true, out alt, out azi);
+                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
 
                 Alt_Choice.Value = (decimal)alt;
                 Azi_Choice.Value = (decimal)azi;
