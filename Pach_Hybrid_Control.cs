@@ -36,7 +36,30 @@ namespace Pachyderm_Acoustic
             public Pach_Hybrid_Control()
             {
                 InitializeComponent();
+                Load_Library();
                 Instance = this;
+                Rhino.RhinoDoc.LayerTableEvent += Load_Library_Event;
+            }
+
+            private void Load_Library_Event(object sender, Rhino.DocObjects.Tables.LayerTableEventArgs e)
+            {
+                Load_Library();
+            }
+
+            private void Load_Library()
+            {
+                    string Selection = LayerDisplay.Text;
+                    LayerNames.Clear();
+
+                    for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
+                    {
+                        if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name);
+                    }
+                    LayerDisplay.Items.Clear();
+                    LayerDisplay.Items.AddRange(LayerNames.ToArray());
+                    LayerDisplay.Text = Selection;
+                    Material_Lib.Items.Clear();
+                    Material_Lib.Items.AddRange(Materials.Names().ToArray());
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -387,6 +410,13 @@ namespace Pachyderm_Acoustic
 
             private void SaveAbs_Click(object sender, EventArgs e)
             {
+                foreach (Material MAT in Materials)
+                {
+                    if (!string.Equals(MAT.Name, Material_Name.Text, StringComparison.OrdinalIgnoreCase)) continue;
+                    System.Windows.Forms.MessageBox.Show("The material name " + Material_Name.Text + " already exists in the materials library. Please choose a different name.", "Material Name Error", MessageBoxButtons.OK);
+                    return;
+                }
+
                 double[] Abs = new double[8];
                 Abs[0] = (double)Abs63Out.Value / 100;
                 Abs[1] = (double)Abs125Out.Value / 100;
@@ -397,21 +427,28 @@ namespace Pachyderm_Acoustic
                 Abs[6] = (double)Abs4kOut.Value / 100;
                 Abs[7] = (double)Abs8kOut.Value / 100;
 
-                Materials.Add_Unique(Material_Name.Text, Abs);
+                Materials.Add(new Material(Material_Name.Text, Abs));
+                Material_Lib.Items.Add(Material_Name.Text);
                 Materials.Save_Library();
 
-                Material_Lib.Items.Clear();
-                Material_Lib.Items.AddRange(Materials.Names().ToArray());
+                Load_Library();
+
+                //Materials.Add_Unique(Material_Name.Text, Abs);
+                //Materials.Save_Library();
+
+                //Material_Lib.Items.Clear();
+                //Material_Lib.Items.AddRange(Materials.Names().ToArray());
             }
 
             private void Delete_Material_Click(object sender, EventArgs e)
             {
-                string choice = (string)Material_Lib.SelectedItem;
-                Materials.Delete(choice);
+                int si = Material_Lib.SelectedIndex;
+                if (si < 0) return;
+                Materials.RemoveAt(si);
+                Material_Lib.Items.RemoveAt(si);
                 Materials.Save_Library();
 
-                Material_Lib.Items.Clear();
-                Material_Lib.Items.AddRange(Materials.Names().ToArray());
+                Load_Library();
             }
 
             private void Apply_Material_Click(object sender, EventArgs e)
@@ -902,9 +939,10 @@ namespace Pachyderm_Acoustic
                 {
                     Receiver_Choice.Items.Clear();
 
-                    if (Receiver != null && Receiver.Length > 0 && Receiver[0] != null)
+
+                    if (Direct_Data != null && Direct_Data[0] != null)
                     {
-                        for (int i = 0; i < Receiver[0].Count; i++)
+                        for (int i = 0; i < Direct_Data[0].Rec_Origin.Count(); i++)
                         {
                             Receiver_Choice.Items.Add(i.ToString());
                         }
@@ -915,24 +953,24 @@ namespace Pachyderm_Acoustic
                     }
                     if (Direct_Data != null && Direct_Data.Length > 0 && Direct_Data[0] != null) Update_Graph(null, new System.EventArgs());
                 }
-                else if (Tabs.SelectedTab.Text == "Materials")
-                {
-                    Materials.Load_Library();
-                    Rhino.DocObjects.Tables.LayerTable layers = Rhino.RhinoDoc.ActiveDoc.Layers;
-                    string Selection = LayerDisplay.Text;
-                    LayerNames.Clear(); 
-                
-                    for (int q = 0; q < layers.Count; q++)
-                    {
-                        LayerNames.Add(layers[q].Name);
-                    }
-                    LayerDisplay.Items.Clear();
-                    LayerDisplay.Items.AddRange(LayerNames.ToArray());
-                    LayerDisplay.Text = Selection;
-                    Material_Lib.Items.Clear();
-                    Material_Lib.Items.AddRange(Materials.Names().ToArray());
-                    LayerDisplay.Text = Rhino.RhinoDoc.ActiveDoc.Layers.CurrentLayer.Name;
-                }
+                //else if (Tabs.SelectedTab.Text == "Materials")
+                //{
+                //    Materials.Load_Library();
+                //    Rhino.DocObjects.Tables.LayerTable layers = Rhino.RhinoDoc.ActiveDoc.Layers;
+                //    string Selection = LayerDisplay.Text;
+                //    LayerNames.Clear(); 
+
+                //    for (int q = 0; q < layers.Count; q++)
+                //    {
+                //        LayerNames.Add(layers[q].Name);
+                //    }
+                //    LayerDisplay.Items.Clear();
+                //    LayerDisplay.Items.AddRange(LayerNames.ToArray());
+                //    LayerDisplay.Text = Selection;
+                //    Material_Lib.Items.Clear();
+                //    Material_Lib.Items.AddRange(Materials.Names().ToArray());
+                //    LayerDisplay.Text = Rhino.RhinoDoc.ActiveDoc.Layers.CurrentLayer.Name;
+                //}
                 else if (Tabs.SelectedTab.Text == "Processing")
                 {
                     Update_Graph(null, new System.EventArgs());

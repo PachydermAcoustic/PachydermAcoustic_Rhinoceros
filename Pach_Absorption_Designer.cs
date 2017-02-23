@@ -245,7 +245,14 @@ namespace Pachyderm_Acoustic
                     if (Fin_Sample.Checked) { foreach (double a in RI_Absorption) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10) / 10; }
                     foreach (double a in sm.NI_Coef) if (Alpha_Normal.ChartAreas[0].AxisY.Maximum < a) Alpha_Normal.ChartAreas[0].AxisY.Maximum = Math.Ceiling(a * 10) / 10;
 
-                    for(int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
+                    if (Direction_choice.SelectedIndex == 0)
+                    {
+                        for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], AbsorptionModels.Operations.Absorption_Coef(sm.Reflection_Coefficient[Direction_choice.SelectedIndex + 17][i]));//sm.NI_Coef[i]);
+                    }
                     
                     for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
                 }
@@ -266,7 +273,6 @@ namespace Pachyderm_Acoustic
 
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
-
 
                     //Z graph...
                     RI_Absorption = new double[8];
@@ -296,7 +302,7 @@ namespace Pachyderm_Acoustic
 
                     for (int i = 0; i < sm.frequency.Length; i++)
                     {
-                        TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[19][i]).Real;                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
+                        TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[Direction_choice.SelectedIndex + 17][i]).Real;                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
                         max = Math.Max(TL[i], max);
                     }
 
@@ -308,39 +314,39 @@ namespace Pachyderm_Acoustic
                 //Estimate_IIR();
             }
 
-            public void Estimate_IIR()
-            {
-                //Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
-                //for (int i = 0; i < IR.Length; i++) IR[i] = IR[i].Real;
-                //Complex[] R = Audio.Pach_SP.IIR_Design.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
+            //public void Estimate_IIR()
+            //{
+            //    //Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
+            //    //for (int i = 0; i < IR.Length; i++) IR[i] = IR[i].Real;
+            //    //Complex[] R = Audio.Pach_SP.IIR_Design.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
 
-                //Complex[] a, b;
-                //Audio.Pach_SP.IIR_Design.Yule_Walker(R, out a, out b);
+            //    //Complex[] a, b;
+            //    //Audio.Pach_SP.IIR_Design.Yule_Walker(R, out a, out b);
 
-                double[] a, b;
-                Complex[] RefSpectrum = sm.Reflection_Coefficient[18];
-                Audio.Pach_SP.IIR_Design.OptimizeIIR(RefSpectrum, 16000, (int)IIR_Order.Value, out a, out b);
+            //    double[] a, b;
+            //    Complex[] RefSpectrum = sm.Reflection_Coefficient[18];
+            //    Audio.Pach_SP.IIR_Design.OptimizeIIR(RefSpectrum, 16000, (int)IIR_Order.Value, out a, out b);
 
-                Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b),new List<double>(a), sm.frequency);
-                //Audio.Pach_SP.IIR_Design.SpectrumFromIIR(a, b, 16000, 4096);
+            //    Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b),new List<double>(a), sm.frequency);
+            //    //Audio.Pach_SP.IIR_Design.SpectrumFromIIR(a, b, 16000, 4096);
 
-                double corr = Audio.Pach_SP.IIR_Design.CrossCorrelation_Coef(RefSpectrum, IIR_spec).Real;
+            //    double corr = Audio.Pach_SP.IIR_Design.CrossCorrelation_Coef(RefSpectrum, IIR_spec).Real;
 
-                Rhino.RhinoApp.WriteLine(string.Format("Correlation: {0}", corr));
+            //    Rhino.RhinoApp.WriteLine(string.Format("Correlation: {0}", corr));
 
-                //Normalize
-                //double ms = 0;
-                //foreach (Complex s in IIR_spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
-                //double mb = 0;
-                //foreach (Complex s in RefSpectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
+            //    //Normalize
+            //    //double ms = 0;
+            //    //foreach (Complex s in IIR_spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
+            //    //double mb = 0;
+            //    //foreach (Complex s in RefSpectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
 
-                //for (int i = 0; i < IIR_spec.Length; i++) IIR_spec[i] *= mb / ms;
+            //    //for (int i = 0; i < IIR_spec.Length; i++) IIR_spec[i] *= mb / ms;
 
-                ////double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
+            //    double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
 
-                ////Alpha_Normal.Series[2].Points.Clear();
-                ////for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Series[2].Points.AddXY((double)(i + 1)* 16000 / alpha.Length, alpha[i]);
-            }
+            //    Alpha_Normal.Series[2].Points.Clear();
+            //    for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Series[2].Points.AddXY((double)(i + 1)* 16000 / alpha.Length, alpha[i]);
+            //}
 
             public Chart Polar_Plot()
             {
@@ -420,7 +426,7 @@ namespace Pachyderm_Acoustic
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.AirSpace, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
                         break;
                     case 1:
-                        LayerList.Items.Add( ABS_Layer.CreateBiot(false, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value ));
+                        LayerList.Items.Add( ABS_Layer.CreateBiot(true, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value ));
                         break;
                     case 2:
                         LayerList.Items.Add(new ABS_Layer(ABS_Layer.LayerType.PorousDB, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100));
@@ -599,6 +605,11 @@ namespace Pachyderm_Acoustic
             {
                 if (Rigid_Term.Checked) { label21.Text = "-- Rigid Substrate (Infinite Impedance) --"; }
                 else { label21.Text = "-- Receiving Sppce (Semi-Infinite Air Medium) -- "; }
+            }
+
+            private void Direction_choice_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                Update_Graphs();
             }
         }
     }

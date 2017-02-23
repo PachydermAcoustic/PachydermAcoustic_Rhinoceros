@@ -109,6 +109,7 @@ namespace Pachyderm_Acoustic
                 double[] e = new double[PR.Length * PR[0].Count()];
                 Point3d[] pts = new Point3d[PR.Length * PR[0].Count()];
                 int[][] voxel = new int[e.Length][];
+                double emin = System.Math.Pow(10, V_Bounds[0] / 10) * 1e-12;
 
                 for (int s = 0; s < PR.Length; s++)
                 {
@@ -143,29 +144,32 @@ namespace Pachyderm_Acoustic
                     System.Threading.Tasks.Parallel.For(0, pts.Length, s =>
                     //for (int s = 0; s < pts.Length; s++)
                     {
-                        if (voxel[s] != null)
+                        if (e[s] > emin)
                         {
-                            double energy = e[s];
-                            foreach (int[] sp in SearchPattern)
+                            if (voxel[s] != null)
                             {
-                                int x = voxel[s][0] + sp[0];
-                                int y = voxel[s][1] + sp[1];
-                                int z = voxel[s][2] + sp[2];
-                                if (x < 0 || x > nx - 1 || y < 0 || y > ny - 1 || z < 0 || z > nz - 1) continue;
-                                foreach (int t in ptgrid[x, y, z])
+                                double energy = e[s];
+                                foreach (int[] sp in SearchPattern)
                                 {
-                                    if (s == t) continue;
-                                    Vector3d pt = pts[s] - pts[t];
-                                    double d2 = pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z;
-                                    if (d2 < 1)
+                                    int x = voxel[s][0] + sp[0];
+                                    int y = voxel[s][1] + sp[1];
+                                    int z = voxel[s][2] + sp[2];
+                                    if (x < 0 || x > nx - 1 || y < 0 || y > ny - 1 || z < 0 || z > nz - 1) continue;
+                                    foreach (int t in ptgrid[x, y, z])
                                     {
-                                        energy += e[t] * (1 - d2);
+                                        if (s == t) continue;
+                                        Vector3d pt = pts[s] - pts[t];
+                                        double d2 = pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z;
+                                        if (d2 < 1)
+                                        {
+                                            energy += e[t] * (1 - d2);
+                                        }
                                     }
                                 }
+                                S.WaitOne();
+                                PC.Add(pts[s], P_Color(Utilities.AcousticalMath.SPL_Intensity(energy)));
+                                S.Release();
                             }
-                            S.WaitOne();
-                            PC.Add(pts[s], P_Color(Utilities.AcousticalMath.SPL_Intensity(energy)));
-                            S.Release();
                         }
                     });
                     foreach (List<int> p in ptgrid)
@@ -276,7 +280,7 @@ namespace Pachyderm_Acoustic
                     ct++;
                     DisplayMesh.Add(M[0][X[x]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(2 * X[x] * dx / Utilities.Numerics.rt2, 0,0);
+                    DisplayMesh[ct].Translate((X[x] * dx), 0,0);
                 }
 
                 for (int y = 0; y < Y.Length; y++)
@@ -284,7 +288,7 @@ namespace Pachyderm_Acoustic
                     ct++;
                     DisplayMesh.Add(M[1][Y[y]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(0, 2 * Y[y] * dx,0);
+                    DisplayMesh[ct].Translate(0, Y[y] * dx * Utilities.Numerics.rt2, 0);
                 }
 
                 for (int z = 0; z < Z.Length; z++)
@@ -292,7 +296,7 @@ namespace Pachyderm_Acoustic
                     ct++;
                     DisplayMesh.Add(M[2][Z[z]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
-                    DisplayMesh[ct].Translate(0, 0, 2 * Z[z] * dx);
+                    DisplayMesh[ct].Translate(0, 0, Z[z] * dx * Utilities.Numerics.rt2);
                 }
 
                 if (ct != pressure.Count-1) throw new System.Exception("Input of unmatched pairs - Display of Mesh Plans.");

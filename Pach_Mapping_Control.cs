@@ -363,7 +363,7 @@ namespace Pachyderm_Acoustic
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
                             if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
-                        }
+                        } 
                         break;
                     case "Speech Transmission Index - Male":
                         if (Map != null)
@@ -598,6 +598,8 @@ namespace Pachyderm_Acoustic
                 {
                     SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
                 }
+
+                WC = new WaveConduit(c_scale, new double[] { Current_SPLMin, Current_SPLMax });
             }
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)
