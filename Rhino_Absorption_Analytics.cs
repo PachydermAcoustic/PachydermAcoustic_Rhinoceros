@@ -152,7 +152,6 @@ namespace Pachyderm_Acoustic
 
                 return Zr;
             }
-
         }
     }
 }

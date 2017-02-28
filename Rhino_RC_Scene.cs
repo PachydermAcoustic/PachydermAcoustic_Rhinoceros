@@ -1173,6 +1173,23 @@ namespace Pachyderm_Acoustic
                 return false;
             }
 
+            public override bool shoot(Ray R, int topo, out X_Event Xpt)
+            {
+                double u, v, t;
+                int id;
+                Hare.Geometry.Point Pt;
+                bool success = shoot(R, out u, out v, out id, out Pt, out t);
+                if (success)
+                {
+                    Xpt = new X_Event(Pt, u, v, t, id);
+                }
+                else
+                {
+                    Xpt = new X_Event();
+                }
+                return success;
+            }
+
             public bool shoot(Point3d Start, Vector3d Dir, int Random, out double u, out double v, out int Srf_ID, out List<Point3d> X_PT, out List<double> t, out List<int> Code)
             {
                 S_Origin = new Point3d(Start);

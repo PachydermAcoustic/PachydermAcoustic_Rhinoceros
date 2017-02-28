@@ -15,11 +15,17 @@ namespace Pachyderm_Acoustic
                 public Rhino.Geometry.Mesh[] m_templateX, m_templateY, m_templateZ;
 
                 public Acoustic_Compact_FDTD_RC(Environment.Polygon_Scene Rm_in, ref Signal_Driver_Compact S_in, ref Microphone_Compact M_in, double fmax_in, double tmax_in)
-                    : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in)
+                    : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, new Hare.Geometry.Point(), 0, 0, 0)
                 {
-                    //Make Mesh Templates:
                     Build_Mesh_Sections();
                 }
+
+                public Acoustic_Compact_FDTD_RC(Environment.Polygon_Scene Rm_in, ref Signal_Driver_Compact S_in, ref Microphone_Compact M_in, double fmax_in, double tmax_in, GridType GT, Hare.Geometry.Point SampleOrigin, double MindimX, double MindimY, double MindimZ)
+                : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, SampleOrigin, MindimX, MindimY, MindimZ)
+                {
+                    Build_Mesh_Sections();
+                }
+
 
                 private void Build_Mesh_Sections()
                 {
@@ -36,6 +42,8 @@ namespace Pachyderm_Acoustic
 
                     double rt2 = Math.Sqrt(2);
 
+                    Hare.Geometry.Point min = RDD_Location(Bounds.Min_PT, 0, 0, 0, dx, dy, dz);
+
                     for (int i = 0; i < 2; i++)
                     {
                         ct = -1;
@@ -44,7 +52,8 @@ namespace Pachyderm_Acoustic
                             for (int z = 0; z < PFrame[i][y].Length; z++)
                             {
                                 ct++;
-                                Rhino.Geometry.Point3d pt = new Rhino.Geometry.Point3d(PFrame[0][0][0].Pt.x, PFrame[i][y][z].Pt.y, PFrame[i][y][z].Pt.z);
+                                Rhino.Geometry.Point3d pt = Utilities.RC_PachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, i, y, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[0][0][0].Pt.x, PFrame[i][y][z].Pt.y, PFrame[i][y][z].Pt.z);
+                                pt.X = min.x;
                                 m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, dy, dz)));
                                 m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, dy, -dz)));
                                 m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, -dy, -dz)));
@@ -61,7 +70,8 @@ namespace Pachyderm_Acoustic
                             for (int z = 0; z < PFrame[x][i].Length; z++)
                             {
                                 ct++;
-                                Rhino.Geometry.Point3d pt = new Rhino.Geometry.Point3d(PFrame[x][i][z].Pt.x, PFrame[0][0][0].Pt.y, PFrame[x][i][z].Pt.z);
+                                Rhino.Geometry.Point3d pt = Utilities.RC_PachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, i, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][i][z].Pt.x, PFrame[0][0][0].Pt.y, PFrame[x][i][z].Pt.z);
+                                pt.Y = min.y;
                                 m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(2 * dx / rt2, 0, 0)));
                                 m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, -dz)));
                                 m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(2 * -dx / rt2, 0, 0)));
@@ -79,8 +89,8 @@ namespace Pachyderm_Acoustic
                             {
                                 ct++;
 
-                                Rhino.Geometry.Point3d pt = new Rhino.Geometry.Point3d(PFrame[x][y][i].Pt.x, PFrame[x][y][i].Pt.y, PFrame[0][0][0].Pt.z);
-
+                                Rhino.Geometry.Point3d pt = Utilities.RC_PachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, y, i, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][y][i].Pt.x, PFrame[x][y][i].Pt.y, PFrame[0][0][0].Pt.z);
+                                pt.Z = min.z;
                                 m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(2 * dx / rt2, 0, 0)));
                                 m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, -dy, 0)));
                                 m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(-2 * dx / rt2, 0, 0)));
