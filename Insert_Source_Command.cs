@@ -15,7 +15,6 @@
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
-
 using System;
 using System.Drawing;
 using System.Collections.Generic;
@@ -412,8 +411,6 @@ namespace Pachyderm_Acoustic
                 new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}},
                 new double[][]{new double[]{41.022542,10.013879,67,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005},
                 new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}}}};
-
-
 
             ///<summary> This gets called when when the user runs this command.</summary> 
             protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
@@ -919,6 +916,7 @@ namespace Pachyderm_Acoustic
                             Rhino.Geometry.Curve crv = (rhobj.Geometry as Rhino.Geometry.Curve);
                             Rhino.Geometry.Point3d[] pts;
                             double[] par = crv.DivideByLength(10, true, out pts);
+                            if (par == null || par.Length == 0) par = crv.DivideByCount(2, true, out pts);
 
                             for(int i = 0; i < par.Length; i++)
                             {
@@ -943,7 +941,6 @@ namespace Pachyderm_Acoustic
                                 e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
                                 e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt1.X, (int)screen_pt1.Y + 40), false, 12, "Arial");
                             }
-
                         }
                     }
                     index++;

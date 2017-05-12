@@ -21,7 +21,6 @@ namespace Pachyderm_Acoustic
             {
                 get
                 {
-                    //if ((pprops == null)) pprops = new Pach_Properties();
                     return Pach_Properties.Instance;
                 }
             }

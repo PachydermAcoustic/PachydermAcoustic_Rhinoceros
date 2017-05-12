@@ -33,12 +33,14 @@ namespace Pachyderm_Acoustic
         public class PachydermAc_PlugIn : Rhino.PlugIns.PlugIn
         {
             public static Guid Instance_ID = Guid.NewGuid();
+            public Pach_Properties Pach_Props;
 
             public PachydermAc_PlugIn()
             {
                 new SourceConduit();
                 new ReceiverConduit();
                 new CellConduit();
+                Pach_Props = Pach_Properties.Instance;
                 Audio.Pach_SP.Initialize_FFTW();
                 System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
                 Instance = this;
@@ -238,16 +240,16 @@ namespace Pachyderm_Acoustic
                         {
                             case "":
                             case "0":
-                                S[id] = new Environment.GeodesicSource(SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
+                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
                                 break;
                             case "1":
-                                S[id] = new Environment.RandomSource(SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
+                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
                                 break;
                             case "2":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
                                 string[] B = Bands.Split(';');
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.SpeakerSource(SC.m_Balloons[id], SWL_Values, phase, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
+                                S[id] = new Environment.SpeakerSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
                                 break;
                         }
                     }
@@ -275,20 +277,24 @@ namespace Pachyderm_Acoustic
                     {
                         string SWL = Origin.Geometry.GetUserString("SWL");
                         
-                        string Ph = Origin.Geometry.GetUserString("Phase");
-                        double[] phase = new double[8];
-                        if (Ph != "")
-                        {
-                            string[] phstr = Ph.Split(";"[0]);
-                            for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
-                        }
+                        //string Ph = Origin.Geometry.GetUserString("Phase");
+                        //double[] phase = new double[8];
+                        //if (Ph != "")
+                        //{
+                        //    string[] phstr = Ph.Split(";"[0]);
+                        //    for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
+                        //}
 
-                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1 / 4);
+                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1d / 4d);
+                        if (pts == null || pts.Length == 0) pts = new Point3d[1] { (Origin.Geometry as Curve).PointAtNormalizedLength(0.5) };
                         Hare.Geometry.Point[] Samples = new Hare.Geometry.Point[pts.Length];
 
-                        for (int i = 0; i < pts.Length; i++) Samples[i] = Utilities.RC_PachTools.RPttoHPt(pts[i]);
-
-                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, Environment.Source.Phase_Regime.Random);                         
+                        for (int i = 0; i < pts.Length; i++)
+                        {
+                            //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(pts[i]);
+                            Samples[i] = Utilities.RC_PachTools.RPttoHPt(pts[i]);
+                        }
+                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, Environment.Source.Phase_Regime.PhaseRandom);                         
                     }
                 }
                 if (S == null) return false;

@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
+using Rhino.Display;
 
 namespace Pachyderm_Acoustic
 {
@@ -174,6 +175,10 @@ namespace Pachyderm_Acoustic
                 if (Map != null)
                 {
                     Create_Map(false);
+                }
+                else
+                {
+                    Receiver_Selection.Maximum = Map[0].Count;
                 }
 
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day!");
@@ -698,6 +703,173 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            private void Update_Graph(object sender, EventArgs e)
+            {
+                Analysis_View.GraphPane.CurveList.Clear();
+
+                int REC_ID = (int)Receiver_Selection.Value;
+                try
+                {
+                    int SampleRate = Map[0].SampleRate;
+                    //if (Receiver_Choice.Text == "No Results Calculated...") return;
+                    //REC_ID = int.Parse(Receiver_Choice.Text);
+
+                    int OCT_ID = PachTools.OctaveStr2Int(Graph_Octave.Text);
+                    Analysis_View.GraphPane.Title.Text = "Logarithmic Energy Time Curve";
+                    Analysis_View.GraphPane.XAxis.Title.Text = "Time (seconds)";
+                    Analysis_View.GraphPane.YAxis.Title.Text = "Sound Pressure Level (dB)";
+
+                    List<int> SrcIDs = new List<int>();
+                    foreach (int i in SourceList.CheckedIndices) SrcIDs.Add(i);
+
+                    double[] Filter;
+                    double[] Schroeder;
+                    double[] Filter2;
+                    int zero_sample = 0;
+                    switch (Graph_Type.Text)
+                    {
+                        case "Energy Time Curve":
+                            Filter = AcousticalMath.ETCurve(null, null, Map, (double)CO_TIME.Value, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false);
+                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                            break;
+                        //case "Pressure Time Curve":
+                        //    zero_sample = 4096 / 2;
+                        //    Filter2 = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                        //    {
+                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                        //    }
+                        //    Filter = new double[Filter2.Length];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Lateral ETC":
+                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Lateral PTC":
+                        //    zero_sample = 4096 / 2;
+                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                        //    {
+                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                        //    }
+                        //    Filter = new double[Filter2.Length];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Vertical ETC":
+                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Vertical PTC":
+                        //    zero_sample = 4096 / 2;
+                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                        //    {
+                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                        //    }
+                        //    Filter = new double[Filter2.Length];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Fore-Aft ETC":
+                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        //case "Fore-Aft PTC":
+                        //    zero_sample = 4096 / 2;
+                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
+                        //    {
+                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
+                        //    }
+                        //    Filter = new double[Filter2.Length];
+                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
+                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
+                        //    break;
+                        default:
+                            throw new NotImplementedException();
+                    }
+                    //Get the maximum value of the Direct Sound
+
+                    Filter = AcousticalMath.SPL_Intensity_Signal(Filter);
+                    Schroeder = AcousticalMath.SPL_Intensity_Signal(Schroeder);
+
+                    double DirectMagnitude = 0;
+                    for (int j = 0; j < Filter.Length; j++)
+                    {
+                        if (Filter[j] > DirectMagnitude) DirectMagnitude = Filter[j];
+                    }
+                    
+                    if (Normalize_Graph.Checked)
+                    {
+                        Filter = Utilities.AcousticalMath.Normalize_Function(Filter);
+                        Schroeder = Utilities.AcousticalMath.Normalize_Function(Schroeder);
+                    }
+
+                    double[] time = new double[Filter.Length];
+                    for (int i = 0; i < Filter.Length; i++)
+                    {
+                        time[i] = (double)(i - zero_sample) / SampleRate;
+                    }
+
+                    Analysis_View.GraphPane.AddCurve("Schroeder Integral", time, Schroeder, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
+                    Analysis_View.GraphPane.AddCurve("Logarithmic Energy Time Curve", time, Filter, System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
+
+                    if (!LockUserScale.Checked)
+                    {
+                        Analysis_View.GraphPane.XAxis.Scale.Max = time[time.Length - 1];
+                        Analysis_View.GraphPane.XAxis.Scale.Min = time[0];
+
+                        if (Normalize_Graph.Checked)
+                        {
+                            Analysis_View.GraphPane.YAxis.Scale.Max = 0;
+                            Analysis_View.GraphPane.YAxis.Scale.Min = -100;
+                        }
+                        else
+                        {
+                            Analysis_View.GraphPane.YAxis.Scale.Max = DirectMagnitude + 15;
+                            Analysis_View.GraphPane.YAxis.Scale.Min = 0;
+                        }
+                    }
+                    else
+                    {
+                        double max = Analysis_View.GraphPane.YAxis.Scale.Max;
+                        double min = Analysis_View.GraphPane.YAxis.Scale.Min;
+
+                        if (Normalize_Graph.Checked)
+                        {
+                            Analysis_View.GraphPane.YAxis.Scale.Max = max;
+                            Analysis_View.GraphPane.YAxis.Scale.Min = min;
+                        }
+                        else
+                        {
+                            Analysis_View.GraphPane.YAxis.Scale.Max = max;
+                            Analysis_View.GraphPane.YAxis.Scale.Min = min;
+                        }
+                    }
+
+                    //Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
+
+                    //if (Receiver_Choic.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
+                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                }
+                catch (Exception x)
+                {
+                    System.Windows.Forms.MessageBox.Show(x.Message);
+                    return;
+                }
+
+                Analysis_View.AxisChange();
+                Analysis_View.Invalidate();
+                //Update_Parameters();
+            }
+
+
             private void Param_MouseUp(object sender, MouseEventArgs e)
             {
                 Commit_Param_Bounds();
@@ -894,6 +1066,46 @@ namespace Pachyderm_Acoustic
                 {
                     Folder_Status.Text = FileLocation.SelectedPath;
                 }
+            }
+
+
+            public class Map_indicator : Rhino.Display.DisplayConduit
+            {
+                Rhino.Geometry.Point3d PT;
+
+                public void setPoint(Rhino.Geometry.Point3d pt)
+                {
+                    PT = pt;
+                }
+
+                protected override void DrawForeground(DrawEventArgs e)
+                {
+                    if (PT == null) return;
+                    Rhino.Geometry.Point2d screen_pt = e.Display.Viewport.WorldToClient(PT);                    
+                    e.Display.Draw2dRectangle(new System.Drawing.Rectangle((int)screen_pt.X, (int)screen_pt.Y, 5, 5), System.Drawing.Color.Green, 2, System.Drawing.Color.Yellow);
+                    return;
+                }
+            }
+
+            Map_indicator ReceiverPointer = new Map_indicator();
+
+            private void ReceiverSelection_ValueChanged(object sender, EventArgs e)
+            {
+                if (Map == null || Map.Length < 1)
+                {
+                    Receiver_Selection.Value = 0;
+                    Receiver_Selection.Maximum = 0;
+                    ReceiverPointer.Enabled = false;
+                    return;
+                }
+
+                Receiver_Selection.Maximum = Map[0].Rec_List.Length;
+
+                if (SourceList.CheckedIndices.Count < 1) return;
+
+                ReceiverPointer.Enabled = true;
+                ReceiverPointer.setPoint(Utilities.RC_PachTools.HPttoRPt(Map[(int)(SourceList.CheckedIndices[0])].Origin((int)Receiver_Selection.Value)));
+                Update_Graph(sender, e);
             }
         }
     }
