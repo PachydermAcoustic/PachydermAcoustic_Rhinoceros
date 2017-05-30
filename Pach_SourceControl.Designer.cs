@@ -99,9 +99,9 @@ namespace Pachyderm_Acoustic
             this.Alt = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
             this.Delay_ms = new System.Windows.Forms.NumericUpDown();
-            this.SourceType = new System.Windows.Forms.DomainUpDown();
             this.Maximum = new System.Windows.Forms.Button();
             this.Sensitivity = new System.Windows.Forms.Button();
+            this.SourceType = new System.Windows.Forms.ComboBox();
             this.PowerTable.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Phase3)).BeginInit();
@@ -1062,18 +1062,6 @@ namespace Pachyderm_Acoustic
             this.Delay_ms.TabIndex = 5;
             this.Delay_ms.ValueChanged += new System.EventHandler(this.Delay_ms_ValueChanged);
             // 
-            // SourceType
-            // 
-            this.SourceType.Items.Add("Geodesic Directional Distribution");
-            this.SourceType.Items.Add("Pseudo-Random Directional Distribution");
-            this.SourceType.Items.Add("Common Loudspeaker Format");
-            this.SourceType.Location = new System.Drawing.Point(3, 4);
-            this.SourceType.Name = "SourceType";
-            this.SourceType.Size = new System.Drawing.Size(250, 20);
-            this.SourceType.TabIndex = 6;
-            this.SourceType.Text = "Geodesic Directional Distribution";
-            this.SourceType.SelectedItemChanged += new System.EventHandler(this.SourceType_DropDownClosed);
-            // 
             // Maximum
             // 
             this.Maximum.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -1098,15 +1086,31 @@ namespace Pachyderm_Acoustic
             this.Sensitivity.UseVisualStyleBackColor = true;
             this.Sensitivity.Click += new System.EventHandler(this.Sensitivity_Click);
             // 
+            // SourceType
+            // 
+            this.SourceType.Dock = System.Windows.Forms.DockStyle.Top;
+            this.SourceType.FormattingEnabled = true;
+            this.SourceType.Items.AddRange(new object[] {
+            "Geodesic Directional Distribution",
+            "Pseudo-Random Directional Distribution",
+            "Common Loudspeaker Format",
+            "Directional Source"});
+            this.SourceType.Location = new System.Drawing.Point(0, 0);
+            this.SourceType.Name = "SourceType";
+            this.SourceType.Size = new System.Drawing.Size(256, 21);
+            this.SourceType.TabIndex = 9;
+            this.SourceType.Text = "Geodesic Directional Distribution";
+            this.SourceType.SelectedIndexChanged += new System.EventHandler(this.SourceType_DropDownClosed);
+            // 
             // Pach_SourceControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.SourceType);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.Sensitivity);
             this.Controls.Add(this.Maximum);
             this.Controls.Add(this.Delay_ms);
-            this.Controls.Add(this.SourceType);
             this.Controls.Add(this.SrcDIR);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "Pach_SourceControl";
@@ -1160,7 +1164,6 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.NumericUpDown Azi;
             private System.Windows.Forms.NumericUpDown Alt;
             private System.Windows.Forms.Button SrcDetails;
-            private System.Windows.Forms.DomainUpDown SourceType;
             private System.Windows.Forms.Label label6;
             private System.Windows.Forms.NumericUpDown AxialRot;
             private System.Windows.Forms.Label SPL1;
@@ -1198,7 +1201,7 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.NumericUpDown Phase5;
             private System.Windows.Forms.NumericUpDown Phase6;
             private System.Windows.Forms.NumericUpDown Phase7;
-
+            private System.Windows.Forms.ComboBox SourceType;
         }
     }
 }

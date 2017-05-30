@@ -246,10 +246,15 @@ namespace Pachyderm_Acoustic
                                 S[id] = new Environment.RandomSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), delay, id);
                                 break;
                             case "2":
+                            case "3":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
-                                string[] B = Bands.Split(';');
+                                string[] B;
+                                if (Bands != "")
+                                    B = Bands.Split(';');
+                                else
+                                    B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.SpeakerSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
+                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, delay, id);
                                 break;
                         }
                     }

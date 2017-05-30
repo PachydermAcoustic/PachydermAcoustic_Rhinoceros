@@ -629,7 +629,7 @@ namespace Pachyderm_Acoustic
         {
             private bool m_bHandlerAdded = false;
             private List<System.Guid> m_id_list = new List<System.Guid>();
-            public List<Speaker_Balloon> m_Balloons = new List<Speaker_Balloon>();
+            public List<Balloon> m_Balloons = new List<Balloon>();
             DisplayBitmap SS;
             DisplayBitmap SU;
             DisplayBitmap LS;
@@ -707,8 +707,8 @@ namespace Pachyderm_Acoustic
                 try
                 {
                     string typ = "";
-                    typ = e.NewRhinoObject.Geometry.GetUserString("SourceType");
-                    if (typ != "2") return;
+                    typ = e.OldRhinoObject.Geometry.GetUserString("SourceType");
+                    if (typ != "2" && typ != "3") return;
 
                     for (int i = 0; i < m_id_list.Count; i++)
                     {
@@ -822,6 +822,31 @@ namespace Pachyderm_Acoustic
                             L.Update_Position();
                             this.m_Balloons.Add(L);
                         }
+                        else if (typ == "3")
+                        {
+                            string[] strballoon = new string[8];
+                            string Aim = "";
+                            string ft = "";
+                            string SWLMax = "";
+                            strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
+                            strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
+                            strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
+                            strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
+                            strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
+                            strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
+                            strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
+                            strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
+                            Aim = rhino_object.Geometry.GetUserString("Aiming");
+                            SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
+                            string[] A = Aim.Split(';');
+                            //ft = rhino_object.Geometry.GetUserString("FileType");
+                            Balloon L = new Balloon(strballoon, Utilities.RC_PachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            L.CurrentAlt = float.Parse(A[0]);
+                            L.CurrentAzi = float.Parse(A[1]);
+                            L.CurrentAxi = float.Parse(A[2]);
+                            L.Update_Position();
+                            this.m_Balloons.Add(L);
+                        }
                         else
                         {
                             m_Balloons.Add(null);
@@ -861,7 +886,7 @@ namespace Pachyderm_Acoustic
                             Rhino.Geometry.Point3d pt = rhobj.Geometry.GetBoundingBox(true).Min;
                             // this is a point object so the bounding box will be wee sized 
                             Rhino.Geometry.Point2d screen_pt = e.Display.Viewport.WorldToClient(pt);
-                            if (mode == "2" && m_Balloons[index] != null)
+                            if ((mode == "2" || mode == "3") && m_Balloons[index] != null)
                             {
                                 if ((rhobj.IsSelected(false) != 0))
                                 {
@@ -947,12 +972,17 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public void AddBalloon(System.Guid ID, Speaker_Balloon B)
+            public void AddBalloon(System.Guid ID, Balloon B)
             {
                 for (int i = 0; i < m_id_list.Count; i++)
                 {
                     if ((ID == m_id_list[i]))
                     {
+                        if (m_Balloons == null) m_Balloons = new List<Balloon>();
+                        if (m_Balloons.Count < m_id_list.Count)
+                        {
+                            while (m_Balloons.Count < m_id_list.Count) m_Balloons.Add(null);
+                        }
                         m_Balloons[i] = B;
                         return;
                     }

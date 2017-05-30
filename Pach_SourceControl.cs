@@ -65,7 +65,7 @@ namespace Pachyderm_Acoustic
                                 return;
                             }
                         }
-                        if (Mode != "2")
+                        if (Mode == "0" || Mode == "1")
                         {
                             Maximum.Enabled = false;
                             Maximum.Visible = false;
@@ -204,7 +204,7 @@ namespace Pachyderm_Acoustic
 
             private void Select_Type()
             {
-                if (SourceType.SelectedIndex != 2)
+                if (SourceType.SelectedIndex != 2 && SourceType.SelectedIndex != 3)
                 {
                     SWL0.Maximum = 200;
                     SWL1.Maximum = 200;
@@ -222,80 +222,157 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                string[] L;
-                try
+
+                if (SourceType.SelectedIndex == 2)
                 {
-                    L = CLF_Read.SecureAccess.Read();
-                    if (L == null)
+                    string[] L;
+                    try
                     {
-                        SourceType.SelectedIndex = 0;
+                        L = CLF_Read.SecureAccess.Read();
+                        if (L == null)
+                        {
+                            SourceType.SelectedIndex = 0;
+                            return;
+                        }
+                    }
+                    catch (System.Exception)
+                    {
                         return;
                     }
-                }
-                catch (System.Exception)
-                {
-                    return;
-                }
 
-
-                if (Objects.Count != 0)
-                {
-                    for (int i = 0; i < Objects.Count; i++)
+                    if (Objects.Count != 0)
                     {
-                        
-                        Objects[i].Geometry.SetUserString("Model", L[0]);
-                        Objects[i].Geometry.SetUserString("FileType", L[1]);
-                        Objects[i].Geometry.SetUserString("Sensitivity", L[2]);
-                        Objects[i].Geometry.SetUserString("SWLMax", L[3]);
-                        Objects[i].Geometry.SetUserString("Balloon63", L[4]);
-                        Objects[i].Geometry.SetUserString("Balloon125", L[5]);
-                        Objects[i].Geometry.SetUserString("Balloon250", L[6]);
-                        Objects[i].Geometry.SetUserString("Balloon500", L[7]);
-                        Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
-                        Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
-                        Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
-                        Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
-                        Objects[i].Geometry.SetUserString("Bands", L[12]);
+                        for (int i = 0; i < Objects.Count; i++)
+                        {
+                            Objects[i].Geometry.SetUserString("Model", L[0]);
+                            Objects[i].Geometry.SetUserString("FileType", L[1]);
+                            Objects[i].Geometry.SetUserString("Sensitivity", L[2]);
+                            Objects[i].Geometry.SetUserString("SWLMax", L[3]);
+                            Objects[i].Geometry.SetUserString("Balloon63", L[4]);
+                            Objects[i].Geometry.SetUserString("Balloon125", L[5]);
+                            Objects[i].Geometry.SetUserString("Balloon250", L[6]);
+                            Objects[i].Geometry.SetUserString("Balloon500", L[7]);
+                            Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
+                            Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
+                            Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
+                            Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
+                            Objects[i].Geometry.SetUserString("Bands", L[12]);
 
-                        Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
-                        Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
-                        SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RC_PachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                            Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
+                            Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
+                            SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RC_PachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
 
-                        SrcDetails.Enabled = true;
-                        SrcDetails.Visible = true;
-                        SrcDIR.Enabled = true;
-                        SrcDIR.Visible = true;
+                            SrcDetails.Enabled = true;
+                            SrcDetails.Visible = true;
+                            SrcDIR.Enabled = true;
+                            SrcDIR.Visible = true;
 
-                        string[] strSens = L[2].Split(';');
-                        string[] strMSwl = L[3].Split(';');
-                        float[] SenSwl = new float[8];
-                        float[] MSwl = new float[8];
+                            string[] strSens = L[2].Split(';');
+                            string[] strMSwl = L[3].Split(';');
+                            float[] SenSwl = new float[8];
+                            float[] MSwl = new float[8];
 
+                            for (int oct = 0; oct < 8; oct++)
+                            {
+                                SenSwl[oct] = float.Parse(strSens[oct]);
+                                MSwl[oct] = float.Parse(strMSwl[oct]);
+                            }
+
+                            SWL0.Maximum = (!float.IsInfinity(MSwl[0]) && !float.IsNaN(MSwl[0])) ? (decimal)MSwl[0] : (decimal)200;
+                            SWL1.Maximum = (!float.IsInfinity(MSwl[1]) && !float.IsNaN(MSwl[1])) ? (decimal)MSwl[1] : (decimal)200;
+                            SWL2.Maximum = (!float.IsInfinity(MSwl[2]) && !float.IsNaN(MSwl[2])) ? (decimal)MSwl[2] : (decimal)200;
+                            SWL3.Maximum = (!float.IsInfinity(MSwl[3]) && !float.IsNaN(MSwl[3])) ? (decimal)MSwl[3] : (decimal)200;
+                            SWL4.Maximum = (!float.IsInfinity(MSwl[4]) && !float.IsNaN(MSwl[4])) ? (decimal)MSwl[4] : (decimal)200;
+                            SWL5.Maximum = (!float.IsInfinity(MSwl[5]) && !float.IsNaN(MSwl[5])) ? (decimal)MSwl[5] : (decimal)200;
+                            SWL6.Maximum = (!float.IsInfinity(MSwl[6]) && !float.IsNaN(MSwl[6])) ? (decimal)MSwl[6] : (decimal)200;
+                            SWL7.Maximum = (!float.IsInfinity(MSwl[7]) && !float.IsNaN(MSwl[7])) ? (decimal)MSwl[7] : (decimal)200;
+
+                            SWL0.Value = (decimal)SenSwl[0];
+                            SWL1.Value = (decimal)SenSwl[1];
+                            SWL2.Value = (decimal)SenSwl[2];
+                            SWL3.Value = (decimal)SenSwl[3];
+                            SWL4.Value = (decimal)SenSwl[4];
+                            SWL5.Value = (decimal)SenSwl[5];
+                            SWL6.Value = (decimal)SenSwl[6];
+                            SWL7.Value = (decimal)SenSwl[7];
+
+                            Commit();
+                        }
+                    }
+                }
+                else if (SourceType.SelectedIndex == 3)
+                {
+                    System.Windows.Forms.OpenFileDialog OF = new System.Windows.Forms.OpenFileDialog();
+                    Balloon B;
+                    String[] CODES;
+                    string[] ballooncodes = new string[8];
+                    double[] SWLmax = new double[8];
+                    double[] SWLnom = new double[8];
+                    if (OF.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
+                    {
+                        CODES = Balloon.Read_Generic(OF.FileName);
+
+                        string[] nomcode = CODES[8].Split(';');
+                        string[] maxcode = CODES[9].Split(';');
                         for (int oct = 0; oct < 8; oct++)
                         {
-                            SenSwl[oct] = float.Parse(strSens[oct]);
-                            MSwl[oct] = float.Parse(strMSwl[oct]);
+                            ballooncodes[oct] = CODES[oct];
+                            SWLnom[oct] = double.Parse(nomcode[oct]);
+                            SWLmax[oct] = double.Parse(maxcode[oct]);
                         }
 
-                        SWL0.Maximum = (!float.IsInfinity(MSwl[0]) && !float.IsNaN(MSwl[0])) ? (decimal)MSwl[0] : (decimal)200;
-                        SWL1.Maximum = (!float.IsInfinity(MSwl[1]) && !float.IsNaN(MSwl[1])) ? (decimal)MSwl[1] : (decimal)200;
-                        SWL2.Maximum = (!float.IsInfinity(MSwl[2]) && !float.IsNaN(MSwl[2])) ? (decimal)MSwl[2] : (decimal)200;
-                        SWL3.Maximum = (!float.IsInfinity(MSwl[3]) && !float.IsNaN(MSwl[3])) ? (decimal)MSwl[3] : (decimal)200;
-                        SWL4.Maximum = (!float.IsInfinity(MSwl[4]) && !float.IsNaN(MSwl[4])) ? (decimal)MSwl[4] : (decimal)200;
-                        SWL5.Maximum = (!float.IsInfinity(MSwl[5]) && !float.IsNaN(MSwl[5])) ? (decimal)MSwl[5] : (decimal)200;
-                        SWL6.Maximum = (!float.IsInfinity(MSwl[6]) && !float.IsNaN(MSwl[6])) ? (decimal)MSwl[6] : (decimal)200;
-                        SWL7.Maximum = (!float.IsInfinity(MSwl[7]) && !float.IsNaN(MSwl[7])) ? (decimal)MSwl[7] : (decimal)200;
+                        B = new Balloon(ballooncodes, Utilities.RC_PachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                    }
+                    else
+                    {
+                        return;
+                    }
 
-                        SWL0.Value = (decimal)SenSwl[0];
-                        SWL1.Value = (decimal)SenSwl[1];
-                        SWL2.Value = (decimal)SenSwl[2];
-                        SWL3.Value = (decimal)SenSwl[3];
-                        SWL4.Value = (decimal)SenSwl[4];
-                        SWL5.Value = (decimal)SenSwl[5];
-                        SWL6.Value = (decimal)SenSwl[6];
-                        SWL7.Value = (decimal)SenSwl[7];
+                    if (Objects.Count != 0)
+                    {
+                        for (int i = 0; i < Objects.Count; i++)
+                        {
+                            Objects[i].Geometry.SetUserString("Sensitivity", CODES[8]);
+                            Objects[i].Geometry.SetUserString("SWLMax", CODES[9]);
 
-                        Commit();
+                            Objects[i].Geometry.SetUserString("Balloon63", ballooncodes[0]);
+                            Objects[i].Geometry.SetUserString("Balloon125", ballooncodes[1]);
+                            Objects[i].Geometry.SetUserString("Balloon250", ballooncodes[2]);
+                            Objects[i].Geometry.SetUserString("Balloon500", ballooncodes[3]);
+                            Objects[i].Geometry.SetUserString("Balloon1000", ballooncodes[4]);
+                            Objects[i].Geometry.SetUserString("Balloon2000", ballooncodes[5]);
+                            Objects[i].Geometry.SetUserString("Balloon4000", ballooncodes[6]);
+                            Objects[i].Geometry.SetUserString("Balloon8000", ballooncodes[7]);
+
+                            Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
+                            Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
+                            SC.AddBalloon(Objects[i].Attributes.ObjectId, B);
+
+                            SrcDetails.Enabled = true;
+                            SrcDetails.Visible = true;
+                            SrcDIR.Enabled = true;
+                            SrcDIR.Visible = true;
+
+                            SWL0.Maximum = (!double.IsInfinity(SWLmax[0]) && !double.IsNaN(SWLmax[0])) ? (decimal)SWLmax[0] : (decimal)200;
+                            SWL1.Maximum = (!double.IsInfinity(SWLmax[1]) && !double.IsNaN(SWLmax[1])) ? (decimal)SWLmax[1] : (decimal)200;
+                            SWL2.Maximum = (!double.IsInfinity(SWLmax[2]) && !double.IsNaN(SWLmax[2])) ? (decimal)SWLmax[2] : (decimal)200;
+                            SWL3.Maximum = (!double.IsInfinity(SWLmax[3]) && !double.IsNaN(SWLmax[3])) ? (decimal)SWLmax[3] : (decimal)200;
+                            SWL4.Maximum = (!double.IsInfinity(SWLmax[4]) && !double.IsNaN(SWLmax[4])) ? (decimal)SWLmax[4] : (decimal)200;
+                            SWL5.Maximum = (!double.IsInfinity(SWLmax[5]) && !double.IsNaN(SWLmax[5])) ? (decimal)SWLmax[5] : (decimal)200;
+                            SWL6.Maximum = (!double.IsInfinity(SWLmax[6]) && !double.IsNaN(SWLmax[6])) ? (decimal)SWLmax[6] : (decimal)200;
+                            SWL7.Maximum = (!double.IsInfinity(SWLmax[7]) && !double.IsNaN(SWLmax[7])) ? (decimal)SWLmax[7] : (decimal)200;
+
+                            SWL0.Value = (decimal)SWLnom[0];
+                            SWL1.Value = (decimal)SWLnom[1];
+                            SWL2.Value = (decimal)SWLnom[2];
+                            SWL3.Value = (decimal)SWLnom[3];
+                            SWL4.Value = (decimal)SWLnom[4];
+                            SWL5.Value = (decimal)SWLnom[5];
+                            SWL6.Value = (decimal)SWLnom[6];
+                            SWL7.Value = (decimal)SWLnom[7];
+
+                            Commit();
+                        }
                     }
                 }
                 Load_Doc(Objects);
