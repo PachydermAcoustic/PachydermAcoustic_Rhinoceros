@@ -840,7 +840,7 @@ namespace Pachyderm_Acoustic
             List<int> SurfaceIndex;
             protected List<Rhino.DocObjects.ObjRef> ObjectList;
 
-            public RhCommon_Scene(List<Rhino.DocObjects.RhinoObject> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic)
+            public RhCommon_Scene(List<Rhino.DocObjects.RhinoObject> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic, List<Rhino.Geometry.GeometryBase> Additional_Geometry = null, List<int> Additional_Layers = null)
                 : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
             {
                 Vector3d NormalHolder = new Vector3d();
@@ -929,16 +929,11 @@ namespace Pachyderm_Acoustic
 
                         for (int oct = 0; oct < 8; oct++)
                         {
-                            //Reflection[oct] = (1 - Absorption[oct]);
                             Transmission[oct] = Transparency[oct];
-                            //Scattering[oct, 1] = Scat[oct];
-                            //phase[oct] = 0;
                         }
 
-                        //ReflectionData.Add(Reflection);
                         ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
                         TransmissionData.Add(Transmission);
-                        //PhaseData.Add(phase);
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
                         {
@@ -972,61 +967,86 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 Valid = true;
-            }
 
-            public RhCommon_Scene(List<Rhino.Geometry.Brep> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic)
-                : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
-            {
-                Vector3d NormalHolder = new Vector3d();
-                Plane PlaneHolder = new Plane();
-                Transform XHolder = new Transform();
-                Random RND = new Random();
+                if (Additional_Geometry == null) return;
+                if (Additional_Layers == null) return;
+                if (Additional_Geometry.Count != Additional_Layers.Count) return;
 
-                for (int q = 0; q < ObjRef.Count; q++)
+                for (int q = 0; q < Additional_Geometry.Count; q++)
                 {
-                    //ObjectList.Add(new Rhino.DocObjects.ObjRef(ObjRef[q]));
-
-                    //Rhino.Geometry.Brep BObj;
-                    //if (ObjRef[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
-                    //{
-                    //    BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry;
-                    //}
-                    //else
-                    //{
-                    //    BObj = ((Rhino.DocObjects.ExtrusionObject)ObjRef[q]).ExtrusionGeometry.ToBrep();
-                    //}
-
-                    for (int j = 0; j < ObjRef[q].Faces.Count; j++)
+                    Rhino.Geometry.Brep BObj;
+                    if (Additional_Geometry[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
                     {
-                        Brep B_Temp = ObjRef[q].DuplicateSubBrep(new List<int>() { j });
-                        BrepList.Add(B_Temp);
-                        string Mode = null;
-                        double[] Absorption = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-                        double[,] Scattering = new double[8, 3] {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-//                        double[] Reflection = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-                        double[] Transparency = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-                        double[] Transmission = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-                        Mode = ObjRef[q].GetUserString("Acoustics_User");
-                        double[] Scat = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-                        double[] phase = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+                        BObj = (Rhino.Geometry.Brep)Additional_Geometry[q];
+                    }
+                    else
+                    {
+                        BObj = ((Rhino.Geometry.Extrusion)Additional_Geometry[q]).ToBrep();
+                    }
 
-                        //ReflectionData.Add(Reflection);
-                        AbsorptionData.Add(new Basic_Material(Absorption, phase));
+                    for (int j = 0; j < BObj.Faces.Count; j++)
+                    {
+                        Brep B_Temp = BObj.DuplicateSubBrep(new List<int>() { j });
+                        BrepList.Add(B_Temp);
+                        string AcousticsData = null;
+                        double[] Absorption = new double[8];
+                        double[] Transparency = new double[8];
+                        double[] Transmission = new double[8];
+                        double[] Scat = new double[8];
+
+                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[Additional_Layers[q]];
+                        string Method = layer.GetUserString("ABSType");
+                        AcousticsData = layer.GetUserString("Acoustics");
+                        if (Method == "Buildup")
+                        {
+                            List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
+                            string[] Buildup = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
+                            AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                        }
+                        if (!string.IsNullOrEmpty(AcousticsData))
+                        {
+                            Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
+                            AbsorptionData.Add(new Basic_Material(Absorption));
+                        }
+                        else
+                        {
+                            if (!Custom_Method)
+                            {
+                                Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
+                                Complete = false;
+                                return;
+                            }
+                        }
+                    
+                        Area = new double[BrepList.Count];
+                        for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
+
+                        for (int oct = 0; oct < 8; oct++)
+                        {
+                            Transmission[oct] = Transparency[oct];
+                        }
+
                         ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
                         TransmissionData.Add(Transmission);
-                        //PhaseData.Add(phase);
-
-                        Transmissive.Add(false);
-                        PlaneBoolean.Add(ObjRef[q].Faces[j].IsPlanar());
+                        bool Trans = false;
+                        for (int t_oct = 0; t_oct < 8; t_oct++)
+                        {
+                            if (Transmission[t_oct] > 0)
+                            {
+                                Trans = true;
+                                break;
+                            }
+                        }
+                        Transmissive.Add(Trans);
+                        PlaneBoolean.Add(BObj.Faces[j].IsPlanar());
 
                         if (PlaneBoolean[PlaneBoolean.Count - 1])
                         {
                             Vector3d Normal = new Vector3d();
                             Point3d Origin = new Point3d();
-                            //Transform MirrorSingle = new Transform();
-                            //Plane PlaneSingle = new Plane();
-                            Origin = ObjRef[q].Faces[j].PointAt(0, 0);
-                            Normal = ObjRef[q].Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
+                            Origin = BObj.Faces[j].PointAt(0, 0);
+                            Normal = BObj.Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
                             Mirror.Add(Transform.Mirror(Origin, Normal));
                             Plane.Add(new Plane(Origin, Normal));
                             PlanarNormal.Add(Normal);
@@ -1039,9 +1059,76 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-                //SurfaceArray = SurfaceList.ToArray();
-                Valid = true;
             }
+
+//            public RhCommon_Scene(List<Rhino.Geometry.Brep> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic)
+//                : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
+//            {
+//                Vector3d NormalHolder = new Vector3d();
+//                Plane PlaneHolder = new Plane();
+//                Transform XHolder = new Transform();
+//                Random RND = new Random();
+
+//                for (int q = 0; q < ObjRef.Count; q++)
+//                {
+//                    //ObjectList.Add(new Rhino.DocObjects.ObjRef(ObjRef[q]));
+
+//                    //Rhino.Geometry.Brep BObj;
+//                    //if (ObjRef[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
+//                    //{
+//                    //    BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry;
+//                    //}
+//                    //else
+//                    //{
+//                    //    BObj = ((Rhino.DocObjects.ExtrusionObject)ObjRef[q]).ExtrusionGeometry.ToBrep();
+//                    //}
+
+//                    for (int j = 0; j < ObjRef[q].Faces.Count; j++)
+//                    {
+//                        Brep B_Temp = ObjRef[q].DuplicateSubBrep(new List<int>() { j });
+//                        BrepList.Add(B_Temp);
+//                        string Mode = null;
+//                        double[] Absorption = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+//                        double[,] Scattering = new double[8, 3] {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+////                        double[] Reflection = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+//                        double[] Transparency = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+//                        double[] Transmission = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+//                        Mode = ObjRef[q].GetUserString("Acoustics_User");
+//                        double[] Scat = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+//                        double[] phase = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
+
+//                        //ReflectionData.Add(Reflection);
+//                        AbsorptionData.Add(new Basic_Material(Absorption, phase));
+//                        ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
+//                        TransmissionData.Add(Transmission);
+//                        //PhaseData.Add(phase);
+
+//                        Transmissive.Add(false);
+//                        PlaneBoolean.Add(ObjRef[q].Faces[j].IsPlanar());
+
+//                        if (PlaneBoolean[PlaneBoolean.Count - 1])
+//                        {
+//                            Vector3d Normal = new Vector3d();
+//                            Point3d Origin = new Point3d();
+//                            //Transform MirrorSingle = new Transform();
+//                            //Plane PlaneSingle = new Plane();
+//                            Origin = ObjRef[q].Faces[j].PointAt(0, 0);
+//                            Normal = ObjRef[q].Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
+//                            Mirror.Add(Transform.Mirror(Origin, Normal));
+//                            Plane.Add(new Plane(Origin, Normal));
+//                            PlanarNormal.Add(Normal);
+//                        }
+//                        else
+//                        {
+//                            PlanarNormal.Add(NormalHolder);
+//                            Plane.Add(PlaneHolder);
+//                            Mirror.Add(XHolder);
+//                        }
+//                    }
+//                }
+//                //SurfaceArray = SurfaceList.ToArray();
+//                Valid = true;
+//            }
 
             //public override void Standardize_Normals()
             //{
