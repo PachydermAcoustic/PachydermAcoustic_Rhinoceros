@@ -207,7 +207,7 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
 
                     RI_Absorption = new double[8];
-                    
+
                     Polar_Absorption.ChartAreas[0].AxisY.Minimum = 0;
                     Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1;
 
@@ -254,7 +254,7 @@ namespace Pachyderm_Acoustic
                         double[][] acoef = AbsorptionModels.Operations.Absorption_Coefficient(sm.Z, sm.frequency);
                         for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], acoef[Direction_choice.SelectedIndex + 17][i]); //sm.NI_Coef[i]);
                     }
-                    
+
                     for (int oct = 0; oct < 8; oct++) Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), RI_Absorption[oct]);
                 }
                 else
@@ -277,7 +277,7 @@ namespace Pachyderm_Acoustic
 
                     //Z graph...
                     RI_Absorption = new double[8];
-                    
+
                     double[] real = new double[sm.Z[18].Length];
                     double[] imag = new double[sm.Z[18].Length];
 
@@ -293,23 +293,57 @@ namespace Pachyderm_Acoustic
                     Impedance_Graph.ChartAreas[0].AxisY.Maximum = 40000;
                     Impedance_Graph.ChartAreas[0].AxisY.Minimum = -60000;
 
+
                     //T graph...
                     Alpha_Normal.Series[0].Points.Clear();
                     Alpha_Normal.Series[1].Points.Clear();
-                    
+
                     double[] TL = new double[sm.frequency.Length];
+                    double[] aTL = new double[sm.frequency.Length];
 
                     double max = double.NegativeInfinity;
 
                     for (int i = 0; i < sm.frequency.Length; i++)
                     {
+                        //Complex tau = 0;
+                        //for (int a = 0; a < sm.Angles.Length; a++)
+                        //{
+                        //    tau += sm.Trans_Coefficient[a][i] * Math.Cos(a * sm.Angles.Length / 180) * Math.Sin(a * sm.Angles.Length / 180);                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
+                        //}
+                        //aTL[i] = -10 * Complex.Log10(tau).Real;
                         TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[Direction_choice.SelectedIndex + 17][i]).Real;                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
                         max = Math.Max(TL[i], max);
                     }
 
-                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = max;
+                    double maxTL = 0;
+                    Polar_Absorption.ChartAreas[0].AxisY.Minimum = 0;
+                    Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1;
+
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        double[] TL_ang = new double[sm.Ang_tau_Oct[oct].Length];
+                        for (int a = 0; a < sm.Ang_tau_Oct[oct].Length; a++)
+                        {
+                            //if (Polar_Absorption.ChartAreas[0].AxisY.Maximum < sm.Ang_Coef_Oct[oct][a])
+                            //{
+                            double TLnow = -10 * Math.Log10(sm.Ang_tau_Oct[oct][a]);
+                            maxTL = Math.Max(TLnow, maxTL);
+                            TL_ang[a] = TLnow;
+                                //Polar_Absorption.ChartAreas[0].AxisY.Maximum = sm.Ang_tau_Oct[oct][a] * 10;
+                            //}
+                        }
+                        Polar_Absorption.Series[oct].Points.DataBindXY(AnglesDeg, TL_ang);
+                    }
+
+                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = maxTL;
 
                     for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], TL[i]);
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        double TLnow = -10 * Math.Log10(sm.TI_Coef[oct]);
+                        Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), TLnow);
+                    }
+                    Polar_Absorption.ChartAreas[0].AxisY.Maximum = maxTL;
                 }
 
                 //Estimate_IIR();

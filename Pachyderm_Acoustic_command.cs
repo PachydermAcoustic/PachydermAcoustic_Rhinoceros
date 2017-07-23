@@ -209,6 +209,7 @@ namespace Pachyderm_Acoustic
                 {
                     try
                     {
+                        
                         Rhino.Input.RhinoGet.GetNumber(string.Format("Specify background noise sound pressure level at {0} Hertz.", freq[i]), true, ref noise[i]);
                     }
                     catch 

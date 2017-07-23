@@ -1385,10 +1385,12 @@ namespace Pachyderm_Acoustic
                         }
                         else
                         {
+                            this.Enabled = false;
                             Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                             n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                             string[] ns = n.Split(","[0]);
                             for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
+                            this.Enabled = true;
                         }
 
                         double[] STI = AcousticalMath.Speech_Transmission_Index(ETC, 1.2*343, Noise, SampleRate);
@@ -1415,10 +1417,12 @@ namespace Pachyderm_Acoustic
                         }
                         else
                         {
+                            this.Enabled = false;
                             Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                             N = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                             string[] ns = N.Split(","[0]);
                             for (int oct = 0; oct < 8; oct++) NoiseM[oct] = double.Parse(ns[oct]);
+                            this.Enabled = true;
                         }
 
                         double[][] ETCm = new double[8][];
@@ -1745,7 +1749,7 @@ namespace Pachyderm_Acoustic
                     
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
-                    if (Receiver_Choice.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
+                    if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch(Exception x)
@@ -1869,8 +1873,8 @@ namespace Pachyderm_Acoustic
             private void Receiver_Choice_SelectedIndexChanged(object sender, EventArgs e)
             {
                 Update_Parameters();
-                Update_Graph(null, System.EventArgs.Empty);
                 Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
+                Update_Graph(null, System.EventArgs.Empty);
                 OpenAnalysis();
             }
 

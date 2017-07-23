@@ -388,11 +388,11 @@ namespace Pachyderm_Acoustic
                                     {
                                         if (l < Lengths[i])
                                         {
-                                            Naked_Breps.Insert(0, BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
-                                            Naked_Edges.Insert(0, be);
-                                            EdgeDomains.Insert(0, new double[] { be.Domain[0], be.Domain[1] });
-                                            Lengths.Insert(0, l);
-                                            Brep_IDS.Insert(0, p);
+                                            Naked_Breps.Insert(i, BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
+                                            Naked_Edges.Insert(i, be);
+                                            EdgeDomains.Insert(i, new double[] { be.Domain[0], be.Domain[1] });
+                                            Lengths.Insert(i, l);
+                                            Brep_IDS.Insert(i, p);
                                             register_anyway = false;
                                             ////////////////
                                             //Rhino.RhinoDoc.ActiveDoc.Objects.AddCurve(be);
@@ -439,7 +439,7 @@ namespace Pachyderm_Acoustic
                     {
                         bool orphaned = true; //Orphaned until proven otherwise...
 
-                        while (Naked_Edges[0] == null)
+                        if(Naked_Edges[0] == null)
                         {
                             Naked_Edges.RemoveAt(0);
                             Naked_Breps.RemoveAt(0);
@@ -666,20 +666,57 @@ namespace Pachyderm_Acoustic
                         }
                         if (orphaned)
                         {
+                            bool coincident = false;
                             //Check for intersecting geometry. (T-section)
-                            //for (int i = 0; i < this.BrepList.Count; i++)
-                            //{
-                            //    Curve[] crv;
-                            //    Point3d[] pts;
-                            //    //Rhino.Geometry.Intersect.Intersection.CurveBrep(Edges[0], BrepList[i], 0.01, out crv, out pts);
-                            //}
+                            List<Curve> starting = new List<Curve>();
+                            starting.Add(Naked_Edges[0]);
+                            for (int i = 0; i < BrepList.Count; i++)
+                            {
+                                if (Brep_IDS[0] == i) continue;
+                                if (starting.Count == 0)
+                                {
+                                    coincident = true;
+                                    break;
+                                }
+                                Curve[] crv;
+                                Point3d[] pts;
+                                List<Curve> passed = new List<Curve>();
+                                foreach (Curve totest in starting)
+                                {
+                                    Rhino.Geometry.Intersect.Intersection.CurveBrep(totest, BrepList[i], 0.01, out crv, out pts);
+                                    if (crv != null)
+                                    {
+                                        foreach (Curve c in crv)
+                                        {
+                                            if (Lengths[0] > c.GetLength() - 0.02)
+                                            {
+                                                coincident = true;
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                passed.AddRange(Rhino.Geometry.Curve.CreateBooleanDifference(totest, c));
+                                            }
+                                        }
+                                    }
+                                }
+                                if (coincident)
+                                {
+                                    starting.Clear();
+                                    break;
+                                }
+                                if(passed.Count > 0) starting = passed;
+                            }
 
                             //Rhino.RhinoApp.WriteLine("Orphaned Edge... Assuming thin plate in free air. (Warning: T-Intersects not yet implemented.)");
 
                             //Create thin plate...
-                            Brep Converse = Naked_Breps[0].Duplicate() as Brep;
-                            Converse.Surfaces[0].Reverse(0, true);
-                            create_curved_edge_entry(Naked_Edges[0], new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] });
+                            foreach (Curve c in starting)
+                            {
+                                Brep Converse = Naked_Breps[0].Duplicate() as Brep;
+                                Converse.Surfaces[0].Reverse(0, true);
+                                create_curved_edge_entry(c, new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] });
+                            }
                             //if (Naked_Edges[0].IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, new Brep[] { Naked_Breps[0], Naked_Breps[0] }, new int[2] { Brep_IDS[0], Brep_IDS[0] }, Edges[0]));
                             //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, new Brep[] { Naked_Breps[0], Converse }, new int[2] { Brep_IDS[0], Brep_IDS[0] }, Edges[0]));
                             //Remove this edge from Edges

@@ -357,10 +357,12 @@ namespace Pachyderm_Acoustic
                             }
                             else
                             {
+                                this.Enabled = false;
                                 Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                                 n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
+                                this.Enabled = true;
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SelectedSources(), 0, Coherent.Checked);
@@ -383,10 +385,12 @@ namespace Pachyderm_Acoustic
                             }
                             else
                             {
+                                this.Enabled = false;
                                 Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                                 n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
+                                this.Enabled = true;
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SelectedSources(), 1, Coherent.Checked);
@@ -409,10 +413,12 @@ namespace Pachyderm_Acoustic
                             }
                             else
                             {
+                                this.Enabled = false;
                                 Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                                 n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
+                                this.Enabled = true;
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SelectedSources(), 2, Coherent.Checked);

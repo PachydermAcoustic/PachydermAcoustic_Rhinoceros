@@ -80,6 +80,8 @@ namespace Pachyderm_Acoustic
             this.Eigen_Extent = new System.Windows.Forms.ComboBox();
             this.CalculateSim = new System.Windows.Forms.Button();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.label12 = new System.Windows.Forms.Label();
+            this.comboBox2 = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
             this.Sample_Depth = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
@@ -90,7 +92,7 @@ namespace Pachyderm_Acoustic
             this.button1 = new System.Windows.Forms.Button();
             this.ScatteringGraph = new ZedGraph.ZedGraphControl();
             this.label9 = new System.Windows.Forms.Label();
-            this.Scatter_Extent = new System.Windows.Forms.ComboBox();
+            this.Analysis_Technique = new System.Windows.Forms.ComboBox();
             this.Set_Origin = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -540,6 +542,8 @@ namespace Pachyderm_Acoustic
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.label12);
+            this.tabPage3.Controls.Add(this.comboBox2);
             this.tabPage3.Controls.Add(this.label11);
             this.tabPage3.Controls.Add(this.Sample_Depth);
             this.tabPage3.Controls.Add(this.label7);
@@ -548,7 +552,7 @@ namespace Pachyderm_Acoustic
             this.tabPage3.Controls.Add(this.CalculateScattering);
             this.tabPage3.Controls.Add(this.tableLayoutPanel2);
             this.tabPage3.Controls.Add(this.label9);
-            this.tabPage3.Controls.Add(this.Scatter_Extent);
+            this.tabPage3.Controls.Add(this.Analysis_Technique);
             this.tabPage3.Controls.Add(this.Set_Origin);
             this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
@@ -558,10 +562,36 @@ namespace Pachyderm_Acoustic
             this.tabPage3.Text = "Scattering Analysis";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 36);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(81, 13);
+            this.label12.TabIndex = 56;
+            this.label12.Text = "Calculate up to:";
+            // 
+            // comboBox2
+            // 
+            this.comboBox2.FormattingEnabled = true;
+            this.comboBox2.Items.AddRange(new object[] {
+            "63 Hz. Octave Band",
+            "125 Hz. Octave Band",
+            "250 Hz. Octave Band",
+            "500 Hz. Octave Band",
+            "1000 Hz. Octave Band",
+            "2000 Hz. Octave Band",
+            "4000 Hz. Octave Band",
+            "8000 Hz. Octave Band"});
+            this.comboBox2.Location = new System.Drawing.Point(98, 33);
+            this.comboBox2.Name = "comboBox2";
+            this.comboBox2.Size = new System.Drawing.Size(303, 21);
+            this.comboBox2.TabIndex = 55;
+            // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(9, 116);
+            this.label11.Location = new System.Drawing.Point(9, 143);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(126, 13);
             this.label11.TabIndex = 54;
@@ -576,7 +606,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             65536});
-            this.Sample_Depth.Location = new System.Drawing.Point(341, 116);
+            this.Sample_Depth.Location = new System.Drawing.Point(341, 143);
             this.Sample_Depth.Name = "Sample_Depth";
             this.Sample_Depth.Size = new System.Drawing.Size(58, 20);
             this.Sample_Depth.TabIndex = 53;
@@ -589,7 +619,7 @@ namespace Pachyderm_Acoustic
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(9, 91);
+            this.label7.Location = new System.Drawing.Point(9, 118);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(147, 13);
             this.label7.TabIndex = 52;
@@ -604,7 +634,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             65536});
-            this.ScatteringRadius.Location = new System.Drawing.Point(341, 91);
+            this.ScatteringRadius.Location = new System.Drawing.Point(341, 118);
             this.ScatteringRadius.Name = "ScatteringRadius";
             this.ScatteringRadius.Size = new System.Drawing.Size(58, 20);
             this.ScatteringRadius.TabIndex = 51;
@@ -616,7 +646,7 @@ namespace Pachyderm_Acoustic
             // 
             // SetNormal
             // 
-            this.SetNormal.Location = new System.Drawing.Point(6, 62);
+            this.SetNormal.Location = new System.Drawing.Point(6, 89);
             this.SetNormal.Name = "SetNormal";
             this.SetNormal.Size = new System.Drawing.Size(395, 23);
             this.SetNormal.TabIndex = 50;
@@ -625,7 +655,7 @@ namespace Pachyderm_Acoustic
             // 
             // CalculateScattering
             // 
-            this.CalculateScattering.Location = new System.Drawing.Point(6, 142);
+            this.CalculateScattering.Location = new System.Drawing.Point(6, 159);
             this.CalculateScattering.Name = "CalculateScattering";
             this.CalculateScattering.Size = new System.Drawing.Size(395, 23);
             this.CalculateScattering.TabIndex = 49;
@@ -645,7 +675,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
             this.tableLayoutPanel2.Controls.Add(this.button1, 2, 1);
             this.tableLayoutPanel2.Controls.Add(this.ScatteringGraph, 0, 2);
-            this.tableLayoutPanel2.Location = new System.Drawing.Point(6, 171);
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(6, 188);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
             this.tableLayoutPanel2.RowCount = 3;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
@@ -653,7 +683,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(395, 424);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(395, 407);
             this.tableLayoutPanel2.TabIndex = 48;
             // 
             // button1
@@ -689,7 +719,7 @@ namespace Pachyderm_Acoustic
             this.ScatteringGraph.ScrollMinX = 0D;
             this.ScatteringGraph.ScrollMinY = 0D;
             this.ScatteringGraph.ScrollMinY2 = 0D;
-            this.ScatteringGraph.Size = new System.Drawing.Size(383, 387);
+            this.ScatteringGraph.Size = new System.Drawing.Size(383, 370);
             this.ScatteringGraph.TabIndex = 42;
             this.ScatteringGraph.UseExtendedPrintDialog = true;
             // 
@@ -698,30 +728,24 @@ namespace Pachyderm_Acoustic
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(6, 9);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(81, 13);
+            this.label9.Size = new System.Drawing.Size(75, 13);
             this.label9.TabIndex = 47;
-            this.label9.Text = "Calculate up to:";
+            this.label9.Text = "Analysis Type:";
             // 
-            // Scatter_Extent
+            // Analysis_Technique
             // 
-            this.Scatter_Extent.FormattingEnabled = true;
-            this.Scatter_Extent.Items.AddRange(new object[] {
-            "63 Hz. Octave Band",
-            "125 Hz. Octave Band",
-            "250 Hz. Octave Band",
-            "500 Hz. Octave Band",
-            "1000 Hz. Octave Band",
-            "2000 Hz. Octave Band",
-            "4000 Hz. Octave Band",
-            "8000 Hz. Octave Band"});
-            this.Scatter_Extent.Location = new System.Drawing.Point(98, 6);
-            this.Scatter_Extent.Name = "Scatter_Extent";
-            this.Scatter_Extent.Size = new System.Drawing.Size(303, 21);
-            this.Scatter_Extent.TabIndex = 46;
+            this.Analysis_Technique.FormattingEnabled = true;
+            this.Analysis_Technique.Items.AddRange(new object[] {
+            "Correlation Scattering Coefficient",
+            "Total Scattered Power"});
+            this.Analysis_Technique.Location = new System.Drawing.Point(98, 6);
+            this.Analysis_Technique.Name = "Analysis_Technique";
+            this.Analysis_Technique.Size = new System.Drawing.Size(303, 21);
+            this.Analysis_Technique.TabIndex = 46;
             // 
             // Set_Origin
             // 
-            this.Set_Origin.Location = new System.Drawing.Point(6, 33);
+            this.Set_Origin.Location = new System.Drawing.Point(6, 60);
             this.Set_Origin.Name = "Set_Origin";
             this.Set_Origin.Size = new System.Drawing.Size(395, 23);
             this.Set_Origin.TabIndex = 45;
@@ -1481,12 +1505,14 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Button button1;
             private ZedGraph.ZedGraphControl ScatteringGraph;
             private System.Windows.Forms.Label label9;
-            private System.Windows.Forms.ComboBox Scatter_Extent;
+            private System.Windows.Forms.ComboBox Analysis_Technique;
             private System.Windows.Forms.Button Set_Origin;
             private System.Windows.Forms.Label label7;
             private System.Windows.Forms.NumericUpDown ScatteringRadius;
             private System.Windows.Forms.Label label11;
             private System.Windows.Forms.NumericUpDown Sample_Depth;
+            private System.Windows.Forms.Label label12;
+            private System.Windows.Forms.ComboBox comboBox2;
         }
     }
 }

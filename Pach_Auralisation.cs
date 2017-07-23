@@ -344,25 +344,6 @@ namespace Pachyderm_Acoustic
                 }
                 byte[] temp = new byte[4];
                 int c = (int)DryChannel.Value - 1;
-                //double Max;
-
-                //switch (WP.WaveFormat.BitsPerSample)
-                //{
-                //    case 32:
-                //        Max = Int32.MaxValue;
-                //        break;
-                //    case 24:
-                //        Max = BitConverter.ToInt32(new byte[] { 0, byte.MaxValue, byte.MaxValue, byte.MaxValue }, 0);
-                //        break;
-                //    case 16:
-                //        Max = Int16.MaxValue;
-                //        break;
-                //    case 8:
-                //        Max = BitConverter.ToInt16(new byte[] { 0, byte.MaxValue }, 0);
-                //        break;
-                //    default:
-                //        throw new Exception("Invalid bit depth variable... Where did you get this audio file again?");
-                //}
 
                 for (int i = 0; i < WP.SampleCount; i++)
                 {
@@ -445,9 +426,7 @@ namespace Pachyderm_Acoustic
                 for (int j = 0; j < SignalBuffer.Length; j++) maxvalue = (float)Math.Max(maxvalue, Math.Abs(SignalBuffer[j]));
                 for (int j = 0; j < SignalBuffer.Length; j++) SignalBuffer[j] /= maxvalue;
                 //Convert pressure response to a 24-bit dynamic range:
-                //double mod24 = Math.Pow(10, -50 / 10);
-                //for (int i = 0; i < Response.Length; i++) for(int j = 0; j < Response[i].Length; j++) Response[i][j] *= mod24;
-
+                
                 float[][] NewSignal = new float[(int)Response.Length][];
                 for (int i = 0; i < Response.Length; i++)
                 {
@@ -473,7 +452,7 @@ namespace Pachyderm_Acoustic
                     SaveWave.Filter = "Extended Wave Audio (*.wavex) |*.wavex";
                 }
 
-                if (SaveWave.ShowDialog() == DialogResult.OK)
+                 if (SaveWave.ShowDialog() == DialogResult.OK)
                 {
                     if (Response == null || Response.Length == 0)
                     {
@@ -484,7 +463,7 @@ namespace Pachyderm_Acoustic
 
                     for (int j = 0; j < NewSignal[0].Length; j++)
                     {
-                        for (int i = 0; i < Channel_View.Items.Count; i++) Writer.WriteSample(NewSignal[i][j]);
+                        for (int i = 0; i < NewSignal.Length; i++) Writer.WriteSample(NewSignal[i][j]);
                     }
                     Writer.Close();
                     Writer.Dispose();
@@ -492,7 +471,7 @@ namespace Pachyderm_Acoustic
                     Player.Play();
                 }
             }
-
+             
             private void ExportFilter(object sender, EventArgs e)
             {
                 SaveFileDialog SaveWave = new SaveFileDialog();
