@@ -26,7 +26,7 @@ namespace Pachyderm_Acoustic
 {
     namespace AbsorptionModels
     {
-        public static partial class Operations
+        public static class Operations_RhinoSpecific
         {
             public static Complex[] Finite_Radiation_Impedance_Rect(Rhino.Geometry.Mesh M, double step, double freq, double angles, double C_Sound)
             {
@@ -62,31 +62,6 @@ namespace Pachyderm_Acoustic
                     ///this is now Zr for a given angle theta.
                 }
                 return Zr;
-            }
-
-            public static double[][] Absorption_Coefficient(Complex[][] Z, double[] freq)
-            {
-                double dt = Math.PI / (Z.Length - 1);
-                double[][] alpha = new double[Z.Length][];
-
-                //Complex[] Zc = Equivalent_Fluids.DB_Miki_Impedance(1.2, 343, 25000, freq);
-
-                for (int a = 0; a < Z.Length; a++)
-                {
-                    double theta = a * dt - (Math.PI / 2);
-                    alpha[a] = new double[Z[a].Length];
-                    for (int f = 0; f < Z[0].Length; f++)
-                    {
-                        //Complex Za = (1 / Z[a][f]);
-                        //Complex Za = Z[a][f] / Zc[f];
-                        //Za /= Za.Magnitude();
-                        Complex Za = Z[a][f] / Z[a][f].Magnitude;
-                        //Za = 1 / Za;
-                        double denom_rt2 = (Za * Math.Cos(theta) + 1).Magnitude;
-                        alpha[a][f] = (4 * Za.Real) * Math.Cos(theta) / (denom_rt2 * denom_rt2);
-                    }
-                }
-                return alpha;
             }
 
             public static Complex[][] Finite_Radiation_Impedance_Rect_Longhand(double x, double y, Rhino.Geometry.Brep S, double freq, double[] altitude, double[] azimuth, double C_Sound)

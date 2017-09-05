@@ -187,7 +187,7 @@ namespace Pachyderm_Acoustic
             this.SoundSpeed = new System.Windows.Forms.NumericUpDown();
             this.Impedance_Graph = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.label2 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
+            this.PolarTitle = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label21 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
@@ -1535,17 +1535,17 @@ namespace Pachyderm_Acoustic
             this.label2.TabIndex = 0;
             this.label2.Text = "Impedance (Z)";
             // 
-            // label4
+            // PolarTitle
             // 
-            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.PolarTitle.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(124, 275);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(217, 13);
-            this.label4.TabIndex = 0;
-            this.label4.Text = "Absorption Coefficient By Angle of Incidence";
+            this.PolarTitle.AutoSize = true;
+            this.PolarTitle.Location = new System.Drawing.Point(124, 275);
+            this.PolarTitle.Name = "PolarTitle";
+            this.PolarTitle.Size = new System.Drawing.Size(217, 13);
+            this.PolarTitle.TabIndex = 0;
+            this.PolarTitle.Text = "Absorption Coefficient By Angle of Incidence";
             // 
             // label5
             // 
@@ -1724,7 +1724,7 @@ namespace Pachyderm_Acoustic
             this.Controls.Add(this.label23);
             this.Controls.Add(this.label22);
             this.Controls.Add(this.label21);
-            this.Controls.Add(this.label4);
+            this.Controls.Add(this.PolarTitle);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.Impedance_Graph);
@@ -1796,7 +1796,7 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label PorosityLabel;
             private System.Windows.Forms.NumericUpDown Porosity_Percent;
             private System.Windows.Forms.Label label2;
-            private System.Windows.Forms.Label label4;
+            private System.Windows.Forms.Label PolarTitle;
             private System.Windows.Forms.Label label5;
             private System.Windows.Forms.Button Smart_Mat;
             private System.Windows.Forms.NumericUpDown XDim;

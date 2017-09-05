@@ -50,6 +50,7 @@ namespace Pachyderm_Acoustic
             Rhino.Geometry.Mesh[][] M;
             //List<List<Rhino.Geometry.Point3d>> Pts;
             List<List<double>> Pressure;
+            CellConduit c = new CellConduit();
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
@@ -156,7 +157,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < hpts.Count; i++)
                 {
                     Pts.Add(new List<Rhino.Geometry.Point3d>());
-                    for(int j = 0; j < hpts[i].Count; j++)
+                    for (int j = 0; j < hpts[i].Count; j++)
                     {
                         Pts[i].Add(RC_PachTools.HPttoRPt(hpts[i][j]));
                     }
@@ -171,7 +172,7 @@ namespace Pachyderm_Acoustic
             {
                 double t = FDTD.Increment();
 
-                Rhino.RhinoApp.CommandPrompt = string.Format("Running {0} Hz., {1} ms.",  FDTD.SD.frequency, Math.Round(t * 1000));
+                Rhino.RhinoApp.CommandPrompt = string.Format("Running {0} Hz., {1} ms.", FDTD.SD.frequency, Math.Round(t * 1000));
 
                 Show_Field();
 
@@ -652,7 +653,7 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
-                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + 2 * radius + (double)Sample_Depth.Value) };
+                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value) };
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
@@ -736,7 +737,7 @@ namespace Pachyderm_Acoustic
             private void Update_Scattering_Graph(object sender, EventArgs e)
             {
                 double max = Scattering.Max();
-                
+
                 ScatteringGraph.GraphPane.CurveList.Clear();
                 ScatteringGraph.GraphPane.Title.Text = "Scattering Performance";
                 ScatteringGraph.GraphPane.XAxis.Title.Text = "Frequency (Hz.)";
@@ -744,14 +745,14 @@ namespace Pachyderm_Acoustic
 
 
                 //ScatteringGraph.GraphPane.AddCurve("Scattering Function", Scattering, , System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
-                ScatteringGraph.GraphPane.XAxis.Scale.Max = samplefrequency/2;
+                ScatteringGraph.GraphPane.XAxis.Scale.Max = samplefrequency / 2;
                 ScatteringGraph.GraphPane.XAxis.Scale.Min = 0;
-                
+
                 ScatteringGraph.GraphPane.YAxis.Scale.Max = 1.0;
                 if (max > 1) ScatteringGraph.GraphPane.YAxis.Scale.Max = max;
 
                 ScatteringGraph.GraphPane.YAxis.Scale.Min = 0;
-                
+
                 ScatteringGraph.AxisChange();
                 ScatteringGraph.Invalidate();
 
@@ -762,6 +763,31 @@ namespace Pachyderm_Acoustic
                 }
 
                 ScatteringGraph.GraphPane.AddCurve("Scattering Function", freq, Scattering, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
+            }
+
+            private void Update_LabGuides()
+            {
+                c.labguide = true;
+                c.hemianechoic = (Analysis_Technique.SelectedIndex == 0);
+                c.radius = (double)this.ScatteringRadius.Value;
+                c.depth = (double)this.Sample_Depth.Value;
+            }
+
+            private void ScatteringLab_Focus(object sender, EventArgs e)
+            {
+                c.Enabled = true;
+                Update_LabGuides();
+            }
+
+            private void ScatteringLab_FocusLost(object sender, EventArgs e)
+            {
+                c.Enabled = false;
+                c.labguide = false;
+            }
+
+            private void LabGuideParametersChanged(object sender, EventArgs e)
+            {
+                Update_LabGuides();
             }
         }
     }

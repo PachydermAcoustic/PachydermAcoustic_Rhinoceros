@@ -561,6 +561,8 @@ namespace Pachyderm_Acoustic
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Scattering Analysis";
             this.tabPage3.UseVisualStyleBackColor = true;
+            this.tabPage3.Enter += new System.EventHandler(this.ScatteringLab_Focus);
+            this.tabPage3.Leave += new System.EventHandler(this.ScatteringLab_FocusLost);
             // 
             // label12
             // 
@@ -615,6 +617,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             65536});
+            this.Sample_Depth.ValueChanged += new System.EventHandler(this.LabGuideParametersChanged);
             // 
             // label7
             // 
@@ -643,6 +646,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
+            this.ScatteringRadius.ValueChanged += new System.EventHandler(this.LabGuideParametersChanged);
             // 
             // SetNormal
             // 
@@ -742,6 +746,7 @@ namespace Pachyderm_Acoustic
             this.Analysis_Technique.Name = "Analysis_Technique";
             this.Analysis_Technique.Size = new System.Drawing.Size(303, 21);
             this.Analysis_Technique.TabIndex = 46;
+            this.Analysis_Technique.SelectedIndexChanged += new System.EventHandler(this.LabGuideParametersChanged);
             // 
             // Set_Origin
             // 

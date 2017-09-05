@@ -251,7 +251,7 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        double[][] acoef = AbsorptionModels.Operations.Absorption_Coefficient(sm.Z, sm.frequency);
+                        double[][] acoef = AbsorptionModels.Operations.  Absorption_Coef(sm.Reflection_Coefficient); //(sm.Z, sm.frequency);
                         for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], acoef[Direction_choice.SelectedIndex + 17][i]); //sm.NI_Coef[i]);
                     }
 
@@ -293,7 +293,6 @@ namespace Pachyderm_Acoustic
                     Impedance_Graph.ChartAreas[0].AxisY.Maximum = 40000;
                     Impedance_Graph.ChartAreas[0].AxisY.Minimum = -60000;
 
-
                     //T graph...
                     Alpha_Normal.Series[0].Points.Clear();
                     Alpha_Normal.Series[1].Points.Clear();
@@ -316,6 +315,7 @@ namespace Pachyderm_Acoustic
                     }
 
                     double maxTL = 0;
+                    double minTL = double.PositiveInfinity;
                     Polar_Absorption.ChartAreas[0].AxisY.Minimum = 0;
                     Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1;
 
@@ -326,16 +326,18 @@ namespace Pachyderm_Acoustic
                         {
                             //if (Polar_Absorption.ChartAreas[0].AxisY.Maximum < sm.Ang_Coef_Oct[oct][a])
                             //{
-                            double TLnow = -10 * Math.Log10(sm.Ang_tau_Oct[oct][a]);
+                            double TLnow = sm.Ang_tau_Oct[oct][a];// - 10 * Math.Log10(sm.Ang_tau_Oct[oct][a]);
                             maxTL = Math.Max(TLnow, maxTL);
+                            minTL = Math.Min(TLnow, minTL);
                             TL_ang[a] = TLnow;
                                 //Polar_Absorption.ChartAreas[0].AxisY.Maximum = sm.Ang_tau_Oct[oct][a] * 10;
                             //}
                         }
                         Polar_Absorption.Series[oct].Points.DataBindXY(AnglesDeg, TL_ang);
                     }
-
-                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = maxTL;
+                    Polar_Absorption.ChartAreas[0].AxisY.Maximum = 1; //Math.Min(1, maxTL);// maxTL;
+                    if (Chart_Contents.SelectedIndex == 0) PolarTitle.Text = "Absorption Coefficient by Angle of Incidence";
+                    else PolarTitle.Text = "Transmission Coefficient by Angle of Incidence";
 
                     for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], TL[i]);
                     for (int oct = 0; oct < 8; oct++)
@@ -343,9 +345,10 @@ namespace Pachyderm_Acoustic
                         double TLnow = -10 * Math.Log10(sm.TI_Coef[oct]);
                         Alpha_Normal.Series[1].Points.AddXY(62.5 * Math.Pow(2, oct), TLnow);
                     }
-                    Polar_Absorption.ChartAreas[0].AxisY.Maximum = maxTL;
+                    Alpha_Normal.ChartAreas[0].AxisY.Maximum = -10 * Math.Log10(minTL);
+                    if (Chart_Contents.SelectedIndex == 0) Alpha_Normal.Titles[0].Text = "Absorption Coefficient";
+                    else Alpha_Normal.Titles[0].Text = "Transmission Loss (dB)";
                 }
-
                 //Estimate_IIR();
             }
 

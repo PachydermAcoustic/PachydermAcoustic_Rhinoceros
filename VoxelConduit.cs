@@ -33,6 +33,11 @@ namespace Pachyderm_Acoustic
             List<Mesh> DisplayMesh;
             List<Mesh[]> DirMesh;
 
+            public bool labguide = false;
+            public bool hemianechoic = false;
+            public double radius = 0;
+            public double depth = 0;
+
             public CellConduit()
             {
                 DisplayMesh = new List<Mesh>();
@@ -52,6 +57,23 @@ namespace Pachyderm_Acoustic
                 {
                     lock (Rhino.RhinoDoc.ActiveDoc.Views.ActiveView)
                     {
+                        if (labguide)
+                        {
+                            e.Display.DrawDot(new Point3d(0, 0, 0), "Center");
+                            e.Display.DrawSurface(RevSurface.Create(new ArcCurve(new Arc(new Plane(new Point3d(0, 0, depth), new Vector3d(1, 0, 0)), radius, System.Math.PI / 2)), new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1)), 0, 2 * System.Math.PI), System.Drawing.Color.Green, 4);
+                            e.Display.DrawDot(new Point3d(0, 0, radius + depth), "Source");
+                            e.Display.DrawArrow(new Line(new Point3d(0, 0, 1.2 * radius + depth), new Point3d(0, 0, 1 * radius + depth)), System.Drawing.Color.Red);
+                            if (hemianechoic)
+                            {
+                                e.Display.DrawBox(new BoundingBox(new Point3d(-radius, -radius, 0), new Point3d(radius, radius, 1.2 * radius + depth)), System.Drawing.Color.Blue, 2);
+                                e.Display.DrawBox(new BoundingBox(new Point3d(-radius - 1, -radius - 1, 0), new Point3d(radius + 1, radius + 1, 1.2 * radius + 1 + depth)), System.Drawing.Color.Black, 2);
+                            } else
+                            {
+                                e.Display.DrawBox(new BoundingBox(new Point3d(-2 * radius, -2 * radius, 0), new Point3d(2 * radius, 2 * radius, 1.2 * radius + depth)), System.Drawing.Color.Blue, 2);
+                                e.Display.DrawBox(new BoundingBox(new Point3d(-2 * radius - 1, -2 * radius - 1, -1), new Point3d(2 * radius + 1, 2 * radius + 1, 1.2 * radius + 1 + depth)), System.Drawing.Color.Black, 2);
+                            }
+                        }
+
                         for (int i = 0; i < DisplayMesh.Count; i++)
                         {
                             for (int j = 0; j < DirMesh[i].Length; j++) e.Display.DrawMeshWires(DirMesh[i][j], System.Drawing.Color.Blue);

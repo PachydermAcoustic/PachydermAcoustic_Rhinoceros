@@ -72,9 +72,9 @@ namespace Pachyderm_Acoustic
                                 ct++;
                                 Rhino.Geometry.Point3d pt = Utilities.RC_PachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, i, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][i][z].Pt.x, PFrame[0][0][0].Pt.y, PFrame[x][i][z].Pt.z);
                                 pt.Y = min.y;
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(2 * dx / rt2, 0, 0)));
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(dx, 0, 0)));
                                 m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, -dz)));
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(2 * -dx / rt2, 0, 0)));
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(-dx, 0, 0)));
                                 m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, dz)));
                                 int ct4 = ct * 4;
                                 m_templateY[i].Faces.AddFace(ct4, ct4 + 1, ct4 + 2, ct4 + 3);
@@ -91,9 +91,9 @@ namespace Pachyderm_Acoustic
 
                                 Rhino.Geometry.Point3d pt = Utilities.RC_PachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, y, i, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][y][i].Pt.x, PFrame[x][y][i].Pt.y, PFrame[0][0][0].Pt.z);
                                 pt.Z = min.z;
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(2 * dx / rt2, 0, 0)));
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(dx, 0, 0)));
                                 m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, -dy, 0)));
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(-2 * dx / rt2, 0, 0)));
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(-dx, 0, 0)));
                                 m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, dy, 0)));
                                 int ct4 = ct * 4;
                                 m_templateZ[i].Faces.AddFace(ct4, ct4 + 1, ct4 + 2, ct4 + 3);
