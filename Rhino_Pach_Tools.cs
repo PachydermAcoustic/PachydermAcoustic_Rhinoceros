@@ -560,6 +560,11 @@ namespace Pachyderm_Acoustic
                 return new Hare.Geometry.Point(Point.X, Point.Y, Point.Z);
             }
 
+            public static Hare.Geometry.Vector RPttoHPt(Vector3d Point)
+            {
+                return new Hare.Geometry.Vector(Point.X, Point.Y, Point.Z);
+            }
+
             /// <summary>
             /// Casts Hare point to Rhino point
             /// </summary>
@@ -568,6 +573,11 @@ namespace Pachyderm_Acoustic
             public static Point3d HPttoRPt(Hare.Geometry.Point Point)
             {
                 return new Point3d(Point.x, Point.y, Point.z);
+            }
+
+            public static Vector3d HPttoRPt(Hare.Geometry.Vector Point)
+            {
+                return new Vector3d(Point.x, Point.y, Point.z);
             }
 
             /// <summary>
