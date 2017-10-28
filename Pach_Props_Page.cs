@@ -10,7 +10,6 @@ namespace Pachyderm_Acoustic
     {
         public class Pach_Props_Page : Rhino.UI.OptionsDialogPage
         {
-            Pach_Properties  pprops = null;
 
             public Pach_Props_Page()
                 : base("Pachyderm Acoustic")

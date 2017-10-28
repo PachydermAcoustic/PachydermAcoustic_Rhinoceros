@@ -826,7 +826,6 @@ namespace Pachyderm_Acoustic
                         {
                             string[] strballoon = new string[8];
                             string Aim = "";
-                            string ft = "";
                             string SWLMax = "";
                             strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
                             strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");

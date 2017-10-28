@@ -730,7 +730,7 @@ namespace Pachyderm_Acoustic
 
                     double[] Filter;
                     double[] Schroeder;
-                    double[] Filter2;
+                    //double[] Filter2;
                     int zero_sample = 0;
                     switch (Graph_Type.Text)
                     {

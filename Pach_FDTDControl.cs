@@ -555,7 +555,7 @@ namespace Pachyderm_Acoustic
             {
                 Chosenfreq = 0;
                 double radius = (double)ScatteringRadius.Value;
-                double t = 4 * (radius + (double)Sample_Depth.Value) / C_Sound() * 1000;
+                double t = 3 * (radius + (double)Sample_Depth.Value) / C_Sound() * 1000;
                 if (LabCenter == null) return;
 
                 if (Analysis_Technique.SelectedIndex == 0)
@@ -586,6 +586,8 @@ namespace Pachyderm_Acoustic
                     //    }
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
+
+                    t += 60 / fs;
 
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
