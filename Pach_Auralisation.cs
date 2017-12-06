@@ -34,6 +34,7 @@ namespace Pachyderm_Acoustic
         public partial class Pach_Auralisation
         {
             AuralisationConduit A;
+            bool Linear_Phase;
             // This call is required by the Windows Form Designer. 
             public Pach_Auralisation()
             {
@@ -43,6 +44,17 @@ namespace Pachyderm_Acoustic
                 Graph_Octave.SelectedIndex = 5;
                 DistributionType_SelectedIndexChanged(this, new EventArgs());
                 Instance = this;
+            }
+
+            public void Reset()
+            {
+                Linear_Phase = false;
+                Direct_Data = null;
+                Receiver = null;
+                IS_Data = null;
+                Maps = null;
+                Srcs = null;
+                Recs = null;
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -62,47 +74,47 @@ namespace Pachyderm_Acoustic
             int SampleRate;
             double CutoffTime;
 
-            private void Tab_Selecting(object sender, System.Windows.Forms.TabControlCancelEventArgs e)
-            {
-                if (Tabs.SelectedTab.Text == "Render Settings")
-                {
-                    Receiver_Choice.Items.Clear();
-                    if (Receiver != null && Receiver.Length > 0)
-                    { 
-                        for (int i = 0; i < Recs.Length; i++)
-                        {
-                            Receiver_Choice.Items.Add(i.ToString());
-                        }
-                    }
-                    Update_Graph(null, new System.EventArgs());
-                }
-                else if (Tabs.SelectedTab.Text == "Data Source")
-                {
-                    if (Hybrid_Select.Checked)
-                    {
-                        if (UI.Pach_Hybrid_Control.Instance.Auralisation_Ready())
-                        {
-                            UI.Pach_Hybrid_Control.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
-                            SampleRate = UI.Pach_Hybrid_Control.Instance.SampleRate;
-                            CutoffTime = UI.Pach_Hybrid_Control.Instance.CutoffTime;
-                        }
-                    }
-                    else if (Mapping_Select.Checked)
-                    {
-                        if (UI.Pach_Mapping_Control.Instance.Auralisation_Ready())
-                            UI.Pach_Mapping_Control.Instance.GetSims(ref Maps);
-                    }
-
-                }
-            }
+            //private void Tab_Selecting(object sender, System.Windows.Forms.TabControlCancelEventArgs e)
+            //{
+            //    if (Tabs.SelectedTab.Text == "Render Settings")
+            //    {
+            //        Receiver_Choice.Items.Clear();
+            //        if (Receiver != null && Receiver.Length > 0)
+            //        {
+            //            for (int i = 0; i < Recs.Length; i++)
+            //            {
+            //                Receiver_Choice.Items.Add(i.ToString());
+            //            }
+            //        }
+            //        Update_Graph(null, new System.EventArgs());
+            //    }
+            //    else if (Tabs.SelectedTab.Text == "Data Source")
+            //    {
+            //        if (Hybrid_Select.Checked)
+            //        {
+            //            if (UI.Pach_Hybrid_Control.Instance.Auralisation_Ready())
+            //            {
+            //                UI.Pach_Hybrid_Control.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
+            //                SampleRate = UI.Pach_Hybrid_Control.Instance.SampleRate;
+            //                CutoffTime = UI.Pach_Hybrid_Control.Instance.CutoffTime;
+            //            }
+            //        }
+            //        else if (Mapping_Select.Checked)
+            //        {
+            //            if (UI.Pach_Mapping_Control.Instance.Auralisation_Ready())
+            //                UI.Pach_Mapping_Control.Instance.GetSims(ref Maps);
+            //        }
+            //    }
+            //}
 
             private void Draw_Feedback()
             {
-                if (Hybrid_Select.Checked)
+                if (Hybrid_Select.Checked && Direct_Data != null)
                 {
-                    if (Pach_Hybrid_Control.Instance != null && !Pach_Hybrid_Control.Instance.Auralisation_Ready() || Receiver_Choice.SelectedIndex < 0) return;
+                    if (Pach_Hybrid_Control.Instance != null && Receiver_Choice.SelectedIndex < 0) return;
                     Hare.Geometry.Point[] rec = new Hare.Geometry.Point[Recs.Length];
                     for (int i = 0; i < Recs.Length; i++) rec[i] = Recs[i];
+                    AuralisationConduit.Instance.Enabled = true;
                     AuralisationConduit.Instance.add_Receivers(rec);
                     List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
                     foreach (Direct_Sound D in Direct_Data) pts.Add(D.Src_Origin);
@@ -150,6 +162,19 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();
             }
 
+            public void Set_Phase_Regime(bool Linear_Phase)
+            {
+                if (Direct_Data == null) return;
+
+                if ((Linear_Phase != true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase != false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System) || Direct_Data[0].F == null)
+                {
+                    for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
+                    for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 44100, 4096);
+                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(Direct_Data[i].SWL);
+                    this.Linear_Phase = Linear_Phase;
+                }
+            }
+
             private void Update_Graph(object sender, EventArgs e)
             {
                 Analysis_View.GraphPane.CurveList.Clear();
@@ -173,27 +198,27 @@ namespace Pachyderm_Acoustic
                     double[][] Temp;
 
                     switch (DistributionType.Text)
-                    {
+                    { 
                         case "Monaural":
                             Response = new double[1][];
-                            Response[0] = (AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false));
+                            Response[0] = (AcousticalMath.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false));
                             break;
                         case "First Order Ambisonics":
                             Response = new double[4][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
-                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                            Temp = AcousticalMath.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Response[0] = AcousticalMath.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
                             break;
                         case "Second Order Ambisonics":
                             Response = new double[9][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
-                            Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                            Temp = AcousticalMath.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Response[0] = AcousticalMath.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
-                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[4] = Temp[0];
                             Response[5] = Temp[1];
                             Response[6] = Temp[2];
@@ -202,18 +227,18 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Third Order Ambisonics":
                             Response = new double[16][];
-                            Temp = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[0] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                             Response[1] = Temp[0];
                             Response[2] = Temp[1];
                             Response[3] = Temp[2];
-                            Temp = AcousticalMath.PTCurve_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[4] = Temp[0];
                             Response[5] = Temp[1];
                             Response[6] = Temp[2];
                             Response[7] = Temp[3];
                             Response[8] = Temp[4];
-                            Temp = AcousticalMath.PTCurve_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
+                            Temp = AcousticalMath.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true);
                             Response[9] = Temp[0];
                             Response[10] = Temp[1];
                             Response[11] = Temp[2];
@@ -232,10 +257,12 @@ namespace Pachyderm_Acoustic
                                 if (alt < -90) alt += 180;
                                 if (azi > 360) azi -= 360;
                                 if (azi < 0) azi += 360;
-                                Response[i] = AcousticalMath.PTCurve_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, alt, azi, true);
+                                Response[i] = AcousticalMath.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, alt, azi, true);
                             }
                             break;
                     }
+
+                    //for (int i = 0; i < Response.Length; i++) Response[i] = Pach_SP.Whiten_Signal(Response[i]);
 
                     //Get the maximum value of the Direct Sound
                     double DirectMagnitude = 0;
@@ -257,12 +284,19 @@ namespace Pachyderm_Acoustic
 
                     for (int i = 0; i < Response.Length; i++)
                     {
-                        double[] filter = Audio.Pach_SP.FIR_Bandpass(Response[i], OCT_ID, SampleRate, 0);
-                        Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10], ZedGraph.SymbolType.None);
+                        if (OCT_ID < 8)
+                        {
+                            double[] filter = Audio.Pach_SP.FIR_Bandpass(Response[i], OCT_ID, SampleRate, 0);
+                            Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10], ZedGraph.SymbolType.None);
+                        }
+                        else
+                        {
+                            Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, Response[i], C[i % 10], ZedGraph.SymbolType.None);
+                        }
                     }
                     Analysis_View.GraphPane.XAxis.Scale.Max = time[time.Length - 1];
                     Analysis_View.GraphPane.XAxis.Scale.Min = time[0];
-                    Analysis_View.GraphPane.YAxis.Scale.Max = DirectMagnitude + 15;
+                    Analysis_View.GraphPane.YAxis.Scale.Max = (OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : DirectMagnitude + 15;
                     Analysis_View.GraphPane.YAxis.Scale.Min = 0;
 
                     //AuralisationConduit.Instance.set_direction(Receiver[0].Origin(Receiver_Choice.SelectedIndex), new Rhino.Geometry.Vector3d(Math.Cos((float)Azi_Choice.Value * Math.PI / 180.0f) * Math.Cos((float)Alt_Choice.Value * Math.PI / 180.0f), Math.Sin((float)Azi_Choice.Value * Math.PI / 180.0f) * Math.Cos((float)Alt_Choice.Value * Math.PI / 180.0f), Math.Sin((float)Alt_Choice.Value * Math.PI / 180.0f)));
@@ -614,9 +648,10 @@ namespace Pachyderm_Acoustic
 
                     if (Hybrid_Select.Checked)
                     {
-                        if (UI.Pach_Hybrid_Control.Instance.Auralisation_Ready())
+                        UI.Pach_Hybrid_Control.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
+                        Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
+                        if (Direct_Data != null)
                         {
-                            UI.Pach_Hybrid_Control.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
                             CutoffTime = Direct_Data[0].Cutoff_Time;
                             SampleRate = (int)Direct_Data[0].SampleRate;
                         }
@@ -633,7 +668,7 @@ namespace Pachyderm_Acoustic
                     }
                     else if (Mapping_Select.Checked)
                     {
-                        if (UI.Pach_Mapping_Control.Instance.Auralisation_Ready())
+                        if (UI.Pach_Mapping_Control.Instance != null && UI.Pach_Mapping_Control.Instance.Auralisation_Ready())
                         {
                             UI.Pach_Mapping_Control.Instance.GetSims(ref Maps);
                             CutoffTime = Maps[0].CutOffTime;

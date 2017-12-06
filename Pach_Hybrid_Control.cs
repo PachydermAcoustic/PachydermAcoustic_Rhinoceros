@@ -1796,10 +1796,13 @@ namespace Pachyderm_Acoustic
 
             public void GetSims(ref Hare.Geometry.Point[] Src, ref Hare.Geometry.Point[] Rec, ref Direct_Sound[] D, ref ImageSourceData[] IS, ref Receiver_Bank[] RT)
             {
-                Src = new Hare.Geometry.Point[Source.Length];
-                for (int i = 0; i < Source.Length; i++) Src[i] = Source[i].H_Origin();
-                Rec = Recs;
-
+                if (Source != null)
+                {
+                    Src = new Hare.Geometry.Point[Source.Length];
+                    for (int i = 0; i < Source.Length; i++) Src[i] = Source[i].H_Origin();
+                    Rec = Recs;
+                }
+                else return;
                 if (Direct_Data != null) D = Direct_Data;
                 if (IS_Data != null) IS = IS_Data;
                 if (Receiver != null) RT = Receiver;
@@ -1866,6 +1869,7 @@ namespace Pachyderm_Acoustic
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
+                Pach_Auralisation.Instance.Reset();
                 Read_File();
                 Update_Graph(null, System.EventArgs.Empty);
             }

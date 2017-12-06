@@ -585,7 +585,7 @@ namespace Pachyderm_Acoustic
                     //        Rec.Add(ArrayCenter + radius * new Rhino.Geometry.Point3d(Math.Cos(anglePhi), 0, Math.Sin(anglePhi)));
                     //    }
 
-                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
+                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
 
                     t += 60 / fs;
 

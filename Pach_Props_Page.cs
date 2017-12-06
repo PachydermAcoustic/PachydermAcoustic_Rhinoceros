@@ -28,6 +28,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Pach_Hybrid_Control.Instance != null) Pach_Hybrid_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 if (Pach_Mapping_Control.Instance != null) Pach_Mapping_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
+                if (Pach_Auralisation.Instance != null) Pach_Auralisation.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 return base.OnApply();
             }
 
