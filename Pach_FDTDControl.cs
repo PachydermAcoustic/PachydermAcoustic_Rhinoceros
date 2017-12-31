@@ -596,7 +596,7 @@ namespace Pachyderm_Acoustic
 
                     Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter) + new Hare.Geometry.Point(0, 0, (double)Sample_Depth.Value), radius * 2, radius * 2, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2, radius * 2, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
                     samplefrequency = FDTDS.SampleFrequency;
@@ -610,6 +610,12 @@ namespace Pachyderm_Acoustic
                     double[][] TimeS = Mic.Recordings[0];
                     double[][] TimeF = Micf.Recordings[0];
 
+                    //Zero packing
+                    for (int i = 0; i < TimeS.Length; i++)
+                    {
+                        Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
+                        Array.Resize(ref TimeF[i], (int)(samplefrequency / 2));
+                    }
                     System.Numerics.Complex[][] FS = new System.Numerics.Complex[TimeS.Length][];
                     System.Numerics.Complex[][] FF = new System.Numerics.Complex[TimeS.Length][];
 

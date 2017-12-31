@@ -293,6 +293,7 @@ namespace Pachyderm_Acoustic
                         {
                             double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, PachTools.OctaveStr2Int(Octave.Text), SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, c_scale);
+                            //Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Utilities.RC_PachTools.Hare_to_RhinoMesh(Map[0].MapMesh(),true));
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
                             if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);

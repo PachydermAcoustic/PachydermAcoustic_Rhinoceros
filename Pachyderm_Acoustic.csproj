@@ -82,9 +82,6 @@
     <Reference Include="CLF_Read">
       <HintPath>Resources\CLF_Read.dll</HintPath>
     </Reference>
-    <Reference Include="Hare">
-      <HintPath>Resources\Hare.dll</HintPath>
-    </Reference>
     <Reference Include="LibOptimization, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\LibOptimization.1.8.1\lib\net40\LibOptimization.dll</HintPath>
       <Private>True</Private>
@@ -299,6 +296,10 @@
     <Content Include="Resources\Source.bmp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Hare\Hare.csproj">
+      <Project>{681e37f0-fdb7-4d4d-b5dc-b6f5065170ff}</Project>
+      <Name>Hare</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj">
       <Project>{95032bc9-057a-42e1-a698-82a64db1a360}</Project>
       <Name>Pachyderm_Acoustic_Universal</Name>

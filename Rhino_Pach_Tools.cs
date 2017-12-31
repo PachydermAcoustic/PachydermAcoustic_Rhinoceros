@@ -220,6 +220,7 @@ namespace Pachyderm_Acoustic
                     if ((Snormal.X * Mnormal.X + Snormal.Y * Mnormal.Y + Snormal.Z * Mnormal.Z) < 0) m.Flip(true, true, true);
                     Map_Mesh.Append(m);
                 }
+
                 return Map_Mesh;
             }
 
@@ -607,6 +608,8 @@ namespace Pachyderm_Acoustic
             public static Mesh PlotMesh(PachMapReceiver[] Rec_List, System.Drawing.Color[] C)
             {
                 Mesh MM = Hare_to_RhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
+
+
                 if (!Rec_List[0].Rec_Vertex)
                 {
                     Mesh MF = new Mesh();

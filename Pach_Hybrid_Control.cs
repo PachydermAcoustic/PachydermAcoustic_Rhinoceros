@@ -145,6 +145,7 @@ namespace Pachyderm_Acoustic
                 //for (int i = 0; i < PScene.Count(); i++)
                 //{
                 //    Hare.Geometry.Point p = PScene.polygon_centroid(i);
+
                 //    double coef = PScene.AbsorptionValue[i].Coefficient_A_Broad(4);
                 //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
                 //}
@@ -252,10 +253,10 @@ namespace Pachyderm_Acoustic
                             SplitRayTracer RT_Data = (SplitRayTracer)command.Sim;
                             Receiver[s] = RT_Data.GetReceiver;
                             Receiver[s].Create_Pressure();
+                            Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", RT_Data.PercentLost);
                         }
                         else
-                        {
-                            CancelCalc();
+                        {                           CancelCalc();
                             return;
                         }
                         command.Reset();
@@ -325,6 +326,8 @@ namespace Pachyderm_Acoustic
                     SourceList.SetItemChecked(0, true);
                     Source_Aim.SelectedIndex = 0;
                 }
+                OpenAnalysis();
+                Update_Graph(null, null);
             }
 
             private void cleanup()

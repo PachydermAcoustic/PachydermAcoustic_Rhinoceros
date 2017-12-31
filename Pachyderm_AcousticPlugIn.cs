@@ -302,8 +302,8 @@ namespace Pachyderm_Acoustic
                         S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, Environment.Source.Phase_Regime.PhaseRandom);                         
                     }
                 }
-                if (S == null) return false;
-                return true;
+                if (S.Length > 0) return true;
+                return false;
             }
 
             public bool Receiver(out List<Hare.Geometry.Point> Point)
@@ -317,7 +317,9 @@ namespace Pachyderm_Acoustic
                     if (R_ID == System.Guid.Empty || R_ID == System.Guid.NewGuid()) break;
                     Point.Add(Utilities.RC_PachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
                 }
-                return true;
+
+                if (Point.Count > 0) return true;
+                return false;
             }
 
             protected override bool ShouldCallWriteDocument(Rhino.FileIO.FileWriteOptions options)

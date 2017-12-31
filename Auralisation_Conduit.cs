@@ -56,7 +56,7 @@ namespace Pachyderm_Acoustic
                 if (Speakers != null)
                     foreach (Rhino.Geometry.Line Sp in Speakers)
                     {
-                        //TODO: Draw Speaker Cabinets, for clarity.
+                        //Draw Speaker Cabinets, for clarity.
                         Rhino.Geometry.Box BB = new Box(new Rhino.Geometry.Plane(Sp.From, Sp.UnitTangent), new BoundingBox(-.125, -.15, -.18, .125, .15, .18));
                         e.Display.DrawBox(BB, System.Drawing.Color.Blue);
                         e.Display.DrawLineArrow(Sp, System.Drawing.Color.Blue, 1, .05);
