@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -347,7 +347,6 @@ namespace Pachyderm_Acoustic
 
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
-                //samplefrequency = fs;
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource());
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0);
                 FDTD.RuntoCompletion();
@@ -579,12 +578,6 @@ namespace Pachyderm_Acoustic
                             Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
                         }
 
-                    //for (int phi = 0; phi < 18; phi++)
-                    //    {
-                    //        double anglePhi = phi * Math.PI / 18;
-                    //        Rec.Add(ArrayCenter + radius * new Rhino.Geometry.Point3d(Math.Cos(anglePhi), 0, Math.Sin(anglePhi)));
-                    //    }
-
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
 
                     t += 60 / fs;
@@ -657,8 +650,6 @@ namespace Pachyderm_Acoustic
 
                     if (!Rm.Complete && Rm_Ctrl.Complete) return;
 
-                    //if (!Rm.Complete) return;
-
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
                     Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value) };
@@ -670,12 +661,6 @@ namespace Pachyderm_Acoustic
                             double angleTheta = theta * Utilities.Numerics.PiX2 / 36;
                             Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
                         }
-
-                    //for (int phi = 0; phi < 18; phi++)
-                    //    {
-                    //        double anglePhi = phi * Math.PI / 18;
-                    //        Rec.Add(ArrayCenter + radius * new Rhino.Geometry.Point3d(Math.Cos(anglePhi), 0, Math.Sin(anglePhi)));
-                    //    }
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
 
@@ -750,7 +735,6 @@ namespace Pachyderm_Acoustic
                 ScatteringGraph.GraphPane.Title.Text = "Scattering Performance";
                 ScatteringGraph.GraphPane.XAxis.Title.Text = "Frequency (Hz.)";
                 ScatteringGraph.GraphPane.YAxis.Title.Text = "Scattering Coefficient";
-
 
                 //ScatteringGraph.GraphPane.AddCurve("Scattering Function", Scattering, , System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
                 ScatteringGraph.GraphPane.XAxis.Scale.Max = samplefrequency / 2;

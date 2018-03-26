@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -180,7 +180,7 @@ namespace Pachyderm_Acoustic
                         {
                             for (int oct = 0; oct < 8; oct++)
                             {
-                                double[] ETC = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
+                                double[] ETC = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
                                 Schroeder = AcousticalMath.Schroeder_Integral(ETC);
                                 EDT[s, r, oct] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
                                 T10[s, r, oct] = AcousticalMath.T_X(Schroeder, 10, SampleRate);
@@ -192,7 +192,7 @@ namespace Pachyderm_Acoustic
                                 C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
                                 D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
                                 TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
-                                double[] L_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value), SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
+                                double[] L_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value), SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
                                 LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                                 LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                             }
@@ -241,7 +241,7 @@ namespace Pachyderm_Acoustic
                         ReceiverLine += r.ToString() + ";";
                         for (int oct = 0; oct < 8; oct++)
                         {
-                            double[] ETC = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
+                            double[] ETC = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
                             Schroeder = AcousticalMath.Schroeder_Integral(ETC);
                             ParamValues[s, r, oct, 0] = AcousticalMath.T_X(Schroeder, 30, SampleRate);
                             ParamValues[s, r, oct, 1] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
@@ -251,7 +251,7 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
                             double azi, alt;
                             PachTools.World_Angles(Direct_Data[s].Src.Origin(), Recs[r], true, out alt, out azi);
-                            double[][] Lateral_ETC = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
+                            double[][] Lateral_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
                             ParamValues[s, r, oct, 6] = AcousticalMath.Lateral_Fraction(ETC, Lateral_ETC, SampleRate, Direct_Data[s].Min_Time(r), false);
                         }
                     }

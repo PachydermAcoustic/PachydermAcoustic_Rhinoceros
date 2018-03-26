@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -786,9 +786,9 @@ namespace Pachyderm_Acoustic
                     t1z.Add(T1.Z);
                     Vector3d T2 = (Csects2[0].PointAtNormalizedLength(0.05) - P.Origin);
                     T2.Unitize();
-                    t2x.Add(T1.X);
-                    t2y.Add(T1.Y);
-                    t2z.Add(T1.Z);
+                    t2x.Add(T2.X);
+                    t2y.Add(T2.Y);
+                    t2z.Add(T2.Z);
                     //Hare.Geometry.Vector[] HTangents = new Hare.Geometry.Vector[2] { new Hare.Geometry.Vector(Tangents[0].X, Tangents[0].Y, Tangents[0].Z), new Hare.Geometry.Vector(Tangents[1].X, Ta0gents[1].Y, 0T00000000000Z) };
                     ///Get Normal
                     double up, vp;

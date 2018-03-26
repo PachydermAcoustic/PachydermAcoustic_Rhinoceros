@@ -18,17 +18,24 @@ namespace Pachyderm_Acoustic
                     : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, new Hare.Geometry.Point(), 0, 0, 0)
                 {
                     Build_Mesh_Sections();
+                    Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
+                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
 
                 public Acoustic_Compact_FDTD_RC(Environment.Polygon_Scene Rm_in, ref Signal_Driver_Compact S_in, ref Microphone_Compact M_in, double fmax_in, double tmax_in, GridType GT, Hare.Geometry.Point SampleOrigin, double MindimX, double MindimY, double MindimZ)
                 : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, SampleOrigin, MindimX, MindimY, MindimZ)
                 {
                     Build_Mesh_Sections();
+                    Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
+                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
-
 
                 private void Build_Mesh_Sections()
                 {
+                    ///
+                    ///Testing source and receiver positions
+                    ///
+
                     int ct = -1;
                     m_templateX = new Rhino.Geometry.Mesh[2];
                     m_templateX[0] = new Rhino.Geometry.Mesh();

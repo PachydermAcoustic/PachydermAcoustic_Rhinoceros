@@ -391,7 +391,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                    R.Add(new Receiver_Bank(ReceiverLocations, (Srcs.ElementAt<Source>(i)).Origin(), Sc, 1000, CutOffTime, (Srcs.ElementAt<Source>(i)).Delay, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, (Srcs.ElementAt<Source>(i)).Origin(), Sc, 1000, CutOffTime, RecType));
                 }
 
                 return R;
@@ -427,7 +427,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                    R.Add(new Receiver_Bank(ReceiverLocations, Srcs.ElementAt<Source>(i).Origin(), Sc, sample_rate, CutOffTime, Srcs.ElementAt<Source>(i).Delay, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, Srcs.ElementAt<Source>(i).Origin(), Sc, sample_rate, CutOffTime, RecType));
                 }
 
                 return R;

@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -100,31 +100,6 @@ namespace Pachyderm_Acoustic
                         SWL6.Value = (decimal)SWL[6];
                         SWL7.Value = (decimal)SWL[7];
 
-                        string phase = Objects[0].Geometry.GetUserString("Phase");
-                        if (!string.IsNullOrEmpty(phase))
-                        {
-                            string[] ph = phase.Split(';');
-                            this.Phase0.Value = decimal.Parse(ph[0]);
-                            this.Phase1.Value = decimal.Parse(ph[1]);
-                            this.Phase2.Value = decimal.Parse(ph[2]);
-                            this.Phase3.Value = decimal.Parse(ph[3]);
-                            this.Phase4.Value = decimal.Parse(ph[4]);
-                            this.Phase5.Value = decimal.Parse(ph[5]);
-                            this.Phase6.Value = decimal.Parse(ph[6]);
-                            this.Phase7.Value = decimal.Parse(ph[7]);
-                        }
-                        else
-                        {
-                            this.Phase0.Value = 0;
-                            this.Phase1.Value = 0;
-                            this.Phase2.Value = 0;
-                            this.Phase3.Value = 0;
-                            this.Phase4.Value = 0;
-                            this.Phase5.Value = 0;
-                            this.Phase6.Value = 0;
-                            this.Phase7.Value = 0;
-                        }
-
                         string Aim = Objects[0].Geometry.GetUserString("Aiming");
                         if (!string.IsNullOrEmpty(Aim))
                         {
@@ -169,13 +144,11 @@ namespace Pachyderm_Acoustic
             {
                 if (Objects.Count != 0)
                 {
-                    if (!SWL0.Focused && !SWL1.Focused && !SWL2.Focused && !SWL3.Focused && !SWL4.Focused && !SWL5.Focused && !SWL6.Focused && !SWL7.Focused 
-                        && !Phase0.Focused && !Phase1.Focused && !Phase2.Focused && !Phase3.Focused && !Phase4.Focused && !Phase5.Focused && !Phase6.Focused && !Phase7.Focused && !SourceType.Focused) return;
+                    if (!SWL0.Focused && !SWL1.Focused && !SWL2.Focused && !SWL3.Focused && !SWL4.Focused && !SWL5.Focused && !SWL6.Focused && !SWL7.Focused && !SourceType.Focused) return;
                     foreach (RhinoObject OBJ in Objects)
                     {
                         OBJ.Geometry.SetUserString("SourceType", SourceType.SelectedIndex.ToString());
                         OBJ.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { (double)SWL0.Value, (double)SWL1.Value, (double)SWL2.Value, (double)SWL3.Value, (double)SWL4.Value, (double)SWL5.Value, (double)SWL6.Value, (double)SWL7.Value }));
-                        OBJ.Geometry.SetUserString("Phase", Utilities.PachTools.EncodeSourcePower(new double[] { (double)Phase0.Value, (double)Phase1.Value, (double)Phase2.Value, (double)Phase3.Value, (double)Phase4.Value, (double)Phase5.Value, (double)Phase6.Value, (double)Phase7.Value }));                        
                     }
                 }
                 Load_Doc(Objects);
