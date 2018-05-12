@@ -496,7 +496,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Render_Response.Length; i++)
                 {
                     NewSignal[i] = Pach_SP.FFT_Convolution(SignalBuffer, Render_Response[i], 0);
-                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= 1E-5f;
+                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float) (Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value/20));
                 }
 
                 SrcRendered = new int[SourceList.CheckedIndices.Count];
@@ -647,7 +647,7 @@ namespace Pachyderm_Acoustic
                     NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(SamplesPerSec, 24, Render_Response.Length));
                     for (int j = 0; j < Render_Response[0].Length; j++)
                     {
-                        for (int c = 0; c < Render_Response.Length; c++) if (j > Render_Response[c].Length - 1) Writer.WriteSample(0); else Writer.WriteSample((float)Render_Response[c][j]);
+                        for (int c = 0; c < Render_Response.Length; c++) if (j > Render_Response[c].Length - 1) Writer.WriteSample(0); else Writer.WriteSample((float)Render_Response[c][j] * (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value / 20)) * (float)Math.Pow(2, 11));
                     }
                     Writer.Close();
                     Writer.Dispose();
@@ -789,6 +789,10 @@ namespace Pachyderm_Acoustic
                             SourceList.SetItemChecked(0, true);
                             Source_Aim.SelectedIndex = 0;
                         }
+
+                        double max = 0;
+                        foreach (Direct_Sound d in Direct_Data) max = Math.Max(max, d.SWL.Max());// 10 * Math.Log10(Math.Pow(10, d.SWL[0] / 10) + Math.Pow(10, d.SWL[1] / 10) + Math.Pow(10, d.SWL[2] / 10) + Math.Pow(10, d.SWL[3] / 10) + Math.Pow(10, d.SWL[4] / 10) + Math.Pow(10, d.SWL[5] / 10) + Math.Pow(10, d.SWL[6] / 10) + Math.Pow(10, d.SWL[7] / 10)));
+                        Normalization_Choice.Value = (decimal)max;
                     }
                     else if (Mapping_Select.Checked)
                     {

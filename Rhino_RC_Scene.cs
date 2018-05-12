@@ -801,7 +801,7 @@ namespace Pachyderm_Acoustic
                     //Hare.Geometry.Vector[] HNormals = new Hare.Geometry.Vector[2] { new Hare.Geometry.Vector(Normals[0].X, Normals[0].Y, Normals[0].Z), new Hare.Geometry.Vector(Normals[1].X, Normals[1].Y, Normals[1].Z) };
                 }
 
-                if (d.Count < 4) return;
+                if (d.Count < 5) return;
 
                 Edges.Add(new MathNet.Numerics.Interpolation.CubicSpline[] {
                 MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkimaSorted(d.ToArray(), x.ToArray()),

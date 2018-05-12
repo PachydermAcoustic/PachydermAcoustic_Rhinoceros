@@ -249,7 +249,7 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.CheckState == CheckState.Checked)
                     {
-                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)RT_Count.Value, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0);
+                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0, (int)RT_Count.Value, Direct_Data[s]);
 
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)

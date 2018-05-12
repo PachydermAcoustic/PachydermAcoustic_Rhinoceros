@@ -143,7 +143,7 @@ namespace Pachyderm_Acoustic
                     }
                     command.Reset();
 
-                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), (int)RT_Count.Value, 0);
+                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, (int)RT_Count.Value, 0, Direct_Data);
 
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
 
