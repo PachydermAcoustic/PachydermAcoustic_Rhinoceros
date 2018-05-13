@@ -2,7 +2,7 @@ Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros
 PachydermGH
 Hare
 
-Copyright (C) 2008-2015, Arthur van der Harten
+Copyright (C) 2008-2018, Arthur van der Harten
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 

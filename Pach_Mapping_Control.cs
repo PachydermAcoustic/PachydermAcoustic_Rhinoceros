@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -43,6 +43,7 @@ namespace Pachyderm_Acoustic
                 Instance = this;
                 FC = new ForCall(Step_Forward);
                 TC = new T_Call(Update_T);
+                Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -142,7 +143,7 @@ namespace Pachyderm_Acoustic
                     }
                     command.Reset();
 
-                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), (int)RT_Count.Value, 0);
+                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, (int)RT_Count.Value, 0, Direct_Data);
 
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
 
@@ -736,12 +737,12 @@ namespace Pachyderm_Acoustic
                     switch (Graph_Type.Text)
                     {
                         case "Energy Time Curve":
-                            Filter = AcousticalMath.ETCurve(null, null, Map, (double)CO_TIME.Value, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false);
+                            Filter = IR_Construction.ETCurve(null, null, Map, (double)CO_TIME.Value, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         //case "Pressure Time Curve":
                         //    zero_sample = 4096 / 2;
-                        //    Filter2 = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                        //    Filter2 = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
                         //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                         //    {
                         //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -757,7 +758,7 @@ namespace Pachyderm_Acoustic
                         //    break;
                         //case "Lateral PTC":
                         //    zero_sample = 4096 / 2;
-                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
                         //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                         //    {
                         //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -773,7 +774,7 @@ namespace Pachyderm_Acoustic
                         //    break;
                         //case "Vertical PTC":
                         //    zero_sample = 4096 / 2;
-                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
                         //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                         //    {
                         //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -789,7 +790,7 @@ namespace Pachyderm_Acoustic
                         //    break;
                         //case "Fore-Aft PTC":
                         //    zero_sample = 4096 / 2;
-                        //    Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
                         //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                         //    {
                         //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -1042,7 +1043,7 @@ namespace Pachyderm_Acoustic
                 if (Linear_Phase == this.Linear_Phase) return;
                 if ((this.Linear_Phase == true && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System)) || (this.Linear_Phase == false && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)))
                 {
-                    for (int i = 0; i < Map.Length; i++) Map[i].reset_pressure();
+                    for (int i = 0; i < Map.Length; i++) Map[i].reset_filter();
                     Rhino.RhinoApp.Write("Mapping pressure reset.");
                     this.Linear_Phase = Linear_Phase;
                 }
@@ -1050,13 +1051,13 @@ namespace Pachyderm_Acoustic
 
             private void Coherent_CheckedChanged(object sender, EventArgs e)
             {
-                if (Coherent.Checked && Map != null && !Map[0].HasPressure())
+                if (Coherent.Checked && Map != null && !Map[0].HasFilter())
                 {
                     DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
                     if (DR == DialogResult.Yes)
                     {
                         Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
-                        for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Pressure();
+                        for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(); //this.Map[i].Create_Pressure(Map[i].SWL);
                     }
                     else 
                     {
@@ -1107,12 +1108,39 @@ namespace Pachyderm_Acoustic
                 }
 
                 Receiver_Selection.Maximum = Map[0].Rec_List.Length;
-
+                
                 if (SourceList.CheckedIndices.Count < 1) return;
 
                 ReceiverPointer.Enabled = true;
                 ReceiverPointer.setPoint(Utilities.RC_PachTools.HPttoRPt(Map[(int)(SourceList.CheckedIndices[0])].Origin((int)Receiver_Selection.Value)));
                 Update_Graph(sender, e);
+            }
+
+            private void DelayMod_Click(object sender, EventArgs e)
+            {
+                //Interface for time selection...
+                double t = Map[SourceList.SelectedIndices[0]].delay_ms;
+                Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
+
+                foreach (int id in SourceList.SelectedIndices)
+                {
+                    Map[id].delay_ms = t;
+                }
+                Update_Graph(null, null);
+            }
+
+            private void ModifyPower_Click(object sender, EventArgs e)
+            {
+                int[] srcs = new int[SourceList.SelectedIndices.Count];
+                if (srcs.Length < 1) return;
+                SourceList.SelectedIndices.CopyTo(srcs, 0);
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Map[srcs[0]].SWL);
+                mod.ShowDialog();
+                if (mod.accept)
+                {
+                    foreach (int i in srcs) Map[i].SWL = mod.Power;
+                }
+                Update_Graph(null, null);
             }
         }
     }

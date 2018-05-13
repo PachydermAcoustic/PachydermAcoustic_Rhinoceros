@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2015, Arthur van der Harten 
+//'Copyright (c) 2008-2018, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -39,6 +39,7 @@ namespace Pachyderm_Acoustic
                 Load_Library();
                 Instance = this;
                 Rhino.RhinoDoc.LayerTableEvent += Load_Library_Event;
+                Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
             }
 
             private void Load_Library_Event(object sender, Rhino.DocObjects.Tables.LayerTableEventArgs e)
@@ -78,6 +79,7 @@ namespace Pachyderm_Acoustic
             public double CutoffTime;
             List<System.Guid> ShownPaths = new List<Guid>();
             bool Linear_Phase = false;
+            //bool Pressure_Ready;
 
             //To Begin Calculation... 
             PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
@@ -195,14 +197,14 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Source.Length; s++)
                 {
-                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, Source[s].Delay, T);
+                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, T);
 
                     command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
                     if (command.CommandResult != Rhino.Commands.Result.Cancel)
                     {
                         Direct_Data[s] = ((Direct_Sound)command.Sim);
-                        Direct_Data[s].Create_Pressure();
+                        Direct_Data[s].Create_Filter();
                     }
                     else
                     {
@@ -219,6 +221,7 @@ namespace Pachyderm_Acoustic
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
                         {
                             IS_Data[s] = ((ImageSourceData)command.Sim);
+                            IS_Data[s].Create_Filter(Source[s].SWL(), 4096);
                         }
                         else
                         {
@@ -235,6 +238,7 @@ namespace Pachyderm_Acoustic
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
                         {
                             IS_Data[s].Lookup_Sequences(((IS_Trace)(command.Sim)).IS_Sequences());
+                            IS_Data[s].Create_Filter(Source[s].SWL(), 4096);
                         }
                         else
                         {
@@ -245,14 +249,15 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.CheckState == CheckState.Checked)
                     {
-                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)RT_Count.Value, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0);
+                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0, (int)RT_Count.Value, Direct_Data[s]);
 
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
                         {
                             SplitRayTracer RT_Data = (SplitRayTracer)command.Sim;
                             Receiver[s] = RT_Data.GetReceiver;
-                            Receiver[s].Create_Pressure();
+                            //Receiver[s].Create_Pressure(Direct_Data[s].SWL);
+                            Receiver[s].Create_Filter();
                             Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", RT_Data.PercentLost);
                         }
                         else
@@ -278,6 +283,8 @@ namespace Pachyderm_Acoustic
                     OpenAnalysis();
                     cleanup();
                 }
+
+                //Pressure_Ready = true;
                 Populate_Sources();
             }
 
@@ -544,9 +551,9 @@ namespace Pachyderm_Acoustic
                 this.Linear_Phase = Linear_Phase;
                 if ((Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System))
                 {
-                    for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Pressure();
-                    for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Pressure(44100, 4096);
-                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Pressure();
+                    for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
+                    for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096);
+                    //for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter();
                 }
             }
 
@@ -1035,17 +1042,18 @@ namespace Pachyderm_Acoustic
                 if (Graph_Type.Text == "Pressure Time Curve")
                 {
                     double RhoC = Direct_Data[0].Rho_C[int.Parse(Receiver_Choice.Text)];
+                    double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true);
+                    ///Need a new PT_Curve method that will apply the correct power to each filter appropriately. This one forces only one power level to be used...)
                     for (int oct = 0; oct < 8; oct++) 
                      {
-                         ETC[oct] = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false);
-                         ETC[oct] = Audio.Pach_SP.FIR_Bandpass(ETC[oct], oct, SampleRate, 0);
+                         ETC[oct] = Audio.Pach_SP.FIR_Bandpass(ETC_BB, oct, SampleRate, 0);
                          for(int i = 0; i < ETC[oct].Length; i++) ETC[oct][i] *= ETC[oct][i] / RhoC;
                      }
                      pressure = true;
                 }
                 else
                 {
-                    for (int oct = 0; oct < 8; oct++) ETC[oct] = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
+                    for (int oct = 0; oct < 8; oct++) ETC[oct] = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
                     pressure = false;
                 }
 
@@ -1431,7 +1439,7 @@ namespace Pachyderm_Acoustic
                         double[][] ETCm = new double[8][];
                         for (int oct = 0; oct < 8; oct++)
                         {
-                            ETCm[oct] = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
+                            ETCm[oct] = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
                             //ETCm[oct] = new double[ptc.Length];
                             //for (int s = 0; s < ptc.Length; s++) ETCm[oct][s] = ptc[s] * ptc[s];
                         }
@@ -1446,125 +1454,125 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(MTI[6], 2));
                         break;
                     case "Lateral Fraction (LF)":
-                        double LF = AcousticalMath.Lateral_Fraction(ETC[0], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        double LF = AcousticalMath.Lateral_Fraction(ETC[0], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[1], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[1], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[2], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[2], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[3], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[3], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true), SampleRate, dtime, pressure);
                         SRT4.Text = string.Format("500 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[4], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[4], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[5], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[5], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[6], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[6], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(LF, 2));
 
-                        LF = AcousticalMath.Lateral_Fraction(ETC[7], AcousticalMath.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
+                        LF = AcousticalMath.Lateral_Fraction(ETC[7], IR_Construction.ETCurve_1d_Tight(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, dtime, pressure);
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(LF, 2));
                         break;
                     case "Lateral Efficiency (LE)":
-                        double LE = AcousticalMath.Lateral_Efficiency(ETC[0], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        double LE = AcousticalMath.Lateral_Efficiency(ETC[0], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 0, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[1], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[1], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 1, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[2], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[2], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 2, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[3], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[3], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 3, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT4.Text = string.Format("500 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[4], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[4], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 4, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[5], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[5], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 5, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[6], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[6], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 6, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(LE, 2));
 
-                        LE = AcousticalMath.Lateral_Efficiency(ETC[7], AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
+                        LE = AcousticalMath.Lateral_Efficiency(ETC[7], IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, 7, int.Parse(Receiver_Choice.Text), SrcIDs, false, -(double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1], SampleRate, Direct_Data[SourceList.CheckedIndices[0]].Min_Time(int.Parse(Receiver_Choice.Text)), pressure);
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(LE, 2));
                         break;
                     case "Echo Criterion (Music, 10%)":
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50 );
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50 );
                         SRT1.Text = string.Format("62.5 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT2.Text = string.Format("125 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT3.Text = string.Format("250 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT4.Text = string.Format("500 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT5.Text = string.Format("1000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT6.Text = string.Format("2000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT7.Text = string.Format("4000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT8.Text = string.Format("8000 hz. : {0}", Echo10);
                         break;
                     case "Echo Criterion (Music, 50%)":
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT2.Text = string.Format("125 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT3.Text = string.Format("250 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT4.Text = string.Format("500 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT5.Text = string.Format("1000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT6.Text = string.Format("2000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT7.Text = string.Format("4000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT8.Text = string.Format("8000 hz. : {0}", Echo50);
                         break;
                     case "Echo Criterion (Speech, 10%)":
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT2.Text = string.Format("125 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT3.Text = string.Format("250 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT4.Text = string.Format("500 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT5.Text = string.Format("1000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT6.Text = string.Format("2000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT7.Text = string.Format("4000 hz. : {0}", Echo10);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT8.Text = string.Format("8000 hz. : {0}", Echo10);
                         break;
                     case "Echo Criterion (Speech, 50%)":
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT2.Text = string.Format("125 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 2, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT3.Text = string.Format("250 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 3, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT4.Text = string.Format("500 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 4, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT5.Text = string.Format("1000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 5, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT6.Text = string.Format("2000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 6, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT7.Text = string.Format("4000 hz. : {0}", Echo50);
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT8.Text = string.Format("8000 hz. : {0}", Echo50);
                         break;
                 }
@@ -1622,12 +1630,13 @@ namespace Pachyderm_Acoustic
                     switch (Graph_Type.Text)
                     {
                         case "Energy Time Curve":
-                            Filter = AcousticalMath.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false);
+                            Filter = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Pressure Time Curve":
+                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096/2;
-                            Filter2 = AcousticalMath.PTCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
+                            Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -1637,13 +1646,14 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral ETC":
-                            Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                            Filter = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral PTC":
+                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096/2;
-                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
+                            Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[1];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -1653,13 +1663,14 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
                             break;
                         case "Vertical ETC":
-                            Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                            Filter = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Vertical PTC":
+                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096/2;
-                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
+                            Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[2];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -1669,13 +1680,14 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
                             break;
                         case "Fore-Aft ETC":
-                            Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                            Filter = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case"Fore-Aft PTC":
+                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096/2;
-                            Filter2 = AcousticalMath.PTCurve_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
+                            Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[0];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
@@ -1781,6 +1793,7 @@ namespace Pachyderm_Acoustic
 
             private void SourceList_MouseUp(object sender, MouseEventArgs e)
             {
+                if (e.Button == MouseButtons.Right) return;
                 Update_Parameters();
                 Update_Graph(null, System.EventArgs.Empty);
                 OpenAnalysis();
@@ -1872,7 +1885,7 @@ namespace Pachyderm_Acoustic
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                Pach_Auralisation.Instance.Reset();
+                //Pach_Auralisation.Instance.Reset();
                 Read_File();
                 Update_Graph(null, System.EventArgs.Empty);
             }
@@ -1900,6 +1913,34 @@ namespace Pachyderm_Acoustic
             private void Auralisation_Click(object sender, EventArgs e)
             {
                 Rhino.RhinoApp.RunScript("PachyDerm_Auralisation", false);
+            }
+
+            private void DelayMod_Click(object sender, EventArgs e)
+            {
+                //Interface for time selection...
+                double t = Direct_Data[SourceList.SelectedIndices[0]].Delay_ms;
+                Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
+
+                foreach (int id in SourceList.SelectedIndices)
+                {
+                    Direct_Data[id].Delay_ms = t;
+                }
+                Update_Graph(null, null);
+            }
+
+            private void Source_Power_Mod_Click(object sender, EventArgs e)
+            {
+                int[] srcs = new int[SourceList.SelectedIndices.Count];
+                if (srcs.Length < 1) return;
+                SourceList.SelectedIndices.CopyTo(srcs, 0);
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Direct_Data[srcs[0]].SWL);
+                mod.ShowDialog();
+                if (mod.accept)
+                {
+                    //Pressure_Ready = false;
+                    foreach (int i in srcs) Direct_Data[i].Set_Power(mod.Power);
+                }
+                Update_Graph(null, null);
             }
         }
     }

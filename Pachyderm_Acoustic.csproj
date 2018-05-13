@@ -136,12 +136,6 @@
     <Compile Include="Rhino_Compact_FDTD.cs" />
     <Compile Include="Rhino_Pach_Tools.cs" />
     <Compile Include="VoxelConduit.cs" />
-    <Compile Include="Pach_Absorption_Designer.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Pach_Absorption_Designer.Designer.cs">
-      <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
-    </Compile>
     <Compile Include="Pach_Auralisation.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -238,9 +232,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Pach_Absorption_Designer.resx">
-      <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Pach_Auralisation.resx">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
       <SubType>Designer</SubType>
