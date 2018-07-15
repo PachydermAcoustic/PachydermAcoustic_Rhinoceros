@@ -11,7 +11,7 @@
 //'but WITHOUT ANY WARRANTY; without even the implied warranty of 
 //'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
 //'GNU General Public License for more details. 
-//' 
+//'
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
@@ -46,7 +46,6 @@ namespace Pachyderm_Acoustic
             {
                 Pach_GetModel_Command Model = new Pach_GetModel_Command();
                 Source[] Source;
-
 
                 if (PachydermAc_PlugIn.Instance.Source(out Source) && !object.ReferenceEquals(FileLocation.SelectedPath, "")) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];
@@ -126,6 +125,9 @@ namespace Pachyderm_Acoustic
                 double PMax = (double)this.Param_Max.Value;
                 double PRange = PMax - PMin;
 
+                int h = Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.Bounds.Height;
+                int w = Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.Bounds.Width;
+                
                 for (int q = 0; q < (int)total_Frames; q++)
                 {
                     for (int i = 0; i < Rays.Length; i++)
@@ -156,7 +158,7 @@ namespace Pachyderm_Acoustic
                         else number = "0" + q.ToString();
                     }
                     else number = q.ToString();
-                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
+                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + string.Format(".jpg Width={0} Height={1} DrawGrid=No Enter", 2*w, 2*h), true);
 
                     //Clean Up Model
                     Rhino.RhinoDoc.ActiveDoc.Objects.Delete(Particle_IDS, true);
@@ -428,7 +430,6 @@ namespace Pachyderm_Acoustic
                         if (Room.shoot(R, out u, out v, out ChosenIndex, out Start, out leg, out code))
                         {
                             double cos_theta;
-
 
                             for (int i = 0; i < Start.Count; i++)
                             {

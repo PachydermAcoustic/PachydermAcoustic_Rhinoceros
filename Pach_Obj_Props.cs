@@ -240,20 +240,17 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < Objects.Count; i++)
                         {
                             Objects[i].Geometry.SetUserString("Acoustics_User", "no");
-                            //Rhino.RhinoDoc.ActiveDoc.Objects.ModifyAttributes(obj, obj.Attributes, true);
                         }
                         UpdateForm();
                     }
                     else if (User_Materials.Checked)
                     {
-                        //foreach (RhinoObject obj in Objects)
                         for(int i = 0; i < Objects.Count; i++)
                         {
                             Objects[i].Geometry.SetUserString("Acoustics_User", "yes");
                             UpdateForm();
                             Objects[i].Geometry.SetUserString("Acoustics", MaterialCode);
                         }
-                        //UpdateForm();
                     }
                 }
 
@@ -281,12 +278,10 @@ namespace Pachyderm_Acoustic
                             {
                                 this.User_Materials.Checked = false;
                                 this.Acoustics_Layer.Checked = false;
-                                //UpdateForm();
                                 MaterialCode = null;
                                 return;
                             }
                         }
-                        //If the common method is user_materials 
 
                         if (Mode == "yes")
                         {
@@ -303,7 +298,6 @@ namespace Pachyderm_Acoustic
                                     //If not the same... 
                                     this.User_Materials.Checked = true;
                                     this.Acoustics_Layer.Checked = false;
-                                    //UpdateForm();
                                     Clear();
                                     return;
                                 }
@@ -343,13 +337,10 @@ namespace Pachyderm_Acoustic
                                 Trans2kv.Value = (int)(Transparency[5] * 100);
                                 Trans4kv.Value = (int)(Transparency[6] * 100);
                                 Trans8kv.Value = (int)(Transparency[7] * 100);
-
-                                //UpdateForm();
                             }
                             else
                             {
                                 Clear();
-                                //UpdateForm();
                             }
                         }
                         else
@@ -358,7 +349,6 @@ namespace Pachyderm_Acoustic
                             this.User_Materials.Checked = false;
                             this.Acoustics_Layer.Checked = true;
                             Clear();
-                            //UpdateForm();
                             return;
                         }
                     }
@@ -368,7 +358,6 @@ namespace Pachyderm_Acoustic
                         this.User_Materials.Checked = false;
                         this.Acoustics_Layer.Checked = true;
                         Clear();
-                        //UpdateForm();
                     }
                 }
                 UpdateForm();
@@ -461,7 +450,6 @@ namespace Pachyderm_Acoustic
             {
                 get
                 {
-                    //System.Windows.Forms.MessageBox.Show("PageControl");
                     if (obj_Props == null) obj_Props = new Pach_objProps();
                     return obj_Props;
                 }

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Rhino;
 using Rhino.Display;
 using Rhino.Commands;
+using Rhino.Geometry;
 
 namespace Pachyderm_Acoustic
 {
@@ -630,6 +631,7 @@ namespace Pachyderm_Acoustic
             private bool m_bHandlerAdded = false;
             private List<System.Guid> m_id_list = new List<System.Guid>();
             public List<Balloon> m_Balloons = new List<Balloon>();
+            public Dodec d = new Dodec(0.18);
             DisplayBitmap SS;
             DisplayBitmap SU;
             DisplayBitmap LS;
@@ -910,12 +912,34 @@ namespace Pachyderm_Acoustic
                             {
                                 if ((rhobj.IsSelected(false) != 0))
                                 {
-                                    e.Display.DrawSprite(SS, pt, 0.5f, true);// screen_pt, 32.0f);
+                                    e.Display.DrawLines(d.GetLines(pt), Color.Yellow);
+                                    List<Circle> circles = d.GetCircles(pt);
+                                    foreach (Circle c in circles)
+                                    {
+                                        e.Display.DrawCircle(c, Color.Red);
+                                        Circle c1 = c;
+                                        c1.Radius += 0.02;
+                                        e.Display.DrawCircle(c1, Color.Red);
+                                        c1.Radius -= 0.04;
+                                        e.Display.DrawCircle(c1, Color.Red);
+                                    }
+                                    //e.Display.DrawSprite(SS, pt, 0.5f, true);// screen_pt, 32.0f);
                                     e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
                                 }
                                 else
                                 {
-                                    e.Display.DrawSprite(SU, pt, 0.5f, true);// screen_pt, 32.0f, Color.Black);
+                                    e.Display.DrawLines(d.GetLines(pt), Color.Black);
+                                    List<Circle> circles = d.GetCircles(pt);
+                                    foreach (Circle c in circles)
+                                    {
+                                        e.Display.DrawCircle(c, Color.Red);
+                                        Circle c1 = c;
+                                        c1.Radius += 0.02;
+                                        e.Display.DrawCircle(c1, Color.Red);
+                                        c1.Radius -= 0.04;
+                                        e.Display.DrawCircle(c1, Color.Red);
+                                    }
+                                    //e.Display.DrawSprite(SU, pt, 0.5f, true);// screen_pt, 32.0f, Color.Black);
                                     e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
                                 }
                             }
@@ -1038,6 +1062,96 @@ namespace Pachyderm_Acoustic
                         m_Balloons[i].CurrentAxi = axi;
                         m_Balloons[i].Update_Position();
                     }
+                }
+            }
+
+            public class Dodec
+            {
+                List<Rhino.Geometry.Line> L = new List<Rhino.Geometry.Line>();
+                Vector3d[] C = new Vector3d[12];
+                double r;
+
+                public Dodec(double radius)
+                {
+                    r = radius;
+                    double phi = (Math.Sqrt(5) - 1) / 2;
+                    double a = r / Math.Sqrt(3);
+                    double b =  a / phi;
+                    double c =  a * phi;
+                    int[] sign = new int[2] { -1, 1 };
+
+                    L.Add(new Line(c, 0, b, -c, 0, b));//0
+                    L.Add(new Line(c, 0, -b, -c, 0, -b));//1
+                    L.Add(new Line(L[0].From, new Point3d(a, a, a)));//2
+                    L.Add(new Line(L[0].From, new Point3d(a, -a, a)));//3
+                    L.Add(new Line(L[0].To, new Point3d(-a, a, a)));//4
+                    L.Add(new Line(L[0].To, new Point3d(-a, -a, a)));//5
+                    L.Add(new Line(L[1].From, new Point3d(a, a, -a)));//6
+                    L.Add(new Line(L[1].From, new Point3d(a, -a, -a)));//7
+                    L.Add(new Line(L[1].To, new Point3d(-a, a, -a)));//8
+                    L.Add(new Line(L[1].To, new Point3d(-a, -a, -a)));//9
+                    L.Add(new Line(L[2].To, new Point3d(0, b, c)));//10
+                    L.Add(new Line(L[4].To, new Point3d(0, b, c)));//11
+                    L.Add(new Line(L[3].To, new Point3d(0, -b, c)));//12
+                    L.Add(new Line(L[5].To, new Point3d(0, -b, c)));//13
+                    L.Add(new Line(L[6].To, new Point3d(0, b, -c)));//14
+                    L.Add(new Line(L[8].To, new Point3d(0, b, -c)));//15
+                    L.Add(new Line(L[7].To, new Point3d(0, -b, -c)));//16
+                    L.Add(new Line(L[9].To, new Point3d(0, -b, -c)));//17
+                    L.Add(new Line(L[10].To, L[14].To));//18
+                    L.Add(new Line(L[12].To, L[16].To));//19
+                    Point3d Ppp = new Point3d(b, c, 0);
+                    Point3d Ppm = new Point3d(b, -c, 0);
+                    Point3d Pmp = new Point3d(-b, c, 0);
+                    Point3d Pmm = new Point3d(-b, -c, 0);
+                    L.Add(new Line(L[2].To, Ppp));//20
+                    L.Add(new Line(L[6].To, Ppp));//21
+                    L.Add(new Line(L[3].To, Ppm));//22
+                    L.Add(new Line(L[7].To, Ppm));//23
+                    L.Add(new Line(L[21].To, L[22].To));//24
+                    L.Add(new Line(L[4].To, Pmp));//25
+                    L.Add(new Line(L[8].To, Pmp));//26
+                    L.Add(new Line(L[5].To, Pmm));//27
+                    L.Add(new Line(L[9].To, Pmm));//28
+                    L.Add(new Line(L[26].To, L[28].To));//29
+
+                    r *= 0.7;
+                    C[0] = new Vector3d(-r, 0, -r * phi);
+                    C[1] = new Vector3d(-r, 0, r * phi);
+                    C[2] = new Vector3d(r, 0, -r * phi);
+                    C[3] = new Vector3d(r, 0, r * phi);
+                    C[4] = new Vector3d(-r * phi, -r, 0);
+                    C[5] = new Vector3d(-r * phi, r, 0);
+                    C[6] = new Vector3d(r * phi, -r, 0);
+                    C[7] = new Vector3d(r * phi, r, 0);
+                    C[8] = new Vector3d(0, -r * phi, -r);
+                    C[9] = new Vector3d(0, r * phi, -r);
+                    C[10] = new Vector3d(0, -r * phi, r);
+                    C[11] = new Vector3d(0, r * phi, r);
+                }
+
+                public List<Line> GetLines(Point3d p)
+                {
+                    List<Line> OUTPUT = new List<Line>();
+
+                    foreach (Line l in L)
+                    {
+                        OUTPUT.Add(new Line(l.From + p, l.To + p));
+                    }
+
+                    return OUTPUT;
+                }
+
+                public List<Circle> GetCircles(Point3d p)
+                {
+                    List<Circle> OUTPUT = new List<Circle>();
+
+                    foreach (Vector3d c in C)
+                    {
+                        OUTPUT.Add(new Circle(new Plane(c + p, c), .3 * r));
+                    }
+
+                    return OUTPUT;
                 }
             }
         }

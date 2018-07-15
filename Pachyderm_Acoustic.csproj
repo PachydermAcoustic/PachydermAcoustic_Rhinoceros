@@ -95,8 +95,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="RhinoCommon">
-      <HintPath>..\..\..\..\..\..\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\..\..\..\..\Program Files\Rhinoceros 5 (64-bit)\System\RhinoCommon.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -135,6 +134,7 @@
     <Compile Include="Rhino_Absorption_Analytics.cs" />
     <Compile Include="Rhino_Compact_FDTD.cs" />
     <Compile Include="Rhino_Pach_Tools.cs" />
+    <Compile Include="SphereConduit.cs" />
     <Compile Include="VoxelConduit.cs" />
     <Compile Include="Pach_Auralisation.cs">
       <SubType>UserControl</SubType>

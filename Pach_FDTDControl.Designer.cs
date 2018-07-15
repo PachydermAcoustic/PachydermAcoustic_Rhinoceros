@@ -81,6 +81,13 @@ namespace Pachyderm_Acoustic
             this.Eigen_Extent = new System.Windows.Forms.ComboBox();
             this.CalculateSim = new System.Windows.Forms.Button();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.Scat_Dir_75 = new System.Windows.Forms.CheckBox();
+            this.Scat_Dir_60 = new System.Windows.Forms.CheckBox();
+            this.Scat_Dir_45 = new System.Windows.Forms.CheckBox();
+            this.Scat_Dir_30 = new System.Windows.Forms.CheckBox();
+            this.Scat_Dir_15 = new System.Windows.Forms.CheckBox();
+            this.Scat_Dir_00 = new System.Windows.Forms.CheckBox();
             this.label13 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
             this.comboBox2 = new System.Windows.Forms.ComboBox();
@@ -88,14 +95,23 @@ namespace Pachyderm_Acoustic
             this.Sample_Depth = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
             this.ScatteringRadius = new System.Windows.Forms.NumericUpDown();
-            this.SetNormal = new System.Windows.Forms.Button();
             this.CalculateScattering = new System.Windows.Forms.Button();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.button1 = new System.Windows.Forms.Button();
             this.ScatteringGraph = new ZedGraph.ZedGraphControl();
+            this.Scatter_Scale = new System.Windows.Forms.PictureBox();
+            this.Scat_Color = new System.Windows.Forms.ComboBox();
+            this.label26 = new System.Windows.Forms.Label();
+            this.ScatMax = new System.Windows.Forms.NumericUpDown();
+            this.ScatMin = new System.Windows.Forms.NumericUpDown();
+            this.Scat_Mid = new System.Windows.Forms.Label();
+            this.Freq_Trackbar1 = new System.Windows.Forms.TrackBar();
+            this.Freq_Trackbar2 = new System.Windows.Forms.TrackBar();
+            this.Freq_Feedback = new System.Windows.Forms.Label();
+            this.label18 = new System.Windows.Forms.Label();
+            this.Scat_Param_Select = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.Analysis_Technique = new System.Windows.Forms.ComboBox();
-            this.Set_Origin = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.EdgeFreq = new System.Windows.Forms.CheckBox();
@@ -143,9 +159,15 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).BeginInit();
             this.tableLayoutPanel3.SuspendLayout();
             this.tabPage3.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Sample_Depth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ScatteringRadius)).BeginInit();
             this.tableLayoutPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Scatter_Scale)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ScatMax)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ScatMin)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Trackbar1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Trackbar2)).BeginInit();
             this.tabPage2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).BeginInit();
@@ -568,6 +590,7 @@ namespace Pachyderm_Acoustic
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.groupBox5);
             this.tabPage3.Controls.Add(this.label13);
             this.tabPage3.Controls.Add(this.label12);
             this.tabPage3.Controls.Add(this.comboBox2);
@@ -575,12 +598,10 @@ namespace Pachyderm_Acoustic
             this.tabPage3.Controls.Add(this.Sample_Depth);
             this.tabPage3.Controls.Add(this.label7);
             this.tabPage3.Controls.Add(this.ScatteringRadius);
-            this.tabPage3.Controls.Add(this.SetNormal);
             this.tabPage3.Controls.Add(this.CalculateScattering);
             this.tabPage3.Controls.Add(this.tableLayoutPanel2);
             this.tabPage3.Controls.Add(this.label9);
             this.tabPage3.Controls.Add(this.Analysis_Technique);
-            this.tabPage3.Controls.Add(this.Set_Origin);
             this.tabPage3.Location = new System.Drawing.Point(4, 25);
             this.tabPage3.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage3.Name = "tabPage3";
@@ -592,13 +613,90 @@ namespace Pachyderm_Acoustic
             this.tabPage3.Enter += new System.EventHandler(this.ScatteringLab_Focus);
             this.tabPage3.Leave += new System.EventHandler(this.ScatteringLab_FocusLost);
             // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.Scat_Dir_75);
+            this.groupBox5.Controls.Add(this.Scat_Dir_60);
+            this.groupBox5.Controls.Add(this.Scat_Dir_45);
+            this.groupBox5.Controls.Add(this.Scat_Dir_30);
+            this.groupBox5.Controls.Add(this.Scat_Dir_15);
+            this.groupBox5.Controls.Add(this.Scat_Dir_00);
+            this.groupBox5.Location = new System.Drawing.Point(305, 8);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(233, 140);
+            this.groupBox5.TabIndex = 58;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Direction";
+            // 
+            // Scat_Dir_75
+            // 
+            this.Scat_Dir_75.AutoSize = true;
+            this.Scat_Dir_75.Location = new System.Drawing.Point(116, 76);
+            this.Scat_Dir_75.Name = "Scat_Dir_75";
+            this.Scat_Dir_75.Size = new System.Drawing.Size(104, 21);
+            this.Scat_Dir_75.TabIndex = 5;
+            this.Scat_Dir_75.Text = "75 Degrees";
+            this.Scat_Dir_75.UseVisualStyleBackColor = true;
+            // 
+            // Scat_Dir_60
+            // 
+            this.Scat_Dir_60.AutoSize = true;
+            this.Scat_Dir_60.Location = new System.Drawing.Point(116, 49);
+            this.Scat_Dir_60.Name = "Scat_Dir_60";
+            this.Scat_Dir_60.Size = new System.Drawing.Size(104, 21);
+            this.Scat_Dir_60.TabIndex = 4;
+            this.Scat_Dir_60.Text = "60 Degrees";
+            this.Scat_Dir_60.UseVisualStyleBackColor = true;
+            // 
+            // Scat_Dir_45
+            // 
+            this.Scat_Dir_45.AutoSize = true;
+            this.Scat_Dir_45.Location = new System.Drawing.Point(6, 103);
+            this.Scat_Dir_45.Name = "Scat_Dir_45";
+            this.Scat_Dir_45.Size = new System.Drawing.Size(104, 21);
+            this.Scat_Dir_45.TabIndex = 3;
+            this.Scat_Dir_45.Text = "45 Degrees";
+            this.Scat_Dir_45.UseVisualStyleBackColor = true;
+            // 
+            // Scat_Dir_30
+            // 
+            this.Scat_Dir_30.AutoSize = true;
+            this.Scat_Dir_30.Location = new System.Drawing.Point(6, 76);
+            this.Scat_Dir_30.Name = "Scat_Dir_30";
+            this.Scat_Dir_30.Size = new System.Drawing.Size(104, 21);
+            this.Scat_Dir_30.TabIndex = 2;
+            this.Scat_Dir_30.Text = "30 Degrees";
+            this.Scat_Dir_30.UseVisualStyleBackColor = true;
+            // 
+            // Scat_Dir_15
+            // 
+            this.Scat_Dir_15.AutoSize = true;
+            this.Scat_Dir_15.Location = new System.Drawing.Point(6, 49);
+            this.Scat_Dir_15.Name = "Scat_Dir_15";
+            this.Scat_Dir_15.Size = new System.Drawing.Size(104, 21);
+            this.Scat_Dir_15.TabIndex = 1;
+            this.Scat_Dir_15.Text = "15 Degrees";
+            this.Scat_Dir_15.UseVisualStyleBackColor = true;
+            // 
+            // Scat_Dir_00
+            // 
+            this.Scat_Dir_00.AutoSize = true;
+            this.Scat_Dir_00.Checked = true;
+            this.Scat_Dir_00.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Scat_Dir_00.Location = new System.Drawing.Point(7, 22);
+            this.Scat_Dir_00.Name = "Scat_Dir_00";
+            this.Scat_Dir_00.Size = new System.Drawing.Size(139, 21);
+            this.Scat_Dir_00.TabIndex = 0;
+            this.Scat_Dir_00.Text = "Normal Incidence";
+            this.Scat_Dir_00.UseVisualStyleBackColor = true;
+            // 
             // label13
             // 
             this.label13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label13.AutoSize = true;
             this.label13.BackColor = System.Drawing.Color.Red;
             this.label13.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.label13.Location = new System.Drawing.Point(446, 11);
+            this.label13.Location = new System.Drawing.Point(7, 4);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(89, 17);
             this.label13.TabIndex = 57;
@@ -607,7 +705,7 @@ namespace Pachyderm_Acoustic
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(8, 44);
+            this.label12.Location = new System.Drawing.Point(9, 69);
             this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(106, 17);
@@ -626,16 +724,16 @@ namespace Pachyderm_Acoustic
             "2000 Hz. Octave Band",
             "4000 Hz. Octave Band",
             "8000 Hz. Octave Band"});
-            this.comboBox2.Location = new System.Drawing.Point(131, 41);
+            this.comboBox2.Location = new System.Drawing.Point(117, 66);
             this.comboBox2.Margin = new System.Windows.Forms.Padding(4);
             this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(403, 24);
+            this.comboBox2.Size = new System.Drawing.Size(180, 24);
             this.comboBox2.TabIndex = 55;
             // 
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(12, 176);
+            this.label11.Location = new System.Drawing.Point(13, 126);
             this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(170, 17);
@@ -651,7 +749,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             65536});
-            this.Sample_Depth.Location = new System.Drawing.Point(455, 176);
+            this.Sample_Depth.Location = new System.Drawing.Point(221, 126);
             this.Sample_Depth.Margin = new System.Windows.Forms.Padding(4);
             this.Sample_Depth.Name = "Sample_Depth";
             this.Sample_Depth.Size = new System.Drawing.Size(77, 22);
@@ -666,7 +764,7 @@ namespace Pachyderm_Acoustic
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(12, 145);
+            this.label7.Location = new System.Drawing.Point(13, 100);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(199, 17);
@@ -682,7 +780,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             65536});
-            this.ScatteringRadius.Location = new System.Drawing.Point(455, 145);
+            this.ScatteringRadius.Location = new System.Drawing.Point(220, 98);
             this.ScatteringRadius.Margin = new System.Windows.Forms.Padding(4);
             this.ScatteringRadius.Name = "ScatteringRadius";
             this.ScatteringRadius.Size = new System.Drawing.Size(77, 22);
@@ -694,22 +792,12 @@ namespace Pachyderm_Acoustic
             0});
             this.ScatteringRadius.ValueChanged += new System.EventHandler(this.LabGuideParametersChanged);
             // 
-            // SetNormal
-            // 
-            this.SetNormal.Location = new System.Drawing.Point(8, 110);
-            this.SetNormal.Margin = new System.Windows.Forms.Padding(4);
-            this.SetNormal.Name = "SetNormal";
-            this.SetNormal.Size = new System.Drawing.Size(527, 28);
-            this.SetNormal.TabIndex = 50;
-            this.SetNormal.Text = "Set Sample Normal Vector";
-            this.SetNormal.UseVisualStyleBackColor = true;
-            // 
             // CalculateScattering
             // 
-            this.CalculateScattering.Location = new System.Drawing.Point(8, 196);
+            this.CalculateScattering.Location = new System.Drawing.Point(8, 156);
             this.CalculateScattering.Margin = new System.Windows.Forms.Padding(4);
             this.CalculateScattering.Name = "CalculateScattering";
-            this.CalculateScattering.Size = new System.Drawing.Size(527, 28);
+            this.CalculateScattering.Size = new System.Drawing.Size(533, 28);
             this.CalculateScattering.TabIndex = 49;
             this.CalculateScattering.Text = "Calculate";
             this.CalculateScattering.UseVisualStyleBackColor = true;
@@ -722,21 +810,37 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tableLayoutPanel2.AutoScroll = true;
             this.tableLayoutPanel2.ColumnCount = 3;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 58.55513F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 16.53992F));
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.90495F));
             this.tableLayoutPanel2.Controls.Add(this.button1, 2, 1);
             this.tableLayoutPanel2.Controls.Add(this.ScatteringGraph, 0, 2);
-            this.tableLayoutPanel2.Location = new System.Drawing.Point(8, 231);
+            this.tableLayoutPanel2.Controls.Add(this.Scatter_Scale, 2, 3);
+            this.tableLayoutPanel2.Controls.Add(this.Scat_Color, 0, 4);
+            this.tableLayoutPanel2.Controls.Add(this.label26, 0, 3);
+            this.tableLayoutPanel2.Controls.Add(this.ScatMax, 1, 3);
+            this.tableLayoutPanel2.Controls.Add(this.ScatMin, 1, 9);
+            this.tableLayoutPanel2.Controls.Add(this.Scat_Mid, 1, 6);
+            this.tableLayoutPanel2.Controls.Add(this.Freq_Trackbar1, 0, 8);
+            this.tableLayoutPanel2.Controls.Add(this.Freq_Trackbar2, 0, 9);
+            this.tableLayoutPanel2.Controls.Add(this.Freq_Feedback, 0, 7);
+            this.tableLayoutPanel2.Controls.Add(this.label18, 0, 5);
+            this.tableLayoutPanel2.Controls.Add(this.Scat_Param_Select, 0, 6);
+            this.tableLayoutPanel2.Location = new System.Drawing.Point(8, 192);
             this.tableLayoutPanel2.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
-            this.tableLayoutPanel2.RowCount = 3;
+            this.tableLayoutPanel2.RowCount = 10;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(527, 501);
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50.50505F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 7.070707F));
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(533, 552);
             this.tableLayoutPanel2.TabIndex = 48;
             // 
             // button1
@@ -744,10 +848,10 @@ namespace Pachyderm_Acoustic
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(353, 2);
+            this.button1.Location = new System.Drawing.Point(403, 2);
             this.button1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(171, 27);
+            this.button1.Size = new System.Drawing.Size(127, 27);
             this.button1.TabIndex = 45;
             this.button1.Text = "Export...";
             this.button1.UseVisualStyleBackColor = true;
@@ -772,14 +876,169 @@ namespace Pachyderm_Acoustic
             this.ScatteringGraph.ScrollMinX = 0D;
             this.ScatteringGraph.ScrollMinY = 0D;
             this.ScatteringGraph.ScrollMinY2 = 0D;
-            this.ScatteringGraph.Size = new System.Drawing.Size(511, 456);
+            this.ScatteringGraph.Size = new System.Drawing.Size(517, 249);
             this.ScatteringGraph.TabIndex = 42;
             this.ScatteringGraph.UseExtendedPrintDialog = true;
+            // 
+            // Scatter_Scale
+            // 
+            this.Scatter_Scale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Scatter_Scale.Location = new System.Drawing.Point(404, 298);
+            this.Scatter_Scale.Margin = new System.Windows.Forms.Padding(4);
+            this.Scatter_Scale.Name = "Scatter_Scale";
+            this.tableLayoutPanel2.SetRowSpan(this.Scatter_Scale, 7);
+            this.Scatter_Scale.Size = new System.Drawing.Size(125, 250);
+            this.Scatter_Scale.TabIndex = 84;
+            this.Scatter_Scale.TabStop = false;
+            // 
+            // Scat_Color
+            // 
+            this.Scat_Color.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Scat_Color.FormattingEnabled = true;
+            this.Scat_Color.Items.AddRange(new object[] {
+            "R-O-Y-G-B-I-V",
+            "R-O-Y",
+            "Y-G-B",
+            "R-M-B",
+            "W-B"});
+            this.Scat_Color.Location = new System.Drawing.Point(4, 334);
+            this.Scat_Color.Margin = new System.Windows.Forms.Padding(4);
+            this.Scat_Color.Name = "Scat_Color";
+            this.Scat_Color.Size = new System.Drawing.Size(304, 24);
+            this.Scat_Color.TabIndex = 90;
+            this.Scat_Color.Text = "R-O-Y-G-B-I-V";
+            this.Scat_Color.SelectedIndexChanged += new System.EventHandler(this.Scat_Color_SelectedIndexChanged);
+            // 
+            // label26
+            // 
+            this.label26.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label26.AutoSize = true;
+            this.label26.Location = new System.Drawing.Point(4, 303);
+            this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(103, 17);
+            this.label26.TabIndex = 91;
+            this.label26.Text = "Color Selection";
+            // 
+            // ScatMax
+            // 
+            this.ScatMax.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ScatMax.DecimalPlaces = 1;
+            this.ScatMax.Location = new System.Drawing.Point(328, 298);
+            this.ScatMax.Margin = new System.Windows.Forms.Padding(4);
+            this.ScatMax.Maximum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.ScatMax.Name = "ScatMax";
+            this.ScatMax.Size = new System.Drawing.Size(68, 22);
+            this.ScatMax.TabIndex = 98;
+            this.ScatMax.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.ScatMax.ValueChanged += new System.EventHandler(this.Scat_ValueChanged);
+            // 
+            // ScatMin
+            // 
+            this.ScatMin.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.ScatMin.DecimalPlaces = 1;
+            this.ScatMin.Location = new System.Drawing.Point(328, 526);
+            this.ScatMin.Margin = new System.Windows.Forms.Padding(4);
+            this.ScatMin.Maximum = new decimal(new int[] {
+            200,
+            0,
+            0,
+            0});
+            this.ScatMin.Name = "ScatMin";
+            this.ScatMin.Size = new System.Drawing.Size(68, 22);
+            this.ScatMin.TabIndex = 99;
+            this.ScatMin.ValueChanged += new System.EventHandler(this.Scat_ValueChanged);
+            // 
+            // Scat_Mid
+            // 
+            this.Scat_Mid.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.Scat_Mid.AutoSize = true;
+            this.Scat_Mid.Location = new System.Drawing.Point(361, 411);
+            this.Scat_Mid.Name = "Scat_Mid";
+            this.Scat_Mid.Size = new System.Drawing.Size(36, 17);
+            this.Scat_Mid.TabIndex = 86;
+            this.Scat_Mid.Text = "0.50";
+            // 
+            // Freq_Trackbar1
+            // 
+            this.Freq_Trackbar1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Freq_Trackbar1.Location = new System.Drawing.Point(3, 477);
+            this.Freq_Trackbar1.Maximum = 4095;
+            this.Freq_Trackbar1.Name = "Freq_Trackbar1";
+            this.Freq_Trackbar1.Size = new System.Drawing.Size(306, 30);
+            this.Freq_Trackbar1.TabIndex = 100;
+            this.Freq_Trackbar1.Value = 1;
+            this.Freq_Trackbar1.Scroll += new System.EventHandler(this.Freq_Trackbar_Scroll);
+            // 
+            // Freq_Trackbar2
+            // 
+            this.Freq_Trackbar2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Freq_Trackbar2.Location = new System.Drawing.Point(3, 513);
+            this.Freq_Trackbar2.Maximum = 4095;
+            this.Freq_Trackbar2.Name = "Freq_Trackbar2";
+            this.Freq_Trackbar2.Size = new System.Drawing.Size(306, 36);
+            this.Freq_Trackbar2.TabIndex = 101;
+            this.Freq_Trackbar2.Value = 4095;
+            this.Freq_Trackbar2.Scroll += new System.EventHandler(this.Freq_Trackbar_Scroll);
+            // 
+            // Freq_Feedback
+            // 
+            this.Freq_Feedback.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.Freq_Feedback.AutoSize = true;
+            this.Freq_Feedback.Location = new System.Drawing.Point(4, 447);
+            this.Freq_Feedback.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.Freq_Feedback.Name = "Freq_Feedback";
+            this.Freq_Feedback.Size = new System.Drawing.Size(230, 17);
+            this.Freq_Feedback.TabIndex = 92;
+            this.Freq_Feedback.Text = "Frequency Selection: 0 to 8000 Hz.";
+            // 
+            // label18
+            // 
+            this.label18.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label18.AutoSize = true;
+            this.label18.Location = new System.Drawing.Point(4, 375);
+            this.label18.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(136, 17);
+            this.label18.TabIndex = 91;
+            this.label18.Text = "Parameter Selection";
+            // 
+            // Scat_Param_Select
+            // 
+            this.Scat_Param_Select.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Scat_Param_Select.FormattingEnabled = true;
+            this.Scat_Param_Select.Items.AddRange(new object[] {
+            "Total Reflected Power",
+            "Correlation Coefficient"});
+            this.Scat_Param_Select.Location = new System.Drawing.Point(4, 406);
+            this.Scat_Param_Select.Margin = new System.Windows.Forms.Padding(4);
+            this.Scat_Param_Select.Name = "Scat_Param_Select";
+            this.Scat_Param_Select.Size = new System.Drawing.Size(304, 24);
+            this.Scat_Param_Select.TabIndex = 90;
+            this.Scat_Param_Select.Text = "Total Reflected Power";
+            this.Scat_Param_Select.SelectedIndexChanged += new System.EventHandler(this.Scat_Color_SelectedIndexChanged);
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(8, 11);
+            this.label9.Location = new System.Drawing.Point(9, 36);
             this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(100, 17);
@@ -790,25 +1049,13 @@ namespace Pachyderm_Acoustic
             // 
             this.Analysis_Technique.FormattingEnabled = true;
             this.Analysis_Technique.Items.AddRange(new object[] {
-            "Correlation Scattering Coefficient",
-            "Total Scattered Power"});
-            this.Analysis_Technique.Location = new System.Drawing.Point(131, 7);
+            "Correlation Scattering Coefficient"});
+            this.Analysis_Technique.Location = new System.Drawing.Point(117, 33);
             this.Analysis_Technique.Margin = new System.Windows.Forms.Padding(4);
             this.Analysis_Technique.Name = "Analysis_Technique";
-            this.Analysis_Technique.Size = new System.Drawing.Size(308, 24);
+            this.Analysis_Technique.Size = new System.Drawing.Size(180, 24);
             this.Analysis_Technique.TabIndex = 46;
             this.Analysis_Technique.SelectedIndexChanged += new System.EventHandler(this.LabGuideParametersChanged);
-            // 
-            // Set_Origin
-            // 
-            this.Set_Origin.Location = new System.Drawing.Point(8, 74);
-            this.Set_Origin.Margin = new System.Windows.Forms.Padding(4);
-            this.Set_Origin.Name = "Set_Origin";
-            this.Set_Origin.Size = new System.Drawing.Size(527, 28);
-            this.Set_Origin.TabIndex = 45;
-            this.Set_Origin.Text = "Set Sample Origin";
-            this.Set_Origin.UseVisualStyleBackColor = true;
-            this.Set_Origin.Click += new System.EventHandler(this.Set_Origin_Click);
             // 
             // tabPage2
             // 
@@ -1518,10 +1765,17 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.PerformLayout();
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Sample_Depth)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ScatteringRadius)).EndInit();
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.Scatter_Scale)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ScatMax)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ScatMin)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Trackbar1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Freq_Trackbar2)).EndInit();
             this.tabPage2.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
@@ -1617,14 +1871,12 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.TextBox Folder_Status;
             private System.Windows.Forms.Button SetFolder;
             private System.Windows.Forms.TabPage tabPage3;
-            private System.Windows.Forms.Button SetNormal;
             private System.Windows.Forms.Button CalculateScattering;
             private System.Windows.Forms.TableLayoutPanel tableLayoutPanel2;
             private System.Windows.Forms.Button button1;
             private ZedGraph.ZedGraphControl ScatteringGraph;
             private System.Windows.Forms.Label label9;
             private System.Windows.Forms.ComboBox Analysis_Technique;
-            private System.Windows.Forms.Button Set_Origin;
             private System.Windows.Forms.Label label7;
             private System.Windows.Forms.NumericUpDown ScatteringRadius;
             private System.Windows.Forms.Label label11;
@@ -1634,6 +1886,24 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label label14;
             private System.Windows.Forms.Label label13;
             private System.Windows.Forms.Label label17;
+            private System.Windows.Forms.PictureBox Scatter_Scale;
+            private System.Windows.Forms.Label Scat_Mid;
+            internal System.Windows.Forms.ComboBox Scat_Color;
+            private System.Windows.Forms.Label Freq_Feedback;
+            private System.Windows.Forms.Label label26;
+            private System.Windows.Forms.NumericUpDown ScatMax;
+            private System.Windows.Forms.NumericUpDown ScatMin;
+            private System.Windows.Forms.TrackBar Freq_Trackbar1;
+            private System.Windows.Forms.TrackBar Freq_Trackbar2;
+            private System.Windows.Forms.Label label18;
+            internal System.Windows.Forms.ComboBox Scat_Param_Select;
+            private System.Windows.Forms.GroupBox groupBox5;
+            private System.Windows.Forms.CheckBox Scat_Dir_75;
+            private System.Windows.Forms.CheckBox Scat_Dir_60;
+            private System.Windows.Forms.CheckBox Scat_Dir_45;
+            private System.Windows.Forms.CheckBox Scat_Dir_30;
+            private System.Windows.Forms.CheckBox Scat_Dir_15;
+            private System.Windows.Forms.CheckBox Scat_Dir_00;
         }
     }
 }

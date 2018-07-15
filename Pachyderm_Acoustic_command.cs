@@ -196,7 +196,7 @@ namespace Pachyderm_Acoustic
                 double[] noise = new double[8];
                 string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                 
-                if (n != "")
+                if (n != "" && n != null)
                 {
                     string[] ns = n.Split(","[0]);
                     double t = 0;

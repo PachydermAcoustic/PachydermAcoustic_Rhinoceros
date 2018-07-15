@@ -39,14 +39,18 @@ namespace Pachyderm_Acoustic
                 Eigen_Extent.SelectedIndex = 4;
                 scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
                 Param_Scale.Image = scale.PIC;
+                scatterscale = new Pach_Graphics.HSV_colorscale(Scatter_Scale.Height, Scatter_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
+                Scatter_Scale.Image = scatterscale.PIC;
             }
 
             #region Visualization
 
             private Pach_Graphics.colorscale scale;
+            private Pach_Graphics.colorscale scatterscale;
             public delegate void Populator(double Dist);
             Numeric.TimeDomain.Acoustic_Compact_FDTD_RC FDTD;
             WaveConduit P;
+            SphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
             //List<List<Rhino.Geometry.Point3d>> Pts;
             List<List<double>> Pressure;
@@ -345,16 +349,16 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point> Rec = RC_PachTools.GetReceivers();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource());
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource());
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0);
                 FDTD.RuntoCompletion();
 
                 samplefrequency = FDTD.SampleFrequency;
 
                 Mic.reset();
-                result_signals = Mic.Recordings[0];
+                result_signals = Mic.Recordings()[0];
                 //System.Numerics.Complex[] source_response = SD.Frequency_Response(result_signals[0].Length);
 
                 //double f_limit = 0.8 * fs / samplefrequency * result_signals[0].Length;
@@ -549,16 +553,39 @@ namespace Pachyderm_Acoustic
             }
 
             double[] Scattering;
+            Numeric.TimeDomain.Microphone_Compact MicS;
+            List<System.Numerics.Complex[]> FFTs;
+            double d_f = 2;
+            int omit;
+            System.Numerics.Complex[][] FS2;
+            System.Numerics.Complex[][] FF2;
+            System.Numerics.Complex[][] FSFF;
 
             private void CalculateScattering_Click(object sender, EventArgs e)
             {
                 Chosenfreq = 0;
                 double radius = (double)ScatteringRadius.Value;
-                double t = 3 * (radius + (double)Sample_Depth.Value) / C_Sound() * 1000;
-                if (LabCenter == null) return;
+                double t = 5 * (radius + (double)Sample_Depth.Value) / C_Sound() * 1000;
+                LabCenter = new Rhino.Geometry.Point3d(0,0, (double)Sample_Depth.Value);
 
                 if (Analysis_Technique.SelectedIndex == 0)
                 {
+                    List<double> dir = new List<double>();
+                    if (Scat_Dir_00.Checked) dir.Add(0);
+                    if (Scat_Dir_15.Checked) dir.Add(15 * Math.PI / 180);
+                    if (Scat_Dir_30.Checked) dir.Add(30 * Math.PI / 180);
+                    if (Scat_Dir_45.Checked) dir.Add(45 * Math.PI / 180);
+                    if (Scat_Dir_60.Checked) dir.Add(60 * Math.PI / 180);
+                    if (Scat_Dir_75.Checked) dir.Add(75 * Math.PI / 180);
+
+                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[dir.Count];
+                    for(int i = 0; i < dir.Count; i++) Src[i] = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value) ;
+                    List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
+
+                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
+
+                    t += 60 / fs;
+
                     Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
                     Empty_Scene Rm_Ctrl = new Empty_Scene((double)Air_Temp.Value, (double)Rel_Humidity.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
@@ -566,42 +593,27 @@ namespace Pachyderm_Acoustic
 
                     if (!Rm.Complete && Rm_Ctrl.Complete) return;
 
-                    Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
-
-                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value) };
-                    List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
-
-                    for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
-                        {
-                            double anglePhi = phi * Math.PI / 18;
-                            double angleTheta = theta * Utilities.Numerics.PiX2 / 36;
-                            Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
-                        }
-
-                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
-
-                    t += 60 / fs;
-
-                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2, radius * 2, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDS.RuntoCompletion();
 
-                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2, radius * 2, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
+                    omit = SD.Z[0] + 60;
                     samplefrequency = FDTDS.SampleFrequency;
 
                     Mic.reset();
-                    result_signals = Mic.Recordings[0];
+                    result_signals = Mic.Recordings()[0];
                     Micf.reset();
-                    result_signals = Micf.Recordings[0];
+                    result_signals = Micf.Recordings()[0];
 
                     //Calculate Scattering Coefficients
-                    double[][] TimeS = Mic.Recordings[0];
-                    double[][] TimeF = Micf.Recordings[0];
+                    double[][] TimeS = Mic.Recordings()[0];
+                    double[][] TimeF = Micf.Recordings()[0];
 
                     //Zero packing
                     for (int i = 0; i < TimeS.Length; i++)
@@ -609,6 +621,10 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
                         Array.Resize(ref TimeF[i], (int)(samplefrequency / 2));
                     }
+
+                    Freq_Trackbar1.Maximum = (int)(samplefrequency / 2);
+                    Freq_Trackbar2.Maximum = (int)(samplefrequency / 2);
+
                     System.Numerics.Complex[][] FS = new System.Numerics.Complex[TimeS.Length][];
                     System.Numerics.Complex[][] FF = new System.Numerics.Complex[TimeS.Length][];
 
@@ -619,27 +635,51 @@ namespace Pachyderm_Acoustic
                     }
 
                     Scattering = new double[FS[0].Length];
-
+                    FF2 = new System.Numerics.Complex[FS[0].Length][];
+                    FS2 = new System.Numerics.Complex[FS[0].Length][];
+                    FSFF = new System.Numerics.Complex[FS[0].Length][];
                     for (int i = 0; i < FS[0].Length; i++)
                     {
+                        FF2[i] = new System.Numerics.Complex[FS.Length];
+                        FS2[i] = new System.Numerics.Complex[FS.Length];
+                        FSFF[i] = new System.Numerics.Complex[FS.Length];
                         System.Numerics.Complex sumFS2 = 0;
                         System.Numerics.Complex sumFF2 = 0;
                         System.Numerics.Complex sumFSFF = 0;
 
                         for (int j = 0; j < FS.Length; j++)
                         {
-                            sumFS2 += System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
-                            sumFF2 += System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);
-                            sumFSFF += FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
-                            //sumFS2 += System.Numerics.Complex.Pow(FS[j][i], 2);
-                            //sumFF2 += System.Numerics.Complex.Pow(FF[j][i], 2);
-                            //sumFSFF += FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
+
+                            FS2[i][j] = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
+                            FF2[i][j] = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);
+                            FSFF[i][j] = FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
+                            sumFS2 += FS2[i][j];
+                            sumFF2 += FF2[i][j];
+                            sumFSFF += FSFF[i][j];
                         }
 
                         System.Numerics.Complex sumReflected = sumFSFF / sumFF2;
                         System.Numerics.Complex Ratio = sumFF2 / sumFS2;
                         Scattering[i] = 1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio);
                     }
+
+                    ///Add Balloon plot aparatus
+                    List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
+                    FFTs = new List<System.Numerics.Complex[]>();
+                    for (int i = 0; i < Mic.X.Length; i++)
+                    {
+                        double[] Reflection = Mic.Recordings(i, omit);
+                        if (Reflection.Length < 8192) Array.Resize(ref Reflection, omit + Reflection.Length);
+                        FFTs.Add(Audio.Pach_SP.FFT_General(Reflection, 0));
+                        pts.Add(FDTDS.RDD_Location(Mic.X[i] , Mic.Y[i], Mic.Z[i]) - Utilities.RC_PachTools.RPttoHPt(LabCenter));
+                    }
+
+                    d_f = FDTDS.SampleFrequency / FFTs[0].Length;
+
+                    Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
+                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { (double)this.ScatMin.Value, (double)this.ScatMax.Value });
+                    else SP.plot = SPS;
+                    MicS = Mic;
                 }
                 else if (Analysis_Technique.SelectedIndex == 1)
                 {
@@ -653,24 +693,24 @@ namespace Pachyderm_Acoustic
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
                     Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value) };
-                    List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
+                    //List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
-                    for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
-                        {
-                            double anglePhi = phi * Math.PI / 18;
-                            double angleTheta = theta * Utilities.Numerics.PiX2 / 36;
-                            Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
-                        }
+                    //for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
+                    //    {
+                    //        double anglePhi = phi * Math.PI / 18;
+                    //        double angleTheta = theta * Utilities.Numerics.PiX2 / 36;
+                    //        Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
+                    //    }
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
 
-                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
+                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();// Rec.ToArray());
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.TransparencyLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDS.RuntoCompletion();
 
-                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
+                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();// Rec.ToArray());
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
@@ -679,11 +719,11 @@ namespace Pachyderm_Acoustic
                     samplefrequency = FDTDS.SampleFrequency;
 
                     Mic.reset();
-                    result_signals = Mic.Recordings[0];
+                    result_signals = Mic.Recordings()[0];
 
                     //Calculate Scattering Coefficients
-                    double[][] TimeS = Mic.Recordings[0];
-                    double[][] TimeF = Micf.Recordings[0];
+                    double[][] TimeS = Mic.Recordings()[0];
+                    double[][] TimeF = Micf.Recordings()[0];
 
                     System.Numerics.Complex[][] FS = new System.Numerics.Complex[TimeS.Length][];
                     System.Numerics.Complex[][] FF = new System.Numerics.Complex[TimeS.Length][];
@@ -714,6 +754,16 @@ namespace Pachyderm_Acoustic
 
                         Scattering[i] = Utilities.AcousticalMath.SPL_Pressure(System.Numerics.Complex.Abs(sumFF2));
                     }
+                    ///Add Balloon plot aparatus
+                    List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
+                    for (int i = 0; i < Mic.X.Length; i++)
+                    {
+                        pts.Add(FDTDS.RDD_Location(Mic.X[i], Mic.Y[i], Mic.Z[i]) - Utilities.RC_PachTools.RPttoHPt(LabCenter));
+                    }
+
+                    Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
+                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { (double)this.ScatMin.Value, (double)this.ScatMax.Value });
+                    MicS = Mic;
                 }
                 Update_Scattering_Graph(null, null);
             }
@@ -736,10 +786,9 @@ namespace Pachyderm_Acoustic
                 ScatteringGraph.GraphPane.XAxis.Title.Text = "Frequency (Hz.)";
                 ScatteringGraph.GraphPane.YAxis.Title.Text = "Scattering Coefficient";
 
-                //ScatteringGraph.GraphPane.AddCurve("Scattering Function", Scattering, , System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
                 ScatteringGraph.GraphPane.XAxis.Scale.Max = samplefrequency / 2;
                 ScatteringGraph.GraphPane.XAxis.Scale.Min = 0;
-
+ 
                 ScatteringGraph.GraphPane.YAxis.Scale.Max = 1.0;
                 if (max > 1) ScatteringGraph.GraphPane.YAxis.Scale.Max = max;
 
@@ -755,6 +804,34 @@ namespace Pachyderm_Acoustic
                 }
 
                 ScatteringGraph.GraphPane.AddCurve("Scattering Function", freq, Scattering, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
+
+                System.Numerics.Complex[] SWC = new System.Numerics.Complex[FFTs.Count];
+                double[] SW = new double[FFTs.Count];
+
+                int[] F = new int[2] { Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value), Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) };
+
+                for (int i = 0; i < FFTs.Count; i++)
+                {
+                    if (Scat_Param_Select.SelectedIndex == 0)
+                    {
+                        for (int f = F[0]; f < F[1]; f++) SWC[i] += FFTs[i][f] * FFTs[i][f];
+                        SW[i] = (10 * System.Numerics.Complex.Log10(SWC[i])).Magnitude;
+                    }
+                    else if (Scat_Param_Select.SelectedIndex == 1)
+                    {
+                        System.Numerics.Complex sumFS2 = 0, sumFF2 = 0, sumFSFF = 0;
+                        for (int f = F[0]; f < F[1]; f++)
+                        {
+                            sumFS2 += FS2[f][i];
+                            sumFF2 += FF2[f][i];
+                            sumFSFF += FSFF[f][i];
+                        }
+                        System.Numerics.Complex sumReflected = sumFSFF / sumFF2;
+                        System.Numerics.Complex Ratio = sumFF2 / sumFS2;
+                        SW[i] = 100 * (1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio));
+                    }
+                }
+                SP.Data_in(SW.ToArray(), new double[2] { (double)ScatMin.Value, (double)ScatMax.Value }, (double)ScatteringRadius.Value);
             }
 
             private void Update_LabGuides()
@@ -780,6 +857,61 @@ namespace Pachyderm_Acoustic
             private void LabGuideParametersChanged(object sender, EventArgs e)
             {
                 Update_LabGuides();
+            }
+
+            private void Scat_ValueChanged(object sender, EventArgs e)
+            {
+                Scat_Mid.Text = ((ScatMax.Value - ScatMin.Value) / 2 + ScatMin.Value).ToString();
+                Update_Scattering_Graph(null, null);
+            }
+
+            private void Scat_Color_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                Pach_Graphics.colorscale scale;
+                switch (this.Color_Selection.Text)
+                {
+                    case "R-O-Y-G-B-I-V":
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                    case "Y-G-B":
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                    case "R-O-Y":
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                    case "W-B":
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                    case "R-M-B":
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                    default:
+                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
+                        Scatter_Scale.Image = scale.PIC;
+                        break;
+                }
+                if (SP != null)
+                {
+                    SP.SetColorScale(scale);
+                }
+
+                Update_Scattering_Graph(null, null);
+            }
+
+            private void Scat_Octave_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                Update_Scattering_Graph(null, null);
+            }
+
+            private void Freq_Trackbar_Scroll(object sender, EventArgs e)
+            {
+                Freq_Feedback.Text = "Frequency Selection: " + Math.Round(d_f * Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " to " + Math.Round(d_f * Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " Hz.";
+                Update_Scattering_Graph(null, null);
             }
         }
     }

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -18,7 +14,7 @@ namespace Pachyderm_Acoustic
                     : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, new Hare.Geometry.Point(), 0, 0, 0)
                 {
                     Build_Mesh_Sections();
-                    Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
+                    //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
                     if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
 
@@ -26,7 +22,7 @@ namespace Pachyderm_Acoustic
                 : base(Rm_in, ref S_in, ref M_in, fmax_in, tmax_in, GridType.Freefield, SampleOrigin, MindimX, MindimY, MindimZ)
                 {
                     Build_Mesh_Sections();
-                    Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
+                    //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
                     if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
 

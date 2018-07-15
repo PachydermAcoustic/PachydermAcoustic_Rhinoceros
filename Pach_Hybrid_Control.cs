@@ -49,18 +49,18 @@ namespace Pachyderm_Acoustic
 
             private void Load_Library()
             {
-                    string Selection = LayerDisplay.Text;
-                    LayerNames.Clear();
+                string Selection = LayerDisplay.Text;
+                LayerNames.Clear();
 
-                    for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
-                    {
-                        if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name);
-                    }
-                    LayerDisplay.Items.Clear();
-                    LayerDisplay.Items.AddRange(LayerNames.ToArray());
-                    LayerDisplay.Text = Selection;
-                    Material_Lib.Items.Clear();
-                    Material_Lib.Items.AddRange(Materials.Names().ToArray());
+                for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
+                {
+                    if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name);
+                }
+                LayerDisplay.Items.Clear();
+                LayerDisplay.Items.AddRange(LayerNames.ToArray());
+                LayerDisplay.Text = Selection;
+                Material_Lib.Items.Clear();
+                Material_Lib.Items.AddRange(Materials.Names().ToArray());
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -249,7 +249,7 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.CheckState == CheckState.Checked)
                     {
-                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0, (int)RT_Count.Value, Direct_Data[s]);
+                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked ? int.MaxValue : ISBox.Checked ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value);
 
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
@@ -258,10 +258,12 @@ namespace Pachyderm_Acoustic
                             Receiver[s] = RT_Data.GetReceiver;
                             //Receiver[s].Create_Pressure(Direct_Data[s].SWL);
                             Receiver[s].Create_Filter();
+                            Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT_Data._currentRay.Sum(), RT_Data._rayTotal.Sum(), RT_Data._ts.Hours, RT_Data._ts.Minutes, RT_Data._ts.Seconds));
                             Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", RT_Data.PercentLost);
                         }
                         else
-                        {                           CancelCalc();
+                        {
+                            CancelCalc();
                             return;
                         }
                         command.Reset();
@@ -423,8 +425,15 @@ namespace Pachyderm_Acoustic
                 foreach (Material MAT in Materials)
                 {
                     if (!string.Equals(MAT.Name, Material_Name.Text, StringComparison.OrdinalIgnoreCase)) continue;
-                    System.Windows.Forms.MessageBox.Show("The material name " + Material_Name.Text + " already exists in the materials library. Please choose a different name.", "Material Name Error", MessageBoxButtons.OK);
-                    return;
+
+                    int si = Material_Lib.SelectedIndex;
+                    if (si < 0) return;
+                    Materials.RemoveAt(si);
+                    Material_Lib.Items.RemoveAt(si);
+                    Materials.Save_Library();
+
+                    Load_Library();
+                    break;
                 }
 
                 double[] Abs = new double[8];
@@ -442,42 +451,53 @@ namespace Pachyderm_Acoustic
                 Materials.Save_Library();
 
                 Load_Library();
-
-                //Materials.Add_Unique(Material_Name.Text, Abs);
-                //Materials.Save_Library();
-
-                //Material_Lib.Items.Clear();
-                //Material_Lib.Items.AddRange(Materials.Names().ToArray());
             }
 
             private void Delete_Material_Click(object sender, EventArgs e)
             {
-                int si = Material_Lib.SelectedIndex;
-                if (si < 0) return;
-                Materials.RemoveAt(si);
-                Material_Lib.Items.RemoveAt(si);
-                Materials.Save_Library();
-
-                Load_Library();
+                if (Delete_Material.Text == "Delete Materials")
+                {
+                    Delete_Material.Text = "Cancel Deletion Mode";
+                    Save_Material.Enabled = false;
+                }
+                else
+                {
+                    Delete_Material.Text = "Delete Materials";
+                    Save_Material.Enabled = true;
+                }
             }
 
-            private void Apply_Material_Click(object sender, EventArgs e)
+            private void Material_Lib_SelectedIndexChanged(object sender, EventArgs e)
             {
-                if (Material_Lib.SelectedItem == null) return;
-                string Selection = Material_Lib.SelectedItem.ToString();
-                Material Mat = Materials.byKey(Selection);
+                if (Delete_Material.Text == "Delete Materials")
+                {
+                    if (Material_Lib.SelectedItem == null) return;
+                    string Selection = Material_Lib.SelectedItem.ToString();
+                    Material_Name.Text = Material_Lib.SelectedItem.ToString();
+                    Material Mat = Materials.byKey(Selection);
 
-                Abs63.Value = (int)(Mat.Absorption[0] * 100);
-                Abs125.Value = (int)(Mat.Absorption[1] * 100);
-                Abs250.Value = (int)(Mat.Absorption[2] * 100);
-                Abs500.Value = (int)(Mat.Absorption[3] * 100);
-                Abs1k.Value = (int)(Mat.Absorption[4] * 100);
-                Abs2k.Value = (int)(Mat.Absorption[5] * 100);
-                Abs4k.Value = (int)(Mat.Absorption[6] * 100);
-                Abs8k.Value = (int)(Mat.Absorption[7] * 100);
-                Commit_Layer_Acoustics();
+                    Abs63.Value = (int)(Mat.Absorption[0] * 100);
+                    Abs125.Value = (int)(Mat.Absorption[1] * 100);
+                    Abs250.Value = (int)(Mat.Absorption[2] * 100);
+                    Abs500.Value = (int)(Mat.Absorption[3] * 100);
+                    Abs1k.Value = (int)(Mat.Absorption[4] * 100);
+                    Abs2k.Value = (int)(Mat.Absorption[5] * 100);
+                    Abs4k.Value = (int)(Mat.Absorption[6] * 100);
+                    Abs8k.Value = (int)(Mat.Absorption[7] * 100);
+                    Commit_Layer_Acoustics();
 
-                Material_Mode(true);
+                    Material_Mode(true);
+                }
+                else
+                {
+                    int si = Material_Lib.SelectedIndex;
+                    if (si < 0) return;
+                    Materials.RemoveAt(si);
+                    Material_Lib.Items.RemoveAt(si);
+                    Materials.Save_Library();
+
+                    Load_Library();
+                }
             }
 
             private void Commit_SmartMaterial(Pach_Absorption_Designer AD)
@@ -598,7 +618,7 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                     for (int i = 0; i < 8; i++) SmartMat_Display.Series[0].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[i]);
                 }
-                else if(M == "Buildup_Finite")
+                else if (M == "Buildup_Finite")
                 {
                     Material_Mode(false);
                     string[] BU = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -887,7 +907,7 @@ namespace Pachyderm_Acoustic
                         Commit_Layer_Acoustics();
                         Material_Mode(true);
                         return;
-                    case Pach_Absorption_Designer.AbsorptionModelResult.Smart_Material:                    
+                    case Pach_Absorption_Designer.AbsorptionModelResult.Smart_Material:
                         //Store and Assign Smart Material.
                         Material_Mode(false);
                         Commit_SmartMaterial(AD);
@@ -933,13 +953,13 @@ namespace Pachyderm_Acoustic
                 {
                     SmartMat_Display.SendToBack();
                 }
-                else 
+                else
                 {
                     SmartMat_Display.BringToFront();
                 }
             }
 
-        #endregion
+            #endregion
 
             #region Tab 3: Data Analysis 
 
@@ -1020,7 +1040,7 @@ namespace Pachyderm_Acoustic
                 }
                 else if (SrcTypeList[SrcIDs[0]] == "Pseudo-Random" || SrcTypeList[SrcIDs[0]] != "Geodesic")
                 {
-                    ISOCOMP.Text = "ISO Compliant: No"; 
+                    ISOCOMP.Text = "ISO Compliant: No";
                 }
                 else
                 {
@@ -1044,12 +1064,12 @@ namespace Pachyderm_Acoustic
                     double RhoC = Direct_Data[0].Rho_C[int.Parse(Receiver_Choice.Text)];
                     double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true);
                     ///Need a new PT_Curve method that will apply the correct power to each filter appropriately. This one forces only one power level to be used...)
-                    for (int oct = 0; oct < 8; oct++) 
-                     {
-                         ETC[oct] = Audio.Pach_SP.FIR_Bandpass(ETC_BB, oct, SampleRate, 0);
-                         for(int i = 0; i < ETC[oct].Length; i++) ETC[oct][i] *= ETC[oct][i] / RhoC;
-                     }
-                     pressure = true;
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        ETC[oct] = Audio.Pach_SP.FIR_Bandpass(ETC_BB, oct, SampleRate, 0);
+                        for (int i = 0; i < ETC[oct].Length; i++) ETC[oct][i] *= ETC[oct][i] / RhoC;
+                    }
+                    pressure = true;
                 }
                 else
                 {
@@ -1216,42 +1236,42 @@ namespace Pachyderm_Acoustic
                     case "Sound Pressure Level (SPL)":
 
                         double I = 0;
-                        for(int i = 0; i < ETC[0].Length; i++) I += ETC[0][i];
+                        for (int i = 0; i < ETC[0].Length; i++) I += ETC[0][i];
                         double SPL = AcousticalMath.SPL_Intensity(I);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[1].Length; i++) I += ETC[1][i];
+                        for (int i = 0; i < ETC[1].Length; i++) I += ETC[1][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[2].Length; i++) I += ETC[2][i];
+                        for (int i = 0; i < ETC[2].Length; i++) I += ETC[2][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[3].Length; i++) I += ETC[3][i];
+                        for (int i = 0; i < ETC[3].Length; i++) I += ETC[3][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT4.Text = string.Format("500 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[4].Length; i++) I += ETC[4][i];
+                        for (int i = 0; i < ETC[4].Length; i++) I += ETC[4][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[5].Length; i++) I += ETC[5][i];
+                        for (int i = 0; i < ETC[5].Length; i++) I += ETC[5][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[6].Length; i++) I += ETC[6][i];
+                        for (int i = 0; i < ETC[6].Length; i++) I += ETC[6][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(SPL, 2));
 
                         I = 0;
-                        for(int i = 0; i < ETC[7].Length; i++) I += ETC[7][i];
+                        for (int i = 0; i < ETC[7].Length; i++) I += ETC[7][i];
                         SPL = AcousticalMath.SPL_Intensity(I);
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(SPL, 2));
                         break;
@@ -1389,7 +1409,7 @@ namespace Pachyderm_Acoustic
                         double[] Noise = new double[8];
                         string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                        if (n != "")
+                        if (n != "" && n != null)
                         {
                             string[] ns = n.Split(","[0]);
                             for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -1404,7 +1424,7 @@ namespace Pachyderm_Acoustic
                             this.Enabled = true;
                         }
 
-                        double[] STI = AcousticalMath.Speech_Transmission_Index(ETC, 1.2*343, Noise, SampleRate);
+                        double[] STI = AcousticalMath.Speech_Transmission_Index(ETC, 1.2 * 343, Noise, SampleRate);
                         SRT1.Text = string.Format("General(2003) : {0}", Math.Round(STI[0], 2));
                         SRT2.Text = string.Format("Male : {0}", Math.Round(STI[1], 2));
                         SRT3.Text = string.Format("Female : {0}", Math.Round(STI[2], 2));
@@ -1443,7 +1463,7 @@ namespace Pachyderm_Acoustic
                             //ETCm[oct] = new double[ptc.Length];
                             //for (int s = 0; s < ptc.Length; s++) ETCm[oct][s] = ptc[s] * ptc[s];
                         }
-                        double[] MTI = AcousticalMath.Modulation_Transfer_Index(ETCm, 1.2*343, NoiseM, SampleRate);
+                        double[] MTI = AcousticalMath.Modulation_Transfer_Index(ETCm, 1.2 * 343, NoiseM, SampleRate);
                         SRT1.Text = "";
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(MTI[0], 2));
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(MTI[1], 2));
@@ -1504,7 +1524,7 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(LE, 2));
                         break;
                     case "Echo Criterion (Music, 10%)":
-                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50 );
+                        AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 0, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Echo10);
                         AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true), 1, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT2.Text = string.Format("125 hz. : {0}", Echo10);
@@ -1580,7 +1600,7 @@ namespace Pachyderm_Acoustic
 
             private void IS_Path_Box_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
             {
-                List<int>Srcs = SelectedSources();
+                List<int> Srcs = SelectedSources();
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 foreach (Guid path in ShownPaths)
                 {
@@ -1608,7 +1628,7 @@ namespace Pachyderm_Acoustic
             private void Update_Graph(object sender, EventArgs e)
             {
                 Analysis_View.GraphPane.CurveList.Clear();
-                
+
                 int REC_ID = 0;
                 try
                 {
@@ -1635,7 +1655,7 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Pressure Time Curve":
                             //if (!Pressure_Ready) Update_Pressure();
-                            zero_sample = 4096/2;
+                            zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1652,7 +1672,7 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Lateral PTC":
                             //if (!Pressure_Ready) Update_Pressure();
-                            zero_sample = 4096/2;
+                            zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[1];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1660,16 +1680,16 @@ namespace Pachyderm_Acoustic
                             }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
+                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Vertical ETC":
                             Filter = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
-                        case"Vertical PTC":
+                        case "Vertical PTC":
                             //if (!Pressure_Ready) Update_Pressure();
-                            zero_sample = 4096/2;
+                            zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[2];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1677,16 +1697,16 @@ namespace Pachyderm_Acoustic
                             }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
+                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Fore-Aft ETC":
                             Filter = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
-                        case"Fore-Aft PTC":
+                        case "Fore-Aft PTC":
                             //if (!Pressure_Ready) Update_Pressure();
-                            zero_sample = 4096/2;
+                            zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[0];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
                             {
@@ -1694,7 +1714,7 @@ namespace Pachyderm_Acoustic
                             }
                             Filter = new double[Filter2.Length];
                             for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);                           
+                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         default:
                             throw new NotImplementedException();
@@ -1723,17 +1743,17 @@ namespace Pachyderm_Acoustic
                     double[] time = new double[Filter.Length];
                     for (int i = 0; i < Filter.Length; i++)
                     {
-                        time[i] = (double)(i - zero_sample)/ SampleRate;
+                        time[i] = (double)(i - zero_sample) / SampleRate;
                     }
 
                     Analysis_View.GraphPane.AddCurve("Schroeder Integral", time, Schroeder, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
                     Analysis_View.GraphPane.AddCurve("Logarithmic Energy Time Curve", time, Filter, System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
-                    
+
                     if (!LockUserScale.Checked)
                     {
                         Analysis_View.GraphPane.XAxis.Scale.Max = time[time.Length - 1];
                         Analysis_View.GraphPane.XAxis.Scale.Min = time[0];
-                        
+
                         if (Normalize_Graph.Checked)
                         {
                             Analysis_View.GraphPane.YAxis.Scale.Max = 0;
@@ -1761,18 +1781,18 @@ namespace Pachyderm_Acoustic
                             Analysis_View.GraphPane.YAxis.Scale.Min = min;
                         }
                     }
-                    
+
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
                     if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
-                catch(Exception x)
+                catch (Exception x)
                 {
                     System.Windows.Forms.MessageBox.Show(x.Message);
-                    return; 
+                    return;
                 }
-                
+
                 Analysis_View.AxisChange();
                 Analysis_View.Invalidate();
                 Update_Parameters();
@@ -1875,9 +1895,9 @@ namespace Pachyderm_Acoustic
 
                 Update_Graph(sender, e);
             }
-        #endregion
+            #endregion
 
-        #region ToolstripMenuItems
+            #region ToolstripMenuItems
             private void SaveDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 Write_File();
@@ -1908,7 +1928,7 @@ namespace Pachyderm_Acoustic
                 Plot_PTB_Results();
             }
 
-        #endregion
+            #endregion
 
             private void Auralisation_Click(object sender, EventArgs e)
             {
@@ -1941,6 +1961,74 @@ namespace Pachyderm_Acoustic
                     foreach (int i in srcs) Direct_Data[i].Set_Power(mod.Power);
                 }
                 Update_Graph(null, null);
+            }
+
+            private void Convergence_CheckedChanged(object sender, EventArgs e)
+            {
+                if (Spec_Rays.Checked) RT_Count.Enabled = true;
+                else RT_Count.Enabled = false;
+            }
+
+            private void trackBar1_Scroll(object sender, EventArgs e)
+            {
+                quart_lambda.Text = user_quart_lambda.Value.ToString() + " mm.";
+                double f = 1000d * 343d / (user_quart_lambda.Value * 4);
+
+                if (f > 88) Scat63Out.Value = 20;
+                else if (f < 44) Scat63Out.Value = 90;
+                else Scat63Out.Value = (decimal)( 20 + 70d * (1 - (f - 44d) / 44d));
+
+                if (f > 196) Scat125Out.Value = 20;
+                else if (f < 88) Scat125Out.Value = 90;
+                else Scat125Out.Value = (decimal)(20 + 70d * (1 - (f - 88d) / 88d));
+
+                if (f > 392) Scat250Out.Value = 20;
+                else if (f < 196) Scat250Out.Value = 90;
+                else Scat250Out.Value = (decimal)(20 + 70d * (1 - (f - 196d) / 196d));
+
+                if (f > 784) Scat500Out.Value = 20;
+                else if (f < 392) Scat500Out.Value = 90;
+                else Scat500Out.Value = (decimal)(20 + 70f * (1 - (f - 392f) / 392f));
+
+                if (f > 1568) Scat1kOut.Value = 20;
+                else if (f < 784) Scat1kOut.Value = 90;
+                else Scat1kOut.Value = (decimal)(20 + 70f * (1 - (f - 784f) / 784f));
+
+                if (f > 3136) Scat2kOut.Value = 20;
+                else if (f < 1568) Scat2kOut.Value = 90;
+                else Scat2kOut.Value = (decimal)(20 + 70f * (1 - (f - 1568f) / 1568f));
+
+                if (f > 6272) Scat4kOut.Value = 20;
+                else if (f < 3136) Scat4kOut.Value = 90;
+                else Scat4kOut.Value = (decimal)(20 + 70f * (1 - (f - 3136f) / 3136f));
+
+                if (f > 12544) Scat8kOut.Value = 20;
+                else if (f < 6272) Scat8kOut.Value = 90;
+                else Scat8kOut.Value = (decimal)(20 + 70f * (1 - (f - 6272f) / 6272f));
+            }
+
+            private void PlasterScatter_Click(object sender, EventArgs e)
+            {
+                Scat63Out.Value = 25;
+                Scat125Out.Value = 25;
+                Scat250Out.Value = 25;
+                Scat500Out.Value = 25;
+                Scat1kOut.Value = 25;
+                Scat2kOut.Value = 25;
+                Scat4kOut.Value = 25;
+                Scat8kOut.Value = 25;
+            }
+
+            private void GlassScatter_Click(object sender, EventArgs e)
+            {
+                Scat63Out.Value = 15;
+                Scat125Out.Value = 15;
+                Scat250Out.Value = 15;
+                Scat500Out.Value = 15;
+                Scat1kOut.Value = 15;
+                Scat2kOut.Value = 15;
+                Scat4kOut.Value = 15;
+                Scat8kOut.Value = 15;
             }
         }
     }

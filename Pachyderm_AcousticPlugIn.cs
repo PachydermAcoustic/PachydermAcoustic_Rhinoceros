@@ -225,7 +225,7 @@ namespace Pachyderm_Acoustic
                         string S_Type = Origin.Geometry.GetUserString("SourceType");
                         string SWL = Origin.Geometry.GetUserString("SWL");
                         string D = Origin.Geometry.GetUserString("Delay");
-                        double delay; if (D != "") delay = double.Parse(D)/1000; else delay = 0;
+                        double delay; if (D != ""&& D != null) delay = double.Parse(D)/1000; else delay = 0;
 
                         string Ph = Origin.Geometry.GetUserString("Phase");
                         double[] phase = new double[8];

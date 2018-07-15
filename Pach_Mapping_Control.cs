@@ -24,6 +24,7 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using Rhino.Display;
+using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
@@ -143,9 +144,12 @@ namespace Pachyderm_Acoustic
                     }
                     command.Reset();
 
-                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, (int)RT_Count.Value, 0, Direct_Data);
+                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value);
 
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
+
+                    Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", (command.Sim as SplitRayTracer)._currentRay.Sum(), (command.Sim as SplitRayTracer)._rayTotal.Sum(), (command.Sim as SplitRayTracer)._ts.Hours, (command.Sim as SplitRayTracer)._ts.Minutes, (command.Sim as SplitRayTracer)._ts.Seconds));
+                    Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", (command.Sim as SplitRayTracer).PercentLost);
 
                     if (command.CommandResult == Rhino.Commands.Result.Success)
                     {
@@ -181,13 +185,15 @@ namespace Pachyderm_Acoustic
                 {
                     Receiver_Selection.Maximum = Map[0].Count;
                 }
-
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day!");
 
                 ///////
                 //for(int i = 0;i < 10000; i++) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(((Source[0] as LineSource).D as LineSource.ANCON).Pt[i]);
                 ///////
+                Commit_Param_Bounds();
                 Calculate.Enabled = true;
+
+            
             }
 
             private double CutOffLength()
@@ -1141,6 +1147,12 @@ namespace Pachyderm_Acoustic
                     foreach (int i in srcs) Map[i].SWL = mod.Power;
                 }
                 Update_Graph(null, null);
+            }
+
+            private void Convergence_CheckedChanged(object sender, EventArgs e)
+            {
+                if (Spec_Rays.Checked) RT_Count.Enabled = true;
+                else RT_Count.Enabled = false;
             }
         }
     }
