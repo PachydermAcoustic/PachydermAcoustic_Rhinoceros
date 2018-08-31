@@ -609,28 +609,40 @@ namespace Pachyderm_Acoustic
             {
                 Mesh MM = Hare_to_RhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
 
-
                 if (!Rec_List[0].Rec_Vertex)
                 {
                     Mesh MF = new Mesh();
                     for (int i = 0; i < MM.Faces.Count; i++)
                     {
-                        MF.Vertices.Add(MM.Vertices[MM.Faces[i].A]);
-                        MF.Vertices.Add(MM.Vertices[MM.Faces[i].B]);
-                        MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
-                        MF.Vertices.Add(MM.Vertices[MM.Faces[i].D]);
-                        int f = i * 4;
-                        MF.Faces.AddFace(f, f + 1, f + 2, f + 3);
-                        MF.VertexColors.SetColor(f, C[i]);
-                        MF.VertexColors.SetColor(f + 1, C[i]);
-                        MF.VertexColors.SetColor(f + 2, C[i]);
-                        MF.VertexColors.SetColor(f + 3, C[i]);
+                        if (MM.Faces[i].IsQuad)
+                        {
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].A]);
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].B]);
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].D]);
+                            int f = MF.Vertices.Count - 4;
+                            MF.Faces.AddFace(f, f + 1, f + 2, f + 3);
+                            MF.VertexColors.SetColor(f, C[i]);
+                            MF.VertexColors.SetColor(f + 1, C[i]);
+                            MF.VertexColors.SetColor(f + 2, C[i]);
+                            MF.VertexColors.SetColor(f + 3, C[i]);
+                        }
+                        else
+                        {
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].A]);
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].B]);
+                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
+                            int f = MF.Vertices.Count - 3;
+                            MF.Faces.AddFace(f, f + 1, f + 2);
+                            MF.VertexColors.SetColor(f, C[i]);
+                            MF.VertexColors.SetColor(f + 1, C[i]);
+                            MF.VertexColors.SetColor(f + 2, C[i]);
+                        }
                     }
                     return MF;
                 }
                 else
                 {
-//                    MM.Weld(0);
                     MM.VertexColors.SetColors(C);
                     return MM;
                 }

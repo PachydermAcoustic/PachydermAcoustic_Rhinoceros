@@ -465,7 +465,16 @@ namespace Pachyderm_Acoustic
                                 return;
                             }
                             int SrcID = SelectedSources()[0];
-                            double[] Values = PachMapReceiver.Get_G_Map(Map, PachTools.OctaveStr2Int(Octave.Text), Source[SrcID].SWL(PachTools.OctaveStr2Int(Octave.Text)), SrcID, Coherent.Checked);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
+                            int oct = PachTools.OctaveStr2Int(Octave.Text);
+                            double SWL = 0;
+                            if (oct < 7) SWL = Map[SrcID].SWL[oct];
+                            else
+                            {
+                                if (Map[SrcID].SWL == null) Map[SrcID].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
+                                for (int i = 0; i < 8; i++) SWL += Math.Pow(10, Map[SrcID].SWL[i] / 10);
+                                SWL = 10 * Math.Log10(SWL);
+                            }
+                            double[] Values = PachMapReceiver.Get_G_Map(Map, oct, SWL, SrcID, Coherent.Checked);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_GMin, Current_GMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);

@@ -48,35 +48,38 @@ namespace Pachyderm_Acoustic
 
             public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
             {
-                string PachPath;
+                //string PachPath;
 
-                PachPath = this.GetPluginPath();
-                if (PachPath == null || PachPath == "")
-                {
-                    if (Rhino.PlugIns.PlugIn.LoadPlugIn(new Guid("25895777-97d3-4058-8753-503183d4bc01")))
-                    {
-                        PachPath = Pachyderm_Acoustic.UI.PachydermAc_PlugIn.Instance.GetPluginPath();
-                    }
-                }
+                //PachPath = this.GetPluginPath();
+                //if (PachPath == null || PachPath == "")
+                //{
+                //    if (Rhino.PlugIns.PlugIn.LoadPlugIn(new Guid("25895777-97d3-4058-8753-503183d4bc01")))
+                //    {
+                //        PachPath = Pachyderm_Acoustic.UI.PachydermAc_PlugIn.Instance.GetPluginPath();
+                //    }
+                //}
 
-                PachPath = PachPath.Remove(PachPath.Length - 22);
+                //PachPath = PachPath.Remove(PachPath.Length - 22);
 
-                switch (e.Name)
-                {
+                //switch (e.Name)
+                //{
+                //    case "Hare":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "Hare.dll");
+                //    case "CLF_Read":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "CLF_Read.dll");
+                //    case "MathNet.Numerics":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "MathNet.Numerics.dll");
+                //    case "NAudio":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "NAudio.dll");
+                //    case "Pachyderm_Acoustic_Universal":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "Pachyderm_Acoustic_Universal.dll");
+                //    case "ZedGraph":
+                //        return System.Reflection.Assembly.LoadFile(PachPath + "ZedGraph.dll");
+                //}
 
-                    case "Hare":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "Hare.dll");
-                    case "CLF_Read":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "CLF_Read.dll");
-                    case "MathNet.Numerics":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "MathNet.Numerics.dll");
-                    case "NAudio":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "NAudio.dll");
-                    case "Pachyderm_Acoustic_Universal":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "Pachyderm_Acoustic_Universal.dll");
-                    case "ZedGraph":
-                        return System.Reflection.Assembly.LoadFile(PachPath + "ZedGraph.dll");
-                }
+                //if (e.Name == "OxyPlot.Wpf")
+                //    return AppDomain.CurrentDomain.Load(e.Name);
+                //else return null;
                 return null;
             }
 

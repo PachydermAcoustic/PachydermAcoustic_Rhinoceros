@@ -1380,28 +1380,28 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0} ms.", Math.Round(TS * 1000, 2));
                         break;
                     case "Initial Time Delay Gap (ITDG)":
-                        double ITDG = AcousticalMath.InitialTimeDelayGap(ETC[0]);
+                        double ITDG = AcousticalMath.InitialTimeDelayGap(ETC[0], SampleRate);
                         SRT1.Text = string.Format("62.5 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[1]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[1], SampleRate);
                         SRT2.Text = string.Format("125 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[2]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[2], SampleRate);
                         SRT3.Text = string.Format("250 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[3]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[3], SampleRate);
                         SRT4.Text = string.Format("500 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[4]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[4], SampleRate);
                         SRT5.Text = string.Format("1000 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[5]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[5], SampleRate);
                         SRT6.Text = string.Format("2000 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[6]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[6], SampleRate);
                         SRT7.Text = string.Format("4000 hz. : {0} ms", ITDG);
 
-                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[7]);
+                        ITDG = AcousticalMath.InitialTimeDelayGap(ETC[7], SampleRate);
                         SRT8.Text = string.Format("8000 hz. : {0} ms", ITDG);
                         break;
                     case "Speech Transmission Index (Explicit)":

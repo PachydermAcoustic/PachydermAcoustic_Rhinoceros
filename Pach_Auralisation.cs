@@ -517,7 +517,7 @@ namespace Pachyderm_Acoustic
                     SaveWave.Filter = "Extended Wave Audio (*.wavex) |*.wavex";
                 }
 
-                 if (SaveWave.ShowDialog() == DialogResult.OK)
+                if (SaveWave.ShowDialog() == DialogResult.OK)
                 {
                     if (Response == null || Response.Length == 0)
                     {
