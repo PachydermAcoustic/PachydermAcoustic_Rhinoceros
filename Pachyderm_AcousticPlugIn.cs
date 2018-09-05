@@ -231,12 +231,12 @@ namespace Pachyderm_Acoustic
                         double delay; if (D != ""&& D != null) delay = double.Parse(D)/1000; else delay = 0;
 
                         string Ph = Origin.Geometry.GetUserString("Phase");
-                        double[] phase = new double[8];
-                        if (Ph != "")
-                        {
-                            string[] phstr = Ph.Split(";"[0]);
-                            for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
-                        }
+                        //double[] phase = new double[8];
+                        //if (Ph != "")
+                        //{
+                        //    string[] phstr = Ph.Split(";"[0]);
+                        //    for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
+                        //}
 
                         double[] SWL_Values = Utilities.PachTools.DecodeSourcePower(SWL);
                         switch (S_Type)

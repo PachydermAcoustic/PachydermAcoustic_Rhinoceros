@@ -597,29 +597,26 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDS.RuntoCompletion();
+                    Mic.reset();
+                    double[][] TimeS = Mic.Recordings()[0];
+                    samplefrequency = FDTDS.SampleFrequency;
 
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
-
-                    omit = SD.Z[0] + 60;
-                    samplefrequency = FDTDS.SampleFrequency;
-
-                    Mic.reset();
-                    result_signals = Mic.Recordings()[0];
                     Micf.reset();
                     result_signals = Micf.Recordings()[0];
 
-                    //Calculate Scattering Coefficients
-                    double[][] TimeS = Mic.Recordings()[0];
-                    double[][] TimeF = Micf.Recordings()[0];
+                    omit = SD.Z[0] + 60;
 
+                    //Calculate Scattering Coefficients
+                    
                     //Zero packing
                     for (int i = 0; i < TimeS.Length; i++)
                     {
                         Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
-                        Array.Resize(ref TimeF[i], (int)(samplefrequency / 2));
+                        Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     }
 
                     Freq_Trackbar1.Maximum = (int)(samplefrequency / 2);
@@ -631,7 +628,7 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < TimeS.Length; i++)
                     {
                         FS[i] = Audio.Pach_SP.FFT_General(TimeS[i], 0);
-                        FF[i] = Audio.Pach_SP.FFT_General(TimeF[i], 0);
+                        FF[i] = Audio.Pach_SP.FFT_General(result_signals[i], 0);
                     }
 
                     Scattering = new double[FS[0].Length];

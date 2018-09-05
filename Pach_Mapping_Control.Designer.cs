@@ -88,6 +88,9 @@ namespace Pachyderm_Acoustic
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.Select_Map = new System.Windows.Forms.Button();
+            this.Calculate = new System.Windows.Forms.Button();
             this.GroupBox4 = new System.Windows.Forms.GroupBox();
             this.EdgeFreq = new System.Windows.Forms.CheckBox();
             this.Label21 = new System.Windows.Forms.Label();
@@ -98,29 +101,29 @@ namespace Pachyderm_Acoustic
             this.Rel_Humidity = new System.Windows.Forms.NumericUpDown();
             this.AirTemp = new System.Windows.Forms.Label();
             this.Air_Temp = new System.Windows.Forms.NumericUpDown();
-            this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.Spec_Rays = new System.Windows.Forms.RadioButton();
-            this.DetailedConvergence = new System.Windows.Forms.RadioButton();
-            this.Minimum_Convergence = new System.Windows.Forms.RadioButton();
-            this.Sum_Time = new System.Windows.Forms.CheckBox();
-            this.DirectionalToggle = new System.Windows.Forms.CheckBox();
-            this.Label1 = new System.Windows.Forms.Label();
-            this.Increment = new System.Windows.Forms.NumericUpDown();
-            this.COTime = new System.Windows.Forms.Label();
-            this.CO_TIME = new System.Windows.Forms.NumericUpDown();
             this.Label2 = new System.Windows.Forms.Label();
+            this.COTime = new System.Windows.Forms.Label();
+            this.Label1 = new System.Windows.Forms.Label();
             this.RT_Count = new System.Windows.Forms.NumericUpDown();
-            this.GroupBox2 = new System.Windows.Forms.GroupBox();
+            this.CO_TIME = new System.Windows.Forms.NumericUpDown();
+            this.Increment = new System.Windows.Forms.NumericUpDown();
+            this.label31 = new System.Windows.Forms.Label();
+            this.label32 = new System.Windows.Forms.Label();
+            this.label33 = new System.Windows.Forms.Label();
+            this.Offset_Mesh = new System.Windows.Forms.CheckBox();
+            this.label34 = new System.Windows.Forms.Label();
+            this.DirectionalToggle = new System.Windows.Forms.CheckBox();
+            this.Sum_Time = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.groupBox11 = new System.Windows.Forms.GroupBox();
-            this.Rec_Centroid = new System.Windows.Forms.RadioButton();
-            this.Rec_Vertex = new System.Windows.Forms.RadioButton();
-            this.groupBox10 = new System.Windows.Forms.GroupBox();
+            this.Spec_Rays = new System.Windows.Forms.RadioButton();
+            this.Minimum_Convergence = new System.Windows.Forms.RadioButton();
+            this.DetailedConvergence = new System.Windows.Forms.RadioButton();
+            this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.Disp_Audience = new System.Windows.Forms.RadioButton();
             this.Disp_Other = new System.Windows.Forms.RadioButton();
-            this.Offset_Mesh = new System.Windows.Forms.CheckBox();
-            this.Select_Map = new System.Windows.Forms.Button();
-            this.Calculate = new System.Windows.Forms.Button();
+            this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
+            this.Rec_Centroid = new System.Windows.Forms.RadioButton();
+            this.Rec_Vertex = new System.Windows.Forms.RadioButton();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox12 = new System.Windows.Forms.GroupBox();
@@ -200,18 +203,17 @@ namespace Pachyderm_Acoustic
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.tableLayoutPanel4.SuspendLayout();
             this.GroupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Rel_Humidity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Temp)).BeginInit();
-            this.groupBox6.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Increment)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.RT_Count)).BeginInit();
-            this.GroupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Increment)).BeginInit();
             this.tableLayoutPanel1.SuspendLayout();
-            this.groupBox11.SuspendLayout();
-            this.groupBox10.SuspendLayout();
+            this.tableLayoutPanel5.SuspendLayout();
+            this.tableLayoutPanel6.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tableLayoutPanel2.SuspendLayout();
             this.groupBox12.SuspendLayout();
@@ -708,10 +710,7 @@ namespace Pachyderm_Acoustic
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.GroupBox4);
-            this.tabPage1.Controls.Add(this.groupBox6);
-            this.tabPage1.Controls.Add(this.GroupBox2);
-            this.tabPage1.Controls.Add(this.Calculate);
+            this.tabPage1.Controls.Add(this.tableLayoutPanel4);
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4);
             this.tabPage1.Name = "tabPage1";
@@ -721,10 +720,87 @@ namespace Pachyderm_Acoustic
             this.tabPage1.Text = "Calculation";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
+            // tableLayoutPanel4
+            // 
+            this.tableLayoutPanel4.ColumnCount = 4;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25.00062F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 24.99813F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25.00063F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25.00063F));
+            this.tableLayoutPanel4.Controls.Add(this.Select_Map, 0, 1);
+            this.tableLayoutPanel4.Controls.Add(this.GroupBox4, 0, 13);
+            this.tableLayoutPanel4.Controls.Add(this.Label2, 0, 7);
+            this.tableLayoutPanel4.Controls.Add(this.COTime, 0, 8);
+            this.tableLayoutPanel4.Controls.Add(this.Label1, 0, 9);
+            this.tableLayoutPanel4.Controls.Add(this.RT_Count, 2, 7);
+            this.tableLayoutPanel4.Controls.Add(this.CO_TIME, 2, 8);
+            this.tableLayoutPanel4.Controls.Add(this.Increment, 2, 9);
+            this.tableLayoutPanel4.Controls.Add(this.label31, 0, 2);
+            this.tableLayoutPanel4.Controls.Add(this.label32, 2, 2);
+            this.tableLayoutPanel4.Controls.Add(this.label33, 0, 0);
+            this.tableLayoutPanel4.Controls.Add(this.Offset_Mesh, 3, 1);
+            this.tableLayoutPanel4.Controls.Add(this.label34, 0, 5);
+            this.tableLayoutPanel4.Controls.Add(this.DirectionalToggle, 2, 11);
+            this.tableLayoutPanel4.Controls.Add(this.Sum_Time, 0, 11);
+            this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel1, 1, 5);
+            this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel5, 0, 3);
+            this.tableLayoutPanel4.Controls.Add(this.tableLayoutPanel6, 2, 3);
+            this.tableLayoutPanel4.Controls.Add(this.Calculate, 0, 12);
+            this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(4, 4);
+            this.tableLayoutPanel4.Name = "tableLayoutPanel4";
+            this.tableLayoutPanel4.RowCount = 15;
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 21F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 10F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 15F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 180F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(517, 789);
+            this.tableLayoutPanel4.TabIndex = 85;
+            // 
+            // Select_Map
+            // 
+            this.Select_Map.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.Select_Map.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.tableLayoutPanel4.SetColumnSpan(this.Select_Map, 3);
+            this.Select_Map.Location = new System.Drawing.Point(4, 25);
+            this.Select_Map.Margin = new System.Windows.Forms.Padding(4);
+            this.Select_Map.Name = "Select_Map";
+            this.Select_Map.Size = new System.Drawing.Size(379, 32);
+            this.Select_Map.TabIndex = 31;
+            this.Select_Map.Text = "Select Mapping Surfaces";
+            this.Select_Map.UseVisualStyleBackColor = true;
+            this.Select_Map.Click += new System.EventHandler(this.Select_Map_Click);
+            // 
+            // Calculate
+            // 
+            this.Calculate.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel4.SetColumnSpan(this.Calculate, 4);
+            this.Calculate.Location = new System.Drawing.Point(3, 328);
+            this.Calculate.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.Calculate.Name = "Calculate";
+            this.Calculate.Size = new System.Drawing.Size(511, 36);
+            this.Calculate.TabIndex = 81;
+            this.Calculate.Text = "Run Calculation";
+            this.Calculate.UseVisualStyleBackColor = true;
+            this.Calculate.Click += new System.EventHandler(this.Calculate_Click);
+            // 
             // GroupBox4
             // 
-            this.GroupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel4.SetColumnSpan(this.GroupBox4, 4);
             this.GroupBox4.Controls.Add(this.EdgeFreq);
             this.GroupBox4.Controls.Add(this.Label21);
             this.GroupBox4.Controls.Add(this.Atten_Method);
@@ -734,11 +810,12 @@ namespace Pachyderm_Acoustic
             this.GroupBox4.Controls.Add(this.Rel_Humidity);
             this.GroupBox4.Controls.Add(this.AirTemp);
             this.GroupBox4.Controls.Add(this.Air_Temp);
-            this.GroupBox4.Location = new System.Drawing.Point(7, 350);
+            this.GroupBox4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.GroupBox4.Location = new System.Drawing.Point(4, 370);
             this.GroupBox4.Margin = new System.Windows.Forms.Padding(4);
             this.GroupBox4.Name = "GroupBox4";
             this.GroupBox4.Padding = new System.Windows.Forms.Padding(4);
-            this.GroupBox4.Size = new System.Drawing.Size(507, 164);
+            this.GroupBox4.Size = new System.Drawing.Size(509, 172);
             this.GroupBox4.TabIndex = 84;
             this.GroupBox4.TabStop = false;
             this.GroupBox4.Text = "Environmental Factors";
@@ -777,7 +854,7 @@ namespace Pachyderm_Acoustic
             this.Atten_Method.Location = new System.Drawing.Point(93, 108);
             this.Atten_Method.Margin = new System.Windows.Forms.Padding(4);
             this.Atten_Method.Name = "Atten_Method";
-            this.Atten_Method.Size = new System.Drawing.Size(400, 24);
+            this.Atten_Method.Size = new System.Drawing.Size(402, 24);
             this.Atten_Method.TabIndex = 14;
             this.Atten_Method.Text = "ISO 9613-1 (Outdoor Attenuation)";
             // 
@@ -795,7 +872,7 @@ namespace Pachyderm_Acoustic
             // 
             this.Air_Pressure.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Air_Pressure.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Air_Pressure.Location = new System.Drawing.Point(409, 79);
+            this.Air_Pressure.Location = new System.Drawing.Point(411, 79);
             this.Air_Pressure.Margin = new System.Windows.Forms.Padding(4);
             this.Air_Pressure.Maximum = new decimal(new int[] {
             1500,
@@ -830,7 +907,7 @@ namespace Pachyderm_Acoustic
             // 
             this.Rel_Humidity.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Rel_Humidity.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Rel_Humidity.Location = new System.Drawing.Point(437, 49);
+            this.Rel_Humidity.Location = new System.Drawing.Point(439, 49);
             this.Rel_Humidity.Margin = new System.Windows.Forms.Padding(4);
             this.Rel_Humidity.Maximum = new decimal(new int[] {
             80,
@@ -865,7 +942,7 @@ namespace Pachyderm_Acoustic
             // 
             this.Air_Temp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.Air_Temp.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Air_Temp.Location = new System.Drawing.Point(437, 20);
+            this.Air_Temp.Location = new System.Drawing.Point(439, 20);
             this.Air_Temp.Margin = new System.Windows.Forms.Padding(4);
             this.Air_Temp.Maximum = new decimal(new int[] {
             80,
@@ -886,182 +963,50 @@ namespace Pachyderm_Acoustic
             0,
             0});
             // 
-            // groupBox6
+            // Label2
             // 
-            this.groupBox6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.Label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox6.Controls.Add(this.Spec_Rays);
-            this.groupBox6.Controls.Add(this.DetailedConvergence);
-            this.groupBox6.Controls.Add(this.Minimum_Convergence);
-            this.groupBox6.Controls.Add(this.Sum_Time);
-            this.groupBox6.Controls.Add(this.DirectionalToggle);
-            this.groupBox6.Controls.Add(this.Label1);
-            this.groupBox6.Controls.Add(this.Increment);
-            this.groupBox6.Controls.Add(this.COTime);
-            this.groupBox6.Controls.Add(this.CO_TIME);
-            this.groupBox6.Controls.Add(this.Label2);
-            this.groupBox6.Controls.Add(this.RT_Count);
-            this.groupBox6.Location = new System.Drawing.Point(8, 178);
-            this.groupBox6.Margin = new System.Windows.Forms.Padding(4);
-            this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox6.Size = new System.Drawing.Size(507, 173);
-            this.groupBox6.TabIndex = 83;
-            this.groupBox6.TabStop = false;
-            this.groupBox6.Text = "Simulation Settings";
-            // 
-            // Spec_Rays
-            // 
-            this.Spec_Rays.AutoSize = true;
-            this.Spec_Rays.Location = new System.Drawing.Point(359, 20);
-            this.Spec_Rays.Name = "Spec_Rays";
-            this.Spec_Rays.Size = new System.Drawing.Size(145, 21);
-            this.Spec_Rays.TabIndex = 91;
-            this.Spec_Rays.Text = "Specify Ray Count";
-            this.Spec_Rays.UseVisualStyleBackColor = true;
-            this.Spec_Rays.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
-            // 
-            // DetailedConvergence
-            // 
-            this.DetailedConvergence.AutoSize = true;
-            this.DetailedConvergence.Location = new System.Drawing.Point(184, 20);
-            this.DetailedConvergence.Name = "DetailedConvergence";
-            this.DetailedConvergence.Size = new System.Drawing.Size(169, 21);
-            this.DetailedConvergence.TabIndex = 90;
-            this.DetailedConvergence.Text = "Detailed Convergence";
-            this.DetailedConvergence.UseVisualStyleBackColor = true;
-            this.DetailedConvergence.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
-            // 
-            // Minimum_Convergence
-            // 
-            this.Minimum_Convergence.AutoSize = true;
-            this.Minimum_Convergence.Checked = true;
-            this.Minimum_Convergence.Location = new System.Drawing.Point(7, 20);
-            this.Minimum_Convergence.Name = "Minimum_Convergence";
-            this.Minimum_Convergence.Size = new System.Drawing.Size(172, 21);
-            this.Minimum_Convergence.TabIndex = 89;
-            this.Minimum_Convergence.TabStop = true;
-            this.Minimum_Convergence.Text = "Minimum Convergence";
-            this.Minimum_Convergence.UseVisualStyleBackColor = true;
-            this.Minimum_Convergence.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
-            // 
-            // Sum_Time
-            // 
-            this.Sum_Time.AutoSize = true;
-            this.Sum_Time.Location = new System.Drawing.Point(48, 143);
-            this.Sum_Time.Margin = new System.Windows.Forms.Padding(4);
-            this.Sum_Time.Name = "Sum_Time";
-            this.Sum_Time.Size = new System.Drawing.Size(175, 21);
-            this.Sum_Time.TabIndex = 69;
-            this.Sum_Time.Text = "SPL Only (sum of time)";
-            this.Sum_Time.UseVisualStyleBackColor = true;
-            this.Sum_Time.CheckedChanged += new System.EventHandler(this.Sum_Time_CheckedChanged);
-            // 
-            // DirectionalToggle
-            // 
-            this.DirectionalToggle.AutoSize = true;
-            this.DirectionalToggle.Location = new System.Drawing.Point(231, 143);
-            this.DirectionalToggle.Margin = new System.Windows.Forms.Padding(4);
-            this.DirectionalToggle.Name = "DirectionalToggle";
-            this.DirectionalToggle.Size = new System.Drawing.Size(151, 21);
-            this.DirectionalToggle.TabIndex = 68;
-            this.DirectionalToggle.Text = "Track Directionality";
-            this.DirectionalToggle.UseVisualStyleBackColor = true;
-            // 
-            // Label1
-            // 
-            this.Label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Label1.AutoSize = true;
-            this.Label1.Location = new System.Drawing.Point(11, 117);
-            this.Label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.Label1.Name = "Label1";
-            this.Label1.Size = new System.Drawing.Size(137, 17);
-            this.Label1.TabIndex = 67;
-            this.Label1.Text = "Map Increment (cm.)";
-            // 
-            // Increment
-            // 
-            this.Increment.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Increment.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.Increment.Location = new System.Drawing.Point(231, 115);
-            this.Increment.Margin = new System.Windows.Forms.Padding(4);
-            this.Increment.Maximum = new decimal(new int[] {
-            500,
-            0,
-            0,
-            0});
-            this.Increment.Minimum = new decimal(new int[] {
-            50,
-            0,
-            0,
-            -2147483648});
-            this.Increment.Name = "Increment";
-            this.Increment.Size = new System.Drawing.Size(264, 22);
-            this.Increment.TabIndex = 66;
-            this.Increment.UseWaitCursor = true;
-            this.Increment.Value = new decimal(new int[] {
-            50,
-            0,
-            0,
-            0});
+            this.Label2.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.Label2, 2);
+            this.Label2.Location = new System.Drawing.Point(4, 191);
+            this.Label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.Label2.Name = "Label2";
+            this.Label2.Size = new System.Drawing.Size(250, 17);
+            this.Label2.TabIndex = 63;
+            this.Label2.Text = "Number of Rays";
             // 
             // COTime
             // 
             this.COTime.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.COTime.AutoSize = true;
-            this.COTime.Location = new System.Drawing.Point(11, 86);
+            this.tableLayoutPanel4.SetColumnSpan(this.COTime, 2);
+            this.COTime.Location = new System.Drawing.Point(4, 221);
             this.COTime.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.COTime.Name = "COTime";
-            this.COTime.Size = new System.Drawing.Size(119, 17);
+            this.COTime.Size = new System.Drawing.Size(250, 17);
             this.COTime.TabIndex = 65;
             this.COTime.Text = "Cut Off Time (ms)";
             // 
-            // CO_TIME
+            // Label1
             // 
-            this.CO_TIME.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.Label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.CO_TIME.Cursor = System.Windows.Forms.Cursors.WaitCursor;
-            this.CO_TIME.Location = new System.Drawing.Point(231, 84);
-            this.CO_TIME.Margin = new System.Windows.Forms.Padding(4);
-            this.CO_TIME.Maximum = new decimal(new int[] {
-            8000,
-            0,
-            0,
-            0});
-            this.CO_TIME.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.CO_TIME.Name = "CO_TIME";
-            this.CO_TIME.Size = new System.Drawing.Size(264, 22);
-            this.CO_TIME.TabIndex = 64;
-            this.CO_TIME.UseWaitCursor = true;
-            this.CO_TIME.Value = new decimal(new int[] {
-            300,
-            0,
-            0,
-            0});
-            // 
-            // Label2
-            // 
-            this.Label2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Label2.AutoSize = true;
-            this.Label2.Location = new System.Drawing.Point(11, 54);
-            this.Label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.Label2.Name = "Label2";
-            this.Label2.Size = new System.Drawing.Size(110, 17);
-            this.Label2.TabIndex = 63;
-            this.Label2.Text = "Number of Rays";
+            this.Label1.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.Label1, 2);
+            this.Label1.Location = new System.Drawing.Point(4, 251);
+            this.Label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.Label1.Name = "Label1";
+            this.Label1.Size = new System.Drawing.Size(250, 17);
+            this.Label1.TabIndex = 67;
+            this.Label1.Text = "Map Increment (cm.)";
             // 
             // RT_Count
             // 
             this.RT_Count.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel4.SetColumnSpan(this.RT_Count, 2);
             this.RT_Count.Cursor = System.Windows.Forms.Cursors.WaitCursor;
             this.RT_Count.Enabled = false;
             this.RT_Count.Increment = new decimal(new int[] {
@@ -1069,7 +1014,7 @@ namespace Pachyderm_Acoustic
             0,
             0,
             0});
-            this.RT_Count.Location = new System.Drawing.Point(231, 52);
+            this.RT_Count.Location = new System.Drawing.Point(262, 195);
             this.RT_Count.Margin = new System.Windows.Forms.Padding(4);
             this.RT_Count.Maximum = new decimal(new int[] {
             10000000,
@@ -1082,7 +1027,7 @@ namespace Pachyderm_Acoustic
             0,
             0});
             this.RT_Count.Name = "RT_Count";
-            this.RT_Count.Size = new System.Drawing.Size(264, 22);
+            this.RT_Count.Size = new System.Drawing.Size(251, 22);
             this.RT_Count.TabIndex = 62;
             this.RT_Count.UseWaitCursor = true;
             this.RT_Count.Value = new decimal(new int[] {
@@ -1091,100 +1036,214 @@ namespace Pachyderm_Acoustic
             0,
             0});
             // 
-            // GroupBox2
+            // CO_TIME
             // 
-            this.GroupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.CO_TIME.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.GroupBox2.Controls.Add(this.tableLayoutPanel1);
-            this.GroupBox2.Controls.Add(this.Offset_Mesh);
-            this.GroupBox2.Controls.Add(this.Select_Map);
-            this.GroupBox2.Location = new System.Drawing.Point(8, 7);
-            this.GroupBox2.Margin = new System.Windows.Forms.Padding(4);
-            this.GroupBox2.Name = "GroupBox2";
-            this.GroupBox2.Padding = new System.Windows.Forms.Padding(4);
-            this.GroupBox2.Size = new System.Drawing.Size(507, 167);
-            this.GroupBox2.TabIndex = 82;
-            this.GroupBox2.TabStop = false;
-            this.GroupBox2.Text = "Geometry";
+            this.tableLayoutPanel4.SetColumnSpan(this.CO_TIME, 2);
+            this.CO_TIME.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.CO_TIME.Location = new System.Drawing.Point(262, 225);
+            this.CO_TIME.Margin = new System.Windows.Forms.Padding(4);
+            this.CO_TIME.Maximum = new decimal(new int[] {
+            8000,
+            0,
+            0,
+            0});
+            this.CO_TIME.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.CO_TIME.Name = "CO_TIME";
+            this.CO_TIME.Size = new System.Drawing.Size(251, 22);
+            this.CO_TIME.TabIndex = 64;
+            this.CO_TIME.UseWaitCursor = true;
+            this.CO_TIME.Value = new decimal(new int[] {
+            300,
+            0,
+            0,
+            0});
+            // 
+            // Increment
+            // 
+            this.Increment.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel4.SetColumnSpan(this.Increment, 2);
+            this.Increment.Cursor = System.Windows.Forms.Cursors.WaitCursor;
+            this.Increment.Location = new System.Drawing.Point(262, 255);
+            this.Increment.Margin = new System.Windows.Forms.Padding(4);
+            this.Increment.Maximum = new decimal(new int[] {
+            500,
+            0,
+            0,
+            0});
+            this.Increment.Minimum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            -2147483648});
+            this.Increment.Name = "Increment";
+            this.Increment.Size = new System.Drawing.Size(251, 22);
+            this.Increment.TabIndex = 66;
+            this.Increment.UseWaitCursor = true;
+            this.Increment.Value = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
+            // 
+            // label31
+            // 
+            this.label31.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.label31, 2);
+            this.label31.Location = new System.Drawing.Point(3, 61);
+            this.label31.Name = "label31";
+            this.label31.Size = new System.Drawing.Size(153, 15);
+            this.label31.TabIndex = 92;
+            this.label31.Text = "Receiver Displacement";
+            // 
+            // label32
+            // 
+            this.label32.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.label32, 2);
+            this.label32.Location = new System.Drawing.Point(261, 61);
+            this.label32.Name = "label32";
+            this.label32.Size = new System.Drawing.Size(138, 15);
+            this.label32.TabIndex = 93;
+            this.label32.Text = "Receiver Orientation";
+            // 
+            // label33
+            // 
+            this.label33.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.label33, 2);
+            this.label33.Location = new System.Drawing.Point(3, 0);
+            this.label33.Name = "label33";
+            this.label33.Size = new System.Drawing.Size(70, 17);
+            this.label33.TabIndex = 94;
+            this.label33.Text = "Geometry";
+            // 
+            // Offset_Mesh
+            // 
+            this.Offset_Mesh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.Offset_Mesh.AutoSize = true;
+            this.Offset_Mesh.Checked = true;
+            this.Offset_Mesh.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.Offset_Mesh.Location = new System.Drawing.Point(391, 25);
+            this.Offset_Mesh.Margin = new System.Windows.Forms.Padding(4);
+            this.Offset_Mesh.Name = "Offset_Mesh";
+            this.Offset_Mesh.Size = new System.Drawing.Size(122, 21);
+            this.Offset_Mesh.TabIndex = 36;
+            this.Offset_Mesh.Text = "Mesh Offset by Increment";
+            this.Offset_Mesh.UseVisualStyleBackColor = true;
+            // 
+            // label34
+            // 
+            this.label34.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label34.AutoSize = true;
+            this.label34.Location = new System.Drawing.Point(3, 150);
+            this.label34.Name = "label34";
+            this.label34.Size = new System.Drawing.Size(96, 17);
+            this.label34.TabIndex = 95;
+            this.label34.Text = "Convergence:";
+            // 
+            // DirectionalToggle
+            // 
+            this.DirectionalToggle.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.DirectionalToggle, 2);
+            this.DirectionalToggle.Location = new System.Drawing.Point(262, 300);
+            this.DirectionalToggle.Margin = new System.Windows.Forms.Padding(4);
+            this.DirectionalToggle.Name = "DirectionalToggle";
+            this.DirectionalToggle.Size = new System.Drawing.Size(151, 21);
+            this.DirectionalToggle.TabIndex = 68;
+            this.DirectionalToggle.Text = "Track Directionality";
+            this.DirectionalToggle.UseVisualStyleBackColor = true;
+            // 
+            // Sum_Time
+            // 
+            this.Sum_Time.AutoSize = true;
+            this.tableLayoutPanel4.SetColumnSpan(this.Sum_Time, 2);
+            this.Sum_Time.Dock = System.Windows.Forms.DockStyle.Right;
+            this.Sum_Time.Location = new System.Drawing.Point(79, 300);
+            this.Sum_Time.Margin = new System.Windows.Forms.Padding(4);
+            this.Sum_Time.Name = "Sum_Time";
+            this.Sum_Time.Size = new System.Drawing.Size(175, 22);
+            this.Sum_Time.TabIndex = 69;
+            this.Sum_Time.Text = "SPL Only (sum of time)";
+            this.Sum_Time.UseVisualStyleBackColor = true;
+            this.Sum_Time.CheckedChanged += new System.EventHandler(this.Sum_Time_CheckedChanged);
             // 
             // tableLayoutPanel1
             // 
-            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Controls.Add(this.groupBox11, 1, 0);
-            this.tableLayoutPanel1.Controls.Add(this.groupBox10, 0, 0);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 79);
-            this.tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel1.ColumnCount = 3;
+            this.tableLayoutPanel4.SetColumnSpan(this.tableLayoutPanel1, 3);
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33.33333F));
+            this.tableLayoutPanel1.Controls.Add(this.Spec_Rays, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.Minimum_Convergence, 1, 0);
+            this.tableLayoutPanel1.Controls.Add(this.DetailedConvergence, 2, 0);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(132, 139);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 1;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(507, 89);
-            this.tableLayoutPanel1.TabIndex = 85;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(382, 39);
+            this.tableLayoutPanel1.TabIndex = 96;
             // 
-            // groupBox11
+            // Spec_Rays
             // 
-            this.groupBox11.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox11.Controls.Add(this.Rec_Centroid);
-            this.groupBox11.Controls.Add(this.Rec_Vertex);
-            this.groupBox11.Location = new System.Drawing.Point(257, 4);
-            this.groupBox11.Margin = new System.Windows.Forms.Padding(4);
-            this.groupBox11.Name = "groupBox11";
-            this.groupBox11.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox11.Size = new System.Drawing.Size(246, 81);
-            this.groupBox11.TabIndex = 35;
-            this.groupBox11.TabStop = false;
-            this.groupBox11.Text = "Receiver Orientation";
+            this.Spec_Rays.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.Spec_Rays.AutoSize = true;
+            this.Spec_Rays.Location = new System.Drawing.Point(3, 9);
+            this.Spec_Rays.Name = "Spec_Rays";
+            this.Spec_Rays.Size = new System.Drawing.Size(121, 21);
+            this.Spec_Rays.TabIndex = 91;
+            this.Spec_Rays.Text = "Specify Ray Count";
+            this.Spec_Rays.UseVisualStyleBackColor = true;
+            this.Spec_Rays.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
             // 
-            // Rec_Centroid
+            // Minimum_Convergence
             // 
-            this.Rec_Centroid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Rec_Centroid.AutoSize = true;
-            this.Rec_Centroid.Checked = true;
-            this.Rec_Centroid.Location = new System.Drawing.Point(11, 23);
-            this.Rec_Centroid.Margin = new System.Windows.Forms.Padding(4);
-            this.Rec_Centroid.Name = "Rec_Centroid";
-            this.Rec_Centroid.Size = new System.Drawing.Size(229, 21);
-            this.Rec_Centroid.TabIndex = 32;
-            this.Rec_Centroid.TabStop = true;
-            this.Rec_Centroid.Text = "Face Centroid (no interpolation)";
-            this.Rec_Centroid.UseVisualStyleBackColor = true;
+            this.Minimum_Convergence.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.Minimum_Convergence.AutoSize = true;
+            this.Minimum_Convergence.Checked = true;
+            this.Minimum_Convergence.Location = new System.Drawing.Point(130, 9);
+            this.Minimum_Convergence.Name = "Minimum_Convergence";
+            this.Minimum_Convergence.Size = new System.Drawing.Size(121, 21);
+            this.Minimum_Convergence.TabIndex = 89;
+            this.Minimum_Convergence.TabStop = true;
+            this.Minimum_Convergence.Text = "Minimum Convergence";
+            this.Minimum_Convergence.UseVisualStyleBackColor = true;
+            this.Minimum_Convergence.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
             // 
-            // Rec_Vertex
+            // DetailedConvergence
             // 
-            this.Rec_Vertex.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.Rec_Vertex.AutoSize = true;
-            this.Rec_Vertex.Location = new System.Drawing.Point(11, 50);
-            this.Rec_Vertex.Margin = new System.Windows.Forms.Padding(4);
-            this.Rec_Vertex.Name = "Rec_Vertex";
-            this.Rec_Vertex.Size = new System.Drawing.Size(188, 21);
-            this.Rec_Vertex.TabIndex = 33;
-            this.Rec_Vertex.Text = "Vertex (false color interp)";
-            this.Rec_Vertex.UseVisualStyleBackColor = true;
+            this.DetailedConvergence.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.DetailedConvergence.AutoSize = true;
+            this.DetailedConvergence.Location = new System.Drawing.Point(257, 9);
+            this.DetailedConvergence.Name = "DetailedConvergence";
+            this.DetailedConvergence.Size = new System.Drawing.Size(122, 21);
+            this.DetailedConvergence.TabIndex = 90;
+            this.DetailedConvergence.Text = "Detailed Convergence";
+            this.DetailedConvergence.UseVisualStyleBackColor = true;
+            this.DetailedConvergence.CheckedChanged += new System.EventHandler(this.Convergence_CheckedChanged);
             // 
-            // groupBox10
+            // tableLayoutPanel5
             // 
-            this.groupBox10.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox10.Controls.Add(this.Disp_Audience);
-            this.groupBox10.Controls.Add(this.Disp_Other);
-            this.groupBox10.Location = new System.Drawing.Point(4, 4);
-            this.groupBox10.Margin = new System.Windows.Forms.Padding(4);
-            this.groupBox10.Name = "groupBox10";
-            this.groupBox10.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox10.Size = new System.Drawing.Size(245, 81);
-            this.groupBox10.TabIndex = 34;
-            this.groupBox10.TabStop = false;
-            this.groupBox10.Text = "Receiver Displacement";
+            this.tableLayoutPanel5.ColumnCount = 1;
+            this.tableLayoutPanel4.SetColumnSpan(this.tableLayoutPanel5, 2);
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel5.Controls.Add(this.Disp_Audience, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.Disp_Other, 0, 1);
+            this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(3, 79);
+            this.tableLayoutPanel5.Name = "tableLayoutPanel5";
+            this.tableLayoutPanel5.RowCount = 2;
+            this.tableLayoutPanel4.SetRowSpan(this.tableLayoutPanel5, 2);
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel5.Size = new System.Drawing.Size(252, 54);
+            this.tableLayoutPanel5.TabIndex = 97;
             // 
             // Disp_Audience
             // 
@@ -1193,10 +1252,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Disp_Audience.AutoSize = true;
             this.Disp_Audience.Checked = true;
-            this.Disp_Audience.Location = new System.Drawing.Point(8, 22);
+            this.Disp_Audience.Location = new System.Drawing.Point(4, 4);
             this.Disp_Audience.Margin = new System.Windows.Forms.Padding(4);
             this.Disp_Audience.Name = "Disp_Audience";
-            this.Disp_Audience.Size = new System.Drawing.Size(204, 21);
+            this.Disp_Audience.Size = new System.Drawing.Size(244, 19);
             this.Disp_Audience.TabIndex = 32;
             this.Disp_Audience.TabStop = true;
             this.Disp_Audience.Text = "Audience (+z displacement)";
@@ -1208,54 +1267,60 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Disp_Other.AutoSize = true;
-            this.Disp_Other.Location = new System.Drawing.Point(8, 49);
+            this.Disp_Other.Location = new System.Drawing.Point(4, 31);
             this.Disp_Other.Margin = new System.Windows.Forms.Padding(4);
             this.Disp_Other.Name = "Disp_Other";
-            this.Disp_Other.Size = new System.Drawing.Size(211, 21);
+            this.Disp_Other.Size = new System.Drawing.Size(244, 19);
             this.Disp_Other.TabIndex = 33;
             this.Disp_Other.Text = "Other (Normal displacement)";
             this.Disp_Other.UseVisualStyleBackColor = true;
             // 
-            // Offset_Mesh
+            // tableLayoutPanel6
             // 
-            this.Offset_Mesh.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.Offset_Mesh.AutoSize = true;
-            this.Offset_Mesh.Checked = true;
-            this.Offset_Mesh.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Offset_Mesh.Location = new System.Drawing.Point(303, 23);
-            this.Offset_Mesh.Margin = new System.Windows.Forms.Padding(4);
-            this.Offset_Mesh.Name = "Offset_Mesh";
-            this.Offset_Mesh.Size = new System.Drawing.Size(191, 21);
-            this.Offset_Mesh.TabIndex = 36;
-            this.Offset_Mesh.Text = "Mesh Offset by Increment";
-            this.Offset_Mesh.UseVisualStyleBackColor = true;
+            this.tableLayoutPanel6.ColumnCount = 1;
+            this.tableLayoutPanel4.SetColumnSpan(this.tableLayoutPanel6, 2);
+            this.tableLayoutPanel6.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel6.Controls.Add(this.Rec_Centroid, 0, 0);
+            this.tableLayoutPanel6.Controls.Add(this.Rec_Vertex, 0, 1);
+            this.tableLayoutPanel6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(261, 79);
+            this.tableLayoutPanel6.Name = "tableLayoutPanel6";
+            this.tableLayoutPanel6.RowCount = 2;
+            this.tableLayoutPanel4.SetRowSpan(this.tableLayoutPanel6, 2);
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(253, 54);
+            this.tableLayoutPanel6.TabIndex = 98;
             // 
-            // Select_Map
+            // Rec_Centroid
             // 
-            this.Select_Map.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.Rec_Centroid.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Select_Map.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.Select_Map.Location = new System.Drawing.Point(8, 21);
-            this.Select_Map.Margin = new System.Windows.Forms.Padding(4);
-            this.Select_Map.Name = "Select_Map";
-            this.Select_Map.Size = new System.Drawing.Size(281, 50);
-            this.Select_Map.TabIndex = 31;
-            this.Select_Map.Text = "Select Mapping Surfaces";
-            this.Select_Map.UseVisualStyleBackColor = true;
-            this.Select_Map.Click += new System.EventHandler(this.Select_Map_Click);
+            this.Rec_Centroid.AutoSize = true;
+            this.Rec_Centroid.Checked = true;
+            this.Rec_Centroid.Location = new System.Drawing.Point(4, 4);
+            this.Rec_Centroid.Margin = new System.Windows.Forms.Padding(4);
+            this.Rec_Centroid.Name = "Rec_Centroid";
+            this.Rec_Centroid.Size = new System.Drawing.Size(245, 19);
+            this.Rec_Centroid.TabIndex = 32;
+            this.Rec_Centroid.TabStop = true;
+            this.Rec_Centroid.Text = "Face Centroid (no interpolation)";
+            this.Rec_Centroid.UseVisualStyleBackColor = true;
             // 
-            // Calculate
+            // Rec_Vertex
             // 
-            this.Calculate.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.Rec_Vertex.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.Calculate.Location = new System.Drawing.Point(8, 520);
-            this.Calculate.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            this.Calculate.Name = "Calculate";
-            this.Calculate.Size = new System.Drawing.Size(507, 37);
-            this.Calculate.TabIndex = 81;
-            this.Calculate.Text = "Run Calculation";
-            this.Calculate.UseVisualStyleBackColor = true;
-            this.Calculate.Click += new System.EventHandler(this.Calculate_Click);
+            this.Rec_Vertex.AutoSize = true;
+            this.Rec_Vertex.Location = new System.Drawing.Point(4, 31);
+            this.Rec_Vertex.Margin = new System.Windows.Forms.Padding(4);
+            this.Rec_Vertex.Name = "Rec_Vertex";
+            this.Rec_Vertex.Size = new System.Drawing.Size(245, 19);
+            this.Rec_Vertex.TabIndex = 33;
+            this.Rec_Vertex.Text = "Vertex (false color interp)";
+            this.Rec_Vertex.UseVisualStyleBackColor = true;
             // 
             // tabPage2
             // 
@@ -1806,7 +1871,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 28F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 188F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 192F));
             this.tableLayoutPanel3.Controls.Add(this.Analysis_View, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.Normalize_Graph, 2, 2);
             this.tableLayoutPanel3.Controls.Add(this.LockUserScale, 1, 2);
@@ -1858,10 +1923,10 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.AutoSize = true;
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.Normalize_Graph.Location = new System.Drawing.Point(181, 75);
+            this.Normalize_Graph.Location = new System.Drawing.Point(179, 75);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(4);
             this.Normalize_Graph.Name = "Normalize_Graph";
-            this.Normalize_Graph.Size = new System.Drawing.Size(143, 19);
+            this.Normalize_Graph.Size = new System.Drawing.Size(141, 19);
             this.Normalize_Graph.TabIndex = 43;
             this.Normalize_Graph.Text = "Normalize To Direct";
             this.Normalize_Graph.UseVisualStyleBackColor = true;
@@ -1893,10 +1958,10 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(181, 43);
+            this.Graph_Octave.Location = new System.Drawing.Point(179, 43);
             this.Graph_Octave.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(332, 24);
+            this.Graph_Octave.Size = new System.Drawing.Size(334, 24);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             // 
@@ -1918,7 +1983,7 @@ namespace Pachyderm_Acoustic
             this.Graph_Type.Location = new System.Drawing.Point(4, 43);
             this.Graph_Type.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(169, 24);
+            this.Graph_Type.Size = new System.Drawing.Size(167, 24);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             // 
@@ -1938,7 +2003,7 @@ namespace Pachyderm_Acoustic
             // 
             // Receiver_Selection
             // 
-            this.Receiver_Selection.Location = new System.Drawing.Point(181, 4);
+            this.Receiver_Selection.Location = new System.Drawing.Point(179, 4);
             this.Receiver_Selection.Margin = new System.Windows.Forms.Padding(4);
             this.Receiver_Selection.Name = "Receiver_Selection";
             this.Receiver_Selection.Size = new System.Drawing.Size(136, 22);
@@ -2315,23 +2380,22 @@ namespace Pachyderm_Acoustic
             this.menuStrip1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel4.PerformLayout();
             this.GroupBox4.ResumeLayout(false);
             this.GroupBox4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Pressure)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Rel_Humidity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Air_Temp)).EndInit();
-            this.groupBox6.ResumeLayout(false);
-            this.groupBox6.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.Increment)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.RT_Count)).EndInit();
-            this.GroupBox2.ResumeLayout(false);
-            this.GroupBox2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CO_TIME)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Increment)).EndInit();
             this.tableLayoutPanel1.ResumeLayout(false);
-            this.groupBox11.ResumeLayout(false);
-            this.groupBox11.PerformLayout();
-            this.groupBox10.ResumeLayout(false);
-            this.groupBox10.PerformLayout();
+            this.tableLayoutPanel1.PerformLayout();
+            this.tableLayoutPanel5.ResumeLayout(false);
+            this.tableLayoutPanel5.PerformLayout();
+            this.tableLayoutPanel6.ResumeLayout(false);
+            this.tableLayoutPanel6.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tableLayoutPanel2.ResumeLayout(false);
             this.tableLayoutPanel2.PerformLayout();
@@ -2414,14 +2478,12 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.NumericUpDown Rel_Humidity;
             internal System.Windows.Forms.Label AirTemp;
             internal System.Windows.Forms.NumericUpDown Air_Temp;
-            private System.Windows.Forms.GroupBox groupBox6;
             internal System.Windows.Forms.Label Label1;
             internal System.Windows.Forms.NumericUpDown Increment;
             internal System.Windows.Forms.Label COTime;
             internal System.Windows.Forms.NumericUpDown CO_TIME;
             internal System.Windows.Forms.Label Label2;
             internal System.Windows.Forms.NumericUpDown RT_Count;
-            internal System.Windows.Forms.GroupBox GroupBox2;
             private System.Windows.Forms.Button Select_Map;
             internal System.Windows.Forms.Button Calculate;
             private System.Windows.Forms.TabPage tabPage2;
@@ -2468,13 +2530,10 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label Max_Time_out;
             private System.Windows.Forms.Label Min_Time_out;
             private System.Windows.Forms.Label label27;
-            private System.Windows.Forms.GroupBox groupBox11;
             private System.Windows.Forms.RadioButton Rec_Centroid;
             private System.Windows.Forms.RadioButton Rec_Vertex;
-            private System.Windows.Forms.GroupBox groupBox10;
             private System.Windows.Forms.CheckBox Offset_Mesh;
             private System.Windows.Forms.CheckBox Sum_Time;
-            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
             internal System.Windows.Forms.TextBox Folder_Status;
             internal System.Windows.Forms.Label label28;
             internal System.Windows.Forms.Button OpenFolder;
@@ -2504,6 +2563,14 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.RadioButton Incoherent;
             private System.Windows.Forms.CheckBox Discretize;
             private System.Windows.Forms.GroupBox groupBox12;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
+            private System.Windows.Forms.Label label31;
+            private System.Windows.Forms.Label label32;
+            private System.Windows.Forms.Label label33;
+            private System.Windows.Forms.Label label34;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel6;
         }
     }
 }

@@ -2030,6 +2030,11 @@ namespace Pachyderm_Acoustic
                 Scat4kOut.Value = 15;
                 Scat8kOut.Value = 15;
             }
+
+            private void label14_Click(object sender, EventArgs e)
+            {
+
+            }
         }
     }
 }
