@@ -360,6 +360,7 @@ namespace Pachyderm_Acoustic
                             foreach (Deterministic_Reflection s in S) IS_Path_Box.Items.Add(s);
                         }
                         PathCount.Text = string.Format("{0} Specular Reflections", IS_Path_Box.Items.Count);
+                        SortPaths(null, null);
                     }
                 }
             }
@@ -1623,6 +1624,7 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                Update_Graph(null, null);
             }
 
             private void Update_Graph(object sender, EventArgs e)
@@ -1654,7 +1656,6 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Pressure Time Curve":
-                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
@@ -1671,7 +1672,6 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral PTC":
-                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[1];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
@@ -1688,7 +1688,6 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Vertical PTC":
-                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[2];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
@@ -1705,7 +1704,6 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Fore-Aft PTC":
-                            //if (!Pressure_Ready) Update_Pressure();
                             zero_sample = 4096 / 2;
                             Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[0];
                             if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
@@ -1734,9 +1732,32 @@ namespace Pachyderm_Acoustic
                     Filter = AcousticalMath.SPL_Intensity_Signal(Filter);
                     Schroeder = AcousticalMath.SPL_Intensity_Signal(Schroeder);
 
+                    List<double> S_time = new List<double>();
+                    List<double> S_Power = new List<double>();
+
+                    if (IS_Path_Box.CheckedIndices.Count > 0)
+                    {
+                        SortedList<double, double> Selected = new SortedList<double, double>();
+
+                        foreach (int i in IS_Path_Box.CheckedIndices)
+                        {
+                            int ct = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(0).Length;
+                            for (int j = 0; j < ct; j++)
+                            {
+                                Selected.Add((IS_Path_Box.Items[i] as Deterministic_Reflection).TravelTime + (double)j / (double)SampleRate, Utilities.AcousticalMath.SPL_Intensity((IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(OCT_ID)[j]));
+                            }
+                        }
+
+                        for(int i = 0; i < Selected.Count; i++)
+                        {
+                            S_time.Add(Selected.Keys[i]);
+                            S_Power.Add(Selected.Values[i]);
+                        }
+                    }
+
                     if (Normalize_Graph.Checked)
                     {
-                        Filter = Utilities.AcousticalMath.Normalize_Function(Filter);
+                        Filter = Utilities.AcousticalMath.Normalize_Function(Filter, S_Power);
                         Schroeder = Utilities.AcousticalMath.Normalize_Function(Schroeder);
                     }
 
@@ -1748,6 +1769,16 @@ namespace Pachyderm_Acoustic
 
                     Analysis_View.GraphPane.AddCurve("Schroeder Integral", time, Schroeder, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
                     Analysis_View.GraphPane.AddCurve("Logarithmic Energy Time Curve", time, Filter, System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
+
+                    if (IS_Path_Box.CheckedIndices.Count > 0)
+                    {
+                        ZedGraph.LineItem IScurve = Analysis_View.GraphPane.AddCurve("Selected IS Paths", S_time.ToArray(), S_Power.ToArray(), System.Drawing.Color.Red, ZedGraph.SymbolType.None);
+                        IScurve.Line.IsVisible = false;
+                        IScurve.Symbol = new ZedGraph.Symbol(ZedGraph.SymbolType.Diamond, System.Drawing.Color.Red);
+                        IScurve.Symbol.Size = 10f;
+                        IScurve.Symbol.Border.Color = System.Drawing.Color.Red;
+                        IScurve.Symbol.Border.Width = 3f;
+                    }
 
                     if (!LockUserScale.Checked)
                     {
@@ -2031,9 +2062,47 @@ namespace Pachyderm_Acoustic
                 Scat8kOut.Value = 15;
             }
 
-            private void label14_Click(object sender, EventArgs e)
+            private void SortPaths(object sender, EventArgs e)
             {
+                if (sender == toolStripMenuItem3)
+                {
+                    toolStripMenuItem3.Checked = true;
+                    toolStripMenuItem4.Checked = false;
+                }
+                else if (sender == toolStripMenuItem4)
+                {
+                    toolStripMenuItem4.Checked = true;
+                    toolStripMenuItem3.Checked = false;
+                }
 
+                if (toolStripMenuItem3.Checked)
+                {
+                    //Sort by time.
+                    Deterministic_Reflection[] DR = IS_Path_Box.Items.Cast<Deterministic_Reflection>().ToArray();
+                    DR = DR.OrderBy<Deterministic_Reflection,double>(i => (i.TravelTime)).ToArray();
+                    IS_Path_Box.Items.Clear();
+                    IS_Path_Box.Items.AddRange(DR);
+                }
+                else if (toolStripMenuItem4.Checked)
+                {
+                    //Sort by order.
+                    Deterministic_Reflection[] DR = IS_Path_Box.Items.Cast<Deterministic_Reflection>().ToArray();
+                    DR = DR.OrderBy<Deterministic_Reflection, int>(i => (i.Reflection_Sequence.Length)).ToArray();
+                    IS_Path_Box.Items.Clear();
+                    IS_Path_Box.Items.AddRange(DR);
+                }
+            }
+
+            private void ISCheckAll_Click(object sender, EventArgs e)
+            {
+                for (int i = 0; i < IS_Path_Box.Items.Count; i++) IS_Path_Box.SetItemChecked(i, true);
+                IS_Path_Box_MouseUp(null, null);
+            }
+
+            private void ISUncheckAll_Click(object sender, EventArgs e)
+            {
+                for (int i = 0; i < IS_Path_Box.Items.Count; i++) IS_Path_Box.SetItemChecked(i, false);
+                IS_Path_Box_MouseUp(null, null);
             }
         }
     }
