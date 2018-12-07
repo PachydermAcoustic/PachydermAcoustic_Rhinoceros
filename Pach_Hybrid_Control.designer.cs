@@ -240,6 +240,9 @@ namespace Pachyderm_Acoustic
             this.Graph_Octave = new System.Windows.Forms.ComboBox();
             this.IS_Path_Box = new System.Windows.Forms.CheckedListBox();
             this.PathContext = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
             this.PathCount = new System.Windows.Forms.Label();
@@ -259,9 +262,6 @@ namespace Pachyderm_Acoustic
             this.saveParameterResultsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.savePTBFormatToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveVRSpectraToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tableLayoutPanel4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Abs4kOut)).BeginInit();
@@ -2732,7 +2732,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 99F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 104F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
             this.tableLayoutPanel3.Controls.Add(this.label15, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.label25, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.SourceList, 0, 1);
@@ -3062,7 +3062,7 @@ namespace Pachyderm_Acoustic
             this.label27.Location = new System.Drawing.Point(220, 169);
             this.label27.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(40, 30);
+            this.label27.Size = new System.Drawing.Size(37, 30);
             this.label27.TabIndex = 50;
             this.label27.Text = "Altitude";
             // 
@@ -3107,10 +3107,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label26.AutoSize = true;
             this.label26.Enabled = false;
-            this.label26.Location = new System.Drawing.Point(367, 169);
+            this.label26.Location = new System.Drawing.Point(364, 169);
             this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(41, 30);
+            this.label26.Size = new System.Drawing.Size(38, 30);
             this.label26.TabIndex = 49;
             this.label26.Text = "Azimuth";
             // 
@@ -3120,10 +3120,10 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tableLayoutPanel3.SetColumnSpan(this.Normalize_Graph, 2);
-            this.Normalize_Graph.Location = new System.Drawing.Point(367, 337);
+            this.Normalize_Graph.Location = new System.Drawing.Point(364, 337);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(4);
             this.Normalize_Graph.Name = "Normalize_Graph";
-            this.Normalize_Graph.Size = new System.Drawing.Size(146, 20);
+            this.Normalize_Graph.Size = new System.Drawing.Size(149, 20);
             this.Normalize_Graph.TabIndex = 43;
             this.Normalize_Graph.Text = "Normalize To Direct";
             this.Normalize_Graph.UseVisualStyleBackColor = true;
@@ -3132,7 +3132,7 @@ namespace Pachyderm_Acoustic
             // Alt_Choice
             // 
             this.Alt_Choice.DecimalPlaces = 2;
-            this.Alt_Choice.Location = new System.Drawing.Point(268, 173);
+            this.Alt_Choice.Location = new System.Drawing.Point(265, 173);
             this.Alt_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Alt_Choice.Maximum = new decimal(new int[] {
             91,
@@ -3166,7 +3166,7 @@ namespace Pachyderm_Acoustic
             // Azi_Choice
             // 
             this.Azi_Choice.DecimalPlaces = 2;
-            this.Azi_Choice.Location = new System.Drawing.Point(416, 173);
+            this.Azi_Choice.Location = new System.Drawing.Point(410, 173);
             this.Azi_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Azi_Choice.Maximum = new decimal(new int[] {
             360,
@@ -3202,7 +3202,7 @@ namespace Pachyderm_Acoustic
             this.Graph_Type.Location = new System.Drawing.Point(4, 309);
             this.Graph_Type.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(256, 24);
+            this.Graph_Type.Size = new System.Drawing.Size(253, 24);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3232,7 +3232,7 @@ namespace Pachyderm_Acoustic
             this.Label5.Location = new System.Drawing.Point(4, 199);
             this.Label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Label5.Name = "Label5";
-            this.Label5.Size = new System.Drawing.Size(256, 17);
+            this.Label5.Size = new System.Drawing.Size(253, 17);
             this.Label5.TabIndex = 1;
             this.Label5.Text = "Image Source Paths";
             // 
@@ -3252,10 +3252,10 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(268, 309);
+            this.Graph_Octave.Location = new System.Drawing.Point(265, 309);
             this.Graph_Octave.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(245, 24);
+            this.Graph_Octave.Size = new System.Drawing.Size(248, 24);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3286,7 +3286,26 @@ namespace Pachyderm_Acoustic
             this.toolStripMenuItem3,
             this.toolStripMenuItem4});
             this.PathContext.Name = "contextMenuStrip1";
-            this.PathContext.Size = new System.Drawing.Size(219, 142);
+            this.PathContext.Size = new System.Drawing.Size(219, 114);
+            // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(218, 26);
+            this.toolStripMenuItem5.Text = "Check All...";
+            this.toolStripMenuItem5.Click += new System.EventHandler(this.ISCheckAll_Click);
+            // 
+            // toolStripMenuItem6
+            // 
+            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(218, 26);
+            this.toolStripMenuItem6.Text = "Uncheck All...";
+            this.toolStripMenuItem6.Click += new System.EventHandler(this.ISUncheckAll_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(215, 6);
             // 
             // toolStripMenuItem3
             // 
@@ -3438,26 +3457,6 @@ namespace Pachyderm_Acoustic
             // 
             this.saveVRSpectraToolStripMenuItem.Name = "saveVRSpectraToolStripMenuItem";
             this.saveVRSpectraToolStripMenuItem.Size = new System.Drawing.Size(195, 26);
-            // 
-            // toolStripMenuItem5
-            // 
-            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(218, 26);
-            this.toolStripMenuItem5.Text = "Check All...";
-            this.toolStripMenuItem5.Click += new System.EventHandler(ISCheckAll_Click);
-
-            // 
-            // toolStripMenuItem6
-            // 
-            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
-            this.toolStripMenuItem6.Size = new System.Drawing.Size(218, 26);
-            this.toolStripMenuItem6.Text = "Uncheck All...";
-            this.toolStripMenuItem6.Click += new System.EventHandler(ISUncheckAll_Click);
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(215, 6);
             // 
             // Pach_Hybrid_Control
             // 
