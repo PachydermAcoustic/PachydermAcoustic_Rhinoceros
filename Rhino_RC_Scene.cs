@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2018, Arthur van der Harten 
+//'Copyright (c) 2008-2019, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -36,6 +36,8 @@ namespace Pachyderm_Acoustic
                 : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, AcousticFailsafes)
             {
                 List<Hare.Geometry.Point[][]> model = new List<Hare.Geometry.Point[][]>();
+                List<double[][]> Kurvatures = new List<double[][]>();
+                List<Vector[][]> Frame_Axes = new List<Vector[][]>();
 
                 List<GeometryBase> BList = new List<GeometryBase>();
 
@@ -115,6 +117,9 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
+                //Indicate if curved for each object.
+                List<bool> iscurved = new List<bool>();
+
                 for (int q = 0; q <= ObjectList.Count - 1; q++)
                 {
                     List<Brep> B = new List<Brep>();
@@ -122,6 +127,7 @@ namespace Pachyderm_Acoustic
                     {
                         Rhino.DocObjects.BrepObject BObj = ((Rhino.DocObjects.BrepObject)ObjectList[q]);
                         B.Add(BObj.BrepGeometry.DuplicateBrep());
+                        iscurved.Add(!B[B.Count - 1].Surfaces[0].IsPlanar());
                         //string m = ObjectList[q].Geometry.GetUserString("Acoustics_User");
                         if (ObjectList[q].Geometry.GetUserString("Acoustics_User") == "yes")
                         {
@@ -166,6 +172,7 @@ namespace Pachyderm_Acoustic
                             }
 
                             B.Add(BObj.Faces[i].ToBrep());
+                            iscurved.Add(!B[B.Count - 1].Surfaces[0].IsPlanar());
                         }
                     }
                     else
@@ -179,13 +186,14 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Additional_Geometry.Count; i++)
                     {
-                        //for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
-                        //{
-                            BList.Add(Additional_Geometry[i]);
+                        for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
+                        {
+                            BList.Add(Additional_Geometry[i].Faces[j]);
+                            iscurved.Add(!(BList[BList.Count - 1] as Brep).Surfaces[0].IsPlanar());
                             Mat_Obj.Add(Mat_Layer[Layer_IDs[i]]);
                             Scat_Obj.Add(Scat_Layer[Layer_IDs[i]]);
                             Trans_Obj.Add(Trans_Layer[Layer_IDs[i]]);
-                        //}
+                        }
                     }
                 }
 
@@ -222,8 +230,12 @@ namespace Pachyderm_Acoustic
                         //}
                         //else
                         //{
-                        mp.MinimumEdgeLength = 0.1;
+                        mp.JaggedSeams = false;
+                        mp.MaximumEdgeLength = 343d / 250d;
+                        mp.MinimumEdgeLength = 343d / 1000d;
                         mp.SimplePlanes = true;
+                        //mp.RefineAngle = false;
+                        mp.RefineGrid = false;
                         //}
 
                         meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);//(Brep)BrepList[BrepList.Count - 1], mp);
@@ -243,10 +255,13 @@ namespace Pachyderm_Acoustic
                                 continue;
                             }
                             model.Add(new Hare.Geometry.Point[meshes[t].Faces.Count][]);
+                            Kurvatures.Add(new double[meshes[t].Faces.Count][]);
+                            Frame_Axes.Add(new Vector[meshes[t].Faces.Count][]);
 
                             for (int u = 0; u < meshes[t].Faces.Count; u++)
-                            {
+                            {   
                                 Hare.Geometry.Point[] P;
+                                Hare.Geometry.Point Centroid;
                                 if (meshes[t].Faces[u].IsQuad)
                                 {
                                     P = new Hare.Geometry.Point[4];
@@ -258,6 +273,7 @@ namespace Pachyderm_Acoustic
                                     P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
                                     P[3] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    Centroid = (P[0] + P[1] + P[2] + P[3]) / 4;
                                 }
                                 else
                                 {
@@ -268,8 +284,13 @@ namespace Pachyderm_Acoustic
                                     P[1] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
                                     P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    Centroid = (P[0] + P[1] + P[2]) / 3;
                                 }
 
+                                B.Surfaces[0].ClosestPoint(Utilities.RC_PachTools.HPttoRPt(Centroid), out double _u, out double _v);
+                                SurfaceCurvature SC = B.Surfaces[0].CurvatureAt(_u, _v);
+                                Kurvatures[Kurvatures.Count - 1][u] = new double[2] { SC.Kappa(0), SC.Kappa(1) };
+                                Frame_Axes[Kurvatures.Count - 1][u] = new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) };
                                 //if (Finite_Obj[q])
                                 //{
                                 //    if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
@@ -285,7 +306,7 @@ namespace Pachyderm_Acoustic
                                 bool Trans = false;
                                 for (int t_oct = 0; t_oct < 8; t_oct++)
                                 {
-                                    if (Transmission[t_oct] > 0)
+                                    if (Trans_Obj[q][t_oct] > 0)
                                     {
                                         Trans = true;
                                         break;
@@ -334,7 +355,7 @@ namespace Pachyderm_Acoustic
                 //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
                 //}
 
-                Construct(model.ToArray(), ABS_Construct, SCT_Construct, TRN_Construct);
+                Construct(model.ToArray(), ABS_Construct, SCT_Construct, TRN_Construct, iscurved.ToArray(), Kurvatures.ToArray(), Frame_Axes.ToArray());
 
                 if (register_edges)
                 {
