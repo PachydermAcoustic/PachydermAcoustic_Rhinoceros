@@ -267,39 +267,47 @@ namespace Pachyderm_Acoustic
                 this.Enabled = true;
             }
 
-            public void Populate(int[] X, int[] Y, int[] Z, double dx, List<List<double>> pressure, Mesh[][] M, bool Magnitude)
+            public void Populate(int[] X, int[] Y, int[] Z, Mesh C_mesh, double dx, List<List<double>> pressure, Mesh[][] M, bool Magnitude)
             {
                 DisplayMesh = new List<Mesh>();//[M.Length];    
                 Mesh_Vis = true;
                 Section_Vis = true;
 
-                int ct = -1;
+                int ct = 0;
 
                 for (int x = 0; x < X.Length; x++)
                 {
-                    ct++;
                     DisplayMesh.Add(M[0][X[x]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
                     DisplayMesh[ct].Translate((X[x] * dx), 0,0);
+                    ct++;
                 }
 
                 for (int y = 0; y < Y.Length; y++)
                 {
-                    ct++;
                     DisplayMesh.Add(M[1][Y[y]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
                     DisplayMesh[ct].Translate(0, Y[y] * dx * Utilities.Numerics.rt2, 0);
+                    ct++;
                 }
 
                 for (int z = 0; z < Z.Length; z++)
                 {
-                    ct++;
+
                     DisplayMesh.Add(M[2][Z[z]%2].DuplicateMesh());
                     DisplayMesh[ct].VertexColors.Clear();
                     DisplayMesh[ct].Translate(0, 0, Z[z] * dx * Utilities.Numerics.rt2);
+                    ct++;
+                }
+                
+                if (C_mesh != null && C_mesh.Faces.Count > 0 && pressure.Count > ct && pressure[ct].Count == C_mesh.Faces.Count)
+                {
+                    DisplayMesh.Add(C_mesh.DuplicateMesh());
+                    DisplayMesh[ct].VertexColors.Clear();
+                    ct++;
                 }
 
-                if (ct != pressure.Count-1) throw new System.Exception("Input of unmatched pairs - Display of Mesh Plans.");
+                if (ct != pressure.Count) throw new System.Exception("Input of unmatched pairs - Display of Mesh Plans.");
 
                 //List<int> nullfaces;
 

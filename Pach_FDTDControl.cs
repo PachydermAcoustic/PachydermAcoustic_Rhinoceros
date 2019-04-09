@@ -34,6 +34,7 @@ namespace Pachyderm_Acoustic
             // This call is required by the Windows Form Designer. 
             public Pach_TD_Numeric_Control()
             {
+                Instance = this;
                 InitializeComponent();
                 Analysis_Technique.SelectedIndex = 0;
                 Eigen_Extent.SelectedIndex = 4;
@@ -43,12 +44,19 @@ namespace Pachyderm_Acoustic
                 Scatter_Scale.Image = scatterscale.PIC;
             }
 
+            ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
+            public static Pach_TD_Numeric_Control Instance
+            {
+                get;
+                private set;
+            }
+
             #region Visualization
 
             private Pach_Graphics.colorscale scale;
             private Pach_Graphics.colorscale scatterscale;
             public delegate void Populator(double Dist);
-            Numeric.TimeDomain.Acoustic_Compact_FDTD_RC FDTD;
+            public Numeric.TimeDomain.Acoustic_Compact_FDTD_RC FDTD;
             WaveConduit P;
             SphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
@@ -65,7 +73,7 @@ namespace Pachyderm_Acoustic
 
                 if (P == null) P = new WaveConduit(scale, new double[2] { (double)this.Param_Min.Value, (double)this.Param_Max.Value });
                 Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
-                Hare.Geometry.Point[] Rec = new Hare.Geometry.Point[0];//PachTools.GetReceivers().ToArray();
+                Hare.Geometry.Point[] Rec = RC_PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
                 Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
@@ -81,12 +89,15 @@ namespace Pachyderm_Acoustic
                     case "Sine Pulse":
                         s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse;
                         break;
+                    case "Noise Spectrum":
+                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Spectrum;
+                        break;
                 }
 
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RC_PachTools.GetSource());
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RC_PachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
-                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0);
+                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0);
                 //FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, new Hare.Geometry.Point(0,0,0), 8, 6, 5);
                 M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
@@ -158,6 +169,18 @@ namespace Pachyderm_Acoustic
                 FDTD.Pressure_Points(ref hpts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, (double)Param_Min.Value / 20), false, false, true, Magnitude.Checked);
                 List<List<Rhino.Geometry.Point3d>> Pts = new List<List<Rhino.Geometry.Point3d>>();
 
+                Rhino.Geometry.Mesh C = new Rhino.Geometry.Mesh();
+
+                FDTD.Sem_custom_mesh.WaitOne();
+                if (FDTD.m_templateC != null)
+                {
+                    C = FDTD.m_templateC;
+                    int ct = Pressure.Count;
+                    Pressure.Add(new List<double>());
+                    for (int i = 0; i < C.Faces.Count; i++) Pressure[ct].Add(FDTD.m_referenceC[i].P);
+                }
+                FDTD.Sem_custom_mesh.Release();
+
                 for (int i = 0; i < hpts.Count; i++)
                 {
                     Pts.Add(new List<Rhino.Geometry.Point3d>());
@@ -167,7 +190,7 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), FDTD.dx, Pressure, M, Magnitude.Checked);
+                P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), C, FDTD.dx, Pressure, M, Magnitude.Checked);
 
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
@@ -201,7 +224,16 @@ namespace Pachyderm_Acoustic
                     this.Invoke((MethodInvoker)delegate { Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true); });
                 }
                 /////////////////////////
+
+                OnIncrement(EventArgs.Empty);
             }
+
+            protected virtual void OnIncrement(EventArgs e)
+            {
+                Incremented?.Invoke(this, e);
+            }
+
+            public event EventHandler Incremented;
 
             bool Running = false;
 
@@ -311,6 +343,11 @@ namespace Pachyderm_Acoustic
                 Map_Planes.Items.Add(new CutPlane(AxisSelect.SelectedIndex, (int)Pos_Select.Value));
             }
 
+            private void DeletePlane_Click(object sender, EventArgs e)
+            {
+                Map_Planes.Items.RemoveAt(Map_Planes.SelectedIndex);
+            }
+
             private void AxisSelect_SelectedIndexChanged(object sender, EventArgs e)
             {
                 if (Map_Planes.SelectedIndex < 0) return;
@@ -346,10 +383,11 @@ namespace Pachyderm_Acoustic
                 if (!Rm.Complete) return;
 
                 Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
+
                 List<Hare.Geometry.Point> Rec = RC_PachTools.GetReceivers();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource());
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0);
@@ -592,8 +630,8 @@ namespace Pachyderm_Acoustic
                     if (Scat_Dir_60.Checked) dir.Add(60 * Math.PI / 180);
                     if (Scat_Dir_75.Checked) dir.Add(75 * Math.PI / 180);
 
-                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[dir.Count];
-                    for(int i = 0; i < dir.Count; i++) Src[i] = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value) ;
+                    Source[] Src = new Source[dir.Count];
+                    for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i);
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
@@ -762,7 +800,7 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
-                    Hare.Geometry.Point[] Src = new Hare.Geometry.Point[1] { new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value) };
+                    Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0) };
                     //List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     //for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
@@ -784,7 +822,7 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
-                    int start = (int)Math.Round((2.25 * radius / Rm.Sound_speed(Src[0])) / FDTDS.dt);
+                    int start = (int)Math.Round((2.25 * radius / Rm.Sound_speed(Src[0].H_Origin())) / FDTDS.dt);
 
                     samplefrequency = FDTDS.SampleFrequency;
 
