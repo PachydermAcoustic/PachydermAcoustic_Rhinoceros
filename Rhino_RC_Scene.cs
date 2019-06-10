@@ -943,6 +943,7 @@ namespace Pachyderm_Acoustic
                             if (AcousticsData != "")
                             {
                                 Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
+                                AbsorptionData.Add(new Basic_Material(Absorption, phase));
                             }
                             else
                             {
