@@ -47,6 +47,7 @@ namespace Pachyderm_Acoustic
                 List<Material> ABS_Construct = new List<Material>();
                 List<Scattering> SCT_Construct = new List<Scattering>();
                 List<double[]> TRN_Construct = new List<double[]>();
+                List<bool> isCurved_Construct = new List<bool>();
 
                 List<Material> Mat_Layer = new List<Material>();
                 List<Scattering> Scat_Layer = new List<Scattering>();
@@ -54,8 +55,6 @@ namespace Pachyderm_Acoustic
                 List<Scattering> Scat_Obj = new List<Scattering>();
                 List<double[]> Trans_Layer = new List<double[]>();
                 List<double[]> Trans_Obj = new List<double[]>();
-                //List<bool> Finite_Layers = new List<bool>();
-                //List<bool> Finite_Obj = new List<bool>();
                 //Organize the geometry into Breps
                 //Get materials for each layer:
 
@@ -67,7 +66,6 @@ namespace Pachyderm_Acoustic
                     string abstype = Layer.GetUserString("ABSType");
                     if (abstype == "Buildup")
                     {
-                        //Finite_Layers.Add(false);
                         string BU = Layer.GetUserString("BuildUp");
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
@@ -97,7 +95,6 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        //Finite_Layers.Add(false);
                         string spec = Layer.GetUserString("Acoustics");
 
                         if (spec == "")
@@ -117,9 +114,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                //Indicate if curved for each object.
-                List<bool> iscurved = new List<bool>();
-
                 for (int q = 0; q <= ObjectList.Count - 1; q++)
                 {
                     List<Brep> B = new List<Brep>();
@@ -127,14 +121,11 @@ namespace Pachyderm_Acoustic
                     {
                         Rhino.DocObjects.BrepObject BObj = ((Rhino.DocObjects.BrepObject)ObjectList[q]);
                         B.Add(BObj.BrepGeometry.DuplicateBrep());
-                        iscurved.Add(!B[B.Count - 1].Surfaces[0].IsPlanar());
-                        //string m = ObjectList[q].Geometry.GetUserString("Acoustics_User");
                         if (ObjectList[q].Geometry.GetUserString("Acoustics_User") == "yes")
                         {
                             double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
                             Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
                             Mat_Obj.Add(new Basic_Material(ABS, new double[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
-                            //Finite_Obj.Add(false);
                             Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
                             Trans_Obj.Add(TRANS);
                         }
@@ -157,22 +148,15 @@ namespace Pachyderm_Acoustic
                                 Mat_Obj.Add(new Basic_Material(ABS, new double[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
                                 Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
                                 Trans_Obj.Add(TRANS);
-                                //Finite_Obj.Add(false);
                             }
                             else
                             {
-                                //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-                                //AcousticsData.Add(Layer.GetUserString("Acoustics"));
-                                //Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjectList[q].Attributes.LayerIndex];
-                                //AcousticsData.Add(Layer.GetUserString("Acoustics"));
                                 Mat_Obj.Add(Mat_Layer[ObjectList[q].Attributes.LayerIndex]);
                                 Scat_Obj.Add(Scat_Layer[ObjectList[q].Attributes.LayerIndex]);
                                 Trans_Obj.Add(Trans_Layer[ObjectList[q].Attributes.LayerIndex]);
-                                //Finite_Obj.Add(Finite_Layers[ObjectList[q].Attributes.LayerIndex]);
                             }
 
                             B.Add(BObj.Faces[i].ToBrep());
-                            iscurved.Add(!B[B.Count - 1].Surfaces[0].IsPlanar());
                         }
                     }
                     else
@@ -189,7 +173,6 @@ namespace Pachyderm_Acoustic
                         for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
                         {
                             BList.Add(Additional_Geometry[i].Faces[j]);
-                            iscurved.Add(!(BList[BList.Count - 1] as Brep).Surfaces[0].IsPlanar());
                             Mat_Obj.Add(Mat_Layer[Layer_IDs[i]]);
                             Scat_Obj.Add(Scat_Layer[Layer_IDs[i]]);
                             Trans_Obj.Add(Trans_Layer[Layer_IDs[i]]);
@@ -206,6 +189,7 @@ namespace Pachyderm_Acoustic
                         ABS_Construct.Add(Mat_Obj[q]);
                         SCT_Construct.Add(Scat_Obj[q]);
                         TRN_Construct.Add(Trans_Obj[q]);
+                        isCurved_Construct.Add(!((Brep)BList[q]).Faces[r].IsPlanar());
 
                         BrepList.Add(((Brep)BList[q]).Faces[r].DuplicateFace(false));
                         Brep B = ((Brep)BList[q]).Faces[r].DuplicateFace(false);
@@ -223,22 +207,15 @@ namespace Pachyderm_Acoustic
 
                         Mesh[] meshes;
                         MeshingParameters mp = new MeshingParameters();
-                        //if (Finite_Obj[q])
-                        //{
-                        //    mp.MinimumEdgeLength = 0.1;
-                        //    mp.SimplePlanes = false;
-                        //}
-                        //else
-                        //{
+
+                        //TODO: insert a check for degenerate polygons, and exclude prior to passing to construct method.
                         mp.JaggedSeams = false;
                         mp.MaximumEdgeLength = 343d / 250d;
-                        mp.MinimumEdgeLength = 343d / 1000d;
+                        mp.MinimumEdgeLength = 343d / 250d;
                         mp.SimplePlanes = true;
-                        //mp.RefineAngle = false;
                         mp.RefineGrid = false;
-                        //}
 
-                        meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);//(Brep)BrepList[BrepList.Count - 1], mp);
+                        meshes = Rhino.Geometry.Mesh.CreateFromBrep(B);//(Brep)BrepList[BrepList.Count - 1], mp);
                         if (meshes == null) throw new Exception("Problem with meshes");
 
                         for (int t = 0; t < meshes.Length; t++)
@@ -254,54 +231,50 @@ namespace Pachyderm_Acoustic
                                 }
                                 continue;
                             }
-                            model.Add(new Hare.Geometry.Point[meshes[t].Faces.Count][]);
-                            Kurvatures.Add(new double[meshes[t].Faces.Count][]);
-                            Frame_Axes.Add(new Vector[meshes[t].Faces.Count][]);
+                            List<Hare.Geometry.Point[]> temp_polys = new List<Hare.Geometry.Point[]>();
+                            List<double[]> temp_K = new List<double[]>();
+                            List<Vector[]> temp_Frames = new List<Vector[]>();
 
                             for (int u = 0; u < meshes[t].Faces.Count; u++)
                             {   
                                 Hare.Geometry.Point[] P;
                                 Hare.Geometry.Point Centroid;
+
                                 if (meshes[t].Faces[u].IsQuad)
                                 {
                                     P = new Hare.Geometry.Point[4];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
-                                    P[3] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
-                                    Centroid = (P[0] + P[1] + P[2] + P[3]) / 4;
+                                    P[3] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    if (isDegenerate(ref P)) continue;
+
+                                    Centroid = (P.Length == 4) ? (P[0] + P[1] + P[2] + P[3]) / 4 : (P[0] + P[1] + P[2]) / 3;
                                 }
                                 else
                                 {
                                     P = new Hare.Geometry.Point[3];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(FP.X, FP.Y, FP.Z);
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
                                     Centroid = (P[0] + P[1] + P[2]) / 3;
+
+                                    if (isDegenerate(ref P)) continue;
                                 }
 
                                 B.Surfaces[0].ClosestPoint(Utilities.RC_PachTools.HPttoRPt(Centroid), out double _u, out double _v);
                                 SurfaceCurvature SC = B.Surfaces[0].CurvatureAt(_u, _v);
-                                Kurvatures[Kurvatures.Count - 1][u] = new double[2] { SC.Kappa(0), SC.Kappa(1) };
-                                Frame_Axes[Kurvatures.Count - 1][u] = new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) };
-                                //if (Finite_Obj[q])
-                                //{
-                                //    if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
-                                //    Smart_Material mat = Mat_Obj[q] as Smart_Material;
-                                //    AbsorptionData.Add(new Finite_Material(mat, BrepList[q], meshes[t], u, Env_Prop));
-                                //}
-                                //else AbsorptionData.Add(Mat_Obj[q]);
-                                //AbsorptionData.Add(Mat_Obj[q]);
-                                ////
-                                //ScatteringData.Add(Scat_Obj[q]);
-                                //TransmissionData.Add(Trans_Obj[q]);
+                                //Kurvatures[Kurvatures.Count - 1][u] = new double[2] { SC.Kappa(0), SC.Kappa(1) };
+                                //Frame_Axes[Kurvatures.Count - 1][u] = new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) };
+                                temp_K.Add(new double[2] { SC.Kappa(0), SC.Kappa(1) });
+                                temp_Frames.Add(new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) });
 
                                 bool Trans = false;
                                 for (int t_oct = 0; t_oct < 8; t_oct++)
@@ -313,37 +286,11 @@ namespace Pachyderm_Acoustic
                                     }
                                 }
                                 Transmissive.Add(Trans);
-                                //if (B.Faces[t].IsPlanar())//BrepList[BrepList.Count - 1].Faces[t].IsPlanar())
-                                //{
-                                    model[id][u] = P;
-                                    //Topo[0].Add_Polygon(P);
-                                    //Brep_ids.Add(id);//BrepList.Count - 1);
-                                //}
-                                //else
-                                //{
-                                //    model[id][u] = new Hare.Geometry.Point[3] { P[0], P[1], P[2] };
-                                //    //Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[1], P[2] });
-                                //    //Brep_ids.Add(id);//BrepList.Count - 1);
-                                //    if (P.Length > 3)
-                                //    {
-                                //        //break this quad into two polygons in order to avoid warping...
-                                //        //if (Finite_Obj[q])
-                                //        //{
-                                //        //    if (!(Mat_Obj[q] is Smart_Material)) throw new Exception("Finite Material must have a Smart_Material...");
-                                //        //    Smart_Material mat = Mat_Obj[q] as Smart_Material;
-                                //        //    AbsorptionData.Add(new Finite_Material(mat, BrepList[q], meshes[t], u, Env_Prop));
-                                //        //}
-                                //        //else AbsorptionData.Add(Mat_Obj[q]);
-                                //        //AbsorptionData.Add(Mat_Obj[q]);
-                                //        //ScatteringData.Add(Scat_Obj[q]);
-                                //        //TransmissionData.Add(Trans_Obj[q]);
-                                //        //Transmissive.Add(Trans);
-                                //        model[id][u] = P;//new Hare.Geometry.Point[3] { P[3], P[0], P[2] };
-                                //        //Topo[0].Add_Polygon(new Hare.Geometry.Point[3] { P[0], P[2], P[3] });
-                                //        //Brep_ids.Add(id);
-                                //    }
-                                //}
+                                temp_polys.Add(P);
                             }
+                            model.Add(temp_polys.ToArray());
+                            Kurvatures.Add(temp_K.ToArray());
+                            Frame_Axes.Add(temp_Frames.ToArray());
                         }
                     }
                 }
@@ -355,7 +302,7 @@ namespace Pachyderm_Acoustic
                 //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
                 //}
 
-                Construct(model.ToArray(), ABS_Construct, SCT_Construct, TRN_Construct, iscurved.ToArray(), Kurvatures.ToArray(), Frame_Axes.ToArray());
+                Construct(model.ToArray(), ABS_Construct, SCT_Construct, TRN_Construct, isCurved_Construct.ToArray(), Kurvatures.ToArray(), Frame_Axes.ToArray());
 
                 if (register_edges)
                 {
@@ -749,6 +696,42 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
+            }
+
+            public bool isDegenerate(ref Hare.Geometry.Point[] m)
+            {
+                //returns 0 for false, 1 for true, and 2 for misleading... as in a quad is really a tri.
+                if (m.Length == 4)
+                {
+                    Vector AB = m[1] - m[0];
+                    Vector AC = m[2] - m[0];
+                    if (Hare_math.Cross(AB, AC).Length() < 1E-6)
+                    {
+                        Vector DB = m[1] - m[3];
+                        Vector DC = m[2] - m[3];
+                        if (Hare_math.Cross(DB, DC).Length() < 1E-6) return true;
+                        m = new Hare.Geometry.Point[3] { m[1], m[2], m[3] };
+                    }
+                    else
+                    {
+                        Vector DB = m[1] - m[3];
+                        Vector DC = m[2] - m[3];
+                        if (Hare_math.Cross(DB, DC).Length() < 1E-6)
+                        {
+                            m = new Hare.Geometry.Point[3] { m[0], m[1], m[2] };
+                        }
+                    }
+                }
+                else
+                {
+                    Vector AB = m[1] - m[0];
+                    Vector AC = m[2] - m[0];
+                    if (Hare_math.Cross(AB, AC).Length() < 1E-6)
+                    {
+                        return true;
+                    }
+                }
+                return false;
             }
 
             private void create_curved_edge_entry(Curve i, Brep[] B, Material[] absorption_characteristics)
