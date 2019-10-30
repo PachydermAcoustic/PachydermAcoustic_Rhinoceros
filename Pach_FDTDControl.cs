@@ -396,6 +396,7 @@ namespace Pachyderm_Acoustic
                 samplefrequency = FDTD.SampleFrequency;
 
                 Mic.reset();
+                
                 result_signals = Mic.Recordings()[0];
                 //System.Numerics.Complex[] source_response = SD.Frequency_Response(result_signals[0].Length);
 
@@ -559,15 +560,19 @@ namespace Pachyderm_Acoustic
 
                 SaveWave.Filter = " Wave Audio (*.wav) |*.wav";
 
+                float[][] RR = new float[result_signals.Length][];
+                int maxlength = 0;
+                for (int j = 0; j < result_signals.Length; j++) maxlength = Math.Max(result_signals[j].Length, maxlength);
+                for (int j = 0; j < result_signals.Length; j++) result_signals[j] = new double[maxlength];
+
+                for (int j = 0; j < result_signals[0].Length; j++)
+                {
+                    for (int c = 0; c < result_signals.Length; c++) RR[c][j] = (j > result_signals[c].Length - 1) ? 0 : (float)result_signals[c][j];
+                }
+
                 if (SaveWave.ShowDialog() == DialogResult.OK)
                 {
-                    NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(44100, 24, result_signals.Length));
-                    for (int j = 0; j < result_signals[0].Length; j++)
-                    {
-                        for (int c = 0; c < result_signals.Length; c++) if (j > result_signals[0].Length - 1) Writer.WriteSample(0); else Writer.WriteSample((float)result_signals[c][j]);
-                    }
-                    Writer.Close();
-                    Writer.Dispose();
+                    Audio.Pach_SP.Wave.Write(RR, 44100, SaveWave.FileName, 24);
                 }
             }
             #endregion
@@ -617,7 +622,7 @@ namespace Pachyderm_Acoustic
                         FS2[i].Dispose();
                         FF2[i].Dispose();
                         FSFF[i].Dispose();
-                        if( i < FFTs.Length) FFTs[i].Dispose();
+                        if( i < FFTs.Length) if (FFTs[i] != null) FFTs[i].Dispose();
                     }
                 }
                 if (Analysis_Technique.SelectedIndex == 0)
@@ -665,12 +670,12 @@ namespace Pachyderm_Acoustic
                     Micf.reset();
                     result_signals = Micf.Recordings()[0];
 
-                    omit = SD.Z[0] + 60;
+                    omit = SD.Z[0];// + 60;
 
                     //Calculate Scattering Coefficients
                     
                     //Zero packing
-                    for (int i = 0; i < TimeS.Length; i++)
+                    for (int i = 0; i < result_signals.Length; i++)
                     {
                         Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
@@ -682,7 +687,7 @@ namespace Pachyderm_Acoustic
                     System.Numerics.Complex[][] FS = new System.Numerics.Complex[TimeS.Length][];
                     System.Numerics.Complex[][] FF = new System.Numerics.Complex[TimeS.Length][];
 
-                    for (int i = 0; i < TimeS.Length; i++)
+                    for (int i = 0; i < result_signals.Length; i++)
                     {
                         FS[i] = Audio.Pach_SP.FFT_General(TimeS[i], 0);
                         FF[i] = Audio.Pach_SP.FFT_General(result_signals[i], 0);
@@ -711,7 +716,7 @@ namespace Pachyderm_Acoustic
                         System.Numerics.Complex sumFF2 = 0;
                         System.Numerics.Complex sumFSFF = 0;
 
-                        for (int j = 0; j < FS.Length; j++)
+                        for (int j = 0; j < result_signals.Length; j++)
                         {
                             System.Numerics.Complex fs2 = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
                             System.Numerics.Complex ff2 = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);

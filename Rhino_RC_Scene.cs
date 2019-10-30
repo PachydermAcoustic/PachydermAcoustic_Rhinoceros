@@ -184,15 +184,16 @@ namespace Pachyderm_Acoustic
 
                 for (int q = 0; q < BList.Count; q++)
                 {
-                    for (int r = 0; r < ((Brep)BList[q]).Faces.Count; r++)
+                    Brep BL = BList[q] is BrepFace ? (BList[q] as BrepFace).DuplicateFace(false) : BList[q] as Brep;
+                    for (int r = 0; r < BL.Faces.Count; r++)
                     {
                         ABS_Construct.Add(Mat_Obj[q]);
                         SCT_Construct.Add(Scat_Obj[q]);
                         TRN_Construct.Add(Trans_Obj[q]);
-                        isCurved_Construct.Add(!((Brep)BList[q]).Faces[r].IsPlanar());
+                        isCurved_Construct.Add(!BL.Faces[r].IsPlanar());
 
-                        BrepList.Add(((Brep)BList[q]).Faces[r].DuplicateFace(false));
-                        Brep B = ((Brep)BList[q]).Faces[r].DuplicateFace(false);
+                        BrepList.Add(BL.Faces[r].DuplicateFace(false));
+                        Brep B = BL.Faces[r].DuplicateFace(false);
                         double[] Transmission = new double[8];
 
                         if ((Mat_Obj[q] == null) || (Scat_Obj[q] == null) || (Trans_Obj[q] == null))
@@ -210,12 +211,12 @@ namespace Pachyderm_Acoustic
 
                         //TODO: insert a check for degenerate polygons, and exclude prior to passing to construct method.
                         mp.JaggedSeams = false;
-                        mp.MaximumEdgeLength = 343d / 250d;
-                        mp.MinimumEdgeLength = 343d / 250d;
+                        mp.MaximumEdgeLength = 343d / 1000d;
+                        mp.MinimumEdgeLength = 343d / 1000d;
                         mp.SimplePlanes = true;
-                        mp.RefineGrid = false;
+                        mp.RefineGrid = true;
 
-                        meshes = Rhino.Geometry.Mesh.CreateFromBrep(B);//(Brep)BrepList[BrepList.Count - 1], mp);
+                        meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);//(Brep)BrepList[BrepList.Count - 1], mp);
                         if (meshes == null) throw new Exception("Problem with meshes");
 
                         for (int t = 0; t < meshes.Length; t++)
@@ -244,13 +245,13 @@ namespace Pachyderm_Acoustic
                                 {
                                     P = new Hare.Geometry.Point[4];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
-                                    P[3] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[3] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     if (isDegenerate(ref P)) continue;
 
                                     Centroid = (P.Length == 4) ? (P[0] + P[1] + P[2] + P[3]) / 4 : (P[0] + P[1] + P[2]) / 3;
@@ -259,11 +260,11 @@ namespace Pachyderm_Acoustic
                                 {
                                     P = new Hare.Geometry.Point[3];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,2), Math.Round(FP.Y,2), Math.Round(FP.Z,2));
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
                                     Centroid = (P[0] + P[1] + P[2]) / 3;
 
                                     if (isDegenerate(ref P)) continue;
@@ -434,8 +435,7 @@ namespace Pachyderm_Acoustic
                                 ((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001))
                                 {
                                     //Curves are effectively coincident...
-                                    if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }); //Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[shortid]));
-                                                                                                                                                                                                     //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
+                                    if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }); //Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[shortid]));                                                                                                                                                                                                     //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
 
                                     Naked_Edges.RemoveAt(shortid);
                                     Naked_Breps.RemoveAt(shortid);
@@ -536,6 +536,8 @@ namespace Pachyderm_Acoustic
                                     pt = Naked_Edges[shortid].PointAt(tsE);
                                 }
 
+                                if (tl2 == 0) break;
+
                                 if (tsS > tsE)
                                 {
                                     double t = tsE;
@@ -552,8 +554,7 @@ namespace Pachyderm_Acoustic
 
                                 Curve newEdge = Naked_Edges[shortid].Trim(new Interval(tsS, tsE));
 
-                                if (newEdge == null || newEdge.GetLength() < 0.01) continue;
-
+                                if (newEdge == null || newEdge.GetLength() < 0.01)  continue;
                                 create_curved_edge_entry(newEdge, BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] });
                                 //if (newEdge.IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
                                 //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
@@ -610,7 +611,7 @@ namespace Pachyderm_Acoustic
                                     double l = ToAdd[k].GetLength();
                                     for (int i = 0; i < Naked_Edges.Count; i++)
                                     {
-                                        if (l < Lengths[i])
+                                        if (l > Lengths[i])
                                         {
                                             Naked_Breps.Insert(i, ToAddMembers[k]);
                                             Naked_Edges.Insert(i, ToAdd[k]);

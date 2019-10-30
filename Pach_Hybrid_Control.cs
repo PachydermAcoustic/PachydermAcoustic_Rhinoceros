@@ -1990,7 +1990,12 @@ namespace Pachyderm_Acoustic
                 if (mod.accept)
                 {
                     //Pressure_Ready = false;
-                    foreach (int i in srcs) Direct_Data[i].Set_Power(mod.Power);
+                    foreach (int i in srcs)
+                    {
+                        Direct_Data[i].Set_Power(mod.Power);
+                        IS_Data[i].Set_Power();
+                        Receiver[i].Set_Power();
+                    }
                 }
                 Update_Graph(null, null);
             }

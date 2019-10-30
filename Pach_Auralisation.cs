@@ -310,9 +310,9 @@ namespace Pachyderm_Acoustic
                 {
                     Signal_Status.Text = GetWave.FileName;
                     RenderBtn.Enabled = true;
-                    NAudio.Wave.WaveFileReader WR = new NAudio.Wave.WaveFileReader(Signal_Status.Text);
+                    int[][] signal = Audio.Pach_SP.Wave.ReadtoInt(Signal_Status.Text, false, out SampleRate);
                     DryChannel.Minimum = 1;
-                    DryChannel.Maximum = WR.WaveFormat.Channels;
+                    DryChannel.Maximum = signal.Length;
                 }
             }
 
@@ -325,61 +325,7 @@ namespace Pachyderm_Acoustic
 
             private void OpenWaveFile(out int Sample_Freq, out double[] SignalETC)
             {
-                NAudio.Wave.WaveFileReader WP = new NAudio.Wave.WaveFileReader(Signal_Status.Text);
-
-                int BytesPerSample = WP.WaveFormat.Channels * WP.WaveFormat.BitsPerSample / 8;
-                int BytesPerChannel = WP.WaveFormat.BitsPerSample / 8;
-                byte[] signalbuffer = new byte[BytesPerSample];
-                int ChannelCt = WP.WaveFormat.Channels;
-                Sample_Freq = WP.WaveFormat.SampleRate;
-                double[] SignalInt = new double[WP.SampleCount];
-
-                if (WP.WaveFormat.BitsPerSample == 8)
-                {
-                    System.Windows.Forms.MessageBox.Show("Selected File is an 8-Bit audio file. This program requires a minimum bit-depth of 16.");
-                    SignalETC = new double[SignalInt.Length];
-                    return;
-                }
-                byte[] temp = new byte[4];
-                int c = (int)DryChannel.Value - 1;
-
-                for (int i = 0; i < WP.SampleCount; i++)
-                {
-                    WP.Read(signalbuffer, 0, BytesPerSample);
-
-                    if (WP.WaveFormat.BitsPerSample == 32)
-                    {
-                        SignalInt[i] = BitConverter.ToInt32(signalbuffer, c * 4);
-                    }
-                    else if (WP.WaveFormat.BitsPerSample == 24)
-                    {
-                        temp[1] = signalbuffer[c * BytesPerChannel];
-                        temp[2] = signalbuffer[c * BytesPerChannel + 1];
-                        temp[3] = signalbuffer[c * BytesPerChannel + 2];
-                        SignalInt[i] = BitConverter.ToInt32(temp, 0);
-                    }
-                    else if (WP.WaveFormat.BitsPerSample == 16)
-                    {
-                        temp[2] = signalbuffer[c * BytesPerChannel];
-                        temp[3] = signalbuffer[c * BytesPerChannel + 1];
-                        SignalInt[i] = BitConverter.ToInt32(temp, 0);
-                    }
-                }
-
-                SignalETC = new double[SignalInt.Length];
-
-                double Max = double.NegativeInfinity;
-                for(int i = 0; i < SignalInt.Length; i++)
-                {
-                    Max = Math.Max(Max, Math.Abs(SignalInt[i]));
-                }
-
-                for(int i = 0; i < SignalInt.Length; i++)
-                {
-                    SignalETC[i] = SignalInt[i] / Max;
-                }
-                SignalETC = SignalInt;
-
+                SignalETC = Audio.Pach_SP.Wave.ReadtoDouble(Signal_Status.Text, true, out Sample_Freq)[0];
             }
 
             int[] SrcRendered;
@@ -524,30 +470,32 @@ namespace Pachyderm_Acoustic
                         Rhino.RhinoApp.WriteLine("No impulse response found to render...");
                         return;
                     }
-                    NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(SamplesPerSec, 24, NewSignal.Length));
 
-                    for (int j = 0; j < NewSignal[0].Length; j++)
+                    Audio.Pach_SP.Wave.Write(NewSignal, SamplesPerSec, SaveWave.FileName);
+
+                    //TODO: Users find this annoying - make it optional, and provide a way to kill it.
+
+                    if (PlayAuralization.Checked)
                     {
-                        for (int i = 0; i < NewSignal.Length; i++) Writer.WriteSample(NewSignal[i][j]);
+                        Player = new System.Media.SoundPlayer(SaveWave.FileName);
+                        Player.Play();
                     }
-                    Writer.Close();
-                    Writer.Dispose();
-                    System.Media.SoundPlayer Player = new System.Media.SoundPlayer(SaveWave.FileName);
-                    Player.Play();
                 }
             }
-             
+
+            System.Media.SoundPlayer Player =  new System.Media.SoundPlayer();
+
             private void ExportFilter(object sender, EventArgs e)
             {
                 SaveFileDialog SaveWave = new SaveFileDialog();
 
                 if (Response.Length < 4)
                 {
-                    SaveWave.Filter = "Wave Audio (*.wav) |*.wav";//"22050 hz. Wave Audio (*.wav) |*.wav|44100 hz. Wave Audio (*.wav)|*.wav|48000 hz. Wave Audio (*.wav)|*.wav|96000 hz. Wave Audio (*.wav)|*.wav|192000 hz. Wave Audio (*.wav)|*.wav|384000 hz. Wave Audio (*.wav)|*.wav|";
+                    SaveWave.Filter = "Wave Audio (*.wav) |*.wav";
                 }
                 else 
                 {
-                    SaveWave.Filter = "Wave Audio (*.wavex) |*.wavex";//"22050 hz. Wave Audio (*.wavex) |*.wavex|44100 hz. Wave Audio (*.wavex)|*.wavex|48000 hz. Wave Audio (*.wavex)|*.wavex|96000 hz. Wave Audio (*.wavex)|*.wavex|192000 hz. Wave Audio (*.wavex)|*.wavex|384000 hz. Wave Audio (*.wavex)|*.wavex|";
+                    SaveWave.Filter = "Wave Audio (*.wavex) |*.wavex";
                 }
 
                 int SamplesPerSec = 44100;
@@ -641,16 +589,20 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
+                float[][] RR = new float[Render_Response.Length][];
+                int maxlength = 0;
+                for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
+                for (int j = 0; j < Render_Response.Length; j++) Render_Response[j] = new double[maxlength];
+
+                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value / 20));
+                for (int j = 0; j < Render_Response[0].Length; j++)
+                {
+                    for (int c = 0; c < Render_Response.Length; c++)  RR[c][j] = (j > Render_Response[c].Length - 1)? 0 : (float)Render_Response[c][j] * mod * (float)Math.Pow(2, 11);
+                }
+
                 if (SaveWave.ShowDialog() == DialogResult.OK)
                 {
-                    
-                    NAudio.Wave.WaveFileWriter Writer = new NAudio.Wave.WaveFileWriter(SaveWave.FileName, new NAudio.Wave.WaveFormat(SamplesPerSec, 24, Render_Response.Length));
-                    for (int j = 0; j < Render_Response[0].Length; j++)
-                    {
-                        for (int c = 0; c < Render_Response.Length; c++) if (j > Render_Response[c].Length - 1) Writer.WriteSample(0); else Writer.WriteSample((float)Render_Response[c][j] * (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value / 20)) * (float)Math.Pow(2, 11));
-                    }
-                    Writer.Close();
-                    Writer.Dispose();
+                    Audio.Pach_SP.Wave.Write(RR, SamplesPerSec, SaveWave.FileName, 24);
                 }
             }
 
@@ -1014,6 +966,12 @@ namespace Pachyderm_Acoustic
             private void Graph_Octave_SelectedIndexChanged(object sender, EventArgs e)
             {
                 Update_Graph(sender, e);
+            }
+
+            private void PlayAuralization_CheckedChanged(object sender, EventArgs e)
+            {
+                if (PlayAuralization.Checked) Player.Play();
+                else Player.Stop();
             }
         }
     }

@@ -255,18 +255,33 @@ namespace Pachyderm_Acoustic
             }
 
             /// <summary>
-            /// Sets the material association for a layer. Note that Transparency can not be set for a layer.
+            /// Sets the material association for a layer.
             /// </summary>
             /// <param name="LayerName"></param>
             /// <param name="Abs">0 to 100</param>
             /// <param name="Scat">0 to 100</param>
             /// <returns></returns>
-            public static bool Material_SetLayer(string LayerName, int[] Abs, int[] Scat)
+            public static bool Material_SetLayer(string LayerName, int[] Abs, int[] Scat, int[] Trans = null)
             {
                 int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerName, true);
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
-                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Scat, new int[1]));
+                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Scat, Trans));
                 return Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
+            }
+
+            /// <summary>
+            /// Sets the material association for a layer.
+            /// </summary>
+            /// <param name="LayerIndex"></param>
+            /// <param name="Abs">0 to 100</param>
+            /// <param name="Scat">0 to 100</param>
+            /// <returns></returns>
+            public static bool Material_SetLayer(int LayerIndex, int[] Abs, int[] Scat, int[] Trans)
+            {
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[LayerIndex];
+                layer.SetUserString("ABSType", "");
+                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Scat, Trans));
+                return Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, LayerIndex, false);
             }
 
             /// <summary>
