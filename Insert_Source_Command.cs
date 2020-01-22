@@ -269,11 +269,6 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            //Sound Pressure Level at 1 m. of several kinds of people.
-            public double[][] Females = new double[][] { new double[] { 20, 36, 48, 49, 42, 39, 35, 35 }, new double[] { 20, 37, 51, 53, 49, 44, 42, 37 }, new double[] { 20, 35, 56, 59, 57, 53, 48, 43 }, new double[] { 20, 34, 58, 64, 66, 63, 56, 51 }, new double[] { 20, 30, 56, 69, 76, 75, 69, 58 } };
-            public double[][] Males = new double[][] { new double[] { 20, 45, 49, 50, 42, 41, 38, 35 }, new double[] { 20, 51, 56, 57, 50, 47, 43, 36 }, new double[] { 20, 53, 59, 64, 58, 54, 49, 43 }, new double[] { 20, 56, 64, 72, 70, 66, 60, 50 }, new double[] { 20, 45, 70, 80, 84, 80, 72, 63 } };
-            public double[][] Children = new double[][] { new double[] { 20, 27, 48, 52, 44, 41, 38, 38 }, new double[] { 20, 30, 53, 56, 50, 45, 43, 42 }, new double[] { 20, 31, 56, 60, 60, 55, 51, 46 }, new double[] { 20, 30, 56, 63, 66, 65, 57, 51 }, new double[] { 20, 45, 55, 69, 75, 72, 70, 58 } };
-
             ///<summary> This gets called when when the user runs this command.</summary> 
             protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
             {
@@ -308,13 +303,13 @@ namespace Pachyderm_Acoustic
                 switch (GOpt_type.OptionIndex())
                 {
                     case 0:
-                        SPL = Males[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Males[GOpt_act.OptionIndex()-1];
                         break;
                     case 1:
-                        SPL = Females[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Females[GOpt_act.OptionIndex()-1];
                         break;
                     case 2:
-                        SPL = Children[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Children[GOpt_act.OptionIndex()-1];
                         break;
                 }
 

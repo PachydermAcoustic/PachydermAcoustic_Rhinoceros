@@ -64,6 +64,7 @@ namespace Pachyderm_Acoustic
                 {
                     Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[l];
                     string abstype = Layer.GetUserString("ABSType");
+
                     if (abstype == "Buildup")
                     {
                         string BU = Layer.GetUserString("BuildUp");
@@ -108,6 +109,16 @@ namespace Pachyderm_Acoustic
 
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(spec, ref Abs, ref Scat, ref Trans);
+                        //New code for transmission loss incorporation...
+                        string trans = Layer.GetUserString("Transmission");
+                        Trans = (trans == "" || trans == null ) ? ( Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans = Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
+                        for (int oct = 0; oct < 8; oct++)
+                        {
+                            double ret = Math.Pow(10, -Trans[oct] / 10);
+                            Trans[oct] = ret;
+                            //Abs[oct] *= ret;
+                        }
+
                         Mat_Layer.Add(new Environment.Basic_Material(Abs, new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 }));
                         Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
                         Trans_Layer.Add(Trans);
@@ -912,8 +923,6 @@ namespace Pachyderm_Acoustic
                         string Mode = null;
                         string AcousticsData = null;
                         double[] Absorption = new double[8];
-                        //double[,] Scattering = new double[8, 3];
-                        //double[] Reflection = new double[8];
                         double[] phase = new double[8];
                         double[] Transparency = new double[8];
                         double[] Transmission = new double[8];
@@ -944,8 +953,10 @@ namespace Pachyderm_Acoustic
                             Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[ObjRef[q].Attributes.LayerIndex];
                             string Method = layer.GetUserString("ABSType");
                             AcousticsData = layer.GetUserString("Acoustics");
+
                             if (Method == "Buildup")
                             {
+                                //TODO - reconcile transmission with buildup materials... could be specified in smart material.
                                 List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                                 string[] Buildup = layer.GetUserString("Buildup").Split(new char[]{';'}, StringSplitOptions.RemoveEmptyEntries);
                                 foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
@@ -953,7 +964,16 @@ namespace Pachyderm_Acoustic
                             }
                             if (!string.IsNullOrEmpty(AcousticsData))
                             {
+                                //New code for transmission loss incorporation...
                                 Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
+                                string trans = layer.GetUserString("Transmission");
+                                Transmission = trans == "" ? new double[] {0,0,0,0,0,0,0,0} : Utilities.PachTools.DecodeTransmissionLoss(trans);
+                                for (int oct = 0; oct < 8; oct++)
+                                {
+                                    double ret = Math.Pow(10, -Transmission[oct] / 10);
+                                    Transmission[oct] = 1 - ret;
+                                    //Absorption[oct] *= ret; 
+                                }
                                 AbsorptionData.Add(new Basic_Material(Absorption, phase));
                             }
                             else
@@ -970,17 +990,12 @@ namespace Pachyderm_Acoustic
                         Area = new double[BrepList.Count];
                         for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
 
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            Transmission[oct] = Transparency[oct];
-                        }
-
                         ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
-                        TransmissionData.Add(Transmission);
+                        TransmissionData.Add(Transparency);
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
                         {
-                            if (Transmission[t_oct] > 0)
+                            if (Transparency[t_oct] > 0)
                             {
                                 Trans = true;
                                 break;

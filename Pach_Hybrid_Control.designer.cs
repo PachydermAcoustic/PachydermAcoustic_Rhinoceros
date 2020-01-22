@@ -44,28 +44,28 @@ namespace Pachyderm_Acoustic
             private void InitializeComponent()
             {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel1 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel2 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel3 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel4 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel5 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel6 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel7 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel8 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel9 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel10 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel11 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel12 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel25 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel26 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel27 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel28 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel29 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel30 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel31 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel32 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel33 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel34 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel35 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel36 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series17 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series18 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series19 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series20 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series21 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series22 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series23 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series24 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.label24 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
@@ -174,6 +174,8 @@ namespace Pachyderm_Acoustic
             this.label44 = new System.Windows.Forms.Label();
             this.label45 = new System.Windows.Forms.Label();
             this.Transparency = new System.Windows.Forms.TabPage();
+            this.tabControl2 = new System.Windows.Forms.TabControl();
+            this.tabPage2 = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel6 = new System.Windows.Forms.TableLayoutPanel();
             this.Trans_Flat = new System.Windows.Forms.TrackBar();
             this.Trans_8k_Out = new System.Windows.Forms.NumericUpDown();
@@ -203,6 +205,40 @@ namespace Pachyderm_Acoustic
             this.Trans_Check = new System.Windows.Forms.CheckBox();
             this.label28 = new System.Windows.Forms.Label();
             this.label23 = new System.Windows.Forms.Label();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.tableLayoutPanel8 = new System.Windows.Forms.TableLayoutPanel();
+            this.Isolation_Lib = new System.Windows.Forms.ListBox();
+            this.label63 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.DeleteAssembly = new System.Windows.Forms.Button();
+            this.SaveAssembly = new System.Windows.Forms.Button();
+            this.IsolationAssemblies = new System.Windows.Forms.MaskedTextBox();
+            this.label53 = new System.Windows.Forms.Label();
+            this.TL_Check = new System.Windows.Forms.CheckBox();
+            this.TL8k = new System.Windows.Forms.NumericUpDown();
+            this.label54 = new System.Windows.Forms.Label();
+            this.label52 = new System.Windows.Forms.Label();
+            this.label51 = new System.Windows.Forms.Label();
+            this.label48 = new System.Windows.Forms.Label();
+            this.label46 = new System.Windows.Forms.Label();
+            this.label47 = new System.Windows.Forms.Label();
+            this.label49 = new System.Windows.Forms.Label();
+            this.label50 = new System.Windows.Forms.Label();
+            this.TL4k = new System.Windows.Forms.NumericUpDown();
+            this.TL2k = new System.Windows.Forms.NumericUpDown();
+            this.TL1k = new System.Windows.Forms.NumericUpDown();
+            this.TL500 = new System.Windows.Forms.NumericUpDown();
+            this.TL250 = new System.Windows.Forms.NumericUpDown();
+            this.TL125 = new System.Windows.Forms.NumericUpDown();
+            this.TL63 = new System.Windows.Forms.NumericUpDown();
+            this.label55 = new System.Windows.Forms.Label();
+            this.label56 = new System.Windows.Forms.Label();
+            this.label57 = new System.Windows.Forms.Label();
+            this.label58 = new System.Windows.Forms.Label();
+            this.label59 = new System.Windows.Forms.Label();
+            this.label60 = new System.Windows.Forms.Label();
+            this.label61 = new System.Windows.Forms.Label();
+            this.label62 = new System.Windows.Forms.Label();
             this.LayerDisplay = new System.Windows.Forms.ComboBox();
             this.TabPage3 = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
@@ -318,6 +354,8 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.user_quart_lambda)).BeginInit();
             this.Transparency.SuspendLayout();
+            this.tabControl2.SuspendLayout();
+            this.tabPage2.SuspendLayout();
             this.tableLayoutPanel6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_Flat)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_8k_Out)).BeginInit();
@@ -336,6 +374,17 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.Trans_250v)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_500v)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_250_Out)).BeginInit();
+            this.tabPage5.SuspendLayout();
+            this.tableLayoutPanel8.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.TL8k)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL4k)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL2k)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL1k)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL500)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL250)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL125)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL63)).BeginInit();
             this.TabPage3.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
             this.SourceContext.SuspendLayout();
@@ -392,8 +441,8 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel4.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 14;
-            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 23F));
-            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 162F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 163F));
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 18F));
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
@@ -509,11 +558,11 @@ namespace Pachyderm_Acoustic
             this.Material_Lib.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Material_Lib.FormattingEnabled = true;
             this.Material_Lib.ItemHeight = 16;
-            this.Material_Lib.Location = new System.Drawing.Point(4, 27);
+            this.Material_Lib.Location = new System.Drawing.Point(4, 26);
             this.Material_Lib.Margin = new System.Windows.Forms.Padding(4);
             this.Material_Lib.Name = "Material_Lib";
             this.Material_Lib.ScrollAlwaysVisible = true;
-            this.Material_Lib.Size = new System.Drawing.Size(258, 154);
+            this.Material_Lib.Size = new System.Drawing.Size(258, 155);
             this.Material_Lib.TabIndex = 8;
             this.Material_Lib.SelectedIndexChanged += new System.EventHandler(this.Material_Lib_SelectedIndexChanged);
             // 
@@ -916,7 +965,7 @@ namespace Pachyderm_Acoustic
             this.AbsFlat.TabIndex = 46;
             this.AbsFlat.TickFrequency = 10;
             this.AbsFlat.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.AbsFlat.ValueChanged += new System.EventHandler(this.AbsFlat_ValueChanged);
+            this.AbsFlat.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // ScatFlat
             // 
@@ -1207,52 +1256,52 @@ namespace Pachyderm_Acoustic
             // SmartMat_Display
             // 
             this.SmartMat_Display.BackColor = System.Drawing.Color.Transparent;
-            customLabel1.FromPosition = 1D;
-            customLabel1.Text = "0";
-            customLabel1.ToPosition = 2D;
-            customLabel2.FromPosition = 1D;
-            customLabel2.Text = "30";
-            customLabel2.ToPosition = 2D;
-            customLabel3.FromPosition = 2D;
-            customLabel3.Text = "60";
-            customLabel3.ToPosition = 3D;
-            customLabel4.FromPosition = 3D;
-            customLabel4.Text = "90";
-            customLabel4.ToPosition = 4D;
-            customLabel10.FromPosition = 8D;
-            customLabel10.Text = "-90";
-            customLabel10.ToPosition = 9D;
-            customLabel11.FromPosition = 9D;
-            customLabel11.Text = "-60";
-            customLabel11.ToPosition = 10D;
-            customLabel12.FromPosition = 11D;
-            customLabel12.Text = "-30";
-            customLabel12.ToPosition = 12D;
-            chartArea1.AxisX.CustomLabels.Add(customLabel1);
-            chartArea1.AxisX.CustomLabels.Add(customLabel2);
-            chartArea1.AxisX.CustomLabels.Add(customLabel3);
-            chartArea1.AxisX.CustomLabels.Add(customLabel4);
-            chartArea1.AxisX.CustomLabels.Add(customLabel5);
-            chartArea1.AxisX.CustomLabels.Add(customLabel6);
-            chartArea1.AxisX.CustomLabels.Add(customLabel7);
-            chartArea1.AxisX.CustomLabels.Add(customLabel8);
-            chartArea1.AxisX.CustomLabels.Add(customLabel9);
-            chartArea1.AxisX.CustomLabels.Add(customLabel10);
-            chartArea1.AxisX.CustomLabels.Add(customLabel11);
-            chartArea1.AxisX.CustomLabels.Add(customLabel12);
-            chartArea1.Name = "ChartArea1";
-            this.SmartMat_Display.ChartAreas.Add(chartArea1);
+            customLabel25.FromPosition = 1D;
+            customLabel25.Text = "0";
+            customLabel25.ToPosition = 2D;
+            customLabel26.FromPosition = 1D;
+            customLabel26.Text = "30";
+            customLabel26.ToPosition = 2D;
+            customLabel27.FromPosition = 2D;
+            customLabel27.Text = "60";
+            customLabel27.ToPosition = 3D;
+            customLabel28.FromPosition = 3D;
+            customLabel28.Text = "90";
+            customLabel28.ToPosition = 4D;
+            customLabel34.FromPosition = 8D;
+            customLabel34.Text = "-90";
+            customLabel34.ToPosition = 9D;
+            customLabel35.FromPosition = 9D;
+            customLabel35.Text = "-60";
+            customLabel35.ToPosition = 10D;
+            customLabel36.FromPosition = 11D;
+            customLabel36.Text = "-30";
+            customLabel36.ToPosition = 12D;
+            chartArea3.AxisX.CustomLabels.Add(customLabel25);
+            chartArea3.AxisX.CustomLabels.Add(customLabel26);
+            chartArea3.AxisX.CustomLabels.Add(customLabel27);
+            chartArea3.AxisX.CustomLabels.Add(customLabel28);
+            chartArea3.AxisX.CustomLabels.Add(customLabel29);
+            chartArea3.AxisX.CustomLabels.Add(customLabel30);
+            chartArea3.AxisX.CustomLabels.Add(customLabel31);
+            chartArea3.AxisX.CustomLabels.Add(customLabel32);
+            chartArea3.AxisX.CustomLabels.Add(customLabel33);
+            chartArea3.AxisX.CustomLabels.Add(customLabel34);
+            chartArea3.AxisX.CustomLabels.Add(customLabel35);
+            chartArea3.AxisX.CustomLabels.Add(customLabel36);
+            chartArea3.Name = "ChartArea1";
+            this.SmartMat_Display.ChartAreas.Add(chartArea3);
             this.SmartMat_Display.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend1.BackColor = System.Drawing.Color.Transparent;
-            legend1.BackImageAlignment = System.Windows.Forms.DataVisualization.Charting.ChartImageAlignmentStyle.Left;
-            legend1.LegendStyle = System.Windows.Forms.DataVisualization.Charting.LegendStyle.Column;
-            legend1.Name = "Legend1";
-            legend1.Position.Auto = false;
-            legend1.Position.Height = 25F;
-            legend1.Position.Width = 20F;
-            legend1.Position.X = 80F;
-            legend1.Position.Y = 75F;
-            this.SmartMat_Display.Legends.Add(legend1);
+            legend3.BackColor = System.Drawing.Color.Transparent;
+            legend3.BackImageAlignment = System.Windows.Forms.DataVisualization.Charting.ChartImageAlignmentStyle.Left;
+            legend3.LegendStyle = System.Windows.Forms.DataVisualization.Charting.LegendStyle.Column;
+            legend3.Name = "Legend1";
+            legend3.Position.Auto = false;
+            legend3.Position.Height = 25F;
+            legend3.Position.Width = 20F;
+            legend3.Position.X = 80F;
+            legend3.Position.Y = 75F;
+            this.SmartMat_Display.Legends.Add(legend3);
             this.SmartMat_Display.Location = new System.Drawing.Point(4, 4);
             this.SmartMat_Display.Margin = new System.Windows.Forms.Padding(4);
             this.SmartMat_Display.Name = "SmartMat_Display";
@@ -1266,72 +1315,72 @@ namespace Pachyderm_Acoustic
         System.Drawing.Color.Blue,
         System.Drawing.Color.Indigo,
         System.Drawing.Color.Violet};
-            series1.BorderWidth = 3;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series1.CustomProperties = "CircularLabelsStyle=Circular";
-            series1.Font = new System.Drawing.Font("Microsoft Sans Serif", 5.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            series1.Legend = "Legend1";
-            series1.Name = "62.5 Hz.";
-            series1.ShadowColor = System.Drawing.Color.DarkGray;
-            series1.ShadowOffset = 3;
-            series2.BorderWidth = 3;
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series2.Legend = "Legend1";
-            series2.Name = "125 Hz.";
-            series2.ShadowColor = System.Drawing.Color.DarkGray;
-            series2.ShadowOffset = 3;
-            series3.BorderWidth = 3;
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series3.Legend = "Legend1";
-            series3.Name = "250 Hz.";
-            series3.ShadowColor = System.Drawing.Color.DarkGray;
-            series3.ShadowOffset = 3;
-            series4.BorderWidth = 3;
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series4.Legend = "Legend1";
-            series4.Name = "500 Hz.";
-            series4.ShadowColor = System.Drawing.Color.DarkGray;
-            series4.ShadowOffset = 3;
-            series5.BorderWidth = 3;
-            series5.ChartArea = "ChartArea1";
-            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series5.Legend = "Legend1";
-            series5.Name = "1000 Hz.";
-            series5.ShadowColor = System.Drawing.Color.DarkGray;
-            series5.ShadowOffset = 3;
-            series6.BorderWidth = 3;
-            series6.ChartArea = "ChartArea1";
-            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series6.Legend = "Legend1";
-            series6.Name = "2000 Hz.";
-            series6.ShadowColor = System.Drawing.Color.DarkGray;
-            series6.ShadowOffset = 3;
-            series7.BorderWidth = 3;
-            series7.ChartArea = "ChartArea1";
-            series7.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series7.Legend = "Legend1";
-            series7.Name = "4000 Hz.";
-            series7.ShadowColor = System.Drawing.Color.DarkGray;
-            series7.ShadowOffset = 3;
-            series8.BorderWidth = 3;
-            series8.ChartArea = "ChartArea1";
-            series8.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series8.Legend = "Legend1";
-            series8.Name = "8000 Hz.";
-            series8.ShadowColor = System.Drawing.Color.DarkGray;
-            series8.ShadowOffset = 3;
-            this.SmartMat_Display.Series.Add(series1);
-            this.SmartMat_Display.Series.Add(series2);
-            this.SmartMat_Display.Series.Add(series3);
-            this.SmartMat_Display.Series.Add(series4);
-            this.SmartMat_Display.Series.Add(series5);
-            this.SmartMat_Display.Series.Add(series6);
-            this.SmartMat_Display.Series.Add(series7);
-            this.SmartMat_Display.Series.Add(series8);
+            series17.BorderWidth = 3;
+            series17.ChartArea = "ChartArea1";
+            series17.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series17.CustomProperties = "CircularLabelsStyle=Circular";
+            series17.Font = new System.Drawing.Font("Microsoft Sans Serif", 5.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            series17.Legend = "Legend1";
+            series17.Name = "62.5 Hz.";
+            series17.ShadowColor = System.Drawing.Color.DarkGray;
+            series17.ShadowOffset = 3;
+            series18.BorderWidth = 3;
+            series18.ChartArea = "ChartArea1";
+            series18.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series18.Legend = "Legend1";
+            series18.Name = "125 Hz.";
+            series18.ShadowColor = System.Drawing.Color.DarkGray;
+            series18.ShadowOffset = 3;
+            series19.BorderWidth = 3;
+            series19.ChartArea = "ChartArea1";
+            series19.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series19.Legend = "Legend1";
+            series19.Name = "250 Hz.";
+            series19.ShadowColor = System.Drawing.Color.DarkGray;
+            series19.ShadowOffset = 3;
+            series20.BorderWidth = 3;
+            series20.ChartArea = "ChartArea1";
+            series20.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series20.Legend = "Legend1";
+            series20.Name = "500 Hz.";
+            series20.ShadowColor = System.Drawing.Color.DarkGray;
+            series20.ShadowOffset = 3;
+            series21.BorderWidth = 3;
+            series21.ChartArea = "ChartArea1";
+            series21.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series21.Legend = "Legend1";
+            series21.Name = "1000 Hz.";
+            series21.ShadowColor = System.Drawing.Color.DarkGray;
+            series21.ShadowOffset = 3;
+            series22.BorderWidth = 3;
+            series22.ChartArea = "ChartArea1";
+            series22.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series22.Legend = "Legend1";
+            series22.Name = "2000 Hz.";
+            series22.ShadowColor = System.Drawing.Color.DarkGray;
+            series22.ShadowOffset = 3;
+            series23.BorderWidth = 3;
+            series23.ChartArea = "ChartArea1";
+            series23.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series23.Legend = "Legend1";
+            series23.Name = "4000 Hz.";
+            series23.ShadowColor = System.Drawing.Color.DarkGray;
+            series23.ShadowOffset = 3;
+            series24.BorderWidth = 3;
+            series24.ChartArea = "ChartArea1";
+            series24.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series24.Legend = "Legend1";
+            series24.Name = "8000 Hz.";
+            series24.ShadowColor = System.Drawing.Color.DarkGray;
+            series24.ShadowOffset = 3;
+            this.SmartMat_Display.Series.Add(series17);
+            this.SmartMat_Display.Series.Add(series18);
+            this.SmartMat_Display.Series.Add(series19);
+            this.SmartMat_Display.Series.Add(series20);
+            this.SmartMat_Display.Series.Add(series21);
+            this.SmartMat_Display.Series.Add(series22);
+            this.SmartMat_Display.Series.Add(series23);
+            this.SmartMat_Display.Series.Add(series24);
             this.SmartMat_Display.Size = new System.Drawing.Size(493, 619);
             this.SmartMat_Display.TabIndex = 45;
             this.SmartMat_Display.TabStop = false;
@@ -2208,7 +2257,7 @@ namespace Pachyderm_Acoustic
             // 
             // Transparency
             // 
-            this.Transparency.Controls.Add(this.tableLayoutPanel6);
+            this.Transparency.Controls.Add(this.tabControl2);
             this.Transparency.Location = new System.Drawing.Point(4, 25);
             this.Transparency.Margin = new System.Windows.Forms.Padding(4);
             this.Transparency.Name = "Transparency";
@@ -2216,6 +2265,28 @@ namespace Pachyderm_Acoustic
             this.Transparency.TabIndex = 2;
             this.Transparency.Text = "Transparency";
             this.Transparency.UseVisualStyleBackColor = true;
+            // 
+            // tabControl2
+            // 
+            this.tabControl2.Controls.Add(this.tabPage2);
+            this.tabControl2.Controls.Add(this.tabPage5);
+            this.tabControl2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl2.Location = new System.Drawing.Point(0, 0);
+            this.tabControl2.Name = "tabControl2";
+            this.tabControl2.SelectedIndex = 0;
+            this.tabControl2.Size = new System.Drawing.Size(501, 627);
+            this.tabControl2.TabIndex = 48;
+            // 
+            // tabPage2
+            // 
+            this.tabPage2.Controls.Add(this.tableLayoutPanel6);
+            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Name = "tabPage2";
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage2.Size = new System.Drawing.Size(493, 598);
+            this.tabPage2.TabIndex = 0;
+            this.tabPage2.Text = "Transmission Coefficient";
+            this.tabPage2.UseVisualStyleBackColor = true;
             // 
             // tableLayoutPanel6
             // 
@@ -2256,7 +2327,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel6.Controls.Add(this.label28, 0, 8);
             this.tableLayoutPanel6.Controls.Add(this.label23, 0, 9);
             this.tableLayoutPanel6.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
-            this.tableLayoutPanel6.Location = new System.Drawing.Point(8, 7);
+            this.tableLayoutPanel6.Location = new System.Drawing.Point(7, 8);
             this.tableLayoutPanel6.Margin = new System.Windows.Forms.Padding(4);
             this.tableLayoutPanel6.Name = "tableLayoutPanel6";
             this.tableLayoutPanel6.RowCount = 11;
@@ -2274,7 +2345,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel6.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tableLayoutPanel6.Size = new System.Drawing.Size(475, 586);
+            this.tableLayoutPanel6.Size = new System.Drawing.Size(479, 1113);
             this.tableLayoutPanel6.TabIndex = 47;
             // 
             // Trans_Flat
@@ -2289,7 +2360,7 @@ namespace Pachyderm_Acoustic
             this.Trans_Flat.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_Flat.Maximum = 100;
             this.Trans_Flat.Name = "Trans_Flat";
-            this.Trans_Flat.Size = new System.Drawing.Size(241, 23);
+            this.Trans_Flat.Size = new System.Drawing.Size(245, 23);
             this.Trans_Flat.TabIndex = 37;
             this.Trans_Flat.TickFrequency = 10;
             this.Trans_Flat.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2301,13 +2372,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_8k_Out.Enabled = false;
-            this.Trans_8k_Out.Location = new System.Drawing.Point(386, 239);
+            this.Trans_8k_Out.Location = new System.Drawing.Point(390, 239);
             this.Trans_8k_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_8k_Out.Name = "Trans_8k_Out";
             this.Trans_8k_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_8k_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_8k_Out.TabIndex = 45;
             this.Trans_8k_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_8k_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // label29
             // 
@@ -2334,7 +2406,7 @@ namespace Pachyderm_Acoustic
             this.Trans_8kv.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_8kv.Maximum = 100;
             this.Trans_8kv.Name = "Trans_8kv";
-            this.Trans_8kv.Size = new System.Drawing.Size(241, 23);
+            this.Trans_8kv.Size = new System.Drawing.Size(245, 23);
             this.Trans_8kv.TabIndex = 14;
             this.Trans_8kv.TickFrequency = 10;
             this.Trans_8kv.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2385,13 +2457,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_4k_Out.Enabled = false;
-            this.Trans_4k_Out.Location = new System.Drawing.Point(386, 208);
+            this.Trans_4k_Out.Location = new System.Drawing.Point(390, 208);
             this.Trans_4k_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_4k_Out.Name = "Trans_4k_Out";
             this.Trans_4k_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_4k_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_4k_Out.TabIndex = 44;
             this.Trans_4k_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_4k_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_4kv
             // 
@@ -2405,7 +2478,7 @@ namespace Pachyderm_Acoustic
             this.Trans_4kv.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_4kv.Maximum = 100;
             this.Trans_4kv.Name = "Trans_4kv";
-            this.Trans_4kv.Size = new System.Drawing.Size(241, 23);
+            this.Trans_4kv.Size = new System.Drawing.Size(245, 23);
             this.Trans_4kv.TabIndex = 12;
             this.Trans_4kv.TickFrequency = 10;
             this.Trans_4kv.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2443,13 +2516,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_2k_Out.Enabled = false;
-            this.Trans_2k_Out.Location = new System.Drawing.Point(386, 177);
+            this.Trans_2k_Out.Location = new System.Drawing.Point(390, 177);
             this.Trans_2k_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_2k_Out.Name = "Trans_2k_Out";
             this.Trans_2k_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_2k_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_2k_Out.TabIndex = 43;
             this.Trans_2k_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_2k_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // label35
             // 
@@ -2476,7 +2550,7 @@ namespace Pachyderm_Acoustic
             this.Trans_2kv.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_2kv.Maximum = 100;
             this.Trans_2kv.Name = "Trans_2kv";
-            this.Trans_2kv.Size = new System.Drawing.Size(241, 23);
+            this.Trans_2kv.Size = new System.Drawing.Size(245, 23);
             this.Trans_2kv.TabIndex = 11;
             this.Trans_2kv.TickFrequency = 10;
             this.Trans_2kv.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2506,7 +2580,7 @@ namespace Pachyderm_Acoustic
             this.Trans_63v.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_63v.Maximum = 100;
             this.Trans_63v.Name = "Trans_63v";
-            this.Trans_63v.Size = new System.Drawing.Size(241, 23);
+            this.Trans_63v.Size = new System.Drawing.Size(245, 23);
             this.Trans_63v.TabIndex = 16;
             this.Trans_63v.TickFrequency = 10;
             this.Trans_63v.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2518,13 +2592,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_63_Out.Enabled = false;
-            this.Trans_63_Out.Location = new System.Drawing.Point(386, 22);
+            this.Trans_63_Out.Location = new System.Drawing.Point(390, 22);
             this.Trans_63_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_63_Out.Name = "Trans_63_Out";
             this.Trans_63_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_63_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_63_Out.TabIndex = 38;
             this.Trans_63_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_63_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_1k_Out
             // 
@@ -2532,13 +2607,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_1k_Out.Enabled = false;
-            this.Trans_1k_Out.Location = new System.Drawing.Point(386, 146);
+            this.Trans_1k_Out.Location = new System.Drawing.Point(390, 146);
             this.Trans_1k_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_1k_Out.Name = "Trans_1k_Out";
             this.Trans_1k_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_1k_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_1k_Out.TabIndex = 42;
             this.Trans_1k_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_1k_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_1kv
             // 
@@ -2552,7 +2628,7 @@ namespace Pachyderm_Acoustic
             this.Trans_1kv.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_1kv.Maximum = 100;
             this.Trans_1kv.Name = "Trans_1kv";
-            this.Trans_1kv.Size = new System.Drawing.Size(241, 23);
+            this.Trans_1kv.Size = new System.Drawing.Size(245, 23);
             this.Trans_1kv.TabIndex = 10;
             this.Trans_1kv.TickFrequency = 10;
             this.Trans_1kv.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2564,13 +2640,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_125_Out.Enabled = false;
-            this.Trans_125_Out.Location = new System.Drawing.Point(386, 53);
+            this.Trans_125_Out.Location = new System.Drawing.Point(390, 53);
             this.Trans_125_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_125_Out.Name = "Trans_125_Out";
             this.Trans_125_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_125_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_125_Out.TabIndex = 39;
             this.Trans_125_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_125_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_125v
             // 
@@ -2584,7 +2661,7 @@ namespace Pachyderm_Acoustic
             this.Trans_125v.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_125v.Maximum = 100;
             this.Trans_125v.Name = "Trans_125v";
-            this.Trans_125v.Size = new System.Drawing.Size(241, 23);
+            this.Trans_125v.Size = new System.Drawing.Size(245, 23);
             this.Trans_125v.TabIndex = 15;
             this.Trans_125v.TickFrequency = 10;
             this.Trans_125v.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2596,13 +2673,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_500_Out.Enabled = false;
-            this.Trans_500_Out.Location = new System.Drawing.Point(386, 115);
+            this.Trans_500_Out.Location = new System.Drawing.Point(390, 115);
             this.Trans_500_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_500_Out.Name = "Trans_500_Out";
             this.Trans_500_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_500_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_500_Out.TabIndex = 41;
             this.Trans_500_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_500_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_250v
             // 
@@ -2616,7 +2694,7 @@ namespace Pachyderm_Acoustic
             this.Trans_250v.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_250v.Maximum = 100;
             this.Trans_250v.Name = "Trans_250v";
-            this.Trans_250v.Size = new System.Drawing.Size(241, 23);
+            this.Trans_250v.Size = new System.Drawing.Size(245, 23);
             this.Trans_250v.TabIndex = 9;
             this.Trans_250v.TickFrequency = 10;
             this.Trans_250v.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2634,7 +2712,7 @@ namespace Pachyderm_Acoustic
             this.Trans_500v.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_500v.Maximum = 100;
             this.Trans_500v.Name = "Trans_500v";
-            this.Trans_500v.Size = new System.Drawing.Size(241, 23);
+            this.Trans_500v.Size = new System.Drawing.Size(245, 23);
             this.Trans_500v.TabIndex = 13;
             this.Trans_500v.TickFrequency = 10;
             this.Trans_500v.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
@@ -2646,13 +2724,14 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Trans_250_Out.Enabled = false;
-            this.Trans_250_Out.Location = new System.Drawing.Point(386, 84);
+            this.Trans_250_Out.Location = new System.Drawing.Point(390, 84);
             this.Trans_250_Out.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_250_Out.Name = "Trans_250_Out";
             this.Trans_250_Out.RightToLeft = System.Windows.Forms.RightToLeft.No;
             this.Trans_250_Out.Size = new System.Drawing.Size(72, 22);
             this.Trans_250_Out.TabIndex = 40;
             this.Trans_250_Out.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.Trans_250_Out.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
             // 
             // Trans_Check
             // 
@@ -2661,7 +2740,7 @@ namespace Pachyderm_Acoustic
             this.Trans_Check.Location = new System.Drawing.Point(137, 301);
             this.Trans_Check.Margin = new System.Windows.Forms.Padding(4);
             this.Trans_Check.Name = "Trans_Check";
-            this.Trans_Check.Size = new System.Drawing.Size(241, 21);
+            this.Trans_Check.Size = new System.Drawing.Size(245, 21);
             this.Trans_Check.TabIndex = 46;
             this.Trans_Check.Text = "Semi-Transparent Material";
             this.Trans_Check.UseVisualStyleBackColor = true;
@@ -2692,6 +2771,527 @@ namespace Pachyderm_Acoustic
             this.label23.TabIndex = 38;
             this.label23.Text = "Flatten All";
             this.label23.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.tableLayoutPanel8);
+            this.tabPage5.Location = new System.Drawing.Point(4, 25);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(493, 598);
+            this.tabPage5.TabIndex = 1;
+            this.tabPage5.Text = "Transmission Loss";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // tableLayoutPanel8
+            // 
+            this.tableLayoutPanel8.ColumnCount = 4;
+            this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 172F));
+            this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 114F));
+            this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 16F));
+            this.tableLayoutPanel8.Controls.Add(this.Isolation_Lib, 0, 1);
+            this.tableLayoutPanel8.Controls.Add(this.label63, 0, 0);
+            this.tableLayoutPanel8.Controls.Add(this.groupBox1, 1, 0);
+            this.tableLayoutPanel8.Controls.Add(this.label53, 0, 2);
+            this.tableLayoutPanel8.Controls.Add(this.TL_Check, 1, 11);
+            this.tableLayoutPanel8.Controls.Add(this.TL8k, 1, 10);
+            this.tableLayoutPanel8.Controls.Add(this.label54, 0, 10);
+            this.tableLayoutPanel8.Controls.Add(this.label52, 0, 3);
+            this.tableLayoutPanel8.Controls.Add(this.label51, 0, 4);
+            this.tableLayoutPanel8.Controls.Add(this.label48, 0, 7);
+            this.tableLayoutPanel8.Controls.Add(this.label46, 0, 9);
+            this.tableLayoutPanel8.Controls.Add(this.label47, 0, 8);
+            this.tableLayoutPanel8.Controls.Add(this.label49, 0, 6);
+            this.tableLayoutPanel8.Controls.Add(this.label50, 0, 5);
+            this.tableLayoutPanel8.Controls.Add(this.TL4k, 1, 9);
+            this.tableLayoutPanel8.Controls.Add(this.TL2k, 1, 8);
+            this.tableLayoutPanel8.Controls.Add(this.TL1k, 1, 7);
+            this.tableLayoutPanel8.Controls.Add(this.TL500, 1, 6);
+            this.tableLayoutPanel8.Controls.Add(this.TL250, 1, 5);
+            this.tableLayoutPanel8.Controls.Add(this.TL125, 1, 4);
+            this.tableLayoutPanel8.Controls.Add(this.TL63, 1, 3);
+            this.tableLayoutPanel8.Controls.Add(this.label55, 2, 4);
+            this.tableLayoutPanel8.Controls.Add(this.label56, 2, 3);
+            this.tableLayoutPanel8.Controls.Add(this.label57, 2, 5);
+            this.tableLayoutPanel8.Controls.Add(this.label58, 2, 6);
+            this.tableLayoutPanel8.Controls.Add(this.label59, 2, 7);
+            this.tableLayoutPanel8.Controls.Add(this.label60, 2, 8);
+            this.tableLayoutPanel8.Controls.Add(this.label61, 2, 9);
+            this.tableLayoutPanel8.Controls.Add(this.label62, 2, 10);
+            this.tableLayoutPanel8.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel8.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
+            this.tableLayoutPanel8.Location = new System.Drawing.Point(3, 3);
+            this.tableLayoutPanel8.Margin = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel8.Name = "tableLayoutPanel8";
+            this.tableLayoutPanel8.RowCount = 12;
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 119F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 17F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 31F));
+            this.tableLayoutPanel8.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 12F));
+            this.tableLayoutPanel8.Size = new System.Drawing.Size(487, 592);
+            this.tableLayoutPanel8.TabIndex = 48;
+            // 
+            // Isolation_Lib
+            // 
+            this.Isolation_Lib.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Isolation_Lib.FormattingEnabled = true;
+            this.Isolation_Lib.ItemHeight = 16;
+            this.Isolation_Lib.Location = new System.Drawing.Point(4, 26);
+            this.Isolation_Lib.Margin = new System.Windows.Forms.Padding(4);
+            this.Isolation_Lib.Name = "Isolation_Lib";
+            this.Isolation_Lib.ScrollAlwaysVisible = true;
+            this.Isolation_Lib.Size = new System.Drawing.Size(164, 111);
+            this.Isolation_Lib.TabIndex = 50;
+            this.Isolation_Lib.Click += new System.EventHandler(this.Isolation_Lib_SelectedIndexChanged);
+            // 
+            // label63
+            // 
+            this.label63.AutoSize = true;
+            this.label63.Location = new System.Drawing.Point(4, 0);
+            this.label63.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label63.Name = "label63";
+            this.label63.Size = new System.Drawing.Size(144, 17);
+            this.label63.TabIndex = 49;
+            this.label63.Text = "Transmission Library:";
+            // 
+            // groupBox1
+            // 
+            this.tableLayoutPanel8.SetColumnSpan(this.groupBox1, 3);
+            this.groupBox1.Controls.Add(this.DeleteAssembly);
+            this.groupBox1.Controls.Add(this.SaveAssembly);
+            this.groupBox1.Controls.Add(this.IsolationAssemblies);
+            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox1.Location = new System.Drawing.Point(176, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
+            this.tableLayoutPanel8.SetRowSpan(this.groupBox1, 2);
+            this.groupBox1.Size = new System.Drawing.Size(307, 133);
+            this.groupBox1.TabIndex = 48;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Save Assembly Transmission Loss";
+            // 
+            // DeleteAssembly
+            // 
+            this.DeleteAssembly.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.DeleteAssembly.Location = new System.Drawing.Point(8, 90);
+            this.DeleteAssembly.Margin = new System.Windows.Forms.Padding(4);
+            this.DeleteAssembly.Name = "DeleteAssembly";
+            this.DeleteAssembly.Size = new System.Drawing.Size(291, 28);
+            this.DeleteAssembly.TabIndex = 2;
+            this.DeleteAssembly.Text = "Delete Assembly";
+            this.DeleteAssembly.UseVisualStyleBackColor = true;
+            this.DeleteAssembly.Click += new System.EventHandler(this.Delete_Isolation_Click);
+            // 
+            // SaveAssembly
+            // 
+            this.SaveAssembly.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.SaveAssembly.Location = new System.Drawing.Point(8, 54);
+            this.SaveAssembly.Margin = new System.Windows.Forms.Padding(4);
+            this.SaveAssembly.Name = "SaveAssembly";
+            this.SaveAssembly.Size = new System.Drawing.Size(291, 28);
+            this.SaveAssembly.TabIndex = 1;
+            this.SaveAssembly.Text = "Save Assembly";
+            this.SaveAssembly.UseVisualStyleBackColor = true;
+            this.SaveAssembly.Click += new System.EventHandler(this.SaveIso_Click);
+            // 
+            // IsolationAssemblies
+            // 
+            this.IsolationAssemblies.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.IsolationAssemblies.Location = new System.Drawing.Point(8, 22);
+            this.IsolationAssemblies.Margin = new System.Windows.Forms.Padding(4);
+            this.IsolationAssemblies.Name = "IsolationAssemblies";
+            this.IsolationAssemblies.Size = new System.Drawing.Size(290, 22);
+            this.IsolationAssemblies.TabIndex = 0;
+            // 
+            // label53
+            // 
+            this.label53.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label53.AutoSize = true;
+            this.tableLayoutPanel8.SetColumnSpan(this.label53, 3);
+            this.label53.Location = new System.Drawing.Point(4, 141);
+            this.label53.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label53.Name = "label53";
+            this.label53.Size = new System.Drawing.Size(218, 17);
+            this.label53.TabIndex = 30;
+            this.label53.Text = "Transmission Loss (decibels lost)";
+            // 
+            // TL_Check
+            // 
+            this.TL_Check.AutoSize = true;
+            this.TL_Check.Dock = System.Windows.Forms.DockStyle.Top;
+            this.TL_Check.Location = new System.Drawing.Point(176, 410);
+            this.TL_Check.Margin = new System.Windows.Forms.Padding(4);
+            this.TL_Check.Name = "TL_Check";
+            this.TL_Check.Size = new System.Drawing.Size(177, 21);
+            this.TL_Check.TabIndex = 46;
+            this.TL_Check.Text = "Transmissive Assembly";
+            this.TL_Check.UseVisualStyleBackColor = true;
+            this.TL_Check.CheckedChanged += new System.EventHandler(this.Trans_Check_CheckedChanged);
+            // 
+            // TL8k
+            // 
+            this.TL8k.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL8k.DecimalPlaces = 2;
+            this.TL8k.Enabled = false;
+            this.TL8k.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL8k.Location = new System.Drawing.Point(176, 379);
+            this.TL8k.Margin = new System.Windows.Forms.Padding(4);
+            this.TL8k.Name = "TL8k";
+            this.TL8k.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL8k.Size = new System.Drawing.Size(177, 22);
+            this.TL8k.TabIndex = 45;
+            this.TL8k.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL8k.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // label54
+            // 
+            this.label54.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label54.AutoSize = true;
+            this.label54.Location = new System.Drawing.Point(4, 375);
+            this.label54.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label54.Name = "label54";
+            this.label54.Size = new System.Drawing.Size(44, 31);
+            this.label54.TabIndex = 24;
+            this.label54.Text = "8 kHz";
+            this.label54.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label52
+            // 
+            this.label52.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label52.AutoSize = true;
+            this.label52.Location = new System.Drawing.Point(4, 158);
+            this.label52.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label52.Name = "label52";
+            this.label52.Size = new System.Drawing.Size(57, 31);
+            this.label52.TabIndex = 17;
+            this.label52.Text = "62.5 Hz";
+            this.label52.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label51
+            // 
+            this.label51.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label51.AutoSize = true;
+            this.label51.Location = new System.Drawing.Point(4, 189);
+            this.label51.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label51.Name = "label51";
+            this.label51.Size = new System.Drawing.Size(53, 31);
+            this.label51.TabIndex = 18;
+            this.label51.Text = "125 Hz";
+            this.label51.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label48
+            // 
+            this.label48.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label48.AutoSize = true;
+            this.label48.Location = new System.Drawing.Point(4, 282);
+            this.label48.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label48.Name = "label48";
+            this.label48.Size = new System.Drawing.Size(44, 31);
+            this.label48.TabIndex = 20;
+            this.label48.Text = "1 kHz";
+            this.label48.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label46
+            // 
+            this.label46.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label46.AutoSize = true;
+            this.label46.Location = new System.Drawing.Point(4, 344);
+            this.label46.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label46.Name = "label46";
+            this.label46.Size = new System.Drawing.Size(44, 31);
+            this.label46.TabIndex = 22;
+            this.label46.Text = "4 kHz";
+            this.label46.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label47
+            // 
+            this.label47.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label47.AutoSize = true;
+            this.label47.Location = new System.Drawing.Point(4, 313);
+            this.label47.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label47.Name = "label47";
+            this.label47.Size = new System.Drawing.Size(44, 31);
+            this.label47.TabIndex = 21;
+            this.label47.Text = "2 kHz";
+            this.label47.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label49
+            // 
+            this.label49.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label49.AutoSize = true;
+            this.label49.Location = new System.Drawing.Point(4, 251);
+            this.label49.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label49.Name = "label49";
+            this.label49.Size = new System.Drawing.Size(53, 31);
+            this.label49.TabIndex = 19;
+            this.label49.Text = "500 Hz";
+            this.label49.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label50
+            // 
+            this.label50.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.label50.AutoSize = true;
+            this.label50.Location = new System.Drawing.Point(4, 220);
+            this.label50.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label50.Name = "label50";
+            this.label50.Size = new System.Drawing.Size(53, 31);
+            this.label50.TabIndex = 25;
+            this.label50.Text = "250 Hz";
+            this.label50.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // TL4k
+            // 
+            this.TL4k.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL4k.DecimalPlaces = 2;
+            this.TL4k.Enabled = false;
+            this.TL4k.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL4k.Location = new System.Drawing.Point(176, 348);
+            this.TL4k.Margin = new System.Windows.Forms.Padding(4);
+            this.TL4k.Name = "TL4k";
+            this.TL4k.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL4k.Size = new System.Drawing.Size(177, 22);
+            this.TL4k.TabIndex = 44;
+            this.TL4k.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL4k.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL2k
+            // 
+            this.TL2k.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL2k.DecimalPlaces = 2;
+            this.TL2k.Enabled = false;
+            this.TL2k.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL2k.Location = new System.Drawing.Point(176, 317);
+            this.TL2k.Margin = new System.Windows.Forms.Padding(4);
+            this.TL2k.Name = "TL2k";
+            this.TL2k.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL2k.Size = new System.Drawing.Size(177, 22);
+            this.TL2k.TabIndex = 43;
+            this.TL2k.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL2k.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL1k
+            // 
+            this.TL1k.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL1k.DecimalPlaces = 2;
+            this.TL1k.Enabled = false;
+            this.TL1k.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL1k.Location = new System.Drawing.Point(176, 286);
+            this.TL1k.Margin = new System.Windows.Forms.Padding(4);
+            this.TL1k.Name = "TL1k";
+            this.TL1k.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL1k.Size = new System.Drawing.Size(177, 22);
+            this.TL1k.TabIndex = 42;
+            this.TL1k.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL1k.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL500
+            // 
+            this.TL500.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL500.DecimalPlaces = 2;
+            this.TL500.Enabled = false;
+            this.TL500.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL500.Location = new System.Drawing.Point(176, 255);
+            this.TL500.Margin = new System.Windows.Forms.Padding(4);
+            this.TL500.Name = "TL500";
+            this.TL500.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL500.Size = new System.Drawing.Size(177, 22);
+            this.TL500.TabIndex = 41;
+            this.TL500.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL500.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL250
+            // 
+            this.TL250.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL250.DecimalPlaces = 2;
+            this.TL250.Enabled = false;
+            this.TL250.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL250.Location = new System.Drawing.Point(176, 224);
+            this.TL250.Margin = new System.Windows.Forms.Padding(4);
+            this.TL250.Name = "TL250";
+            this.TL250.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL250.Size = new System.Drawing.Size(177, 22);
+            this.TL250.TabIndex = 40;
+            this.TL250.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL250.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL125
+            // 
+            this.TL125.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL125.DecimalPlaces = 2;
+            this.TL125.Enabled = false;
+            this.TL125.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL125.Location = new System.Drawing.Point(176, 193);
+            this.TL125.Margin = new System.Windows.Forms.Padding(4);
+            this.TL125.Name = "TL125";
+            this.TL125.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL125.Size = new System.Drawing.Size(177, 22);
+            this.TL125.TabIndex = 39;
+            this.TL125.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL125.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // TL63
+            // 
+            this.TL63.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.TL63.DecimalPlaces = 2;
+            this.TL63.Enabled = false;
+            this.TL63.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            65536});
+            this.TL63.Location = new System.Drawing.Point(176, 162);
+            this.TL63.Margin = new System.Windows.Forms.Padding(4);
+            this.TL63.Name = "TL63";
+            this.TL63.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.TL63.Size = new System.Drawing.Size(177, 22);
+            this.TL63.TabIndex = 38;
+            this.TL63.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TL63.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            // 
+            // label55
+            // 
+            this.label55.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label55.AutoSize = true;
+            this.label55.Location = new System.Drawing.Point(360, 196);
+            this.label55.Name = "label55";
+            this.label55.Size = new System.Drawing.Size(60, 17);
+            this.label55.TabIndex = 47;
+            this.label55.Text = "decibels";
+            // 
+            // label56
+            // 
+            this.label56.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label56.AutoSize = true;
+            this.label56.Location = new System.Drawing.Point(360, 165);
+            this.label56.Name = "label56";
+            this.label56.Size = new System.Drawing.Size(60, 17);
+            this.label56.TabIndex = 47;
+            this.label56.Text = "decibels";
+            // 
+            // label57
+            // 
+            this.label57.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label57.AutoSize = true;
+            this.label57.Location = new System.Drawing.Point(360, 227);
+            this.label57.Name = "label57";
+            this.label57.Size = new System.Drawing.Size(60, 17);
+            this.label57.TabIndex = 47;
+            this.label57.Text = "decibels";
+            // 
+            // label58
+            // 
+            this.label58.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label58.AutoSize = true;
+            this.label58.Location = new System.Drawing.Point(360, 258);
+            this.label58.Name = "label58";
+            this.label58.Size = new System.Drawing.Size(60, 17);
+            this.label58.TabIndex = 47;
+            this.label58.Text = "decibels";
+            // 
+            // label59
+            // 
+            this.label59.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label59.AutoSize = true;
+            this.label59.Location = new System.Drawing.Point(360, 289);
+            this.label59.Name = "label59";
+            this.label59.Size = new System.Drawing.Size(60, 17);
+            this.label59.TabIndex = 47;
+            this.label59.Text = "decibels";
+            // 
+            // label60
+            // 
+            this.label60.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label60.AutoSize = true;
+            this.label60.Location = new System.Drawing.Point(360, 320);
+            this.label60.Name = "label60";
+            this.label60.Size = new System.Drawing.Size(60, 17);
+            this.label60.TabIndex = 47;
+            this.label60.Text = "decibels";
+            // 
+            // label61
+            // 
+            this.label61.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label61.AutoSize = true;
+            this.label61.Location = new System.Drawing.Point(360, 351);
+            this.label61.Name = "label61";
+            this.label61.Size = new System.Drawing.Size(60, 17);
+            this.label61.TabIndex = 47;
+            this.label61.Text = "decibels";
+            // 
+            // label62
+            // 
+            this.label62.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.label62.AutoSize = true;
+            this.label62.Location = new System.Drawing.Point(360, 382);
+            this.label62.Name = "label62";
+            this.label62.Size = new System.Drawing.Size(60, 17);
+            this.label62.TabIndex = 47;
+            this.label62.Text = "decibels";
             // 
             // LayerDisplay
             // 
@@ -2732,7 +3332,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 99F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 131F));
             this.tableLayoutPanel3.Controls.Add(this.label15, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.label25, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.SourceList, 0, 1);
@@ -3062,7 +3662,7 @@ namespace Pachyderm_Acoustic
             this.label27.Location = new System.Drawing.Point(220, 169);
             this.label27.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(37, 30);
+            this.label27.Size = new System.Drawing.Size(27, 30);
             this.label27.TabIndex = 50;
             this.label27.Text = "Altitude";
             // 
@@ -3107,10 +3707,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label26.AutoSize = true;
             this.label26.Enabled = false;
-            this.label26.Location = new System.Drawing.Point(364, 169);
+            this.label26.Location = new System.Drawing.Point(354, 169);
             this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(38, 30);
+            this.label26.Size = new System.Drawing.Size(27, 30);
             this.label26.TabIndex = 49;
             this.label26.Text = "Azimuth";
             // 
@@ -3120,10 +3720,10 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tableLayoutPanel3.SetColumnSpan(this.Normalize_Graph, 2);
-            this.Normalize_Graph.Location = new System.Drawing.Point(364, 337);
+            this.Normalize_Graph.Location = new System.Drawing.Point(354, 337);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(4);
             this.Normalize_Graph.Name = "Normalize_Graph";
-            this.Normalize_Graph.Size = new System.Drawing.Size(149, 20);
+            this.Normalize_Graph.Size = new System.Drawing.Size(155, 20);
             this.Normalize_Graph.TabIndex = 43;
             this.Normalize_Graph.Text = "Normalize To Direct";
             this.Normalize_Graph.UseVisualStyleBackColor = true;
@@ -3132,7 +3732,7 @@ namespace Pachyderm_Acoustic
             // Alt_Choice
             // 
             this.Alt_Choice.DecimalPlaces = 2;
-            this.Alt_Choice.Location = new System.Drawing.Point(265, 173);
+            this.Alt_Choice.Location = new System.Drawing.Point(255, 173);
             this.Alt_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Alt_Choice.Maximum = new decimal(new int[] {
             91,
@@ -3157,7 +3757,7 @@ namespace Pachyderm_Acoustic
             this.LockUserScale.Location = new System.Drawing.Point(220, 337);
             this.LockUserScale.Margin = new System.Windows.Forms.Padding(4);
             this.LockUserScale.Name = "LockUserScale";
-            this.LockUserScale.Size = new System.Drawing.Size(133, 20);
+            this.LockUserScale.Size = new System.Drawing.Size(126, 20);
             this.LockUserScale.TabIndex = 44;
             this.LockUserScale.Text = "Lock User Scale";
             this.LockUserScale.UseVisualStyleBackColor = true;
@@ -3166,7 +3766,7 @@ namespace Pachyderm_Acoustic
             // Azi_Choice
             // 
             this.Azi_Choice.DecimalPlaces = 2;
-            this.Azi_Choice.Location = new System.Drawing.Point(410, 173);
+            this.Azi_Choice.Location = new System.Drawing.Point(389, 173);
             this.Azi_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Azi_Choice.Maximum = new decimal(new int[] {
             360,
@@ -3202,7 +3802,7 @@ namespace Pachyderm_Acoustic
             this.Graph_Type.Location = new System.Drawing.Point(4, 309);
             this.Graph_Type.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(253, 24);
+            this.Graph_Type.Size = new System.Drawing.Size(243, 24);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3232,7 +3832,7 @@ namespace Pachyderm_Acoustic
             this.Label5.Location = new System.Drawing.Point(4, 199);
             this.Label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Label5.Name = "Label5";
-            this.Label5.Size = new System.Drawing.Size(253, 17);
+            this.Label5.Size = new System.Drawing.Size(243, 17);
             this.Label5.TabIndex = 1;
             this.Label5.Text = "Image Source Paths";
             // 
@@ -3252,10 +3852,10 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(265, 309);
+            this.Graph_Octave.Location = new System.Drawing.Point(255, 309);
             this.Graph_Octave.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(248, 24);
+            this.Graph_Octave.Size = new System.Drawing.Size(258, 24);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3533,6 +4133,8 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel5.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.user_quart_lambda)).EndInit();
             this.Transparency.ResumeLayout(false);
+            this.tabControl2.ResumeLayout(false);
+            this.tabPage2.ResumeLayout(false);
             this.tableLayoutPanel6.ResumeLayout(false);
             this.tableLayoutPanel6.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_Flat)).EndInit();
@@ -3552,6 +4154,19 @@ namespace Pachyderm_Acoustic
             ((System.ComponentModel.ISupportInitialize)(this.Trans_250v)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_500v)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Trans_250_Out)).EndInit();
+            this.tabPage5.ResumeLayout(false);
+            this.tableLayoutPanel8.ResumeLayout(false);
+            this.tableLayoutPanel8.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.TL8k)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL4k)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL2k)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL1k)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL500)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL250)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL125)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TL63)).EndInit();
             this.TabPage3.ResumeLayout(false);
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
@@ -3733,7 +4348,6 @@ namespace Pachyderm_Acoustic
             internal System.Windows.Forms.TrackBar Trans_250v;
             internal System.Windows.Forms.TrackBar Trans_500v;
             private System.Windows.Forms.NumericUpDown Trans_250_Out;
-            private System.Windows.Forms.CheckBox Trans_Check;
             private System.Windows.Forms.MenuStrip SP_menu;
             private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
             private System.Windows.Forms.ToolStripMenuItem openDataToolStripMenuItem;
@@ -3764,6 +4378,43 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem5;
             private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem6;
             private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+            private System.Windows.Forms.TabControl tabControl2;
+            private System.Windows.Forms.TabPage tabPage2;
+            private System.Windows.Forms.CheckBox Trans_Check;
+            private System.Windows.Forms.TabPage tabPage5;
+            private System.Windows.Forms.TableLayoutPanel tableLayoutPanel8;
+            internal System.Windows.Forms.Label label63;
+            private System.Windows.Forms.GroupBox groupBox1;
+            private System.Windows.Forms.Button DeleteAssembly;
+            private System.Windows.Forms.Button SaveAssembly;
+            private System.Windows.Forms.MaskedTextBox IsolationAssemblies;
+            private System.Windows.Forms.Label label53;
+            private System.Windows.Forms.CheckBox TL_Check;
+            private System.Windows.Forms.NumericUpDown TL8k;
+            internal System.Windows.Forms.Label label54;
+            internal System.Windows.Forms.Label label52;
+            internal System.Windows.Forms.Label label51;
+            internal System.Windows.Forms.Label label48;
+            internal System.Windows.Forms.Label label46;
+            internal System.Windows.Forms.Label label47;
+            internal System.Windows.Forms.Label label49;
+            internal System.Windows.Forms.Label label50;
+            private System.Windows.Forms.NumericUpDown TL4k;
+            private System.Windows.Forms.NumericUpDown TL2k;
+            private System.Windows.Forms.NumericUpDown TL1k;
+            private System.Windows.Forms.NumericUpDown TL500;
+            private System.Windows.Forms.NumericUpDown TL250;
+            private System.Windows.Forms.NumericUpDown TL125;
+            private System.Windows.Forms.NumericUpDown TL63;
+            private System.Windows.Forms.Label label55;
+            private System.Windows.Forms.Label label56;
+            private System.Windows.Forms.Label label57;
+            private System.Windows.Forms.Label label58;
+            private System.Windows.Forms.Label label59;
+            private System.Windows.Forms.Label label60;
+            private System.Windows.Forms.Label label61;
+            private System.Windows.Forms.Label label62;
+            internal System.Windows.Forms.ListBox Isolation_Lib;
         }
     }
 }

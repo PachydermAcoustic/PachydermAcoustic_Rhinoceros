@@ -1153,7 +1153,11 @@ namespace Pachyderm_Acoustic
                 mod.ShowDialog();
                 if (mod.accept)
                 {
-                    foreach (int i in srcs) Map[i].SWL = mod.Power;
+                    foreach (int i in srcs)
+                    {
+                        double[] factor = Map[i].PowerModFactor(mod.Power);
+                        Map[i].Set_Power(factor);
+                    }
                 }
                 Update_Graph(null, null);
             }
