@@ -115,7 +115,7 @@ namespace Pachyderm_Acoustic
                         for (int oct = 0; oct < 8; oct++)
                         {
                             double ret = Math.Pow(10, -Trans[oct] / 10);
-                            Trans[oct] = ret;
+                            Trans[oct] = 1 - ret;
                             //Abs[oct] *= ret;
                         }
 
@@ -193,6 +193,27 @@ namespace Pachyderm_Acoustic
 
                 int id = -1;
 
+                MeshingParameters mp = new MeshingParameters();
+                List<Brep> blist = new List<Brep>();
+                mp.JaggedSeams = false;
+                mp.MaximumEdgeLength = 343d / 1000d;
+                mp.MinimumEdgeLength = 343d / 1000d;
+                mp.SimplePlanes = true;
+                mp.RefineGrid = true;
+
+                while (mp.MaximumEdgeLength < 20)
+                {
+                    Mesh Test_mesh = new Mesh();
+                    for (int q = 0; q < BList.Count; q++)
+                    {
+                        Mesh[] m = Mesh.CreateFromBrep(BList[q] as Brep, mp);
+                        for (int i = 0; i < m.Length; i++) Test_mesh.Append(m[i]);
+                    }
+                    if (Test_mesh.Faces.Count < 80000) break;
+                    mp.MaximumEdgeLength *= 1.5;
+                    mp.MinimumEdgeLength *= 1.5;
+                }
+
                 for (int q = 0; q < BList.Count; q++)
                 {
                     Brep BL = BList[q] is BrepFace ? (BList[q] as BrepFace).DuplicateFace(false) : BList[q] as Brep;
@@ -218,15 +239,8 @@ namespace Pachyderm_Acoustic
                         }
 
                         Mesh[] meshes;
-                        MeshingParameters mp = new MeshingParameters();
 
                         //TODO: insert a check for degenerate polygons, and exclude prior to passing to construct method.
-                        mp.JaggedSeams = false;
-                        mp.MaximumEdgeLength = 343d / 1000d;
-                        mp.MinimumEdgeLength = 343d / 1000d;
-                        mp.SimplePlanes = true;
-                        mp.RefineGrid = true;
-
                         meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);//(Brep)BrepList[BrepList.Count - 1], mp);
                         if (meshes == null) throw new Exception("Problem with meshes");
 

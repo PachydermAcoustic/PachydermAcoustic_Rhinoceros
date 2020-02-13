@@ -284,7 +284,6 @@
     <None Include="Resources\LoudSpeaker_Selected.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="License-LGPL.txt" />
     <Content Include="Resources\Icon1.png" />
     <Content Include="Resources\Source.bmp" />
   </ItemGroup>

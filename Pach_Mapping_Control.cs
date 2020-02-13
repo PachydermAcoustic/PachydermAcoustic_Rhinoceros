@@ -1054,7 +1054,7 @@ namespace Pachyderm_Acoustic
 
             public void Set_Phase_Regime(bool Linear_Phase)
             {
-                if (Map == null || Map[0] == null) return;
+                if (Map == null || Map.Length == 0 || Map[0] == null) return;
                 if (Linear_Phase == this.Linear_Phase) return;
                 if ((this.Linear_Phase == true && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System)) || (this.Linear_Phase == false && !(Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System)))
                 {

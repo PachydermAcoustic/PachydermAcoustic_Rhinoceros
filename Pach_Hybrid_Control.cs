@@ -539,10 +539,10 @@ namespace Pachyderm_Acoustic
             {
                 if (DeleteAssembly.Text == "Delete Assembly")
                 {
-                    if (Material_Lib.SelectedItem == null) return;
-                    string Selection = Material_Lib.SelectedItem.ToString();
-                    Material_Name.Text = Material_Lib.SelectedItem.ToString();
-                    Material Mat = Materials.Abs_byKey(Selection);
+                    if (Isolation_Lib.SelectedItem == null) return;
+                    string Selection = Isolation_Lib.SelectedItem.ToString();
+                    Material_Name.Text = Isolation_Lib.SelectedItem.ToString();
+                    Material Mat = Materials.TL_byKey(Selection);
 
                     TL63.Value = (int)(Mat.Values[0]);
                     TL125.Value = (int)(Mat.Values[1]);

@@ -44,28 +44,28 @@ namespace Pachyderm_Acoustic
             private void InitializeComponent()
             {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel25 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel26 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel27 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel28 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel29 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel30 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel31 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel32 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel33 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel34 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel35 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel36 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series17 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series18 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series19 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series20 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series21 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series22 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series23 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series24 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel13 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel14 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel15 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel16 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel17 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel18 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel19 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel20 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel21 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel22 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel23 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.CustomLabel customLabel24 = new System.Windows.Forms.DataVisualization.Charting.CustomLabel();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series13 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series14 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series15 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series16 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.label24 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
@@ -298,6 +298,7 @@ namespace Pachyderm_Acoustic
             this.saveParameterResultsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.savePTBFormatToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveVRSpectraToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label64 = new System.Windows.Forms.Label();
             this.tableLayoutPanel4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.Abs4kOut)).BeginInit();
@@ -1256,52 +1257,52 @@ namespace Pachyderm_Acoustic
             // SmartMat_Display
             // 
             this.SmartMat_Display.BackColor = System.Drawing.Color.Transparent;
-            customLabel25.FromPosition = 1D;
-            customLabel25.Text = "0";
-            customLabel25.ToPosition = 2D;
-            customLabel26.FromPosition = 1D;
-            customLabel26.Text = "30";
-            customLabel26.ToPosition = 2D;
-            customLabel27.FromPosition = 2D;
-            customLabel27.Text = "60";
-            customLabel27.ToPosition = 3D;
-            customLabel28.FromPosition = 3D;
-            customLabel28.Text = "90";
-            customLabel28.ToPosition = 4D;
-            customLabel34.FromPosition = 8D;
-            customLabel34.Text = "-90";
-            customLabel34.ToPosition = 9D;
-            customLabel35.FromPosition = 9D;
-            customLabel35.Text = "-60";
-            customLabel35.ToPosition = 10D;
-            customLabel36.FromPosition = 11D;
-            customLabel36.Text = "-30";
-            customLabel36.ToPosition = 12D;
-            chartArea3.AxisX.CustomLabels.Add(customLabel25);
-            chartArea3.AxisX.CustomLabels.Add(customLabel26);
-            chartArea3.AxisX.CustomLabels.Add(customLabel27);
-            chartArea3.AxisX.CustomLabels.Add(customLabel28);
-            chartArea3.AxisX.CustomLabels.Add(customLabel29);
-            chartArea3.AxisX.CustomLabels.Add(customLabel30);
-            chartArea3.AxisX.CustomLabels.Add(customLabel31);
-            chartArea3.AxisX.CustomLabels.Add(customLabel32);
-            chartArea3.AxisX.CustomLabels.Add(customLabel33);
-            chartArea3.AxisX.CustomLabels.Add(customLabel34);
-            chartArea3.AxisX.CustomLabels.Add(customLabel35);
-            chartArea3.AxisX.CustomLabels.Add(customLabel36);
-            chartArea3.Name = "ChartArea1";
-            this.SmartMat_Display.ChartAreas.Add(chartArea3);
+            customLabel13.FromPosition = 1D;
+            customLabel13.Text = "0";
+            customLabel13.ToPosition = 2D;
+            customLabel14.FromPosition = 1D;
+            customLabel14.Text = "30";
+            customLabel14.ToPosition = 2D;
+            customLabel15.FromPosition = 2D;
+            customLabel15.Text = "60";
+            customLabel15.ToPosition = 3D;
+            customLabel16.FromPosition = 3D;
+            customLabel16.Text = "90";
+            customLabel16.ToPosition = 4D;
+            customLabel22.FromPosition = 8D;
+            customLabel22.Text = "-90";
+            customLabel22.ToPosition = 9D;
+            customLabel23.FromPosition = 9D;
+            customLabel23.Text = "-60";
+            customLabel23.ToPosition = 10D;
+            customLabel24.FromPosition = 11D;
+            customLabel24.Text = "-30";
+            customLabel24.ToPosition = 12D;
+            chartArea2.AxisX.CustomLabels.Add(customLabel13);
+            chartArea2.AxisX.CustomLabels.Add(customLabel14);
+            chartArea2.AxisX.CustomLabels.Add(customLabel15);
+            chartArea2.AxisX.CustomLabels.Add(customLabel16);
+            chartArea2.AxisX.CustomLabels.Add(customLabel17);
+            chartArea2.AxisX.CustomLabels.Add(customLabel18);
+            chartArea2.AxisX.CustomLabels.Add(customLabel19);
+            chartArea2.AxisX.CustomLabels.Add(customLabel20);
+            chartArea2.AxisX.CustomLabels.Add(customLabel21);
+            chartArea2.AxisX.CustomLabels.Add(customLabel22);
+            chartArea2.AxisX.CustomLabels.Add(customLabel23);
+            chartArea2.AxisX.CustomLabels.Add(customLabel24);
+            chartArea2.Name = "ChartArea1";
+            this.SmartMat_Display.ChartAreas.Add(chartArea2);
             this.SmartMat_Display.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend3.BackColor = System.Drawing.Color.Transparent;
-            legend3.BackImageAlignment = System.Windows.Forms.DataVisualization.Charting.ChartImageAlignmentStyle.Left;
-            legend3.LegendStyle = System.Windows.Forms.DataVisualization.Charting.LegendStyle.Column;
-            legend3.Name = "Legend1";
-            legend3.Position.Auto = false;
-            legend3.Position.Height = 25F;
-            legend3.Position.Width = 20F;
-            legend3.Position.X = 80F;
-            legend3.Position.Y = 75F;
-            this.SmartMat_Display.Legends.Add(legend3);
+            legend2.BackColor = System.Drawing.Color.Transparent;
+            legend2.BackImageAlignment = System.Windows.Forms.DataVisualization.Charting.ChartImageAlignmentStyle.Left;
+            legend2.LegendStyle = System.Windows.Forms.DataVisualization.Charting.LegendStyle.Column;
+            legend2.Name = "Legend1";
+            legend2.Position.Auto = false;
+            legend2.Position.Height = 25F;
+            legend2.Position.Width = 20F;
+            legend2.Position.X = 80F;
+            legend2.Position.Y = 75F;
+            this.SmartMat_Display.Legends.Add(legend2);
             this.SmartMat_Display.Location = new System.Drawing.Point(4, 4);
             this.SmartMat_Display.Margin = new System.Windows.Forms.Padding(4);
             this.SmartMat_Display.Name = "SmartMat_Display";
@@ -1315,72 +1316,72 @@ namespace Pachyderm_Acoustic
         System.Drawing.Color.Blue,
         System.Drawing.Color.Indigo,
         System.Drawing.Color.Violet};
-            series17.BorderWidth = 3;
-            series17.ChartArea = "ChartArea1";
-            series17.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series17.CustomProperties = "CircularLabelsStyle=Circular";
-            series17.Font = new System.Drawing.Font("Microsoft Sans Serif", 5.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            series17.Legend = "Legend1";
-            series17.Name = "62.5 Hz.";
-            series17.ShadowColor = System.Drawing.Color.DarkGray;
-            series17.ShadowOffset = 3;
-            series18.BorderWidth = 3;
-            series18.ChartArea = "ChartArea1";
-            series18.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series18.Legend = "Legend1";
-            series18.Name = "125 Hz.";
-            series18.ShadowColor = System.Drawing.Color.DarkGray;
-            series18.ShadowOffset = 3;
-            series19.BorderWidth = 3;
-            series19.ChartArea = "ChartArea1";
-            series19.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series19.Legend = "Legend1";
-            series19.Name = "250 Hz.";
-            series19.ShadowColor = System.Drawing.Color.DarkGray;
-            series19.ShadowOffset = 3;
-            series20.BorderWidth = 3;
-            series20.ChartArea = "ChartArea1";
-            series20.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series20.Legend = "Legend1";
-            series20.Name = "500 Hz.";
-            series20.ShadowColor = System.Drawing.Color.DarkGray;
-            series20.ShadowOffset = 3;
-            series21.BorderWidth = 3;
-            series21.ChartArea = "ChartArea1";
-            series21.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series21.Legend = "Legend1";
-            series21.Name = "1000 Hz.";
-            series21.ShadowColor = System.Drawing.Color.DarkGray;
-            series21.ShadowOffset = 3;
-            series22.BorderWidth = 3;
-            series22.ChartArea = "ChartArea1";
-            series22.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series22.Legend = "Legend1";
-            series22.Name = "2000 Hz.";
-            series22.ShadowColor = System.Drawing.Color.DarkGray;
-            series22.ShadowOffset = 3;
-            series23.BorderWidth = 3;
-            series23.ChartArea = "ChartArea1";
-            series23.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series23.Legend = "Legend1";
-            series23.Name = "4000 Hz.";
-            series23.ShadowColor = System.Drawing.Color.DarkGray;
-            series23.ShadowOffset = 3;
-            series24.BorderWidth = 3;
-            series24.ChartArea = "ChartArea1";
-            series24.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
-            series24.Legend = "Legend1";
-            series24.Name = "8000 Hz.";
-            series24.ShadowColor = System.Drawing.Color.DarkGray;
-            series24.ShadowOffset = 3;
-            this.SmartMat_Display.Series.Add(series17);
-            this.SmartMat_Display.Series.Add(series18);
-            this.SmartMat_Display.Series.Add(series19);
-            this.SmartMat_Display.Series.Add(series20);
-            this.SmartMat_Display.Series.Add(series21);
-            this.SmartMat_Display.Series.Add(series22);
-            this.SmartMat_Display.Series.Add(series23);
-            this.SmartMat_Display.Series.Add(series24);
+            series9.BorderWidth = 3;
+            series9.ChartArea = "ChartArea1";
+            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series9.CustomProperties = "CircularLabelsStyle=Circular";
+            series9.Font = new System.Drawing.Font("Microsoft Sans Serif", 5.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            series9.Legend = "Legend1";
+            series9.Name = "62.5 Hz.";
+            series9.ShadowColor = System.Drawing.Color.DarkGray;
+            series9.ShadowOffset = 3;
+            series10.BorderWidth = 3;
+            series10.ChartArea = "ChartArea1";
+            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series10.Legend = "Legend1";
+            series10.Name = "125 Hz.";
+            series10.ShadowColor = System.Drawing.Color.DarkGray;
+            series10.ShadowOffset = 3;
+            series11.BorderWidth = 3;
+            series11.ChartArea = "ChartArea1";
+            series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series11.Legend = "Legend1";
+            series11.Name = "250 Hz.";
+            series11.ShadowColor = System.Drawing.Color.DarkGray;
+            series11.ShadowOffset = 3;
+            series12.BorderWidth = 3;
+            series12.ChartArea = "ChartArea1";
+            series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series12.Legend = "Legend1";
+            series12.Name = "500 Hz.";
+            series12.ShadowColor = System.Drawing.Color.DarkGray;
+            series12.ShadowOffset = 3;
+            series13.BorderWidth = 3;
+            series13.ChartArea = "ChartArea1";
+            series13.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series13.Legend = "Legend1";
+            series13.Name = "1000 Hz.";
+            series13.ShadowColor = System.Drawing.Color.DarkGray;
+            series13.ShadowOffset = 3;
+            series14.BorderWidth = 3;
+            series14.ChartArea = "ChartArea1";
+            series14.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series14.Legend = "Legend1";
+            series14.Name = "2000 Hz.";
+            series14.ShadowColor = System.Drawing.Color.DarkGray;
+            series14.ShadowOffset = 3;
+            series15.BorderWidth = 3;
+            series15.ChartArea = "ChartArea1";
+            series15.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series15.Legend = "Legend1";
+            series15.Name = "4000 Hz.";
+            series15.ShadowColor = System.Drawing.Color.DarkGray;
+            series15.ShadowOffset = 3;
+            series16.BorderWidth = 3;
+            series16.ChartArea = "ChartArea1";
+            series16.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Polar;
+            series16.Legend = "Legend1";
+            series16.Name = "8000 Hz.";
+            series16.ShadowColor = System.Drawing.Color.DarkGray;
+            series16.ShadowOffset = 3;
+            this.SmartMat_Display.Series.Add(series9);
+            this.SmartMat_Display.Series.Add(series10);
+            this.SmartMat_Display.Series.Add(series11);
+            this.SmartMat_Display.Series.Add(series12);
+            this.SmartMat_Display.Series.Add(series13);
+            this.SmartMat_Display.Series.Add(series14);
+            this.SmartMat_Display.Series.Add(series15);
+            this.SmartMat_Display.Series.Add(series16);
             this.SmartMat_Display.Size = new System.Drawing.Size(493, 619);
             this.SmartMat_Display.TabIndex = 45;
             this.SmartMat_Display.TabStop = false;
@@ -2790,6 +2791,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 114F));
             this.tableLayoutPanel8.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 16F));
+            this.tableLayoutPanel8.Controls.Add(this.label64, 2, 2);
             this.tableLayoutPanel8.Controls.Add(this.Isolation_Lib, 0, 1);
             this.tableLayoutPanel8.Controls.Add(this.label63, 0, 0);
             this.tableLayoutPanel8.Controls.Add(this.groupBox1, 1, 0);
@@ -2852,6 +2854,7 @@ namespace Pachyderm_Acoustic
             this.Isolation_Lib.Size = new System.Drawing.Size(164, 111);
             this.Isolation_Lib.TabIndex = 50;
             this.Isolation_Lib.Click += new System.EventHandler(this.Isolation_Lib_SelectedIndexChanged);
+            this.Isolation_Lib.SelectedIndexChanged += new System.EventHandler(this.Isolation_Lib_SelectedIndexChanged);
             // 
             // label63
             // 
@@ -2920,7 +2923,7 @@ namespace Pachyderm_Acoustic
             // 
             this.label53.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label53.AutoSize = true;
-            this.tableLayoutPanel8.SetColumnSpan(this.label53, 3);
+            this.tableLayoutPanel8.SetColumnSpan(this.label53, 2);
             this.label53.Location = new System.Drawing.Point(4, 141);
             this.label53.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label53.Name = "label53";
@@ -3332,7 +3335,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 99F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 131F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 135F));
             this.tableLayoutPanel3.Controls.Add(this.label15, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.label25, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.SourceList, 0, 1);
@@ -3662,7 +3665,7 @@ namespace Pachyderm_Acoustic
             this.label27.Location = new System.Drawing.Point(220, 169);
             this.label27.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(27, 30);
+            this.label27.Size = new System.Drawing.Size(25, 30);
             this.label27.TabIndex = 50;
             this.label27.Text = "Altitude";
             // 
@@ -3707,10 +3710,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label26.AutoSize = true;
             this.label26.Enabled = false;
-            this.label26.Location = new System.Drawing.Point(354, 169);
+            this.label26.Location = new System.Drawing.Point(352, 169);
             this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(27, 30);
+            this.label26.Size = new System.Drawing.Size(25, 30);
             this.label26.TabIndex = 49;
             this.label26.Text = "Azimuth";
             // 
@@ -3720,7 +3723,7 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tableLayoutPanel3.SetColumnSpan(this.Normalize_Graph, 2);
-            this.Normalize_Graph.Location = new System.Drawing.Point(354, 337);
+            this.Normalize_Graph.Location = new System.Drawing.Point(352, 337);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(4);
             this.Normalize_Graph.Name = "Normalize_Graph";
             this.Normalize_Graph.Size = new System.Drawing.Size(155, 20);
@@ -3732,7 +3735,7 @@ namespace Pachyderm_Acoustic
             // Alt_Choice
             // 
             this.Alt_Choice.DecimalPlaces = 2;
-            this.Alt_Choice.Location = new System.Drawing.Point(255, 173);
+            this.Alt_Choice.Location = new System.Drawing.Point(253, 173);
             this.Alt_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Alt_Choice.Maximum = new decimal(new int[] {
             91,
@@ -3757,7 +3760,7 @@ namespace Pachyderm_Acoustic
             this.LockUserScale.Location = new System.Drawing.Point(220, 337);
             this.LockUserScale.Margin = new System.Windows.Forms.Padding(4);
             this.LockUserScale.Name = "LockUserScale";
-            this.LockUserScale.Size = new System.Drawing.Size(126, 20);
+            this.LockUserScale.Size = new System.Drawing.Size(124, 20);
             this.LockUserScale.TabIndex = 44;
             this.LockUserScale.Text = "Lock User Scale";
             this.LockUserScale.UseVisualStyleBackColor = true;
@@ -3766,7 +3769,7 @@ namespace Pachyderm_Acoustic
             // Azi_Choice
             // 
             this.Azi_Choice.DecimalPlaces = 2;
-            this.Azi_Choice.Location = new System.Drawing.Point(389, 173);
+            this.Azi_Choice.Location = new System.Drawing.Point(385, 173);
             this.Azi_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Azi_Choice.Maximum = new decimal(new int[] {
             360,
@@ -3802,7 +3805,7 @@ namespace Pachyderm_Acoustic
             this.Graph_Type.Location = new System.Drawing.Point(4, 309);
             this.Graph_Type.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(243, 24);
+            this.Graph_Type.Size = new System.Drawing.Size(241, 24);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3832,7 +3835,7 @@ namespace Pachyderm_Acoustic
             this.Label5.Location = new System.Drawing.Point(4, 199);
             this.Label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Label5.Name = "Label5";
-            this.Label5.Size = new System.Drawing.Size(243, 17);
+            this.Label5.Size = new System.Drawing.Size(241, 17);
             this.Label5.TabIndex = 1;
             this.Label5.Text = "Image Source Paths";
             // 
@@ -3852,10 +3855,10 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(255, 309);
+            this.Graph_Octave.Location = new System.Drawing.Point(253, 309);
             this.Graph_Octave.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(258, 24);
+            this.Graph_Octave.Size = new System.Drawing.Size(260, 24);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -4057,6 +4060,20 @@ namespace Pachyderm_Acoustic
             // 
             this.saveVRSpectraToolStripMenuItem.Name = "saveVRSpectraToolStripMenuItem";
             this.saveVRSpectraToolStripMenuItem.Size = new System.Drawing.Size(195, 26);
+            // 
+            // label64
+            // 
+            this.label64.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.label64.AutoSize = true;
+            this.label64.BackColor = System.Drawing.Color.Red;
+            this.label64.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.label64.ImageAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.label64.Location = new System.Drawing.Point(379, 141);
+            this.label64.Name = "label64";
+            this.label64.Size = new System.Drawing.Size(89, 17);
+            this.label64.TabIndex = 86;
+            this.label64.Text = "Experimental";
+            this.label64.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // Pach_Hybrid_Control
             // 
@@ -4415,6 +4432,7 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.Label label61;
             private System.Windows.Forms.Label label62;
             internal System.Windows.Forms.ListBox Isolation_Lib;
+            private System.Windows.Forms.Label label64;
         }
     }
 }
