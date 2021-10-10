@@ -19,6 +19,7 @@
 using Rhino.DocObjects;
 using System;
 using System.Collections.Generic;
+using Pachyderm_Acoustic.UI;
 
 namespace Pachyderm_Acoustic
 {
@@ -487,7 +488,7 @@ namespace Pachyderm_Acoustic
                 get { return Properties.Resources.PIcon1; }
             }
 
-            public override System.Windows.Forms.Control PageControl
+            public override object PageControl //System.Windows.Forms.Control
             {
                 get { return Source_Props; }
             }
@@ -505,6 +506,7 @@ namespace Pachyderm_Acoustic
                 return Selected_Objects;
             }
 
+            [Obsolete]
             public override bool ShouldDisplay(RhinoObject obj)
             {
                 if (Source_Props == null) Source_Props = new Pach_SourceControl();

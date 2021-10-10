@@ -672,10 +672,14 @@ namespace Pachyderm_Acoustic
 
                     omit = SD.Z[0];// + 60;
 
+                    //TODO: Micf and Mic signals do not match in length - Let's make sure that the points really all match up, how they match up, and then let's prevent an array screw up.
+                    int len = Math.Min(result_signals.Length, TimeS.Length);
+
+
                     //Calculate Scattering Coefficients
                     
                     //Zero packing
-                    for (int i = 0; i < result_signals.Length; i++)
+                    for (int i = 0; i < len; i++)
                     {
                         Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
@@ -684,10 +688,10 @@ namespace Pachyderm_Acoustic
                     Freq_Trackbar1.Maximum = (int)(samplefrequency / 2);
                     Freq_Trackbar2.Maximum = (int)(samplefrequency / 2);
 
-                    System.Numerics.Complex[][] FS = new System.Numerics.Complex[TimeS.Length][];
-                    System.Numerics.Complex[][] FF = new System.Numerics.Complex[TimeS.Length][];
+                    System.Numerics.Complex[][] FS = new System.Numerics.Complex[len][];
+                    System.Numerics.Complex[][] FF = new System.Numerics.Complex[len][];
 
-                    for (int i = 0; i < result_signals.Length; i++)
+                    for (int i = 0; i < len; i++)
                     {
                         FS[i] = Audio.Pach_SP.FFT_General(TimeS[i], 0);
                         FF[i] = Audio.Pach_SP.FFT_General(result_signals[i], 0);
@@ -697,15 +701,15 @@ namespace Pachyderm_Acoustic
                     //FF2 = new System.Numerics.Complex[FS[0].Length][];
                     //FS2 = new System.Numerics.Complex[FS[0].Length][];
                     //FSFF = new System.Numerics.Complex[FS[0].Length][];
-                    FF2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[FS[0].Length];
-                    FS2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[FS[0].Length];
-                    FSFF = new System.IO.MemoryMappedFiles.MemoryMappedFile[FS[0].Length];
+                    FF2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
+                    FS2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
+                    FSFF = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
 
-                    for (int i = 0; i < FS[0].Length; i++)
+                    for (int i = 0; i < len; i++)
                     {
-                        FF2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FF2"+i.ToString(), FS.Length * 16);
-                        FS2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FS2"+i.ToString(), FS.Length * 16);
-                        FSFF[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FSFF"+i.ToString(), FS.Length * 16);
+                        FF2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FF2"+i.ToString(), len * 16);
+                        FS2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FS2"+i.ToString(), len * 16);
+                        FSFF[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FSFF"+i.ToString(), len * 16);
                         System.IO.BinaryWriter fs2writer = new System.IO.BinaryWriter(FS2[i].CreateViewStream());
                         System.IO.BinaryWriter ff2writer = new System.IO.BinaryWriter(FF2[i].CreateViewStream());
                         System.IO.BinaryWriter fsffwriter = new System.IO.BinaryWriter(FSFF[i].CreateViewStream());
@@ -716,7 +720,7 @@ namespace Pachyderm_Acoustic
                         System.Numerics.Complex sumFF2 = 0;
                         System.Numerics.Complex sumFSFF = 0;
 
-                        for (int j = 0; j < result_signals.Length; j++)
+                        for (int j = 0; j < len; j++)
                         {
                             System.Numerics.Complex fs2 = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
                             System.Numerics.Complex ff2 = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);

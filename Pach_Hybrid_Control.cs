@@ -1319,6 +1319,48 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0} s.", Math.Round(EDT, 2));
                         break;
 
+                    case "T-10":
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[0]);
+                        double T10 = AcousticalMath.T_X(Schroeder, 15, SampleRate);
+
+                        SRT1.Text = string.Format("62.5 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[1]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT2.Text = string.Format("125 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[2]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT3.Text = string.Format("250 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[3]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT4.Text = string.Format("500 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[4]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT5.Text = string.Format("1000 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[5]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT6.Text = string.Format("2000 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[6]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT7.Text = string.Format("4000 hz. : {0} s.", Math.Round(T10, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[7]);
+                        T10 = AcousticalMath.T_X(Schroeder, 10, SampleRate);
+
+                        SRT8.Text = string.Format("8000 hz. : {0} s.", Math.Round(T10, 2));
+                        break;
+
                     case "T-15":
                         Schroeder = AcousticalMath.Schroeder_Integral(ETC[0]);
                         double T15 = AcousticalMath.T_X(Schroeder, 15, SampleRate);
@@ -1359,6 +1401,48 @@ namespace Pachyderm_Acoustic
                         T15 = AcousticalMath.T_X(Schroeder, 15, SampleRate);
 
                         SRT8.Text = string.Format("8000 hz. : {0} s.", Math.Round(T15, 2));
+                        break;
+
+                    case "T-20":
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[0]);
+                        double T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT1.Text = string.Format("62.5 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[1]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT2.Text = string.Format("125 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[2]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT3.Text = string.Format("250 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[3]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT4.Text = string.Format("500 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[4]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT5.Text = string.Format("1000 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[5]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT6.Text = string.Format("2000 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[6]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT7.Text = string.Format("4000 hz. : {0} s.", Math.Round(T20, 2));
+
+                        Schroeder = AcousticalMath.Schroeder_Integral(ETC[7]);
+                        T20 = AcousticalMath.T_X(Schroeder, 20, SampleRate);
+
+                        SRT8.Text = string.Format("8000 hz. : {0} s.", Math.Round(T20, 2));
                         break;
 
                     case "T-30":

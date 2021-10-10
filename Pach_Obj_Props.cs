@@ -446,7 +446,7 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public override System.Windows.Forms.Control PageControl
+            public override object PageControl //System.Windows.Forms.Control
             {
                 get
                 {

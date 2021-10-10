@@ -126,7 +126,20 @@ namespace Pachyderm_Acoustic
 
                 for (int s_id = 0; s_id < Source.Length; s_id++)
                 {
-                    command.Sim = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8]{0,1,2,3,4,5,6,7});
+                    if (Source[s_id] is LineSource)
+                    {
+                        //cull samples to suit map density...
+                        int skip = (int)Math.Floor(Increment.Value * 2 / 100);
+                        if (skip > 1)
+                        {
+                            Hare.Geometry.Point[] smpl = (Source[s_id] as LineSource).Samples;
+                            List<Hare.Geometry.Point> newsmpl = new List<Hare.Geometry.Point>();
+                            for (int i = 0; i < smpl.Length; i += skip) newsmpl.Add(smpl[i]);
+                            (Source[s_id] as LineSource).Samples = newsmpl.ToArray();
+                        }
+                    }
+
+                    command.Sim = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8]{0,1,2,3,4,5,6,7}, this.Screen_Attenuation.Checked, this.Sum_Time.Checked);
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
 
                     Direct_Sound Direct_Data;

@@ -69,7 +69,7 @@ namespace Pachyderm_Acoustic
                 SourceConduit m_source_conduit = SourceConduit.Instance;
 
                 Rhino.Geometry.Point3d location;
-                if(Rhino.Input.RhinoGet.GetPoint("Select Source Position", false, out location) != Result.Success) return Result.Cancel;
+                if (Rhino.Input.RhinoGet.GetPoint("Select Source Position", false, out location) != Result.Success) return Result.Cancel;
 
                 Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(doc.Objects.AddPoint(location));
                 rhObj.Attributes.Name = "Acoustical Source";
@@ -303,13 +303,13 @@ namespace Pachyderm_Acoustic
                 switch (GOpt_type.OptionIndex())
                 {
                     case 0:
-                        SPL = Utilities.AcousticalMath.Males[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Males[GOpt_act.OptionIndex() - 1];
                         break;
                     case 1:
-                        SPL = Utilities.AcousticalMath.Females[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Females[GOpt_act.OptionIndex() - 1];
                         break;
                     case 2:
-                        SPL = Utilities.AcousticalMath.Children[GOpt_act.OptionIndex()-1];
+                        SPL = Utilities.AcousticalMath.Children[GOpt_act.OptionIndex() - 1];
                         break;
                 }
 
@@ -364,50 +364,6 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public double[] WelshTraffic = new double[] { -32, -16, -4, -3,-10, -13, -17, -17 };
-            /// FHWA traffic coefficients. [Vehicle Type i][Pavement Type p][Full Throttle][A	B	C	D1	D2	E1	E2	F1	F2	G1	G2	H1	H2	I1	I2	J1	J2]
-            public double[][][][] FHWATraffic = new double[][][][] {
-                new double[][][]{new double[][]{new double[]{41.740807,1.148546, 67,-7516.580054,-9.7623,16460.1,11.65932,-14823.9,-1.233347,7009.474786,-4.327918,-1835.189815,2.579086,252.418543,-0.573822,-14.268316,0.045682},
-                new double[]{41.740807,1.148546,50.128316,-7516.580054,-9.7623,16460.1,11.65932,-14823.9,-1.23334,7009.474786,-4.327918,-1835.189815,2.579086,252.418543,-0.573822,-14.268316,0.045682}},
-                new double[][]{new double[]{41.740807,0.494698,67,-7313.985627,-19.697019,16009.5,34.363901,-14414.4,-22.462943,6814.317463,6.093141,-1783.723974,-0.252834,245.299562,-0.170266,-13.86487,0.022131},
-                new double[]{41.740807,0.494698,50.128316,-7313.985627,-19.697019,16009.5,34.363901,-14414.4,-22.462943,6814.317463,6.093141,-1783.723974,-0.252834,245.299562,-0.170266,-13.86487,0.022131}},
-                new double[][]{new double[]{41.740807,-1.065026,67,-9549.987851,-146.173482,21064,340.622686,-19060.8,-324.802942,9032.990872,161.886578,-2363.810485,-44.454426,324.077238,6.378783,-18.21167,-0.373971},
-                new double[]{41.740807,-1.065026,50.128316,-9549.987851,-146.173482,21064,340.622686,-19060.8,-324.802942,9032.990872,161.886578,-2363.810485,-44.454426,324.077238,6.378783,-18.21167,-0.373971}},
-                new double[][]{new double[]{41.740807,3.520004,67,-2027.8376,-70.674562,3728.329033,155.109567,-2768.001364,-138.780925,1030.541403,64.525774,-195.32456,-16.430316,16.418899,2.17435,-0.339616,-0.117021},
-                new double[]{41.740807,3.520004,50.128316,-2027.8376,-70.674562,3728.329033,155.109567,-2768.001364,-138.780925,1030.541403,64.525774,-195.32456,-16.430316,16.418899,2.17435,-0.339616,-0.117021}}},
-                new double[][][]{new double[][]{new double[]{33.918713,20.591046,74,-8997.974274,96.301703,19015.4,-196.241744,-16587,162.56952,7627.874332,-70.394575,-1950.412341,16.876826,263.093464,-2.132793,-14.645109,0.111404},
-                new double[]{33.918713,20.591046,68.002978,-1238.353632,-68.218944,2532.436947,151.781493,-2124.165806,-140.388413,919.784302,68.545463,-215.745405,-18.551234,25.909788,2.634001,-1.244253,-0.153272}},
-                new double[][]{new double[]{33.918713,19.903775,74,-8997.974274,96.301703,19015.4,-196.241744,-16587,162.56952,7627.874332,-70.394575,-1950.412341,16.876826,263.093464,-2.132793,-14.645109,0.111404},
-                new double[]{33.918713,19.903775,68.002978,-230.440015,-82.783198,172.725033,186.80143,131.655819,-174.718246,-207.664798,86.12481,95.139145,-23.513441,-18.96669,3.366475,1.407549,-0.197472}},
-                new double[][]{new double[]{33.918713,19.345214,74,-8997.974274,96.301703,19015.4,-196.241744,-16587,162.56952,7627.874332,-70.394575,-1950.412341,16.876826,263.093464,-2.132793,-14.645109,0.111404},
-                new double[]{33.918713,19.345214,68.002978,-234.711357,-103.147894,162.036132,244.033651,133.970948,-237.867685,-196.613672,121.527971,87.517298,-34.222359,-17.12562,5.031804,1.253128,-0.301914}},
-                new double[][]{new double[]{33.918713,22.141611,74,-8997.974274,96.301703,19015.4,-196.241744,-16587,162.56952,7627.874332,-70.394575,-1950.412341,16.876826,263.093464,-2.132793,-14.645109,0.111404},
-                new double[]{33.918713,22.141611,68.002978,-139.27717,-132.207111,97.357937,296.574807,65.350117,-273.981431,-104.555273,132.85439,47.637332,-35.600554,-9.424641,4.997542,0.689877,-0.287335}}},
-                new double[][][]{new double[][]{new double[]{35.87985,21.019665,80,-6864.586846,-94.379848,14368.7,226.701375,-12459.2,-220.015419,5710.525999,110.518825,-1458.340416,-30.365892,196.811136,4.33716,-10.977676,-0.252197},
-                new double[]{35.87985,21.019665,74.298135,1468.440649,-235.319117,-3852.393214,537.981518,3886.430673,-502.160068,-1986.858782,244.714955,549.002247,-65.686556,-78.239429,9.217734,4.509121,-0.529106}},
-                new double[][]{new double[]{35.87985,20.358498,80,-6864.586846,-94.379848,14368.7,226.701375,-12459.2,-220.015419,5710.525999,110.518825,-1458.340416,-30.365892,196.811136,4.337165,-10.977676,-0.252197},
-                new double[]{35.87985,20.358498,74.298135,-290.277032,-196.828915,156.854882,450.144699,151.082001,-420.250062,-168.033708,204.806845,60.772941,-54.968455,-9.681901,7.711617,0.570105,-0.442469}},
-                new double[][]{new double[]{35.87985,19.107151,80,-6864.586846,-94.379848,14368.7,226.701375,-12459.2,-220.015419,5710.525999,110.518825,-1458.340416,-30.365892,196.811136,4.337165,-10.977676,-0.252197},
-                new double[]{35.87985,19.107151,74.298135,-258.941348,-255.205946,135.514216,587.489921,132.973712,-552.824216,-151.366531,272.102657,57.66924,-73.912732,-9.928293,10.514055,0.649271,-0.612569}},
-                new double[][]{new double[]{35.87985,21.822818,80,-6864.586846,-94.379848,14368.7,226.701375,-12459.2,-220.015419,5710.525999,110.518825,-1458.340416,-30.365892,196.811136,4.337165,-10.977676,-0.252197},
-                new double[]{35.87985,21.822818,74.298135,87.378338,-224.132311,-497.410428,509.705253,579.584033,-473.326603,-298.5689955,229.5809,78.021585,-61.374037,-10.058424,8.58403,0.498685,-0.49149}}},
-                new double[][][]{new double[][]{new double[]{23.47953,38.006238,74,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557},
-                new double[]{23.47953,38.006238,68.002978,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557}},
-                new double[][]{new double[]{23.47953,37.318967,74,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557},
-                new double[]{23.47953,37.318967,68.002978,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557}},
-                new double[][]{new double[]{23.47953,36.760406,74,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557},
-                new double[]{23.47953,36.760406,68.002978,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557}},
-                new double[][]{new double[]{23.47953,39.556803,74,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557},
-                new double[]{23.47953,39.556803,68.002978,4621.365424,-123.140566,-11601.5,284.796174,11535.3,-267.623062,-5896.461017,130.822488,1645.797051,-35.139019,-238.929963,4.927783,14.139828,-0.282557}}},
-                new double[][][]{new double[][]{new double[]{41.022542,10.013879,67,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005},
-                new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}},
-                new double[][]{new double[]{41.022542,10.013879,67,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005},
-                new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}},
-                new double[][]{new double[]{41.022542,10.013879,67,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005},
-                new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}},
-                new double[][]{new double[]{41.022542,10.013879,67,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005},
-                new double[]{41.022542,10.013879,56,7546.65902,-8.870177,-17396,7.899209,16181.8,2.526152,-7828.632535,-5.314462,2085.468458,2.344913,-290.816544,-0.435913,16.614043,0.03005}}}};
-
             ///<summary> This gets called when when the user runs this command.</summary> 
             protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
             {
@@ -445,15 +401,11 @@ namespace Pachyderm_Acoustic
                         {
                             Rhino.Input.RhinoGet.GetNumber("Input basis road sound pressure level at 1 m from street...", false, ref SPLW);
                             SPLW += 8;
+                            SWL = Utilities.StandardConstructions.FHWA_Welsh_SoundPower(SPLW);
                         }
                         else if (type == 2)//"Traffic (FHWA Standard)")
                         {
-                            ///Described at:
-                            ///http://www.fhwa.dot.gov/environment/noise/traffic_noise_model/old_versions/tnm_version_10/tech_manual/tnm03.cfm#tnma2
-
                             double s = 0;
-                            //int i = 0;
-
                             Rhino.Input.RhinoGet.GetNumber("Enter the speed of traffic on this road (in kph)...", false, ref s);
 
                             ///Pavement
@@ -478,58 +430,8 @@ namespace Pachyderm_Acoustic
                             bool throttle = false;
                             int t = 0;
                             Rhino.Input.RhinoGet.GetBool("Full throttle?", false, "Yes", "No", ref throttle);
-                            t = (throttle) ? 1 : 0;
-                            double root2 = Math.Sqrt(2);
-                            double vtot = 0;
-                            double[] Es = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-                            for (int v = 0; v < 5; v++)
-                            {
-                                double A = FHWATraffic[v][pavement][t][0];
-                                double B = FHWATraffic[v][pavement][t][1];
-                                double C = FHWATraffic[v][pavement][t][2];
-                                double D1 = FHWATraffic[v][pavement][t][3];
-                                double D2 = FHWATraffic[v][pavement][t][4];
-                                double E1 = FHWATraffic[v][pavement][t][5];
-                                double E2 = FHWATraffic[v][pavement][t][6];
-                                double F1 = FHWATraffic[v][pavement][t][7];
-                                double F2 = FHWATraffic[v][pavement][t][8];
-                                double G1 = FHWATraffic[v][pavement][t][9];
-                                double G2 = FHWATraffic[v][pavement][t][10];
-                                double H1 = FHWATraffic[v][pavement][t][11];
-                                double H2 = FHWATraffic[v][pavement][t][12];
-                                double I1 = FHWATraffic[v][pavement][t][13];
-                                double I2 = FHWATraffic[v][pavement][t][14];
-                                double J1 = FHWATraffic[v][pavement][t][15];
-                                double J2 = FHWATraffic[v][pavement][t][16];
-
-                                vtot += Veh[v];
-
-                                for (int oct = 0; oct < 8; oct++)
-                                {
-                                    double f = 62.5 * Math.Pow(2, oct);
-                                    double[] freq = new double[3] { f / root2, f, f * root2 };
-
-                                    for (int oct3 = 0; oct3 < 3; oct3++)
-                                    {
-                                        double Ea = Math.Pow(0.6214 * s, A / 10) * Math.Pow(10, B / 10) + Math.Pow(10, C / 10);
-                                        double logf = Math.Log10(freq[oct3]);
-                                        double Ls = 10 * Math.Log10(Ea) + (D1 + 0.6214 * D2 * s) + (E1 + 0.6214 * E2 * s) * logf
-                                            + (F1 + 0.6214 * F2 * s) * logf * logf + (G1 + 0.6214 * G2 * s) * logf * logf * logf
-                                            + (H1 + 0.6214 * H2 * s) * logf * logf * logf * logf + (I1 + 0.6214 * I2 * s) * logf * logf * logf * logf * logf
-                                            + (J1 + 0.6214 * J2 * s) * logf * logf * logf * logf * logf * logf;
-                                        Es[oct] += 0.0476 * Math.Pow(10, Ls / 10) * Veh[v] / s;
-                                    }
-                                }
-                            }
-
-                            double[] Awt = new double[8] { -26, -16, -9, -3, 0, 1.2, 1, -1 };
-                            double dmod = 10 * Math.Log10(1 / (Utilities.Numerics.PiX2 * 15));
-
-                            for (int oct = 0; oct < 8; oct++)
-                            {
-                                SWL[oct] = 10 * Math.Log10(Es[oct]) - Awt[oct] - dmod;//
-                            }
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.FHWA_TNM10_SoundPower(s, pavement, (int)Veh[0], (int)Veh[1], (int)Veh[2], (int)Veh[3], (int)Veh[4], throttle);
                         }
                         else if (type == 3)//"Aircraft (ANCON-derived)")
                         {
@@ -548,72 +450,57 @@ namespace Pachyderm_Acoustic
                             Rhino.Input.RhinoGet.GetNumber("What is the maximum velocity of the aircraft in m/s?", false, ref velocity);
                             Rhino.Input.RhinoGet.GetNumber("What is the slant angle for this aircraft?", false, ref delta);
 
-                            double[][] Aircraft_Normalization = new double[3][] {
-                                //new double[8]{ -12, -10.5, -12, -15, -20, -27, -40, -44},
-                                //new double[8]{-11, -13, -12, -13.5, -18, -21, -25, -35},
-                                //new double[8]{-11, -10.5, -12, -13.5, -18, -21, -25, -35}
-                            new double[8] { 6.191472203, 7.691472203, 6.191472203, 3.191472203, -1.808527797, -8.808527797,-21.8085278, -25.8085278},
-                            new double[8] { 5.6783811710, 3.6783811710, 4.678381171, 3.178381171, -1.321618829, -4.321618829, -8.321618829, -18.32161883},
-                            new double[8] { 5.678381171, 6.178381171, 4.678381171, 3.178381171, -1.321618829, -4.321618829, -8.321618829, -18.32161883}
-                            };
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_SoundPower(SWLA, velocity, delta, (Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use)Enum.ToObject(typeof(Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use), TL_Choice));
 
-                            for (int oct = 0; oct < 8; oct++)
-                            {
-                                SWL[oct] = SWLA + Aircraft_Normalization[TL_Choice-1][oct];//
-                            }
                         }
-                        //    continue;
-                        //    //return Result.Success;
-                        //}
-                    }
-                    else if (GR == Rhino.Input.GetResult.Object)
-                    {
-                        for (int i = 0; i < GO.ObjectCount; i++)
+                        else if (GR == Rhino.Input.GetResult.Object)
                         {
-                            Rhino.DocObjects.ObjRef obj = GO.Object(i);
-
-                            Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(obj.ObjectId);
-
-                            rhObj.Attributes.Name = "Acoustical Source";
-
-                            if (choice == 1)//"Traffic (Welsh Standard)")
+                            for (int i = 0; i < GO.ObjectCount; i++)
                             {
-                                rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
-                                for (int oct = 0; oct < 8; oct++) SWL[oct] = SPLW + WelshTraffic[oct];
-                            }
-                            else if (choice == 2)//"Traffic (FWHA Standard)")
-                            {
-                                rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
-                            }
-                            else if (choice == 3)//"Aircraft (ANCON-derived)")
-                            {
-                                rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
-                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
-                                rhObj.Geometry.SetUserString("delta", delta.ToString());
-                            }
-                            else
-                            {
-                                Rhino.Input.RhinoGet.GetNumber("62.5 Hz. Sound Power Level", true, ref SWL[0]);
-                                Rhino.Input.RhinoGet.GetNumber("125 Hz. Sound Power Level", true, ref SWL[1]);
-                                Rhino.Input.RhinoGet.GetNumber("250 Hz. Sound Power Level", true, ref SWL[2]);
-                                Rhino.Input.RhinoGet.GetNumber("500 Hz. Sound Power Level", true, ref SWL[3]);
-                                Rhino.Input.RhinoGet.GetNumber("1000 Hz. Sound Power Level", true, ref SWL[4]);
-                                Rhino.Input.RhinoGet.GetNumber("2000 Hz. Sound Power Level", true, ref SWL[5]);
-                                Rhino.Input.RhinoGet.GetNumber("4000 Hz. Sound Power Level", true, ref SWL[6]);
-                                Rhino.Input.RhinoGet.GetNumber("8000 Hz. Sound Power Level", true, ref SWL[7]);
+                                Rhino.DocObjects.ObjRef obj = GO.Object(i);
+
+                                Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(obj.ObjectId);
+
+                                rhObj.Attributes.Name = "Acoustical Source";
+
+                                if (choice == 1)//"Traffic (Welsh Standard)")
+                                {
+                                    rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
+                                }
+                                else if (choice == 2)//"Traffic (FWHA Standard)")
+                                {
+                                    rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
+                                }
+                                else if (choice == 3)//"Aircraft (ANCON-derived)")
+                                {
+                                    rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
+                                    rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
+                                    rhObj.Geometry.SetUserString("delta", delta.ToString());
+                                }
+                                else
+                                {
+                                    Rhino.Input.RhinoGet.GetNumber("62.5 Hz. Sound Power Level", true, ref SWL[0]);
+                                    Rhino.Input.RhinoGet.GetNumber("125 Hz. Sound Power Level", true, ref SWL[1]);
+                                    Rhino.Input.RhinoGet.GetNumber("250 Hz. Sound Power Level", true, ref SWL[2]);
+                                    Rhino.Input.RhinoGet.GetNumber("500 Hz. Sound Power Level", true, ref SWL[3]);
+                                    Rhino.Input.RhinoGet.GetNumber("1000 Hz. Sound Power Level", true, ref SWL[4]);
+                                    Rhino.Input.RhinoGet.GetNumber("2000 Hz. Sound Power Level", true, ref SWL[5]);
+                                    Rhino.Input.RhinoGet.GetNumber("4000 Hz. Sound Power Level", true, ref SWL[6]);
+                                    Rhino.Input.RhinoGet.GetNumber("8000 Hz. Sound Power Level", true, ref SWL[7]);
+                                }
+
+                                rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(SWL));
+                                rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
+                                doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+
+                                m_source_conduit.SetSource(rhObj);
                             }
 
-                            rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(SWL));
-                            rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
-                            doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
-
-                            m_source_conduit.SetSource(rhObj);
+                            doc.Views.Redraw();
+                            return Result.Success;
                         }
-
-                        doc.Views.Redraw();
-                        return Result.Success;
+                        else return Result.Cancel;
                     }
-                    else return Result.Cancel;
                 }
             }
         }
@@ -633,7 +520,7 @@ namespace Pachyderm_Acoustic
             DisplayBitmap LU;
 
             public SourceConduit()
-            :base()
+            : base()
             {
                 System.Drawing.Bitmap SSbmp = Pachyderm_Acoustic.Properties.Resources.Source_Selected;
                 SSbmp.MakeTransparent(System.Drawing.Color.Black);
@@ -786,7 +673,7 @@ namespace Pachyderm_Acoustic
 
                 SetupEventHandlers(true);
                 Enabled = true;
-                
+
                 if (!m_id_list.Contains(rhino_object.Attributes.ObjectId))
                 {
                     m_id_list.Add(rhino_object.Attributes.ObjectId);
@@ -812,7 +699,7 @@ namespace Pachyderm_Acoustic
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             ft = rhino_object.Geometry.GetUserString("FileType");
-                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft),Utilities.RC_PachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RC_PachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
                             L.CurrentAxi = float.Parse(A[2]);
@@ -899,7 +786,7 @@ namespace Pachyderm_Acoustic
                                 {
                                     //Display the Icon for a loudspeaker.
                                     e.Display.DrawSprite(LU, pt, 0.5f, true);// screen_pt, 32.0f);
-                                    //e.Display.DrawMeshVertices(this.m_Balloons[i].m_DisplayMesh, R);
+                                                                             //e.Display.DrawMeshVertices(this.m_Balloons[i].m_DisplayMesh, R);
                                     e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
                                 }
                             }
@@ -961,7 +848,7 @@ namespace Pachyderm_Acoustic
                             double[] par = crv.DivideByLength(10, true, out pts);
                             if (par == null || par.Length == 0) par = crv.DivideByCount(2, true, out pts);
 
-                            for(int i = 0; i < par.Length; i++)
+                            for (int i = 0; i < par.Length; i++)
                             {
                                 Rhino.Geometry.Vector3d V = crv.TangentAt(par[i]);
                                 e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), .5), System.Drawing.Color.Red);
@@ -969,11 +856,11 @@ namespace Pachyderm_Acoustic
                                 e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.2), System.Drawing.Color.Red);
                                 e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.4), System.Drawing.Color.Red);
                                 e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.9), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 2.1), System.Drawing.Color.Red); 
+                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 2.1), System.Drawing.Color.Red);
                             }
-                            
+
                             Rhino.Geometry.Point2d screen_pt0 = e.Display.Viewport.WorldToClient(pts[0]);
-                            Rhino.Geometry.Point2d screen_pt1 = e.Display.Viewport.WorldToClient(pts[pts.Length-1]);
+                            Rhino.Geometry.Point2d screen_pt1 = e.Display.Viewport.WorldToClient(pts[pts.Length - 1]);
                             if ((rhobj.IsSelected(false) != 0))
                             {
                                 e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
@@ -1071,8 +958,8 @@ namespace Pachyderm_Acoustic
                     r = radius;
                     double phi = (Math.Sqrt(5) - 1) / 2;
                     double a = r / Math.Sqrt(3);
-                    double b =  a / phi;
-                    double c =  a * phi;
+                    double b = a / phi;
+                    double c = a * phi;
                     int[] sign = new int[2] { -1, 1 };
 
                     L.Add(new Line(c, 0, b, -c, 0, b));//0

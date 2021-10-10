@@ -102,6 +102,11 @@ namespace Pachyderm_Acoustic
                 return null;
             }
 
+            public static void Plot_Hare_Topology(Pachyderm_Acoustic.Environment.Polygon_Scene S)
+            {
+                Plot_Hare_Topology(S.Hare_Data);
+            }
+
             public static void Plot_Hare_Topology(Hare.Geometry.Topology T)
             {
                 Mesh m_RhinoMesh = Hare_to_RhinoMesh(T, true);

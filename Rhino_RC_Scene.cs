@@ -183,7 +183,7 @@ namespace Pachyderm_Acoustic
                     {
                         for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
                         {
-                            BList.Add(Additional_Geometry[i].Faces[j]);
+                            BList.Add(Additional_Geometry[i].Faces[j].ToBrep());
                             Mat_Obj.Add(Mat_Layer[Layer_IDs[i]]);
                             Scat_Obj.Add(Scat_Layer[Layer_IDs[i]]);
                             Trans_Obj.Add(Trans_Layer[Layer_IDs[i]]);
@@ -241,8 +241,18 @@ namespace Pachyderm_Acoustic
                         Mesh[] meshes;
 
                         //TODO: insert a check for degenerate polygons, and exclude prior to passing to construct method.
-                        meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);//(Brep)BrepList[BrepList.Count - 1], mp);
-                        if (meshes == null) throw new Exception("Problem with meshes");
+                        do
+                        {
+                            meshes = Rhino.Geometry.Mesh.CreateFromBrep(B, mp);
+                            if (meshes == null) //throw new Exception("Problem with meshes");
+                            {
+                                //Mesh min length is likely too great. Try again
+                                mp.MinimumEdgeLength /= 2;
+                                continue;
+                            }
+                            break;
+                        } while (true);//(Brep)BrepList[BrepList.Count - 1], mp);
+
 
                         for (int t = 0; t < meshes.Length; t++)
                         {

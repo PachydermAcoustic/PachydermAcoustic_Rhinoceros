@@ -252,7 +252,7 @@ namespace Pachyderm_Acoustic
                             case "3":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
                                 string[] B;
-                                if (Bands != "")
+                                if (Bands != "" && Bands != null)
                                     B = Bands.Split(';');
                                 else
                                     B = new string[2] { "0", "7" };
