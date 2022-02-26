@@ -966,7 +966,7 @@ namespace Pachyderm_Acoustic
             this.AbsFlat.TabIndex = 46;
             this.AbsFlat.TickFrequency = 10;
             this.AbsFlat.TickStyle = System.Windows.Forms.TickStyle.TopLeft;
-            this.AbsFlat.ValueChanged += new System.EventHandler(this.Acoustics_Coef_Update);
+            this.AbsFlat.ValueChanged += new System.EventHandler(this.AbsFlat_ValueChanged);
             // 
             // ScatFlat
             // 
@@ -3349,7 +3349,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 99F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 141F));
             this.tableLayoutPanel3.Controls.Add(this.label15, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.label25, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.SourceList, 0, 1);
@@ -3729,7 +3729,7 @@ namespace Pachyderm_Acoustic
             this.label26.Location = new System.Drawing.Point(349, 169);
             this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(23, 30);
+            this.label26.Size = new System.Drawing.Size(22, 30);
             this.label26.TabIndex = 49;
             this.label26.Text = "Azimuth";
             // 
@@ -3785,7 +3785,7 @@ namespace Pachyderm_Acoustic
             // Azi_Choice
             // 
             this.Azi_Choice.DecimalPlaces = 2;
-            this.Azi_Choice.Location = new System.Drawing.Point(380, 173);
+            this.Azi_Choice.Location = new System.Drawing.Point(379, 173);
             this.Azi_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Azi_Choice.Maximum = new decimal(new int[] {
             360,

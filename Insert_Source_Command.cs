@@ -453,54 +453,55 @@ namespace Pachyderm_Acoustic
                             SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_SoundPower(SWLA, velocity, delta, (Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use)Enum.ToObject(typeof(Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use), TL_Choice));
 
                         }
-                        else if (GR == Rhino.Input.GetResult.Object)
+                    }
+                    else if (GR == Rhino.Input.GetResult.Object)
+                    {
+                        for (int i = 0; i < GO.ObjectCount; i++)
                         {
-                            for (int i = 0; i < GO.ObjectCount; i++)
+                            Rhino.DocObjects.ObjRef obj = GO.Object(i);
+
+                            Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(obj.ObjectId);
+
+                            rhObj.Attributes.Name = "Acoustical Source";
+
+                            if (choice == 1)//"Traffic (Welsh Standard)")
                             {
-                                Rhino.DocObjects.ObjRef obj = GO.Object(i);
-
-                                Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(obj.ObjectId);
-
-                                rhObj.Attributes.Name = "Acoustical Source";
-
-                                if (choice == 1)//"Traffic (Welsh Standard)")
-                                {
-                                    rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
-                                }
-                                else if (choice == 2)//"Traffic (FWHA Standard)")
-                                {
-                                    rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
-                                }
-                                else if (choice == 3)//"Aircraft (ANCON-derived)")
-                                {
-                                    rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
-                                    rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
-                                    rhObj.Geometry.SetUserString("delta", delta.ToString());
-                                }
-                                else
-                                {
-                                    Rhino.Input.RhinoGet.GetNumber("62.5 Hz. Sound Power Level", true, ref SWL[0]);
-                                    Rhino.Input.RhinoGet.GetNumber("125 Hz. Sound Power Level", true, ref SWL[1]);
-                                    Rhino.Input.RhinoGet.GetNumber("250 Hz. Sound Power Level", true, ref SWL[2]);
-                                    Rhino.Input.RhinoGet.GetNumber("500 Hz. Sound Power Level", true, ref SWL[3]);
-                                    Rhino.Input.RhinoGet.GetNumber("1000 Hz. Sound Power Level", true, ref SWL[4]);
-                                    Rhino.Input.RhinoGet.GetNumber("2000 Hz. Sound Power Level", true, ref SWL[5]);
-                                    Rhino.Input.RhinoGet.GetNumber("4000 Hz. Sound Power Level", true, ref SWL[6]);
-                                    Rhino.Input.RhinoGet.GetNumber("8000 Hz. Sound Power Level", true, ref SWL[7]);
-                                }
-
-                                rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(SWL));
-                                rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
-                                doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
-
-                                m_source_conduit.SetSource(rhObj);
+                                rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
+                            }
+                            else if (choice == 2)//"Traffic (FWHA Standard)")
+                            {
+                                rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
+                            }
+                            else if (choice == 3)//"Aircraft (ANCON-derived)")
+                            {
+                                rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
+                                rhObj.Geometry.SetUserString("delta", delta.ToString());
+                            }
+                            else
+                            {
+                                Rhino.Input.RhinoGet.GetNumber("62.5 Hz. Sound Power Level", true, ref SWL[0]);
+                                Rhino.Input.RhinoGet.GetNumber("125 Hz. Sound Power Level", true, ref SWL[1]);
+                                Rhino.Input.RhinoGet.GetNumber("250 Hz. Sound Power Level", true, ref SWL[2]);
+                                Rhino.Input.RhinoGet.GetNumber("500 Hz. Sound Power Level", true, ref SWL[3]);
+                                Rhino.Input.RhinoGet.GetNumber("1000 Hz. Sound Power Level", true, ref SWL[4]);
+                                Rhino.Input.RhinoGet.GetNumber("2000 Hz. Sound Power Level", true, ref SWL[5]);
+                                Rhino.Input.RhinoGet.GetNumber("4000 Hz. Sound Power Level", true, ref SWL[6]);
+                                Rhino.Input.RhinoGet.GetNumber("8000 Hz. Sound Power Level", true, ref SWL[7]);
                             }
 
-                            doc.Views.Redraw();
-                            return Result.Success;
+                            rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(SWL));
+                            rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
+                            doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+
+                            m_source_conduit.SetSource(rhObj);
+                            break;
                         }
-                        else return Result.Cancel;
+
+                        doc.Views.Redraw();
+                        return Result.Success;
                     }
+                    else return Result.Cancel;
                 }
             }
         }

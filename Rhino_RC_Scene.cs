@@ -177,18 +177,25 @@ namespace Pachyderm_Acoustic
                     BList.AddRange(B);
                 }
 
-                if (Additional_Geometry != null)
+                try
                 {
-                    for (int i = 0; i < Additional_Geometry.Count; i++)
+                    if (Additional_Geometry != null)
                     {
-                        for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
+                        for (int i = 0; i < Additional_Geometry.Count; i++)
                         {
-                            BList.Add(Additional_Geometry[i].Faces[j].ToBrep());
-                            Mat_Obj.Add(Mat_Layer[Layer_IDs[i]]);
-                            Scat_Obj.Add(Scat_Layer[Layer_IDs[i]]);
-                            Trans_Obj.Add(Trans_Layer[Layer_IDs[i]]);
+                            for (int j = 0; j < Additional_Geometry[i].Faces.Count; j++)
+                            {
+                                BList.Add(Additional_Geometry[i].Faces[j].ToBrep());
+                                Mat_Obj.Add(Mat_Layer[Layer_IDs[i]]);
+                                Scat_Obj.Add(Scat_Layer[Layer_IDs[i]]);
+                                Trans_Obj.Add(Trans_Layer[Layer_IDs[i]]);
+                            }
                         }
                     }
+                }
+                catch
+                {
+                    throw new Exception("Issue with Layer Material Assignments. Make sure that your layer index is correct.");
                 }
 
                 int id = -1;
