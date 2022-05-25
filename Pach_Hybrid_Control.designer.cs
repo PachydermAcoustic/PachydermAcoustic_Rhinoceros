@@ -3349,7 +3349,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.72973F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 99F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.27027F));
-            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 141F));
+            this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 143F));
             this.tableLayoutPanel3.Controls.Add(this.label15, 0, 0);
             this.tableLayoutPanel3.Controls.Add(this.label25, 0, 3);
             this.tableLayoutPanel3.Controls.Add(this.SourceList, 0, 1);
@@ -3681,7 +3681,7 @@ namespace Pachyderm_Acoustic
             this.label27.Location = new System.Drawing.Point(220, 169);
             this.label27.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(22, 30);
+            this.label27.Size = new System.Drawing.Size(21, 30);
             this.label27.TabIndex = 50;
             this.label27.Text = "Altitude";
             // 
@@ -3726,10 +3726,10 @@ namespace Pachyderm_Acoustic
             | System.Windows.Forms.AnchorStyles.Right)));
             this.label26.AutoSize = true;
             this.label26.Enabled = false;
-            this.label26.Location = new System.Drawing.Point(349, 169);
+            this.label26.Location = new System.Drawing.Point(348, 169);
             this.label26.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(22, 30);
+            this.label26.Size = new System.Drawing.Size(21, 30);
             this.label26.TabIndex = 49;
             this.label26.Text = "Azimuth";
             // 
@@ -3739,7 +3739,7 @@ namespace Pachyderm_Acoustic
             this.Normalize_Graph.Checked = true;
             this.Normalize_Graph.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tableLayoutPanel3.SetColumnSpan(this.Normalize_Graph, 2);
-            this.Normalize_Graph.Location = new System.Drawing.Point(349, 337);
+            this.Normalize_Graph.Location = new System.Drawing.Point(348, 337);
             this.Normalize_Graph.Margin = new System.Windows.Forms.Padding(4);
             this.Normalize_Graph.Name = "Normalize_Graph";
             this.Normalize_Graph.Size = new System.Drawing.Size(155, 20);
@@ -3751,7 +3751,7 @@ namespace Pachyderm_Acoustic
             // Alt_Choice
             // 
             this.Alt_Choice.DecimalPlaces = 2;
-            this.Alt_Choice.Location = new System.Drawing.Point(250, 173);
+            this.Alt_Choice.Location = new System.Drawing.Point(249, 173);
             this.Alt_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Alt_Choice.Maximum = new decimal(new int[] {
             91,
@@ -3776,7 +3776,7 @@ namespace Pachyderm_Acoustic
             this.LockUserScale.Location = new System.Drawing.Point(220, 337);
             this.LockUserScale.Margin = new System.Windows.Forms.Padding(4);
             this.LockUserScale.Name = "LockUserScale";
-            this.LockUserScale.Size = new System.Drawing.Size(121, 20);
+            this.LockUserScale.Size = new System.Drawing.Size(120, 20);
             this.LockUserScale.TabIndex = 44;
             this.LockUserScale.Text = "Lock User Scale";
             this.LockUserScale.UseVisualStyleBackColor = true;
@@ -3785,7 +3785,7 @@ namespace Pachyderm_Acoustic
             // Azi_Choice
             // 
             this.Azi_Choice.DecimalPlaces = 2;
-            this.Azi_Choice.Location = new System.Drawing.Point(379, 173);
+            this.Azi_Choice.Location = new System.Drawing.Point(377, 173);
             this.Azi_Choice.Margin = new System.Windows.Forms.Padding(4);
             this.Azi_Choice.Maximum = new decimal(new int[] {
             360,
@@ -3821,7 +3821,7 @@ namespace Pachyderm_Acoustic
             this.Graph_Type.Location = new System.Drawing.Point(4, 309);
             this.Graph_Type.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Type.Name = "Graph_Type";
-            this.Graph_Type.Size = new System.Drawing.Size(238, 24);
+            this.Graph_Type.Size = new System.Drawing.Size(237, 24);
             this.Graph_Type.TabIndex = 33;
             this.Graph_Type.Text = "Energy Time Curve";
             this.Graph_Type.TextChanged += new System.EventHandler(this.Update_Graph);
@@ -3851,7 +3851,7 @@ namespace Pachyderm_Acoustic
             this.Label5.Location = new System.Drawing.Point(4, 199);
             this.Label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.Label5.Name = "Label5";
-            this.Label5.Size = new System.Drawing.Size(238, 17);
+            this.Label5.Size = new System.Drawing.Size(237, 17);
             this.Label5.TabIndex = 1;
             this.Label5.Text = "Image Source Paths";
             // 
@@ -3871,10 +3871,10 @@ namespace Pachyderm_Acoustic
             "2 kHz.",
             "4 kHz.",
             "8 kHz."});
-            this.Graph_Octave.Location = new System.Drawing.Point(250, 309);
+            this.Graph_Octave.Location = new System.Drawing.Point(249, 309);
             this.Graph_Octave.Margin = new System.Windows.Forms.Padding(4);
             this.Graph_Octave.Name = "Graph_Octave";
-            this.Graph_Octave.Size = new System.Drawing.Size(263, 24);
+            this.Graph_Octave.Size = new System.Drawing.Size(264, 24);
             this.Graph_Octave.TabIndex = 33;
             this.Graph_Octave.Text = "Summation: All Octaves";
             this.Graph_Octave.TextChanged += new System.EventHandler(this.Update_Graph);

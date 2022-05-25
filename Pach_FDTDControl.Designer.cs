@@ -80,6 +80,7 @@ namespace Pachyderm_Acoustic
             this.EigenFrequencies = new System.Windows.Forms.ListBox();
             this.label6 = new System.Windows.Forms.Label();
             this.Receiver_Choice = new System.Windows.Forms.ComboBox();
+            this.EigenPML = new System.Windows.Forms.CheckBox();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
@@ -153,6 +154,7 @@ namespace Pachyderm_Acoustic
             this.Color_Selection = new System.Windows.Forms.ComboBox();
             this.Pos_Select = new System.Windows.Forms.NumericUpDown();
             this.DeletePlane = new System.Windows.Forms.Button();
+            this.VisualPML = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
@@ -367,6 +369,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel3.Controls.Add(this.EigenFrequencies, 2, 8);
             this.tableLayoutPanel3.Controls.Add(this.label6, 0, 8);
             this.tableLayoutPanel3.Controls.Add(this.Receiver_Choice, 2, 3);
+            this.tableLayoutPanel3.Controls.Add(this.EigenPML, 3, 1);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel3.Location = new System.Drawing.Point(4, 4);
             this.tableLayoutPanel3.Margin = new System.Windows.Forms.Padding(4);
@@ -592,6 +595,18 @@ namespace Pachyderm_Acoustic
             this.Receiver_Choice.TabIndex = 46;
             this.Receiver_Choice.Text = "No Results Calculated...";
             this.Receiver_Choice.SelectedIndexChanged += new System.EventHandler(this.Receiver_Choice_SelectedIndexChanged);
+            // 
+            // EigenPML
+            // 
+            this.EigenPML.AutoSize = true;
+            this.EigenPML.Checked = true;
+            this.EigenPML.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.EigenPML.Location = new System.Drawing.Point(427, 43);
+            this.EigenPML.Name = "EigenPML";
+            this.EigenPML.Size = new System.Drawing.Size(58, 21);
+            this.EigenPML.TabIndex = 85;
+            this.EigenPML.Text = "PML";
+            this.EigenPML.UseVisualStyleBackColor = true;
             // 
             // tabPage3
             // 
@@ -1129,6 +1144,7 @@ namespace Pachyderm_Acoustic
             this.tableLayoutPanel1.Controls.Add(this.Color_Selection, 1, 8);
             this.tableLayoutPanel1.Controls.Add(this.Pos_Select, 1, 11);
             this.tableLayoutPanel1.Controls.Add(this.DeletePlane, 2, 12);
+            this.tableLayoutPanel1.Controls.Add(this.VisualPML, 2, 3);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(4, 4);
@@ -1771,6 +1787,19 @@ namespace Pachyderm_Acoustic
             this.DeletePlane.UseVisualStyleBackColor = true;
             this.DeletePlane.Click += new System.EventHandler(this.DeletePlane_Click);
             // 
+            // VisualPML
+            // 
+            this.VisualPML.AutoSize = true;
+            this.VisualPML.Checked = true;
+            this.VisualPML.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.VisualPML.Location = new System.Drawing.Point(217, 108);
+            this.VisualPML.Name = "VisualPML";
+            this.VisualPML.Size = new System.Drawing.Size(58, 18);
+            this.VisualPML.TabIndex = 124;
+            this.VisualPML.Text = "PML";
+            this.VisualPML.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.VisualPML.UseVisualStyleBackColor = true;
+            // 
             // Pach_TD_Numeric_Control
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -1919,6 +1948,8 @@ namespace Pachyderm_Acoustic
             private System.Windows.Forms.CheckBox Scat_Dir_00;
             private System.Windows.Forms.CheckBox GroundPlane;
             private System.Windows.Forms.Button DeletePlane;
+            private System.Windows.Forms.CheckBox EigenPML;
+            private System.Windows.Forms.CheckBox VisualPML;
         }
     }
 }

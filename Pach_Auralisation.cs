@@ -442,7 +442,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Render_Response.Length; i++)
                 {
                     NewSignal[i] = Pach_SP.FFT_Convolution(SignalBuffer, Render_Response[i], 0);
-                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float) (Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value/20));
+                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 60)/20));
                 }
 
                 SrcRendered = new int[SourceList.CheckedIndices.Count];
@@ -594,7 +594,7 @@ namespace Pachyderm_Acoustic
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
                 for (int j = 0; j < Render_Response.Length; j++) Render_Response[j] = new double[maxlength];
 
-                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (double)Normalization_Choice.Value / 20));
+                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 60)/ 20));
                 for (int j = 0; j < Render_Response[0].Length; j++)
                 {
                     for (int c = 0; c < Render_Response.Length; c++)  RR[c][j] = (j > Render_Response[c].Length - 1)? 0 : (float)Render_Response[c][j] * mod * (float)Math.Pow(2, 11);
@@ -744,7 +744,7 @@ namespace Pachyderm_Acoustic
 
                         double max = 0;
                         foreach (Direct_Sound d in Direct_Data) max = Math.Max(max, d.SWL.Max());// 10 * Math.Log10(Math.Pow(10, d.SWL[0] / 10) + Math.Pow(10, d.SWL[1] / 10) + Math.Pow(10, d.SWL[2] / 10) + Math.Pow(10, d.SWL[3] / 10) + Math.Pow(10, d.SWL[4] / 10) + Math.Pow(10, d.SWL[5] / 10) + Math.Pow(10, d.SWL[6] / 10) + Math.Pow(10, d.SWL[7] / 10)));
-                        Normalization_Choice.Value = (decimal)max;
+                        Normalization_Choice.Value = (decimal)max + 30;
                     }
                     else if (Mapping_Select.Checked)
                     {
