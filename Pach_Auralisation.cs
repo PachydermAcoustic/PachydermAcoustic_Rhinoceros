@@ -528,6 +528,7 @@ namespace Pachyderm_Acoustic
                 {
                     case "Monaural":
                         Render_Response = new double[1][];
+                        //Render_Response[0] = (IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
                         Render_Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
                         break;
                     case "First Order Ambisonics":
@@ -592,12 +593,14 @@ namespace Pachyderm_Acoustic
                 float[][] RR = new float[Render_Response.Length][];
                 int maxlength = 0;
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
-                for (int j = 0; j < Render_Response.Length; j++) Render_Response[j] = new double[maxlength];
+                //for (int j = 0; j < Render_Response.Length; j++) Rende[j] = new double[maxlength];
 
                 float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 60)/ 20));
+                for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[Render_Response[c].Length];
+
                 for (int j = 0; j < Render_Response[0].Length; j++)
                 {
-                    for (int c = 0; c < Render_Response.Length; c++)  RR[c][j] = (j > Render_Response[c].Length - 1)? 0 : (float)Render_Response[c][j] * mod * (float)Math.Pow(2, 11);
+                    for (int c = 0; c < Render_Response.Length; c++)  RR[c][j] = (j > Render_Response[c].Length - 1)? 0 : (float)Render_Response[c][j] * mod;
                 }
 
                 if (SaveWave.ShowDialog() == DialogResult.OK)

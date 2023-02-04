@@ -119,9 +119,9 @@ namespace Pachyderm_Acoustic
                         Point3d N, PT;
                         if (!PR[s].RayPt(q, Dist, 4, out energy, out N, out PT)) continue;
                         Vector3d loc = PT - min;
-                        int x = (int)System.Math.Floor(loc.X / dx);
-                        int y = (int)System.Math.Floor(loc.Y / dy);
-                        int z = (int)System.Math.Floor(loc.Z / dz);
+                        int x = System.Math.Min(nx-1, System.Math.Max(0, (int)System.Math.Floor(loc.X / dx)));
+                        int y = System.Math.Min(ny-1, System.Math.Max(0, (int)System.Math.Floor(loc.Y / dy)));
+                        int z = System.Math.Min(nz-1, System.Math.Max(0, (int)System.Math.Floor(loc.Z / dz)));
                         int id = q + s * PR[s].Count();
                         ptgrid[x,y,z].Add(id);
                         voxel[id] = new int[3] { x, y, z };

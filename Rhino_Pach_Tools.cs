@@ -659,6 +659,8 @@ namespace Pachyderm_Acoustic
                             MF.VertexColors.SetColor(f + 2, C[i]);
                         }
                     }
+                    MF.CollapseFacesByArea(0.01,1000);
+                    //MF.CollapseFacesByByAspectRatio(.1);
                     return MF;
                 }
                 else

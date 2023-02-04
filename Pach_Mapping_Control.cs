@@ -135,6 +135,7 @@ namespace Pachyderm_Acoustic
                             Hare.Geometry.Point[] smpl = (Source[s_id] as LineSource).Samples;
                             List<Hare.Geometry.Point> newsmpl = new List<Hare.Geometry.Point>();
                             for (int i = 0; i < smpl.Length; i += skip) newsmpl.Add(smpl[i]);
+                            if (newsmpl.Count < 2) newsmpl.Add(smpl.Last());
                             (Source[s_id] as LineSource).Samples = newsmpl.ToArray();
                         }
                     }
@@ -162,7 +163,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
 
                     Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", (command.Sim as SplitRayTracer)._currentRay.Sum(), (command.Sim as SplitRayTracer)._rayTotal.Sum(), (command.Sim as SplitRayTracer)._ts.Hours, (command.Sim as SplitRayTracer)._ts.Minutes, (command.Sim as SplitRayTracer)._ts.Seconds));
-                    Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", (command.Sim as SplitRayTracer).PercentLost);
+                    Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", (command.Sim as SplitRayTracer).PercentLost);
 
                     if (command.CommandResult == Rhino.Commands.Result.Success)
                     {

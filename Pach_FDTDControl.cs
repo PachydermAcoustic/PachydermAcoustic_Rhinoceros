@@ -572,7 +572,7 @@ namespace Pachyderm_Acoustic
 
                 if (SaveWave.ShowDialog() == DialogResult.OK)
                 {
-                    Audio.Pach_SP.Wave.Write(RR, 44100, SaveWave.FileName, 24);
+                    Audio.Pach_SP.Wave.Write(RR, (int)samplefrequency, SaveWave.FileName, 24);
                 }
             }
             #endregion
@@ -605,8 +605,8 @@ namespace Pachyderm_Acoustic
             //System.Numerics.Complex[][] FF2;
             //System.Numerics.Complex[][] FSFF;
             System.IO.MemoryMappedFiles.MemoryMappedFile[] FFTs;
-            System.IO.MemoryMappedFiles.MemoryMappedFile[] FS2;
-            System.IO.MemoryMappedFiles.MemoryMappedFile[] FF2;
+            System.IO.MemoryMappedFiles.MemoryMappedFile[] FC2;
+            System.IO.MemoryMappedFiles.MemoryMappedFile[] FE2;
             System.IO.MemoryMappedFiles.MemoryMappedFile[] FSFF;
 
             private void CalculateScattering_Click(object sender, EventArgs e)
@@ -616,13 +616,13 @@ namespace Pachyderm_Acoustic
                 double t = 5 * (radius + (double)Sample_Depth.Value) / C_Sound() * 1000;
                 LabCenter = new Rhino.Geometry.Point3d(0,0, (double)Sample_Depth.Value);
 
-                if (FS2 != null)
+                if (FC2 != null)
                 {
-                    for (int i = 0; i < FS2.Length; i++)
+                    for (int i = 0; i < FC2.Length; i++)
                     {
-                        FS2[i].Dispose();
-                        FF2[i].Dispose();
-                        FSFF[i].Dispose();
+                        if (FC2[i] != null) FC2[i].Dispose();
+                        if (FE2[i] != null) FE2[i].Dispose();
+                        if (FSFF[i] != null) FSFF[i].Dispose();
                         if( i < FFTs.Length) if (FFTs[i] != null) FFTs[i].Dispose();
                     }
                 }
@@ -645,6 +645,7 @@ namespace Pachyderm_Acoustic
                     t += 60 / fs;
 
                     Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                    Rm.partition();
                     Empty_Scene Rm_Ctrl = new Empty_Scene((double)Air_Temp.Value, (double)Rel_Humidity.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
                     Rm_Ctrl.partition();
@@ -658,7 +659,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.WriteLine("At end of first model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDS.RuntoCompletion();                    
                     Mic.reset();
-                    double[][] TimeS = Mic.Recordings()[0];
+                    double[][] result_control = Mic.Recordings()[0];
                     samplefrequency = FDTDS.SampleFrequency;
                     double dx = FDTDS.dx, dy = FDTDS.dy, dz = FDTDS.dz;
 
@@ -674,69 +675,69 @@ namespace Pachyderm_Acoustic
                     omit = SD.Z[0];// + 60;
 
                     //TODO: Micf and Mic signals do not match in length - Let's make sure that the points really all match up, how they match up, and then let's prevent an array screw up.
-                    int len = Math.Min(result_signals.Length, TimeS.Length);
-
+                    int len = Math.Min(result_signals.Length, result_control.Length);
 
                     //Calculate Scattering Coefficients
                     
                     //Zero packing
                     for (int i = 0; i < len; i++)
                     {
-                        Array.Resize(ref TimeS[i], (int)(samplefrequency / 2));
+                        Array.Resize(ref result_control[i], (int)(samplefrequency / 2));
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     }
 
                     Freq_Trackbar1.Maximum = (int)(samplefrequency / 2);
                     Freq_Trackbar2.Maximum = (int)(samplefrequency / 2);
 
-                    System.Numerics.Complex[][] FS = new System.Numerics.Complex[len][];
-                    System.Numerics.Complex[][] FF = new System.Numerics.Complex[len][];
+                    System.Numerics.Complex[][] FCtrl = new System.Numerics.Complex[len][];
+                    System.Numerics.Complex[][] FExp = new System.Numerics.Complex[len][];
 
                     for (int i = 0; i < len; i++)
                     {
-                        FS[i] = Audio.Pach_SP.FFT_General(TimeS[i], 0);
-                        FF[i] = Audio.Pach_SP.FFT_General(result_signals[i], 0);
+                        FCtrl[i] = Audio.Pach_SP.FFT_General(result_control[i], 0);
+                        FExp[i] = Audio.Pach_SP.FFT_General(result_signals[i], 0);
                     }
 
-                    Scattering = new double[FS[0].Length];
+                    Scattering = new double[FCtrl[0].Length];
                     //FF2 = new System.Numerics.Complex[FS[0].Length][];
                     //FS2 = new System.Numerics.Complex[FS[0].Length][];
                     //FSFF = new System.Numerics.Complex[FS[0].Length][];
-                    FF2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
-                    FS2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
+                    FE2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
+                    FC2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
                     FSFF = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
+
+                    System.Numerics.Complex[] sumFC2 = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFE2 = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFSFF = new System.Numerics.Complex[(int)(samplefrequency / 2)];
 
                     for (int i = 0; i < len; i++)
                     {
-                        FF2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FF2"+i.ToString(), len * 16);
-                        FS2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FS2"+i.ToString(), len * 16);
-                        FSFF[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FSFF"+i.ToString(), len * 16);
-                        System.IO.BinaryWriter fs2writer = new System.IO.BinaryWriter(FS2[i].CreateViewStream());
-                        System.IO.BinaryWriter ff2writer = new System.IO.BinaryWriter(FF2[i].CreateViewStream());
+                        FC2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FC2"+i.ToString(), (int)(samplefrequency / 2) * 16);
+                        FE2[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FE2" + i.ToString(), (int)(samplefrequency / 2) * 16);
+                        FSFF[i] = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateNew("FSFF"+i.ToString(), (int)(samplefrequency / 2) * 16);
+                        System.IO.BinaryWriter fs2writer = new System.IO.BinaryWriter(FC2[i].CreateViewStream());
+                        System.IO.BinaryWriter ff2writer = new System.IO.BinaryWriter(FE2[i].CreateViewStream());
                         System.IO.BinaryWriter fsffwriter = new System.IO.BinaryWriter(FSFF[i].CreateViewStream());
                         //FF2[i] = new System.Numerics.Complex[FS.Length];
                         //FS2[i] = new System.Numerics.Complex[FS.Length];
                         //FSFF[i] = new System.Numerics.Complex[FS.Length];
-                        System.Numerics.Complex sumFS2 = 0;
-                        System.Numerics.Complex sumFF2 = 0;
-                        System.Numerics.Complex sumFSFF = 0;
 
-                        for (int j = 0; j < len; j++)
+                        for (int j = 0; j < (int)(samplefrequency / 2); j++)
                         {
-                            System.Numerics.Complex fs2 = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
-                            System.Numerics.Complex ff2 = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);
-                            System.Numerics.Complex fsff = FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
+                            System.Numerics.Complex fc2 = System.Numerics.Complex.Pow(FCtrl[i][j].Magnitude, 2);
+                            System.Numerics.Complex fe2 = System.Numerics.Complex.Pow(FExp[i][j].Magnitude, 2);
+                            System.Numerics.Complex fsff = FExp[i][j] * System.Numerics.Complex.Conjugate(FCtrl[i][j]);
 
-                            fs2writer.Write(fs2.Real);
-                            fs2writer.Write(fs2.Imaginary);
-                            ff2writer.Write(ff2.Real);
-                            ff2writer.Write(ff2.Imaginary);
+                            fs2writer.Write(fc2.Real);
+                            fs2writer.Write(fc2.Imaginary);
+                            ff2writer.Write(fe2.Real);
+                            ff2writer.Write(fe2.Imaginary);
                             fsffwriter.Write(fsff.Real);
                             fsffwriter.Write(fsff.Imaginary);
 
-                            sumFS2 += fs2;
-                            sumFF2 += ff2;
-                            sumFSFF += fsff;
+                            sumFC2[j] += fc2;// * Math.Sin(i%10 * Math.PI / 18);
+                            sumFE2[j] += fe2;// * Math.Sin(i % 10 * Math.PI / 18);
+                            sumFSFF[j] += fsff * Math.Sin(i % 10 * Math.PI / 18);
                             //FS2[i][j] = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
                             //FF2[i][j] = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);
                             //FSFF[i][j] = FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
@@ -751,9 +752,22 @@ namespace Pachyderm_Acoustic
                         ff2writer.Dispose();
                         fsffwriter.Dispose();
 
-                        System.Numerics.Complex sumReflected = sumFSFF / sumFF2;
-                        System.Numerics.Complex Ratio = sumFF2 / sumFS2;
-                        Scattering[i] = 1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio);
+                        //System.Numerics.Complex sumReflected = sumFSFF / sumFE2;
+                        //System.Numerics.Complex Ratio = sumFE2 / sumFC2;
+                        //Scattering[i] = 1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio);
+                        
+                    }
+
+                    double denom = 0;
+                    for(int i = 0; i < 9; i++)
+                    {
+                        denom += Math.Sin(i % 10 * Math.PI / 18) / 9;
+                    }
+
+                    for (int j = 0; j < (int)(samplefrequency / 2); j++)
+                    {
+                        Scattering[j] = 1 - Math.Pow(sumFSFF[j].Magnitude, 2) / ((sumFC2[j] * sumFE2[j]).Real);
+                        Scattering[j] /= denom;
                     }
 
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
@@ -781,7 +795,7 @@ namespace Pachyderm_Acoustic
                             FFTwriter.Write(fft[j].Real);
                             FFTwriter.Write(fft[j].Imaginary);
                         }
-                        pts.Add(FDTDF.RDD_Location(Mic.X[i] , Mic.Y[i], Mic.Z[i]) - Utilities.RC_PachTools.RPttoHPt(LabCenter));
+                        pts.Add(FDTDF.RDD_Location(Mic.X[i] , Mic.Y[i], Mic.Z[i]) + Utilities.RC_PachTools.RPttoHPt(LabCenter));
                         FFTwriter.Close(); FFTwriter.Dispose();
                     }
 
@@ -793,7 +807,7 @@ namespace Pachyderm_Acoustic
                     else SP.plot = SPS;
 
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
-                    Rhino.RhinoApp.WriteLine("At end of Delaunay balloon construction, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
+                    Rhino.RhinoApp.WriteLine("At end of balloon construction, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
 
                     MicS = Mic;
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
@@ -865,9 +879,11 @@ namespace Pachyderm_Acoustic
                     {
                         System.Numerics.Complex sumFF2 = 0;
 
+                        double mod = Math.Sin(i % 10 * Math.PI / 18);
+
                         for (int j = 0; j < FS.Length; j++)
                         {
-                            sumFF2 += System.Numerics.Complex.Pow(FS[j][i], 2) / System.Numerics.Complex.Pow(FF[j][i], 2);
+                            sumFF2 += System.Numerics.Complex.Pow(FS[j][i], 2) / System.Numerics.Complex.Pow(FF[j][i], 2) * mod;
                         }
 
                         Scattering[i] = Utilities.AcousticalMath.SPL_Pressure(System.Numerics.Complex.Abs(sumFF2));
@@ -926,14 +942,14 @@ namespace Pachyderm_Acoustic
                 System.Numerics.Complex[] SWC = new System.Numerics.Complex[FFTs.Length];
                 double[] SW = new double[FFTs.Length];
 
-                int[] F = new int[2] { Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value), Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) };
+                int[] F = new int[2] { (int)Math.Floor(Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency), (int)Math.Ceiling(Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency )};
 
                 if (Scat_Param_Select.SelectedIndex == 0)
                 {
                     for (int i = 0; i < FFTs.Length; i++)
                     {
                         System.IO.MemoryMappedFiles.MemoryMappedViewStream fftreader = FFTs[i].CreateViewStream();
-                        fftreader.Position = 0;
+                        fftreader.Position = F[0]*16;
                         for (int f = F[0]; f < F[1]; f++)
                         {
                             byte[] R = new byte[8], I = new byte[8];
@@ -944,7 +960,7 @@ namespace Pachyderm_Acoustic
                             SWC[i] += X * X;// FFTs[i][f] * FFTs[i][f];
                         }
                         fftreader.Dispose();
-                        SW[i] = Pachyderm_Acoustic.Utilities.AcousticalMath.SPL_Intensity(SWC[i].Magnitude);
+                        SW[i] = Pachyderm_Acoustic.Utilities.AcousticalMath.SPL_Intensity(SWC[i].Magnitude / (F[1] - F[0]));
                     }
                 }
                 else if (Scat_Param_Select.SelectedIndex == 1)
@@ -956,13 +972,17 @@ namespace Pachyderm_Acoustic
                         sumFF2[i] = System.Numerics.Complex.Zero;
                         sumFSFF[i] = System.Numerics.Complex.Zero;
                     }
-
-                    for (int f = F[0]; f < F[1]; f++)
+                    
+                    for (int i = 0; i < FFTs.Length; i++)
                     {
-                        System.IO.MemoryMappedFiles.MemoryMappedViewStream fs2reader = FS2[f].CreateViewStream();
-                        System.IO.MemoryMappedFiles.MemoryMappedViewStream ff2reader = FF2[f].CreateViewStream();
-                        System.IO.MemoryMappedFiles.MemoryMappedViewStream fsffreader = FSFF[f].CreateViewStream();
-                        for (int i = 0; i < FFTs.Length; i++)
+                        System.IO.MemoryMappedFiles.MemoryMappedViewStream fs2reader = FC2[i].CreateViewStream();
+                        System.IO.MemoryMappedFiles.MemoryMappedViewStream ff2reader = FE2[i].CreateViewStream();
+                        System.IO.MemoryMappedFiles.MemoryMappedViewStream fsffreader = FSFF[i].CreateViewStream();
+                        fs2reader.Position = F[0] * 16;
+                        ff2reader.Position = F[0] * 16;
+                        fsffreader.Position = F[0] * 16;
+
+                        for (int f = F[0]; f < F[1]; f++)
                         {
                             byte[] R = new byte[8], I = new byte[8];
                             fs2reader.Read(R, 0, 8);
@@ -988,7 +1008,7 @@ namespace Pachyderm_Acoustic
                     {
                         System.Numerics.Complex sumReflected = sumFSFF[i] / sumFF2[i];
                         System.Numerics.Complex Ratio = sumFF2[i] / sumFS2[i];
-                        SW[i] = 100 * (1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio));
+                        SW[i] = 100 * (1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio))/(F[1] - F[0]);
                     }
                 }
                 SP.Data_in(SW.ToArray(), new double[2] { (double)ScatMin.Value, (double)ScatMax.Value }, (double)ScatteringRadius.Value);

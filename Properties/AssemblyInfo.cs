@@ -24,7 +24,7 @@ using Rhino.PlugIns;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("PerspectiveSketch.com")]
 [assembly: AssemblyProduct("Pachyderm_Acoustic")]
-[assembly: AssemblyCopyright("Copyright © Arthur van der Harten 2008-2014")]
+[assembly: AssemblyCopyright("Copyright © Arthur van der Harten 2008-2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

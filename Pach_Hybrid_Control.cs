@@ -258,7 +258,6 @@ namespace Pachyderm_Acoustic
                         {
                             SplitRayTracer RT_Data = (SplitRayTracer)command.Sim;
                             Receiver[s] = RT_Data.GetReceiver;
-                            //Receiver[s].Create_Pressure(Direct_Data[s].SWL);
                             Receiver[s].Create_Filter();
                             Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT_Data._currentRay.Sum(), RT_Data._rayTotal.Sum(), RT_Data._ts.Hours, RT_Data._ts.Minutes, RT_Data._ts.Seconds));
                             Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", RT_Data.PercentLost);
