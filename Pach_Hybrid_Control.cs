@@ -1942,7 +1942,7 @@ namespace Pachyderm_Acoustic
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, OCT_ID, SampleRate, 0);
                             }
                             Filter = new double[Filter2.Length];
-                            for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
+                            for (int i = 0; i < Filter.Length; i++)   Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
                             Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                             break;
                         case "Lateral ETC":
@@ -2020,9 +2020,9 @@ namespace Pachyderm_Acoustic
 
                         foreach (int i in IS_Path_Box.CheckedIndices)
                         {
-                            int ct = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(0, SampleRate).Length;
+                            //int ct = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(0, SampleRate).Length;
                             double[] refl = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(OCT_ID, SampleRate);
-                            for (int j = 0; j < ct; j++)
+                            for (int j = 0; j < refl.Length; j++)
                             {
                                 Selected.Add((IS_Path_Box.Items[i] as Deterministic_Reflection).TravelTime + (double)j / (double)SampleRate, Utilities.AcousticalMath.SPL_Intensity(refl[j]));
                             }
@@ -2090,7 +2090,7 @@ namespace Pachyderm_Acoustic
                         {
                             Analysis_View.GraphPane.YAxis.Scale.Max = max;
                             Analysis_View.GraphPane.YAxis.Scale.Min = min;
-                        }
+                        } 
                     }
 
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);

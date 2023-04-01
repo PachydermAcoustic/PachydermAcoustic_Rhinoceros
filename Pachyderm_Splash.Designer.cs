@@ -39,7 +39,6 @@ namespace Pachyderm_Acoustic
                     base.Dispose(disposing);
                 }
             }
-            internal System.Windows.Forms.TableLayoutPanel MainLayoutPanel;
 
             //Required by the Windows Form Designer
             private System.ComponentModel.IContainer components = null;
@@ -49,111 +48,122 @@ namespace Pachyderm_Acoustic
             [System.Diagnostics.DebuggerStepThrough()]
             private void InitializeComponent()
             {
-                this.MainLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
-                this.title_box = new System.Windows.Forms.Label();
-                this.Version_box = new System.Windows.Forms.Label();
-                this.Copyright = new System.Windows.Forms.Label();
-                this.Attribution = new System.Windows.Forms.Label();
-                this.MainLayoutPanel.SuspendLayout();
-                this.SuspendLayout();
-                // 
-                // MainLayoutPanel
-                // 
-                this.MainLayoutPanel.BackgroundImage = global::Pachyderm_Acoustic.Properties.Resources.logo1Splash;
-                this.MainLayoutPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-                this.MainLayoutPanel.ColumnCount = 2;
-                this.MainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 301F));
-                this.MainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 195F));
-                this.MainLayoutPanel.Controls.Add(this.title_box, 1, 0);
-                this.MainLayoutPanel.Controls.Add(this.Version_box, 1, 1);
-                this.MainLayoutPanel.Controls.Add(this.Copyright, 1, 2);
-                this.MainLayoutPanel.Controls.Add(this.Attribution, 1, 3);
-                this.MainLayoutPanel.Location = new System.Drawing.Point(0, 0);
-                this.MainLayoutPanel.Name = "MainLayoutPanel";
-                this.MainLayoutPanel.RowCount = 4;
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 179F));
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 23F));
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 218F));
-                this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 38F));
-                this.MainLayoutPanel.Size = new System.Drawing.Size(496, 302);
-                this.MainLayoutPanel.TabIndex = 0;
-                // 
-                // title_box
-                // 
-                this.title_box.Anchor = System.Windows.Forms.AnchorStyles.None;
-                this.title_box.BackColor = System.Drawing.Color.Transparent;
-                this.title_box.Font = new System.Drawing.Font("Microsoft Sans Serif", 13F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-                this.title_box.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-                this.title_box.Location = new System.Drawing.Point(304, 9);
-                this.title_box.Name = "title_box";
-                this.title_box.Size = new System.Drawing.Size(189, 161);
-                this.title_box.TabIndex = 2;
-                this.title_box.Text = "Pachyderm-Acoustic\r\nGeometrical Acoustics for Rhinoceros";
-                this.title_box.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-                // 
-                // Version_box
-                // 
-                this.Version_box.Anchor = System.Windows.Forms.AnchorStyles.None;
-                this.Version_box.BackColor = System.Drawing.Color.Transparent;
-                this.Version_box.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-                this.Version_box.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-                this.Version_box.Location = new System.Drawing.Point(304, 181);
-                this.Version_box.Name = "Version_box";
-                this.Version_box.Size = new System.Drawing.Size(189, 17);
-                this.Version_box.TabIndex = 1;
-                this.Version_box.Text = "version:";
-                this.Version_box.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-                // 
-                // Copyright
-                // 
-                this.Copyright.Anchor = System.Windows.Forms.AnchorStyles.None;
-                this.Copyright.BackColor = System.Drawing.Color.Transparent;
-                this.Copyright.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-                this.Copyright.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-                this.Copyright.Location = new System.Drawing.Point(304, 205);
-                this.Copyright.Name = "Copyright";
-                this.Copyright.Size = new System.Drawing.Size(189, 15);
-                this.Copyright.TabIndex = 3;
-                this.Copyright.Text = "copyright Arthur van der Harten";
-                this.Copyright.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-                // 
-                // Attribution
-                // 
-                this.Attribution.Anchor = System.Windows.Forms.AnchorStyles.None;
-                this.Attribution.BackColor = System.Drawing.Color.Transparent;
-                this.Attribution.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-                this.Attribution.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-                this.Attribution.Location = new System.Drawing.Point(304, 240);
-                this.Attribution.Name = "Attribution";
-                this.Attribution.Size = new System.Drawing.Size(189, 45);
-                this.Attribution.TabIndex = 4;
-                this.Attribution.Text = "Developed under the guidance of Paul Calamia at Rensselaer Polytechnic Institute";
-                this.Attribution.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
-                // 
-                // Pach_Splash
-                // 
-                this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
-                this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-                this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-                this.ClientSize = new System.Drawing.Size(496, 300);
-                this.ControlBox = false;
-                this.Controls.Add(this.MainLayoutPanel);
-                this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-                this.MaximizeBox = false;
-                this.MinimizeBox = false;
-                this.Name = "Pach_Splash";
-                this.ShowInTaskbar = false;
-                this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-                this.MainLayoutPanel.ResumeLayout(false);
-                this.ResumeLayout(false);
+            this.Attribution = new System.Windows.Forms.Label();
+            this.Copyright = new System.Windows.Forms.Label();
+            this.Version_box = new System.Windows.Forms.Label();
+            this.title_box = new System.Windows.Forms.Label();
+            this.MainLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
+            this.MainLayoutPanel.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // Attribution
+            // 
+            this.Attribution.BackColor = System.Drawing.Color.Transparent;
+            this.Attribution.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Attribution.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.Attribution.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Attribution.Location = new System.Drawing.Point(556, 421);
+            this.Attribution.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.Attribution.Name = "Attribution";
+            this.Attribution.Size = new System.Drawing.Size(430, 152);
+            this.Attribution.TabIndex = 4;
+            this.Attribution.Text = "A community project serving foundational algorithms for practical application in " +
+    "the development of the built environment and the global soundscape.";
+            this.Attribution.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // Copyright
+            // 
+            this.Copyright.BackColor = System.Drawing.Color.Transparent;
+            this.Copyright.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Copyright.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.Copyright.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Copyright.Location = new System.Drawing.Point(556, 262);
+            this.Copyright.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.Copyright.Name = "Copyright";
+            this.Copyright.Size = new System.Drawing.Size(430, 159);
+            this.Copyright.TabIndex = 3;
+            this.Copyright.Text = "copyright:\r\nOpen Research in Acoustical\r\nScience and Education, Inc.\r\n(a 501(c)3 " +
+    "non-profit organization.)";
+            this.Copyright.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // Version_box
+            // 
+            this.Version_box.BackColor = System.Drawing.Color.Transparent;
+            this.Version_box.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Version_box.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F);
+            this.Version_box.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Version_box.Location = new System.Drawing.Point(556, 222);
+            this.Version_box.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.Version_box.Name = "Version_box";
+            this.Version_box.Size = new System.Drawing.Size(430, 40);
+            this.Version_box.TabIndex = 1;
+            this.Version_box.Text = "version:";
+            this.Version_box.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // title_box
+            // 
+            this.title_box.BackColor = System.Drawing.Color.Transparent;
+            this.title_box.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.title_box.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F);
+            this.title_box.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.title_box.Location = new System.Drawing.Point(556, 0);
+            this.title_box.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.title_box.Name = "title_box";
+            this.title_box.Size = new System.Drawing.Size(430, 222);
+            this.title_box.TabIndex = 2;
+            this.title_box.Text = "Pachyderm\r\nAcoustic Simulation:\r\nFoundational Simulation\r\nin Acoustics";
+            this.title_box.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // MainLayoutPanel
+            // 
+            this.MainLayoutPanel.BackgroundImage = global::Pachyderm_Acoustic.Properties.Resources.LogoOSplash;
+            this.MainLayoutPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.MainLayoutPanel.ColumnCount = 2;
+            this.MainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 550F));
+            this.MainLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 442F));
+            this.MainLayoutPanel.Controls.Add(this.Version_box, 1, 1);
+            this.MainLayoutPanel.Controls.Add(this.Attribution, 1, 3);
+            this.MainLayoutPanel.Controls.Add(this.title_box, 1, 0);
+            this.MainLayoutPanel.Controls.Add(this.Copyright, 1, 2);
+            this.MainLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MainLayoutPanel.Location = new System.Drawing.Point(0, 0);
+            this.MainLayoutPanel.Margin = new System.Windows.Forms.Padding(6);
+            this.MainLayoutPanel.Name = "MainLayoutPanel";
+            this.MainLayoutPanel.RowCount = 4;
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 222F));
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 159F));
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 101F));
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 419F));
+            this.MainLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 73F));
+            this.MainLayoutPanel.Size = new System.Drawing.Size(992, 573);
+            this.MainLayoutPanel.TabIndex = 0;
+            // 
+            // Pach_Splash
+            // 
+            this.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(992, 573);
+            this.ControlBox = false;
+            this.Controls.Add(this.MainLayoutPanel);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(6);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "Pach_Splash";
+            this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.MainLayoutPanel.ResumeLayout(false);
+            this.ResumeLayout(false);
 
             }
+
+            internal System.Windows.Forms.Label Attribution;
+            internal System.Windows.Forms.Label Copyright;
             internal System.Windows.Forms.Label Version_box;
             internal System.Windows.Forms.Label title_box;
-            internal System.Windows.Forms.Label Copyright;
-            internal System.Windows.Forms.Label Attribution;
+            internal System.Windows.Forms.TableLayoutPanel MainLayoutPanel;
         }
     }
 }

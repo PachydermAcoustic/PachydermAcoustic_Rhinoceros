@@ -45,6 +45,7 @@
     <WarningLevel>0</WarningLevel>
     <RegisterForComInterop>false</RegisterForComInterop>
     <Prefer32Bit>false</Prefer32Bit>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -118,6 +119,7 @@
     <Reference Include="WindowsBase">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="WindowsFormsIntegration" />
     <Reference Include="ZedGraph, Version=5.1.7.430, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
       <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ZedGraph.5.1.7\lib\net35-Client\ZedGraph.dll</HintPath>
     </Reference>
@@ -234,6 +236,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Pachyderm_Splash.resx">
+      <DependentUpon>Pachyderm_Splash.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pach_Auralisation.resx">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -267,7 +272,6 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
-    <None Include="Resources\logo1Splash.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\PIcon1.ico" />
@@ -287,6 +291,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\Icon1.png" />
+    <Content Include="Resources\Logo1Splash2.png" />
+    <Content Include="Resources\LogoOSplash.png" />
     <Content Include="Resources\Source.bmp" />
   </ItemGroup>
   <ItemGroup>

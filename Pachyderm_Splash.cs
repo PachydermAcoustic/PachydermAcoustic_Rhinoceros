@@ -31,10 +31,21 @@ namespace Pachyderm_Acoustic
                 PachydermAc_PlugIn p = PachydermAc_PlugIn.Instance;
                 //Application info 
                 Version_box.Text = string.Format("Version: {0}", p.Version);
+            }
+
+            public override void Refresh()
+            {
+                base.Refresh();
+                this.BringToFront();
+                System.Threading.Thread.Sleep(1500);
+                MainLayoutPanel.BackgroundImage = global::Pachyderm_Acoustic.Properties.Resources.Logo1Splash2;
+                this.BackColor = System.Drawing.Color.Black;
                 Version_box.ForeColor = System.Drawing.Color.White;
                 title_box.ForeColor = System.Drawing.Color.White;
                 Copyright.ForeColor = System.Drawing.Color.White;
                 Attribution.ForeColor = System.Drawing.Color.White;
+                base.Refresh();
+                System.Threading.Thread.Sleep(2500);
             }
         }
     }

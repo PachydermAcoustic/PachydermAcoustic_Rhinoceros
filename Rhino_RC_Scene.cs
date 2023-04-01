@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2023, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -229,8 +229,15 @@ namespace Pachyderm_Acoustic
                         ABS_Construct.Add(Mat_Obj[q]);
                         SCT_Construct.Add(Scat_Obj[q]);
                         TRN_Construct.Add(Trans_Obj[q]);
-                        isCurved_Construct.Add(!BL.Faces[r].IsPlanar());
-
+                        if (!BL.Faces[r].IsPlanar())
+                        {
+                            //Filter for a geometrically significant amount of curvature...
+                            //This is necessary in order to avoid numerical errors...
+                            if (Math.Max(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(0), BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(1)) > 1E-5)
+                            { isCurved_Construct.Add(true); }
+                            else { isCurved_Construct.Add(false); }
+                        }
+                        else { isCurved_Construct.Add(false); }
                         BrepList.Add(BL.Faces[r].DuplicateFace(false));
                         Brep B = BL.Faces[r].DuplicateFace(false);
                         double[] Transmission = new double[8];
@@ -258,7 +265,7 @@ namespace Pachyderm_Acoustic
                                 continue;
                             }
                             break;
-                        } while (true);//(Brep)BrepList[BrepList.Count - 1], mp);
+                        } while (true);
 
 
                         for (int t = 0; t < meshes.Length; t++)
@@ -338,13 +345,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                //for (int i = 0; i < model.Count; i++)
-                //{
-                //    Hare.Geometry.Point p = (model[i][0][0] + model[i][0][1] + model[i][0][2]) / 3;
-                //    double coef = ABS_Construct[i].Coefficient_A_Broad(4);
-                //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
-                //}
-
                 Construct(model.ToArray(), ABS_Construct, SCT_Construct, TRN_Construct, isCurved_Construct.ToArray(), Kurvatures.ToArray(), Frame_Axes.ToArray());
 
                 if (register_edges)
@@ -377,19 +377,17 @@ namespace Pachyderm_Acoustic
                                             //Curve is straight, and surfaces are planar (Monolithic Edge)
                                             //Determine if surfaces are coplanar.//////////
                                             Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
-                                            //Rhino.RhinoDoc.ActiveDoc.Objects.Add(BR[0]);
-                                            //Rhino.RhinoDoc.ActiveDoc.Objects.Add(BR[1]);
-                                            //Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, new int[2] { p, p }, be));///TODO: Confirm SoundSpeed Approach suitability...
-                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] });
+                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p );
                                         }
                                         else
                                         {
                                             ///Edge Curved Condition
                                             Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
-                                            //Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, new int[2] { p, p }, be));///TODO: Confirm SoundSpeed Approach suitability...                                        
-                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] });
+                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p);
                                         }
                                     }
+                                    ////Now would do harm. Throw exception instead...
+                                    //throw new Exception("Tried to get edges from breps that have not been split up...");
                                     break;
                                 case EdgeAdjacency.Naked:
                                     //Sorted edges allow us to assume a relationship between curves...
@@ -405,9 +403,6 @@ namespace Pachyderm_Acoustic
                                             Lengths.Insert(i, l);
                                             Brep_IDS.Insert(i, p);
                                             register_anyway = false;
-                                            ////////////////
-                                            //Rhino.RhinoDoc.ActiveDoc.Objects.AddCurve(be);
-                                            ////////////////
                                             break;
                                         }
                                     }
@@ -418,9 +413,6 @@ namespace Pachyderm_Acoustic
                                         EdgeDomains.Add(new double[] { be.Domain[0], be.Domain[1] });
                                         Lengths.Add(l);
                                         Brep_IDS.Add(p);
-                                        ////////////////
-                                        //Rhino.RhinoDoc.ActiveDoc.Objects.AddCurve(be);
-                                        ////////////////
                                     }
                                     break;
                                 case EdgeAdjacency.None:
@@ -477,7 +469,7 @@ namespace Pachyderm_Acoustic
                                 ((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001))
                                 {
                                     //Curves are effectively coincident...
-                                    if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }); //Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[shortid]));                                                                                                                                                                                                     //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
+                                    if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]]}, Brep_IDS[0], Brep_IDS[shortid]);                                                                                                                                                                                                    //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
 
                                     Naked_Edges.RemoveAt(shortid);
                                     Naked_Breps.RemoveAt(shortid);
@@ -494,7 +486,6 @@ namespace Pachyderm_Acoustic
                                 }
                             }
 
-                            //if (Edges[shortid] == null) continue;
                             //Does start or end point fall on longer curve...
                             double t1;
                             double dir;
@@ -562,7 +553,6 @@ namespace Pachyderm_Acoustic
                                 }
 
                                 ////If curves are merged, iterate through points until curves do not merge, or entire section of one or other is exhausted.
-
                                 tsE += dir;
                                 pt = Naked_Edges[shortid].PointAt(tsE);
 
@@ -597,7 +587,7 @@ namespace Pachyderm_Acoustic
                                 Curve newEdge = Naked_Edges[shortid].Trim(new Interval(tsS, tsE));
 
                                 if (newEdge == null || newEdge.GetLength() < 0.01)  continue;
-                                create_curved_edge_entry(newEdge, BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] });
+                                create_curved_edge_entry(newEdge, BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }, Brep_IDS[0], Brep_IDS[shortid]);
                                 //if (newEdge.IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
                                 //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
 
@@ -647,9 +637,6 @@ namespace Pachyderm_Acoustic
                                 for (int k = 0; k < ToAdd.Count; k++)
                                 {
                                     bool added = false;
-                                    ///////////
-                                    //Rhino.RhinoDoc.ActiveDoc.Objects.AddCurve(ToAdd[k]);
-                                    ///////////
                                     double l = ToAdd[k].GetLength();
                                     for (int i = 0; i < Naked_Edges.Count; i++)
                                     {
@@ -719,17 +706,14 @@ namespace Pachyderm_Acoustic
                                 if(passed.Count > 0) starting = passed;
                             }
 
-                            //Rhino.RhinoApp.WriteLine("Orphaned Edge... Assuming thin plate in free air. (Warning: T-Intersects not yet implemented.)");
-
                             //Create thin plate...
                             foreach (Curve c in starting)
                             {
                                 Brep Converse = Naked_Breps[0].Duplicate() as Brep;
                                 Converse.Surfaces[0].Reverse(0, true);
-                                create_curved_edge_entry(c, new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] });
+                                create_curved_edge_entry(c, new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] }, Brep_IDS[0]);
                             }
-                            //if (Naked_Edges[0].IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, new Brep[] { Naked_Breps[0], Naked_Breps[0] }, new int[2] { Brep_IDS[0], Brep_IDS[0] }, Edges[0]));
-                            //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, new Brep[] { Naked_Breps[0], Converse }, new int[2] { Brep_IDS[0], Brep_IDS[0] }, Edges[0]));
+
                             //Remove this edge from Edges
                             Naked_Edges.RemoveAt(0);
                             Naked_Breps.RemoveAt(0);
@@ -777,11 +761,11 @@ namespace Pachyderm_Acoustic
                 return false;
             }
 
-            private void create_curved_edge_entry(Curve i, Brep[] B, Material[] absorption_characteristics)
+            private void create_curved_edge_entry(Curve i, Brep[] B, Material[] absorption_characteristics, int Srf1, int Srf2 = -1)
             {
                 //int fs = 176400;
                 //double length = Env_Prop.Sound_Speed(Utilities.RC_PachTools.RPttoHPt(i.PointAtStart)) / (4 * fs);
-                double length = 0.025;
+                double length = 0.01;
 
                 List<double> d = new List<double>();
                 List<double> x = new List<double>();
@@ -799,7 +783,7 @@ namespace Pachyderm_Acoustic
                     double t;
                     if (!i.LengthParameter(length, out t))
                     {
-                        EdgeLength.Add(length);
+                        EdgeLength.Add(length - 0.025);
                         break;
                     }
 
@@ -811,7 +795,7 @@ namespace Pachyderm_Acoustic
                     //double Delta_Z = Env_Prop.Sound_Speed(Utilities.RC_PachTools.RPttoHPt(P.Origin)) / (4 * fs);//TODO: Adjust depending on distance from source to receiver... (nearest, farthest?)
                     //Sources.Add(new EdgeSource(Edge.Rigid, Utilities.Pach_Tools.RPttoHPt(P.Origin), Delta_Z, HTangents));
                     //length += Delta_Z;
-                    length += 0.025;
+                    
                     //double DeltaZ = Env_Props.Sound_Speed(Point3d.Origin) / (4 * fs);
                     Rhino.Geometry.Intersect.Intersection.BrepPlane(B[0], P, 0.001, out Csects1, out Psects);
                     Rhino.Geometry.Intersect.Intersection.BrepPlane(B[1], P, 0.001, out Csects2, out Psects);
@@ -821,6 +805,7 @@ namespace Pachyderm_Acoustic
                     x.Add(P.Origin.X);
                     y.Add(P.Origin.Y);
                     z.Add(P.Origin.Z);
+                    length += 0.025;
 
                     ///Control Start Point of curve
                     if ((Csects1[0].PointAtStart.X * P.Origin.X + Csects1[0].PointAtStart.Y * P.Origin.Y + Csects1[0].PointAtStart.Z * P.Origin.Z) < 0.00001) Csects1[0].Reverse();
@@ -849,6 +834,8 @@ namespace Pachyderm_Acoustic
                 }
 
                 if (d.Count < 5) return;
+
+                Edge_Srfs.Add(new int[2] { Srf1, Srf2 });
 
                 Edges.Add(new MathNet.Numerics.Interpolation.CubicSpline[] {
                 MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkimaSorted(d.ToArray(), x.ToArray()),
@@ -1366,7 +1353,24 @@ namespace Pachyderm_Acoustic
                 return success;
             }
 
-            public bool shoot(Point3d Start, Vector3d Dir, int Random, out double u, out double v, out int Srf_ID, out List<Point3d> X_PT, out List<double> t, out List<int> Code)
+            public override bool shoot(Ray R, int topo, out X_Event Xpt, int srf_origin1, int srf_origin2 = -1)
+            {
+                double u, v, t;
+                int id;
+                Hare.Geometry.Point Pt;
+                bool success = shoot(R, out u, out v, out id, out Pt, out t);
+                if (success)
+                {
+                    Xpt = new X_Event(Pt, u, v, t, id);
+                }
+                else
+                {
+                    Xpt = new X_Event();
+                }
+                return success;
+            }
+
+            public bool shoot(Point3d Start, Vector3d Dir, int Random, out double u, out double v, out int Srf_ID, out List<Point3d> X_PT, out List<double> t, out List<int> Code, int srf_origin1 = -1, int srf_origin2 = -1)
             {
                 S_Origin = new Point3d(Start);
                 Srf_ID = 0;
@@ -1405,6 +1409,7 @@ namespace Pachyderm_Acoustic
 
                     foreach (int index in SurfaceIndex)
                     {
+                        if (index == srf_origin1 || index == srf_origin2) continue;
                         if (BrepList[index].ClosestPoint(P[0], out CP, out CI, out u, out v, MD, out N) && (CI.ComponentIndexType == ComponentIndexType.BrepFace))
                         {
                             if ((Math.Abs(P[0].X - CP.X) < 0.0001) && (Math.Abs(P[0].Y - CP.Y) < 0.0001) && (Math.Abs(P[0].Z - CP.Z) < 0.0001))

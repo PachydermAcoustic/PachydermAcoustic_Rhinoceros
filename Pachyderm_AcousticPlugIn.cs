@@ -20,6 +20,7 @@ using Rhino.PlugIns;
 using Rhino.Geometry;
 using System.Collections.Generic;
 using System;
+using System.Threading;
 
 namespace Pachyderm_Acoustic
 {
@@ -102,11 +103,14 @@ namespace Pachyderm_Acoustic
             {
                 //the following should always be the case, but just to be paranoid 
                 Pach_Splash splash = new Pach_Splash();
-                splash.Show();
-                splash.Refresh();
-                System.Threading.Thread.Sleep(2000);
 
-                //TODO: find out if we can now create arrays greater than 2 GB...
+                splash.Show();
+                splash.BringToFront();
+                    splash.Focus();
+                    splash.Refresh();
+                    splash.Close();
+                    splash.Dispose();
+                
                 //Register the UserControl "Panels"
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_TD_Numeric_Control), "PachyDerm TimeDomain Models", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Hybrid_Control), "Pachyderm Hybrid Models", Properties.Resources.PIcon1);
@@ -115,9 +119,6 @@ namespace Pachyderm_Acoustic
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Visual_Control), "Pachyderm Particle Animation", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Auralisation), "Pachyderm Auralisation", Properties.Resources.PIcon1);
                 //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_SpeakerBuilder), "Pachyderm Speaker Builder", Properties.Resources.PIcon1);
-
-                splash.Close();
-                splash.Dispose();
 
                 return LoadReturnCode.Success;
             }

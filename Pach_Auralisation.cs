@@ -25,6 +25,10 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
+using MathNet.Numerics.RootFinding;
+using MathNet.Numerics;
+using Pachyderm_Acoustic.AbsorptionModels;
+using System.Windows.Media.Media3D;
 
 namespace Pachyderm_Acoustic
 {
@@ -35,6 +39,10 @@ namespace Pachyderm_Acoustic
         {
             AuralisationConduit A;
             bool Linear_Phase;
+            int[] SrcRendered;
+            int RecRendered;
+            double[][] Response;
+            int SFreq_Rendered;
             // This call is required by the Windows Form Designer. 
             public Pach_Auralisation()
             {
@@ -143,6 +151,122 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            public double[][] Render_Filter(int Sample_Frequency)
+            {
+                double[][] Temp;
+                double[][] Response;
+                switch (DistributionType.Text)
+                {
+                    case "Monaural":
+                        Response = new double[1][];
+                        Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
+                        break;
+                    case "First Order Ambisonics (ACN+SN3D)":
+                        Response = new double[4][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        break;
+                    case "First Order Ambisonics (FuMa+SN3D)":
+                        Response = new double[4][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        break;
+                    case "Second Order Ambisonics(ACN+SN3D)":
+                        Response = new double[9][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        break;
+                    case "Second Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[9][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        break;
+                    case "Third Order Ambisonics(ACN+SN3D)":
+                        Response = new double[16][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        break;
+
+                    case "Third Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[16][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        break;
+                    default:
+                        Response = new double[Channel_View.Items.Count][];
+                        for (int i = 0; i < Channel_View.Items.Count; i++)
+                        {
+                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.z) / Math.PI;
+                            double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.y, (Channel_View.Items[i] as channel).V.x) / Math.PI;
+                            if (alt > 90) alt -= 180;
+                            if (alt < -90) alt += 180;
+                            if (azi > 360) azi -= 360;
+                            if (azi < 0) azi += 360;
+                            Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, PachTools.OctaveStr2Int(Graph_Octave.Text), Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true);
+                        }
+                        break;
+                }
+                return Response;
+            }
+
             private void Update_Graph(object sender, EventArgs e)
             {
                 Analysis_View.GraphPane.CurveList.Clear();
@@ -162,72 +286,7 @@ namespace Pachyderm_Acoustic
 
                     List<System.Drawing.Color> C = new List<System.Drawing.Color> {System.Drawing.Color.Red, System.Drawing.Color.OrangeRed, System.Drawing.Color.Orange, System.Drawing.Color.DarkGoldenrod, System.Drawing.Color.Olive, System.Drawing.Color.Green, System.Drawing.Color.Aquamarine, System.Drawing.Color.Azure, System.Drawing.Color.Blue, System.Drawing.Color.Indigo, System.Drawing.Color.Violet};
 
-                    double[][] Temp;
-
-                    switch (DistributionType.Text)
-                    { 
-                        case "Monaural":
-                            Response = new double[1][];
-                            Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true));
-                            break;
-                        case "First Order Ambisonics":
-                            Response = new double[4][];
-                            Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
-                            Response[1] = Temp[0];
-                            Response[2] = Temp[1];
-                            Response[3] = Temp[2];
-                            break;
-                        case "Second Order Ambisonics":
-                            Response = new double[9][];
-                            Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
-                            Response[1] = Temp[0];
-                            Response[2] = Temp[1];
-                            Response[3] = Temp[2];
-                            Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[4] = Temp[0];
-                            Response[5] = Temp[1];
-                            Response[6] = Temp[2];
-                            Response[7] = Temp[3];
-                            Response[8] = Temp[4];
-                            break;
-                        case "Third Order Ambisonics":
-                            Response = new double[16][];
-                            Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
-                            Response[1] = Temp[0];
-                            Response[2] = Temp[1];
-                            Response[3] = Temp[2];
-                            Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[4] = Temp[0];
-                            Response[5] = Temp[1];
-                            Response[6] = Temp[2];
-                            Response[7] = Temp[3];
-                            Response[8] = Temp[4];
-                            Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                            Response[9] = Temp[0];
-                            Response[10] = Temp[1];
-                            Response[11] = Temp[2];
-                            Response[12] = Temp[3];
-                            Response[13] = Temp[4];
-                            Response[14] = Temp[5];
-                            Response[15] = Temp[6];
-                            break;
-                        default:
-                            Response = new double[Channel_View.Items.Count][];
-                            for (int i = 0; i < Channel_View.Items.Count; i++) 
-                            {
-                                double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.z) / Math.PI;
-                                double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.y, (Channel_View.Items[i] as channel).V.x) / Math.PI;
-                                if (alt > 90) alt -= 180;
-                                if (alt < -90) alt += 180;
-                                if (azi > 360) azi -= 360;
-                                if (azi < 0) azi += 360;
-                                Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, alt, azi, true, true);
-                            }
-                            break;
-                    }
+                    Response = Render_Filter(44100);
 
                     //Get the maximum value of the Direct Sound
                     double DirectMagnitude = 0;
@@ -236,7 +295,7 @@ namespace Pachyderm_Acoustic
                         double[] E = Direct_Data[i].EnergyValue(OCT_ID, REC_ID);
                         for (int j = 0; j < E.Length; j++)
                         {
-                            double D = AcousticalMath.SPL_Intensity(E[j]);
+                            double D = AcousticalMath.SPL_Intensity(E[j])-150;
                             if (D > DirectMagnitude) DirectMagnitude = D;
                         }
                     }
@@ -252,6 +311,7 @@ namespace Pachyderm_Acoustic
                         if (OCT_ID < 8)
                         {
                             double[] filter = Audio.Pach_SP.FIR_Bandpass(Response[i], OCT_ID, SampleRate, 0);
+                            Array.Resize(ref filter, filter.Length - 12288);
                             Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10], ZedGraph.SymbolType.None);
                         }
                         else
@@ -261,8 +321,8 @@ namespace Pachyderm_Acoustic
                     }
                     Analysis_View.GraphPane.XAxis.Scale.Max = time[time.Length - 1];
                     Analysis_View.GraphPane.XAxis.Scale.Min = time[0];
-                    Analysis_View.GraphPane.YAxis.Scale.Max = DirectMagnitude + 15;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
-                    Analysis_View.GraphPane.YAxis.Scale.Min = 0;
+                    Analysis_View.GraphPane.YAxis.Scale.Max = DirectMagnitude;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
+                    Analysis_View.GraphPane.YAxis.Scale.Min = DirectMagnitude - 100;
 
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
@@ -328,11 +388,6 @@ namespace Pachyderm_Acoustic
                 SignalETC = Audio.Pach_SP.Wave.ReadtoDouble(Signal_Status.Text, true, out Sample_Freq)[0];
             }
 
-            int[] SrcRendered;
-            int RecRendered;
-            double[][] Response;
-            int SFreq_Rendered;
-
             private void Clear_Render()
             {
                 SrcRendered = null;
@@ -371,72 +426,7 @@ namespace Pachyderm_Acoustic
                 for (int j = 0; j < SignalBuffer.Length; j++) SignalBuffer[j] /= maxvalue;
                 //Convert pressure response to a 24-bit dynamic range:
 
-                double[][] Temp;
-                double[][] Render_Response;
-                switch (DistributionType.Text)
-                {
-                    case "Monaural":
-                        Render_Response = new double[1][];
-                        Render_Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
-                        break;
-                    case "First Order Ambisonics":
-                        Render_Response = new double[4][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        break;
-                    case "Second Order Ambisonics":
-                        Render_Response = new double[9][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[4] = Temp[0];
-                        Render_Response[5] = Temp[1];
-                        Render_Response[6] = Temp[2];
-                        Render_Response[7] = Temp[3];
-                        Render_Response[8] = Temp[4];
-                        break;
-                    case "Third Order Ambisonics":
-                        Render_Response = new double[16][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[4] = Temp[0];
-                        Render_Response[5] = Temp[1];
-                        Render_Response[6] = Temp[2];
-                        Render_Response[7] = Temp[3];
-                        Render_Response[8] = Temp[4];
-                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[9] = Temp[0];
-                        Render_Response[10] = Temp[1];
-                        Render_Response[11] = Temp[2];
-                        Render_Response[12] = Temp[3];
-                        Render_Response[13] = Temp[4];
-                        Render_Response[14] = Temp[5];
-                        Render_Response[15] = Temp[6];
-                        break;
-                    default:
-                        Render_Response = new double[Channel_View.Items.Count][];
-                        for (int i = 0; i < Channel_View.Items.Count; i++)
-                        {
-                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.z) / Math.PI;
-                            double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.y, (Channel_View.Items[i] as channel).V.x) / Math.PI;
-                            if (alt > 90) alt -= 180;
-                            if (alt < -90) alt += 180;
-                            if (azi > 360) azi -= 360;
-                            if (azi < 0) azi += 360;
-                            Render_Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, PachTools.OctaveStr2Int(Graph_Octave.Text), Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true);
-                        }
-                        break;
-                }
+                double[][] Render_Response = Render_Filter(SamplesPerSec);
 
                 float[][] NewSignal = new float[(int)Render_Response.Length][];
                 for (int i = 0; i < Render_Response.Length; i++)
@@ -522,80 +512,13 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
-                double[][] Temp;
-                double[][] Render_Response;
-                switch (DistributionType.Text)
-                {
-                    case "Monaural":
-                        Render_Response = new double[1][];
-                        //Render_Response[0] = (IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
-                        Render_Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
-                        break;
-                    case "First Order Ambisonics":
-                        Render_Response = new double[4][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        break;
-                    case "Second Order Ambisonics":
-                        Render_Response = new double[9][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[4] = Temp[0];
-                        Render_Response[5] = Temp[1];
-                        Render_Response[6] = Temp[2];
-                        Render_Response[7] = Temp[3];
-                        Render_Response[8] = Temp[4];
-                        break;
-                    case "Third Order Ambisonics":
-                        Render_Response = new double[16][];
-                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
-                        Render_Response[1] = Temp[0];
-                        Render_Response[2] = Temp[1];
-                        Render_Response[3] = Temp[2];
-                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[4] = Temp[0];
-                        Render_Response[5] = Temp[1];
-                        Render_Response[6] = Temp[2];
-                        Render_Response[7] = Temp[3];
-                        Render_Response[8] = Temp[4];
-                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        Render_Response[9] = Temp[0];
-                        Render_Response[10] = Temp[1];
-                        Render_Response[11] = Temp[2];
-                        Render_Response[12] = Temp[3];
-                        Render_Response[13] = Temp[4];
-                        Render_Response[14] = Temp[5];
-                        Render_Response[15] = Temp[6];
-                        break;
-                    default:
-                        Render_Response = new double[Channel_View.Items.Count][];
-                        for (int i = 0; i < Channel_View.Items.Count; i++)
-                        {
-                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.z) / Math.PI;
-                            double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.y, (Channel_View.Items[i] as channel).V.x) / Math.PI;
-                            if (alt > 90) alt -= 180;
-                            if (alt < -90) alt += 180;
-                            if (azi > 360) azi -= 360;
-                            if (azi < 0) azi += 360;
-                            Render_Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, SamplesPerSec, PachTools.OctaveStr2Int(Graph_Octave.Text), Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true);
-                        }
-                        break;
-                }
-
+                double[][] Render_Response = Render_Filter(SamplesPerSec);
                 float[][] RR = new float[Render_Response.Length][];
                 int maxlength = 0;
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
                 //for (int j = 0; j < Render_Response.Length; j++) Rende[j] = new double[maxlength];
 
-                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 60)/ 20));
+                float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 15)/ 20));
                 for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[Render_Response[c].Length];
 
                 for (int j = 0; j < Render_Response[0].Length; j++)
@@ -746,8 +669,14 @@ namespace Pachyderm_Acoustic
                         }
 
                         double max = 0;
-                        foreach (Direct_Sound d in Direct_Data) max = Math.Max(max, d.SWL.Max());// 10 * Math.Log10(Math.Pow(10, d.SWL[0] / 10) + Math.Pow(10, d.SWL[1] / 10) + Math.Pow(10, d.SWL[2] / 10) + Math.Pow(10, d.SWL[3] / 10) + Math.Pow(10, d.SWL[4] / 10) + Math.Pow(10, d.SWL[5] / 10) + Math.Pow(10, d.SWL[6] / 10) + Math.Pow(10, d.SWL[7] / 10)));
-                        Normalization_Choice.Value = (decimal)max + 30;
+                        for (int i = 0; i < Direct_Data.Length; i++)
+                        {
+                            double[] Response = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, 44100, i, SelectedSources(), false, true));
+                            double tmax = Math.Max(Response.Max(), Math.Abs(Response.Min()));
+                            max = Math.Max(max, tmax);
+                        }
+                        max = AcousticalMath.SPL_Pressure(max);
+                        Normalization_Choice.Value = (decimal)max;
                     }
                     else if (Mapping_Select.Checked)
                     {
