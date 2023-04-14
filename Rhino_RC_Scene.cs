@@ -233,7 +233,9 @@ namespace Pachyderm_Acoustic
                         {
                             //Filter for a geometrically significant amount of curvature...
                             //This is necessary in order to avoid numerical errors...
-                            if (Math.Max(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(0), BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(1)) > 1E-5)
+                            double K0 = Math.Abs(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(0));
+                            double K1 = Math.Abs(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(1));
+                            if (Math.Max(K0, K1) > 1E-3)
                             { isCurved_Construct.Add(true); }
                             else { isCurved_Construct.Add(false); }
                         }

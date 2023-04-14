@@ -287,7 +287,6 @@ namespace Pachyderm_Acoustic
                     cleanup();
                 }
 
-                //Pressure_Ready = true;
                 Populate_Sources();
             }
 
@@ -1179,24 +1178,6 @@ namespace Pachyderm_Acoustic
                     }
                     if (Direct_Data != null && Direct_Data.Length > 0 && Direct_Data[0] != null) Update_Graph(null, new System.EventArgs());
                 }
-                //else if (Tabs.SelectedTab.Text == "Materials")
-                //{
-                //    Materials.Load_Library();
-                //    Rhino.DocObjects.Tables.LayerTable layers = Rhino.RhinoDoc.ActiveDoc.Layers;
-                //    string Selection = LayerDisplay.Text;
-                //    LayerNames.Clear(); 
-
-                //    for (int q = 0; q < layers.Count; q++)
-                //    {
-                //        LayerNames.Add(layers[q].Name);
-                //    }
-                //    LayerDisplay.Items.Clear();
-                //    LayerDisplay.Items.AddRange(LayerNames.ToArray());
-                //    LayerDisplay.Text = Selection;
-                //    Material_Lib.Items.Clear();
-                //    Material_Lib.Items.AddRange(Materials.Names().ToArray());
-                //    LayerDisplay.Text = Rhino.RhinoDoc.ActiveDoc.Layers.CurrentLayer.Name;
-                //}
                 else if (Tabs.SelectedTab.Text == "Processing")
                 {
                     Update_Graph(null, new System.EventArgs());
