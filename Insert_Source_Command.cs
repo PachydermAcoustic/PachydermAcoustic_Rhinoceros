@@ -22,6 +22,7 @@ using Rhino;
 using Rhino.Display;
 using Rhino.Commands;
 using Rhino.Geometry;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace Pachyderm_Acoustic
 {
@@ -74,7 +75,7 @@ namespace Pachyderm_Acoustic
                 Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(doc.Objects.AddPoint(location));
                 rhObj.Attributes.Name = "Acoustical Source";
                 rhObj.Geometry.SetUserString("SourceType", "0");
-                rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { 120, 120, 120, 120, 120, 120, 120, 120 }));
+                rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23, 115.23 }));
                 rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
                 doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
 
@@ -688,14 +689,47 @@ namespace Pachyderm_Acoustic
                             string Aim = "";
                             string ft = "";
                             string SWLMax = "";
-                            strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
-                            strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
-                            strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
-                            strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
-                            strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
-                            strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
-                            strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
-                            strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
+                            string Bands = "";
+                            Bands = rhino_object.Geometry.GetUserString("Bands");
+                            if (double.Parse(Bands) <= 10)
+                            {
+                                strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
+                                strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
+                                strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
+                                strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
+                                strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
+                                strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
+                                strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
+                                strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
+                            }
+                            else 
+                            {
+                                strballoon[0] = rhino_object.Geometry.GetUserString("Balloon50");
+                                strballoon[1] = rhino_object.Geometry.GetUserString("Balloon63");
+                                strballoon[2] = rhino_object.Geometry.GetUserString("Balloon80");
+                                strballoon[3] = rhino_object.Geometry.GetUserString("Balloon100");
+                                strballoon[4] = rhino_object.Geometry.GetUserString("Balloon125");
+                                strballoon[5] = rhino_object.Geometry.GetUserString("Balloon160");
+                                strballoon[6] = rhino_object.Geometry.GetUserString("Balloon200");
+                                strballoon[7] = rhino_object.Geometry.GetUserString("Balloon250");
+                                strballoon[8] = rhino_object.Geometry.GetUserString("Balloon315");
+                                strballoon[9] = rhino_object.Geometry.GetUserString("Balloon400");
+                                strballoon[10] = rhino_object.Geometry.GetUserString("Balloon500");
+                                strballoon[11] = rhino_object.Geometry.GetUserString("Balloon630");
+                                strballoon[12] = rhino_object.Geometry.GetUserString("Balloon800");
+                                strballoon[13] = rhino_object.Geometry.GetUserString("Balloon1000");
+                                strballoon[14] = rhino_object.Geometry.GetUserString("Balloon1250");
+                                strballoon[15] = rhino_object.Geometry.GetUserString("Balloon1600");
+                                strballoon[16] = rhino_object.Geometry.GetUserString("Balloon2000");
+                                strballoon[17] = rhino_object.Geometry.GetUserString("Balloon2500");
+                                strballoon[18] = rhino_object.Geometry.GetUserString("Balloon3150");
+                                strballoon[19] = rhino_object.Geometry.GetUserString("Balloon4000");
+                                strballoon[20] = rhino_object.Geometry.GetUserString("Balloon5000");
+                                strballoon[21] = rhino_object.Geometry.GetUserString("Balloon6300");
+                                strballoon[22] = rhino_object.Geometry.GetUserString("Balloon8000");
+                                strballoon[23] = rhino_object.Geometry.GetUserString("Balloon10000");
+                            }
+
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
@@ -712,14 +746,46 @@ namespace Pachyderm_Acoustic
                             string[] strballoon = new string[8];
                             string Aim = "";
                             string SWLMax = "";
-                            strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
-                            strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
-                            strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
-                            strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
-                            strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
-                            strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
-                            strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
-                            strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
+                            string Bands = "";
+                            Bands = rhino_object.Geometry.GetUserString("Bands");
+                            if (double.Parse(Bands) <= 10)
+                            {
+                                strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
+                                strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
+                                strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
+                                strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
+                                strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
+                                strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
+                                strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
+                                strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
+                            }
+                            else
+                            {
+                                strballoon[0] = rhino_object.Geometry.GetUserString("Balloon50");
+                                strballoon[1] = rhino_object.Geometry.GetUserString("Balloon63");
+                                strballoon[2] = rhino_object.Geometry.GetUserString("Balloon80");
+                                strballoon[3] = rhino_object.Geometry.GetUserString("Balloon100");
+                                strballoon[4] = rhino_object.Geometry.GetUserString("Balloon125");
+                                strballoon[5] = rhino_object.Geometry.GetUserString("Balloon160");
+                                strballoon[6] = rhino_object.Geometry.GetUserString("Balloon200");
+                                strballoon[7] = rhino_object.Geometry.GetUserString("Balloon250");
+                                strballoon[8] = rhino_object.Geometry.GetUserString("Balloon315");
+                                strballoon[9] = rhino_object.Geometry.GetUserString("Balloon400");
+                                strballoon[10] = rhino_object.Geometry.GetUserString("Balloon500");
+                                strballoon[11] = rhino_object.Geometry.GetUserString("Balloon630");
+                                strballoon[12] = rhino_object.Geometry.GetUserString("Balloon800");
+                                strballoon[13] = rhino_object.Geometry.GetUserString("Balloon1000");
+                                strballoon[14] = rhino_object.Geometry.GetUserString("Balloon1250");
+                                strballoon[15] = rhino_object.Geometry.GetUserString("Balloon1600");
+                                strballoon[16] = rhino_object.Geometry.GetUserString("Balloon2000");
+                                strballoon[17] = rhino_object.Geometry.GetUserString("Balloon2500");
+                                strballoon[18] = rhino_object.Geometry.GetUserString("Balloon3150");
+                                strballoon[19] = rhino_object.Geometry.GetUserString("Balloon4000");
+                                strballoon[20] = rhino_object.Geometry.GetUserString("Balloon5000");
+                                strballoon[21] = rhino_object.Geometry.GetUserString("Balloon6300");
+                                strballoon[22] = rhino_object.Geometry.GetUserString("Balloon8000");
+                                strballoon[23] = rhino_object.Geometry.GetUserString("Balloon10000");
+                            }
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');

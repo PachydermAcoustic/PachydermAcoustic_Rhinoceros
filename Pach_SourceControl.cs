@@ -20,6 +20,7 @@ using Rhino.DocObjects;
 using System;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.UI;
+using Pachyderm_Acoustic.Utilities;
 
 namespace Pachyderm_Acoustic
 {
@@ -40,14 +41,30 @@ namespace Pachyderm_Acoustic
             {
                 Objects = Obj;
 
+                SWL0a.Maximum = 200;
                 SWL0.Maximum = 200;
+                SWL0b.Maximum = 200;
+                SWL1a.Maximum = 200;
                 SWL1.Maximum = 200;
+                SWL1b.Maximum = 200;
+                SWL2a.Maximum = 200;
                 SWL2.Maximum = 200;
+                SWL2b.Maximum = 200;
+                SWL3a.Maximum = 200;
                 SWL3.Maximum = 200;
+                SWL3b.Maximum = 200;
+                SWL4a.Maximum = 200;
                 SWL4.Maximum = 200;
+                SWL4b.Maximum = 200;
+                SWL5a.Maximum = 200;
                 SWL5.Maximum = 200;
+                SWL5b.Maximum = 200;
+                SWL6a.Maximum = 200;
                 SWL6.Maximum = 200;
+                SWL6b.Maximum = 200;
+                SWL7a.Maximum = 200;
                 SWL7.Maximum = 200;
+                SWL7b.Maximum = 200;
 
                 //Check to see if all objects have the same key values... 
                 string Mode = null;
@@ -92,14 +109,60 @@ namespace Pachyderm_Acoustic
                         SourceType.SelectedIndex = int.Parse(Mode);
                         string Power = Objects[0].Geometry.GetUserString("SWL");
                         double[] SWL = Utilities.PachTools.DecodeSourcePower(Power);
-                        SWL0.Value = (decimal)SWL[0];
-                        SWL1.Value = (decimal)SWL[1];
-                        SWL2.Value = (decimal)SWL[2];
-                        SWL3.Value = (decimal)SWL[3];
-                        SWL4.Value = (decimal)SWL[4];
-                        SWL5.Value = (decimal)SWL[5];
-                        SWL6.Value = (decimal)SWL[6];
-                        SWL7.Value = (decimal)SWL[7];
+                        if (SWL.Length > 8)
+                        {
+                            SWL0a.Value = (decimal)SWL[0];
+                            SWL0.Value = (decimal)SWL[1];
+                            SWL0b.Value = (decimal)SWL[2];
+                            SWL1a.Value = (decimal)SWL[3];
+                            SWL1.Value = (decimal)SWL[4];
+                            SWL1b.Value = (decimal)SWL[5];
+                            SWL2a.Value = (decimal)SWL[6];
+                            SWL2.Value = (decimal)SWL[7];
+                            SWL2b.Value = (decimal)SWL[8];
+                            SWL3a.Value = (decimal)SWL[9];
+                            SWL3.Value = (decimal)SWL[10];
+                            SWL3b.Value = (decimal)SWL[11];
+                            SWL4a.Value = (decimal)SWL[12];
+                            SWL4.Value = (decimal)SWL[13];
+                            SWL4b.Value = (decimal)SWL[14];
+                            SWL5a.Value = (decimal)SWL[15];                            
+                            SWL5.Value = (decimal)SWL[16];
+                            SWL5b.Value = (decimal)SWL[17];
+                            SWL6a.Value = (decimal)SWL[18];
+                            SWL6.Value = (decimal)SWL[19];
+                            SWL6b.Value = (decimal)SWL[20];
+                            SWL7a.Value = (decimal)SWL[21];
+                            SWL7.Value = (decimal)SWL[22];
+                            SWL7b.Value = (decimal)SWL[23];
+                        }
+                        else
+                        {
+                            SWL0a.Value = (decimal)(SWL[0] - (SWL[1] - SWL[0]) / 3 - 4.77);
+                            SWL0.Value = (decimal)(SWL[0] - 4.77);
+                            SWL0b.Value = (decimal)(SWL[0] + (SWL[1] - SWL[0]) / 3 - 4.77);
+                            SWL1a.Value = (decimal)(SWL[1] - (SWL[1] - SWL[0]) / 3 - 4.77);
+                            SWL1.Value = (decimal)(SWL[1] - 4.77);
+                            SWL1b.Value = (decimal)(SWL[1] + (SWL[2] - SWL[1]) / 3 - 4.77);
+                            SWL2a.Value = (decimal)(SWL[2] - (SWL[2] - SWL[1]) / 3 - 4.77);
+                            SWL2.Value = (decimal)(SWL[2] - 4.77);
+                            SWL2b.Value = (decimal)(SWL[2] + (SWL[3] - SWL[2]) / 3 - 4.77);
+                            SWL3a.Value = (decimal)(SWL[3] - (SWL[3] - SWL[2]) / 3 - 4.77);
+                            SWL3.Value = (decimal)(SWL[3] - 4.77);
+                            SWL3b.Value = (decimal)(SWL[3] + (SWL[4] - SWL[3]) / 3 - 4.77);
+                            SWL4a.Value = (decimal)(SWL[4] - (SWL[4] - SWL[3]) / 3 - 4.77);
+                            SWL4.Value = (decimal)(SWL[4] - 4.77);
+                            SWL4b.Value = (decimal)(SWL[4]+ (SWL[5] - SWL[4]) / 3 - 4.77);
+                            SWL5a.Value = (decimal)(SWL[5] - (SWL[5] - SWL[4]) / 3 - 4.77);
+                            SWL5.Value = (decimal)(SWL[5] - 4.77);
+                            SWL5b.Value = (decimal)(SWL[5] + (SWL[6] - SWL[5]) / 3 - 4.77);
+                            SWL6a.Value = (decimal)(SWL[6] - (SWL[6] - SWL[5]) / 3 - 4.77);
+                            SWL6.Value = (decimal)(SWL[6] - 4.77);
+                            SWL6b.Value = (decimal)(SWL[6] + (SWL[7] - SWL[6]) / 3 - 4.77);
+                            SWL7a.Value = (decimal)(SWL[7] - (SWL[7] - SWL[6]) / 3 - 4.77);
+                            SWL7.Value = (decimal)(SWL[7] - 4.77);
+                            SWL7b.Value = (decimal)(SWL[7] + (SWL[7] - SWL[6]) / 3 - 4.77);
+                        }
 
                         string Aim = Objects[0].Geometry.GetUserString("Aiming");
                         if (!string.IsNullOrEmpty(Aim))
@@ -125,7 +188,6 @@ namespace Pachyderm_Acoustic
                         {
                             Delay_ms.Value = 0;
                         }
-
                     }
                     else
                     {
@@ -133,9 +195,8 @@ namespace Pachyderm_Acoustic
                         foreach (RhinoObject OBJ in Objects)
                         {
                             OBJ.Geometry.SetUserString("SourceType", "0");
-                            OBJ.Geometry.SetUserString("SWL", "120;120;120;120;120;120;120;120;");
+                            OBJ.Geometry.SetUserString("SWL", "115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23;115.23");
                             OBJ.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
-                            //Rhino.RhinoDoc.ActiveDoc.Objects.ModifyAttributes(OBJ, OBJ.Attributes, true);
                         }
                     }
                 }
@@ -149,7 +210,7 @@ namespace Pachyderm_Acoustic
                     foreach (RhinoObject OBJ in Objects)
                     {
                         OBJ.Geometry.SetUserString("SourceType", SourceType.SelectedIndex.ToString());
-                        OBJ.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { (double)SWL0.Value, (double)SWL1.Value, (double)SWL2.Value, (double)SWL3.Value, (double)SWL4.Value, (double)SWL5.Value, (double)SWL6.Value, (double)SWL7.Value }));
+                        OBJ.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { (double)SWL0a.Value, (double)SWL0.Value, (double)SWL0b.Value, (double)SWL1a.Value, (double)SWL1.Value, (double)SWL1b.Value, (double)SWL2a.Value, (double)SWL2.Value, (double)SWL2b.Value, (double)SWL3a.Value, (double)SWL3.Value, (double)SWL3b.Value, (double)SWL4a.Value, (double)SWL4.Value, (double)SWL4b.Value, (double)SWL5a.Value, (double)SWL5.Value, (double)SWL5b.Value, (double)SWL6a.Value, (double)SWL6.Value, (double)SWL6b.Value, (double)SWL7a.Value, (double)SWL7.Value, (double)SWL7b.Value }));
                     }
                 }
                 Load_Doc(Objects);
@@ -157,22 +218,111 @@ namespace Pachyderm_Acoustic
 
             private void SWL_ValueChanged(object sender, System.EventArgs e)
             {
-                double SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL0.Value), 12);
-                SPL0.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                double sum = 0;
+                double SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL0a.Value), 12);
+                sum += SourcePower;
+                SPL0a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL0.Value), 12);
+                sum += SourcePower;
+                SPL0.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL0b.Value), 12);
+                sum += SourcePower;
+                SPL0b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SWL01.Text = Math.Round(AcousticalMath.SPL_Intensity(sum),2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL63S.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11, 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL1a.Value), 12);
+                sum += SourcePower;
+                SPL1a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL1.Value), 12);
-                SPL1.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL1.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL1b.Value), 12);
+                sum += SourcePower;
+                SPL1b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SWL11.Text = Math.Round(AcousticalMath.SPL_Intensity(sum),2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL125S.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11, 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+                
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL2a.Value), 12);
+                sum += SourcePower;
+                SPL2a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL2.Value), 12);
-                SPL2.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL2.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL2b.Value), 12);
+                sum += SourcePower;
+                SPL2b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SWL21.Text = Math.Round(AcousticalMath.SPL_Intensity(sum),2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL250S.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11, 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL3a.Value), 12);
+                sum += SourcePower;
+                SPL3a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL3.Value), 12);
-                SPL3.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL3.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL3b.Value), 12);
+                sum += SourcePower;
+                SPL3b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SWL31.Text = Math.Round(AcousticalMath.SPL_Intensity(sum),2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL500S.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11, 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL4a.Value), 12);
+                sum += SourcePower;
+                SPL4a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL4.Value), 12);
-                SPL4.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL4.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL4b.Value), 12);
+                sum += SourcePower;
+                SPL4b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SWL41.Text = Math.Round(AcousticalMath.SPL_Intensity(sum), 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL1KS.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11,2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL5a.Value), 12);
+                sum += SourcePower;
+                SPL5a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL5.Value), 12);
-                SPL5.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL5.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL5b.Value), 12);
+                sum += SourcePower;
+                SPL5b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SWL51.Text = Math.Round(AcousticalMath.SPL_Intensity(sum), 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL2KS.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11,2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL6a.Value), 12);
+                sum += SourcePower;
+                SPL6a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL6.Value), 12);
-                SPL6.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                sum += SourcePower;
+                SPL6.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL6b.Value), 12);
+                sum += SourcePower;
+                SPL6b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SWL61.Text = Math.Round(AcousticalMath.SPL_Intensity(sum),2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL4KS.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11, 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL7a.Value), 12);
+                sum += SourcePower;
+                SPL7a.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL7.Value), 12);
+                sum += SourcePower;
                 SPL7.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL7b.Value), 12);
+                sum += SourcePower;
+                SPL7b.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
+                SWL71.Text = Math.Round(AcousticalMath.SPL_Intensity(sum), 2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                SPL8KS.Text = Math.Round(AcousticalMath.SPL_Intensity(sum) - 11,2).ToString();//System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)sum), 12).ToString();
+                sum = 0;
+
                 Commit();
             }
 
@@ -192,7 +342,6 @@ namespace Pachyderm_Acoustic
                     SrcDetails.Visible = false;
                     SrcDIR.Enabled = false;
                     SrcDIR.Visible = false;
-                    //Commit();
                     return;
                 }
 
@@ -222,15 +371,47 @@ namespace Pachyderm_Acoustic
                             Objects[i].Geometry.SetUserString("FileType", L[1]);
                             Objects[i].Geometry.SetUserString("Sensitivity", L[2]);
                             Objects[i].Geometry.SetUserString("SWLMax", L[3]);
-                            Objects[i].Geometry.SetUserString("Balloon63", L[4]);
-                            Objects[i].Geometry.SetUserString("Balloon125", L[5]);
-                            Objects[i].Geometry.SetUserString("Balloon250", L[6]);
-                            Objects[i].Geometry.SetUserString("Balloon500", L[7]);
-                            Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
-                            Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
-                            Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
-                            Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
-                            Objects[i].Geometry.SetUserString("Bands", L[12]);
+
+                            if (L[1] == "0")
+                            {
+                                Objects[i].Geometry.SetUserString("Balloon63", L[4]);
+                                Objects[i].Geometry.SetUserString("Balloon125", L[5]);
+                                Objects[i].Geometry.SetUserString("Balloon250", L[6]);
+                                Objects[i].Geometry.SetUserString("Balloon500", L[7]);
+                                Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
+                                Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
+                                Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
+                                Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
+                                Objects[i].Geometry.SetUserString("Bands", L[12]);
+                            }
+                            else
+                            {
+                                Objects[i].Geometry.SetUserString("Bands", "1");
+                                Objects[i].Geometry.SetUserString("Balloon50", L[4]);
+                                Objects[i].Geometry.SetUserString("Balloon63", L[5]);
+                                Objects[i].Geometry.SetUserString("Balloon80", L[6]);
+                                Objects[i].Geometry.SetUserString("Balloon100", L[7]);
+                                Objects[i].Geometry.SetUserString("Balloon125", L[8]);
+                                Objects[i].Geometry.SetUserString("Balloon160", L[9]);
+                                Objects[i].Geometry.SetUserString("Balloon200", L[10]);
+                                Objects[i].Geometry.SetUserString("Balloon250", L[11]);
+                                Objects[i].Geometry.SetUserString("Balloon315", L[12]);
+                                Objects[i].Geometry.SetUserString("Balloon400", L[13]);
+                                Objects[i].Geometry.SetUserString("Balloon500", L[14]);
+                                Objects[i].Geometry.SetUserString("Balloon630", L[15]);
+                                Objects[i].Geometry.SetUserString("Balloon800", L[16]);
+                                Objects[i].Geometry.SetUserString("Balloon1000", L[17]);
+                                Objects[i].Geometry.SetUserString("Balloon1250", L[18]);
+                                Objects[i].Geometry.SetUserString("Balloon1600", L[19]);
+                                Objects[i].Geometry.SetUserString("Balloon2000", L[20]);
+                                Objects[i].Geometry.SetUserString("Balloon2500", L[21]);
+                                Objects[i].Geometry.SetUserString("Balloon3150", L[22]);
+                                Objects[i].Geometry.SetUserString("Balloon4000", L[23]);
+                                Objects[i].Geometry.SetUserString("Balloon5000", L[24]);
+                                Objects[i].Geometry.SetUserString("Balloon6300", L[25]);
+                                Objects[i].Geometry.SetUserString("Balloon8000", L[26]);
+                                Objects[i].Geometry.SetUserString("Balloon10000", L[27]);
+                            }
 
                             Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
                             Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());

@@ -637,7 +637,7 @@ namespace Pachyderm_Acoustic
                     if (Scat_Dir_75.Checked) dir.Add(75 * Math.PI / 180);
 
                     Source[] Src = new Source[dir.Count];
-                    for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i);
+                    for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i, true);
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
@@ -824,7 +824,7 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
-                    Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0) };
+                    Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0, true) };
                     //List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     //for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)

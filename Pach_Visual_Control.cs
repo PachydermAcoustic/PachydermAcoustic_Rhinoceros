@@ -202,7 +202,7 @@ namespace Pachyderm_Acoustic
 
                 if (MeshWave)
                 {
-                    for (int i = 0; i < Source.Length; i++) Source[i] = new GeodesicMeshSource(plugin.GetSourceSWL(i), Source[i].Origin(), (int)RT_Count.Value, i);
+                    for (int i = 0; i < Source.Length; i++) Source[i] = new GeodesicMeshSource(plugin.GetSourceSWL(i), Source[i].Origin(), (int)RT_Count.Value, i, false);
                 }
 
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];

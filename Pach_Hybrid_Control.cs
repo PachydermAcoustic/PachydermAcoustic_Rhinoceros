@@ -40,6 +40,31 @@ namespace Pachyderm_Acoustic
                 Instance = this;
                 Rhino.RhinoDoc.LayerTableEvent += Load_Library_Event;
                 Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
+
+                Abs_Table.RowStyles[5].Height = 0;
+                //63
+                Abs_Table.RowStyles[7].Height = 0;
+                Abs_Table.RowStyles[8].Height = 0;
+                //125
+                Abs_Table.RowStyles[10].Height = 0;
+                Abs_Table.RowStyles[11].Height = 0;
+                //250
+                Abs_Table.RowStyles[13].Height = 0;
+                Abs_Table.RowStyles[14].Height = 0;
+                //500
+                Abs_Table.RowStyles[16].Height = 0;
+                Abs_Table.RowStyles[17].Height = 0;
+                //1k
+                Abs_Table.RowStyles[19].Height = 0;
+                Abs_Table.RowStyles[20].Height = 0;
+                //2k
+                Abs_Table.RowStyles[22].Height = 0;
+                Abs_Table.RowStyles[23].Height = 0;
+                //4k
+                Abs_Table.RowStyles[25].Height = 0;
+                Abs_Table.RowStyles[26].Height = 0;
+                //8k
+                Abs_Table.RowStyles[28].Height = 0;
             }
 
             private void Load_Library_Event(object sender, Rhino.DocObjects.Tables.LayerTableEventArgs e)
@@ -199,7 +224,7 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Source.Length; s++)
                 {
-                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, T);
+                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), SPT[s], PScene, SampleRate, CutoffTime, T, ThirdOctaveBand.Checked);
 
                     command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
@@ -407,14 +432,30 @@ namespace Pachyderm_Acoustic
 
             private void UpdateForm()
             {
+                Abs50Out.Value = Abs50.Value;
                 Abs63Out.Value = Abs63.Value;
+                Abs80Out.Value = Abs80.Value;
+                Abs100Out.Value = Abs100.Value;
                 Abs125Out.Value = Abs125.Value;
+                Abs160Out.Value = Abs160.Value;
+                Abs200Out.Value = Abs200.Value;
                 Abs250Out.Value = Abs250.Value;
+                Abs315Out.Value = Abs315.Value;
+                Abs400Out.Value = Abs400.Value;
                 Abs500Out.Value = Abs500.Value;
+                Abs630Out.Value = Abs630.Value;
+                Abs800Out.Value = Abs800.Value;
                 Abs1kOut.Value = Abs1k.Value;
+                Abs1250Out.Value = Abs1250.Value;
+                Abs1600Out.Value = Abs1600.Value;
                 Abs2kOut.Value = Abs2k.Value;
+                Abs2500Out.Value = Abs2500.Value;
+                Abs3150Out.Value = Abs3150.Value;
                 Abs4kOut.Value = Abs4k.Value;
+                Abs5kOut.Value = Abs5k.Value;
+                Abs6300Out.Value = Abs6300.Value;
                 Abs8kOut.Value = Abs8k.Value;
+                Abs10kOut.Value = Abs10k.Value;
                 Scat63Out.Value = Scat63v.Value;
                 Scat125Out.Value = Scat125v.Value;
                 Scat250Out.Value = Scat250v.Value;
@@ -455,16 +496,47 @@ namespace Pachyderm_Acoustic
                     break;
                 }
 
-                double[] Abs = new double[8];
-                Abs[0] = (double)Abs63Out.Value / 100;
-                Abs[1] = (double)Abs125Out.Value / 100;
-                Abs[2] = (double)Abs250Out.Value / 100;
-                Abs[3] = (double)Abs500Out.Value / 100;
-                Abs[4] = (double)Abs1kOut.Value / 100;
-                Abs[5] = (double)Abs2kOut.Value / 100;
-                Abs[6] = (double)Abs4kOut.Value / 100;
-                Abs[7] = (double)Abs8kOut.Value / 100;
-
+                double[] Abs;
+                if (Octave_Abs.Checked)
+                {
+                    Abs = new double[8];
+                    Abs[0] = (double)Abs63Out.Value / 100;
+                    Abs[1] = (double)Abs125Out.Value / 100;
+                    Abs[2] = (double)Abs250Out.Value / 100;
+                    Abs[3] = (double)Abs500Out.Value / 100;
+                    Abs[4] = (double)Abs1kOut.Value / 100;
+                    Abs[5] = (double)Abs2kOut.Value / 100;
+                    Abs[6] = (double)Abs4kOut.Value / 100;
+                    Abs[7] = (double)Abs8kOut.Value / 100;
+                }
+                else
+                {
+                    Abs = new double[24];
+                    Abs[0] = (double)Abs50Out.Value / 100;
+                    Abs[1] = (double)Abs63Out.Value / 100;
+                    Abs[2] = (double)Abs80Out.Value / 100;
+                    Abs[3] = (double)Abs100Out.Value / 100;
+                    Abs[4] = (double)Abs125Out.Value / 100;
+                    Abs[5] = (double)Abs160Out.Value / 100;
+                    Abs[6] = (double)Abs200Out.Value / 100;
+                    Abs[7] = (double)Abs250Out.Value / 100;
+                    Abs[8] = (double)Abs315Out.Value / 100;
+                    Abs[9] = (double)Abs400Out.Value / 100;
+                    Abs[10] = (double)Abs500Out.Value / 100;
+                    Abs[11] = (double)Abs630Out.Value / 100;
+                    Abs[12] = (double)Abs800Out.Value / 100;
+                    Abs[13] = (double)Abs1kOut.Value / 100;
+                    Abs[14] = (double)Abs1250Out.Value / 100;
+                    Abs[15] = (double)Abs1600Out.Value / 100;
+                    Abs[16] = (double)Abs2kOut.Value / 100;
+                    Abs[17] = (double)Abs2500Out.Value / 100;
+                    Abs[18] = (double)Abs3150Out.Value / 100;
+                    Abs[19] = (double)Abs4kOut.Value / 100;
+                    Abs[20] = (double)Abs5kOut.Value / 100;
+                    Abs[21] = (double)Abs6300Out.Value / 100;
+                    Abs[22] = (double)Abs8kOut.Value / 100;
+                    Abs[23] = (double)Abs10kOut.Value / 100;
+                }
                 Materials.Add_Unique_Abs(Material_Name.Text, Abs);
                 Material_Lib.Items.Add(Material_Name.Text);
                 Materials.Save_Abs_Library();
@@ -574,17 +646,49 @@ namespace Pachyderm_Acoustic
                     string Selection = Material_Lib.SelectedItem.ToString();
                     Material_Name.Text = Material_Lib.SelectedItem.ToString();
                     Material Mat = Materials.Abs_byKey(Selection);
-                    
-                    Abs63.Value = (int)(Mat.Values[0] * 100);
-                    Abs125.Value = (int)(Mat.Values[1] * 100);
-                    Abs250.Value = (int)(Mat.Values[2] * 100);
-                    Abs500.Value = (int)(Mat.Values[3] * 100);
-                    Abs1k.Value = (int)(Mat.Values[4] * 100);
-                    Abs2k.Value = (int)(Mat.Values[5] * 100);
-                    Abs4k.Value = (int)(Mat.Values[6] * 100);
-                    Abs8k.Value = (int)(Mat.Values[7] * 100);
-                    Commit_Layer_Acoustics();
 
+                    if (Mat.Values.Length == 8)
+                    {
+                        Octave_Abs.Checked = true;
+                        Abs63.Value = (int)(Mat.Values[0] * 100);
+                        Abs125.Value = (int)(Mat.Values[1] * 100);
+                        Abs250.Value = (int)(Mat.Values[2] * 100);
+                        Abs500.Value = (int)(Mat.Values[3] * 100);
+                        Abs1k.Value = (int)(Mat.Values[4] * 100);
+                        Abs2k.Value = (int)(Mat.Values[5] * 100);
+                        Abs4k.Value = (int)(Mat.Values[6] * 100);
+                        Abs8k.Value = (int)(Mat.Values[7] * 100);
+                    }
+                    else 
+                    {
+                        ThirdOctave_Abs.Checked = true;
+                        Abs50.Value = (int)(Mat.Values[0] * 100);
+                        Abs63.Value = (int)(Mat.Values[1] * 100);
+                        Abs80.Value = (int)(Mat.Values[2] * 100);
+                        Abs100.Value = (int)(Mat.Values[3] * 100);
+                        Abs125.Value = (int)(Mat.Values[4] * 100);
+                        Abs160.Value = (int)(Mat.Values[5] * 100);
+                        Abs200.Value = (int)(Mat.Values[6] * 100);
+                        Abs250.Value = (int)(Mat.Values[7] * 100);
+                        Abs315.Value = (int)(Mat.Values[8] * 100);
+                        Abs400.Value = (int)(Mat.Values[9] * 100);
+                        Abs500.Value = (int)(Mat.Values[10] * 100);
+                        Abs630.Value = (int)(Mat.Values[11] * 100);
+                        Abs800.Value = (int)(Mat.Values[12] * 100);
+                        Abs1k.Value = (int)(Mat.Values[13] * 100);
+                        Abs1250.Value = (int)(Mat.Values[14] * 100);
+                        Abs1600.Value = (int)(Mat.Values[15] * 100);
+                        Abs2k.Value = (int)(Mat.Values[16] * 100);
+                        Abs2500.Value = (int)(Mat.Values[17] * 100);
+                        Abs3150.Value = (int)(Mat.Values[18] * 100);
+                        Abs4k.Value = (int)(Mat.Values[19] * 100);
+                        Abs5k.Value = (int)(Mat.Values[20] * 100);
+                        Abs6300.Value = (int)(Mat.Values[21] * 100);
+                        Abs8k.Value = (int)(Mat.Values[22] * 100);
+                        Abs10k.Value = (int)(Mat.Values[23] * 100);
+                    }
+
+                    Commit_Layer_Acoustics();
                     Material_Mode(true);
                 }
                 else
@@ -627,19 +731,49 @@ namespace Pachyderm_Acoustic
             private void Commit_Layer_Acoustics()
             {
                 if (LayerDisplay.Text == "") return;
-                //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                 int layer_index = (LayerDisplay.SelectedItem as layer).id;
                 int[] Abs = new int[8];
                 int[] Sct = new int[8];
                 int[] Trn = null;
-                Abs[0] = (int)Abs63Out.Value;
-                Abs[1] = (int)Abs125Out.Value;
-                Abs[2] = (int)Abs250Out.Value;
-                Abs[3] = (int)Abs500Out.Value;
-                Abs[4] = (int)Abs1kOut.Value;
-                Abs[5] = (int)Abs2kOut.Value;
-                Abs[6] = (int)Abs4kOut.Value;
-                Abs[7] = (int)Abs8kOut.Value;
+                if (Octave_Abs.Checked)
+                {
+                    Abs[0] = (int)Abs63Out.Value;
+                    Abs[1] = (int)Abs125Out.Value;
+                    Abs[2] = (int)Abs250Out.Value;
+                    Abs[3] = (int)Abs500Out.Value;
+                    Abs[4] = (int)Abs1kOut.Value;
+                    Abs[5] = (int)Abs2kOut.Value;
+                    Abs[6] = (int)Abs4kOut.Value;
+                    Abs[7] = (int)Abs8kOut.Value;
+                }else
+                {
+                    Abs = new int[24];
+                    Abs[0] = (int)Abs50Out.Value;
+                    Abs[1] = (int)Abs63Out.Value;
+                    Abs[2] = (int)Abs80Out.Value;
+                    Abs[3] = (int)Abs100Out.Value;
+                    Abs[4] = (int)Abs125Out.Value;
+                    Abs[5] = (int)Abs160Out.Value;
+                    Abs[6] = (int)Abs200Out.Value;
+                    Abs[7] = (int)Abs250Out.Value;
+                    Abs[8] = (int)Abs315Out.Value;
+                    Abs[9] = (int)Abs400Out.Value;
+                    Abs[10] = (int)Abs500Out.Value;
+                    Abs[11] = (int)Abs630Out.Value;
+                    Abs[12] = (int)Abs800Out.Value;
+                    Abs[13] = (int)Abs1kOut.Value;
+                    Abs[14] = (int)Abs1250Out.Value;
+                    Abs[15] = (int)Abs1600Out.Value;
+                    Abs[16] = (int)Abs2kOut.Value;
+                    Abs[17] = (int)Abs2500Out.Value;
+                    Abs[18] = (int)Abs3150Out.Value;
+                    Abs[19] = (int)Abs4kOut.Value;
+                    Abs[20] = (int)Abs5kOut.Value;
+                    Abs[21] = (int)Abs6300Out.Value;
+                    Abs[22] = (int)Abs8kOut.Value;
+                    Abs[23] = (int)Abs10kOut.Value;
+                }
+
                 Sct[0] = (int)Scat63Out.Value;
                 Sct[1] = (int)Scat125Out.Value;
                 Sct[2] = (int)Scat250Out.Value;
@@ -722,7 +856,6 @@ namespace Pachyderm_Acoustic
                     if (Trans_Check.Checked)
                     {
                         TL_Check.Checked = false;
-                        //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                         int layer_index = (LayerDisplay.SelectedItem as layer).id;
                         Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                         layer.SetUserString("Transmission", "");
@@ -811,14 +944,62 @@ namespace Pachyderm_Acoustic
                     double[] Sct = new double[8];
                     double[] Trn = new double[1];
                     RC_PachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
-                    Abs63.Value = (int)(Abs[0] * 100);
-                    Abs125.Value = (int)(Abs[1] * 100);
-                    Abs250.Value = (int)(Abs[2] * 100);
-                    Abs500.Value = (int)(Abs[3] * 100);
-                    Abs1k.Value = (int)(Abs[4] * 100);
-                    Abs2k.Value = (int)(Abs[5] * 100);
-                    Abs4k.Value = (int)(Abs[6] * 100);
-                    Abs8k.Value = (int)(Abs[7] * 100);
+                    if (Abs.Length == 8)
+                    {
+                        Octave_Abs.Checked = true;
+                        Abs50.Value = (int)((Abs[0] - (Abs[1] - Abs[0]) / 3) * 100);
+                        Abs63.Value = (int)(Abs[0] * 100);
+                        Abs80.Value = (int)((Abs[0] + (Abs[1] - Abs[0])/3) * 100);
+                        Abs100.Value = (int)((Abs[0] + 2 * (Abs[1] - Abs[0]) / 3) * 100);
+                        Abs125.Value = (int)(Abs[1] * 100);
+                        Abs160.Value = (int)((Abs[1] + (Abs[2] - Abs[1]) / 3) * 100);
+                        Abs200.Value = (int)((Abs[1] + 2 * (Abs[2] - Abs[1]) / 3) * 100);
+                        Abs250.Value = (int)(Abs[2] * 100);
+                        Abs315.Value = (int)((Abs[2] + (Abs[3] - Abs[2]) / 3) * 100);
+                        Abs400.Value = (int)((Abs[2] + 2 * (Abs[3] - Abs[2]) / 3) * 100);
+                        Abs500.Value = (int)(Abs[3] * 100);
+                        Abs630.Value = (int)((Abs[3] + (Abs[4] - Abs[3]) / 3) * 100);
+                        Abs800.Value = (int)((Abs[3] + 2 * (Abs[4] - Abs[3]) / 3) * 100);
+                        Abs1k.Value = (int)(Abs[4] * 100);
+                        Abs1250.Value = (int)((Abs[4] + (Abs[5] - Abs[4]) / 3) * 100);
+                        Abs1600.Value = (int)((Abs[4] + 2 * (Abs[5] - Abs[4]) / 3) * 100);
+                        Abs2k.Value = (int)(Abs[5] * 100);
+                        Abs2500.Value = (int)((Abs[5] + (Abs[6] - Abs[5]) / 3) * 100);
+                        Abs3150.Value = (int)((Abs[5] + 2 * (Abs[6] - Abs[5]) / 3) * 100);
+                        Abs4k.Value = (int)(Abs[6] * 100);
+                        Abs5k.Value = (int)((Abs[6] + (Abs[7] - Abs[6]) / 3) * 100);
+                        Abs6300.Value = (int)((Abs[6] + 2 * (Abs[7] - Abs[6]) / 3) * 100);
+                        Abs8k.Value = (int)(Abs[7] * 100);
+                        Abs10k.Value = (int)((Abs[7] + (Abs[7] - Abs[6]) / 3) * 100);
+                    }
+                    else
+                    {
+                        ThirdOctave_Abs.Checked = true;
+                        Abs50.Value = (int)(Abs[0] * 100);
+                        Abs63.Value = (int)(Abs[1] * 100);
+                        Abs80.Value = (int)(Abs[2] * 100);
+                        Abs100.Value = (int)(Abs[3] * 100);
+                        Abs125.Value = (int)(Abs[4] * 100);
+                        Abs160.Value = (int)(Abs[5] * 100);
+                        Abs200.Value = (int)(Abs[6] * 100);
+                        Abs250.Value = (int)(Abs[7] * 100);
+                        Abs315.Value = (int)(Abs[8] * 100);
+                        Abs400.Value = (int)(Abs[9] * 100);
+                        Abs500.Value = (int)(Abs[10] * 100);
+                        Abs630.Value = (int)(Abs[11] * 100);
+                        Abs800.Value = (int)(Abs[12] * 100);
+                        Abs1k.Value = (int)(Abs[13] * 100);
+                        Abs1250.Value = (int)(Abs[14] * 100);
+                        Abs1600.Value = (int)(Abs[15] * 100);
+                        Abs2k.Value = (int)(Abs[16] * 100);
+                        Abs2500.Value = (int)(Abs[17] * 100);
+                        Abs3150.Value = (int)(Abs[18] * 100);
+                        Abs4k.Value = (int)(Abs[19] * 100);
+                        Abs5k.Value = (int)(Abs[20] * 100);
+                        Abs6300.Value = (int)(Abs[21] * 100);
+                        Abs8k.Value = (int)(Abs[22] * 100);
+                        Abs10k.Value = (int)(Abs[23] * 100);
+                    }
                     Scat63v.Value = (int)(Sct[0] * 100);
                     Scat125v.Value = (int)(Sct[1] * 100);
                     Scat250v.Value = (int)(Sct[2] * 100);
@@ -859,22 +1040,22 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    Abs63.Value = 1;
-                    Abs125.Value = 1;
-                    Abs250.Value = 1;
-                    Abs500.Value = 1;
-                    Abs1k.Value = 1;
-                    Abs2k.Value = 1;
-                    Abs4k.Value = 1;
-                    Abs8k.Value = 1;
-                    Scat63v.Value = 1;
-                    Scat125v.Value = 1;
-                    Scat250v.Value = 1;
-                    Scat500v.Value = 1;
-                    Scat1kv.Value = 1;
-                    Scat2kv.Value = 1;
-                    Scat4kv.Value = 1;
-                    Scat8kv.Value = 1;
+                    Abs63.Value = 10;
+                    Abs125.Value = 10;
+                    Abs250.Value = 10;
+                    Abs500.Value = 10;
+                    Abs1k.Value = 10;
+                    Abs2k.Value = 10;
+                    Abs4k.Value = 10;
+                    Abs8k.Value = 10;
+                    Scat63v.Value = 10;
+                    Scat125v.Value = 10;
+                    Scat250v.Value = 10;
+                    Scat500v.Value = 10;
+                    Scat1kv.Value = 10;
+                    Scat2kv.Value = 10;
+                    Scat4kv.Value = 10;
+                    Scat8kv.Value = 10;
                     Trans_63v.Value = 0;
                     Trans_125v.Value = 0;
                     Trans_250v.Value = 0;
@@ -920,61 +1101,58 @@ namespace Pachyderm_Acoustic
 
             private void AbsFlat_ValueChanged(object sender, EventArgs e)
             {
+                Abs50.Value = AbsFlat.Value;
                 Abs63.Value = AbsFlat.Value;
+                Abs80.Value = AbsFlat.Value;
+                Abs100.Value = AbsFlat.Value;
                 Abs125.Value = AbsFlat.Value;
+                Abs160.Value = AbsFlat.Value;
+                Abs200.Value = AbsFlat.Value;
                 Abs250.Value = AbsFlat.Value;
+                Abs315.Value = AbsFlat.Value;
+                Abs400.Value = AbsFlat.Value;
                 Abs500.Value = AbsFlat.Value;
+                Abs630.Value = AbsFlat.Value;
+                Abs800.Value = AbsFlat.Value;
                 Abs1k.Value = AbsFlat.Value;
+                Abs1250.Value = AbsFlat.Value;
+                Abs1600.Value = AbsFlat.Value;
                 Abs2k.Value = AbsFlat.Value;
+                Abs2500.Value = AbsFlat.Value;
+                Abs3150.Value = AbsFlat.Value;
                 Abs4k.Value = AbsFlat.Value;
+                Abs5k.Value = AbsFlat.Value;
+                Abs6300.Value = AbsFlat.Value;
                 Abs8k.Value = AbsFlat.Value;
+                Abs10k.Value = AbsFlat.Value;
             }
 
-            private void Abs63Out_ValueChanged(object sender, EventArgs e)
+            private void AbsOut_ValueChanged(object sender, EventArgs e)
             {
+                Abs50.Value = (int)Abs50Out.Value;
                 Abs63.Value = (int)Abs63Out.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs125Out_ValueChanged(object sender, EventArgs e)
-            {
+                Abs80.Value = (int)Abs80Out.Value;
+                Abs100.Value = (int)Abs100Out.Value;
                 Abs125.Value = (int)Abs125Out.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs250Out_ValueChanged(object sender, EventArgs e)
-            {
+                Abs160.Value = (int)Abs160Out.Value;
+                Abs200.Value = (int)Abs200Out.Value;
                 Abs250.Value = (int)Abs250Out.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs500Out_ValueChanged(object sender, EventArgs e)
-            {
+                Abs315.Value = (int)Abs315Out.Value;
+                Abs400.Value = (int)Abs400Out.Value;
                 Abs500.Value = (int)Abs500Out.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs1kOut_ValueChanged(object sender, EventArgs e)
-            {
+                Abs630.Value = (int)Abs630Out.Value;
+                Abs800.Value = (int)Abs800Out.Value;
                 Abs1k.Value = (int)Abs1kOut.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs2kOut_ValueChanged(object sender, EventArgs e)
-            {
+                Abs1250.Value = (int)Abs1250Out.Value;
+                Abs1600.Value = (int)Abs1600Out.Value;
                 Abs2k.Value = (int)Abs2kOut.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs4kOut_ValueChanged(object sender, EventArgs e)
-            {
+                Abs2500.Value = (int)Abs2500Out.Value;
+                Abs3150.Value = (int)Abs3150Out.Value;
                 Abs4k.Value = (int)Abs4kOut.Value;
-                Commit_Layer_Acoustics();
-            }
-
-            private void Abs8kOut_ValueChanged(object sender, EventArgs e)
-            {
+                Abs5k.Value = (int)Abs5kOut.Value;
+                Abs6300.Value = (int)Abs6300Out.Value;
                 Abs8k.Value = (int)Abs8kOut.Value;
+                Abs10k.Value = (int)Abs10kOut.Value;
                 Commit_Layer_Acoustics();
             }
 
@@ -1084,19 +1262,49 @@ namespace Pachyderm_Acoustic
                     case Pach_Absorption_Designer.AbsorptionModelResult.Random_Incidence:
                         //Assign Random Incidence Absorption Coefficients...
                         Material_Mode(true);
-                        Abs63Out.Value = (int)(AD.RI_Absorption[0] * 100);
-                        Abs125Out.Value = (int)(AD.RI_Absorption[1] * 100);
-                        Abs250Out.Value = (int)(AD.RI_Absorption[2] * 100);
-                        Abs500Out.Value = (int)(AD.RI_Absorption[3] * 100);
-                        Abs1kOut.Value = (int)(AD.RI_Absorption[4] * 100);
-                        Abs2kOut.Value = (int)(AD.RI_Absorption[5] * 100);
-                        Abs4kOut.Value = (int)(AD.RI_Absorption[6] * 100);
-                        Abs8kOut.Value = (int)(AD.RI_Absorption[7] * 100);
+                        if (Octave_Abs.Checked)
+                        {
+                            Abs63Out.Value = (int)(AD.RI_Absorption[0] * 100);
+                            Abs125Out.Value = (int)(AD.RI_Absorption[1] * 100);
+                            Abs250Out.Value = (int)(AD.RI_Absorption[2] * 100);
+                            Abs500Out.Value = (int)(AD.RI_Absorption[3] * 100);
+                            Abs1kOut.Value = (int)(AD.RI_Absorption[4] * 100);
+                            Abs2kOut.Value = (int)(AD.RI_Absorption[5] * 100);
+                            Abs4kOut.Value = (int)(AD.RI_Absorption[6] * 100);
+                            Abs8kOut.Value = (int)(AD.RI_Absorption[7] * 100);
+                        }
+                        else
+                        {
+                            Abs50Out.Value = (int)((AD.RI_Absorption[0] - (AD.RI_Absorption[1] - AD.RI_Absorption[0]) / 3) * 100);
+                            Abs63Out.Value = (int)(AD.RI_Absorption[0] * 100);
+                            Abs80Out.Value = (int)((AD.RI_Absorption[0] + (AD.RI_Absorption[1] - AD.RI_Absorption[0]) / 3) * 100);
+                            Abs100Out.Value = (int)((AD.RI_Absorption[0] + 2 * (AD.RI_Absorption[1] - AD.RI_Absorption[0]) / 3) * 100);
+                            Abs125Out.Value = (int)(AD.RI_Absorption[1] * 100);
+                            Abs160Out.Value = (int)((AD.RI_Absorption[1] + (AD.RI_Absorption[2] - AD.RI_Absorption[1]) / 3) * 100);
+                            Abs200Out.Value = (int)((AD.RI_Absorption[1] + 2 * (AD.RI_Absorption[2] - AD.RI_Absorption[1]) / 3) * 100);
+                            Abs250Out.Value = (int)(AD.RI_Absorption[2] * 100);
+                            Abs315Out.Value = (int)((AD.RI_Absorption[2] + (AD.RI_Absorption[3] - AD.RI_Absorption[2]) / 3) * 100);
+                            Abs400Out.Value = (int)((AD.RI_Absorption[2] + 2 * (AD.RI_Absorption[3] - AD.RI_Absorption[2]) / 3) * 100);
+                            Abs500Out.Value = (int)(AD.RI_Absorption[3] * 100);
+                            Abs630Out.Value = (int)((AD.RI_Absorption[3] + (AD.RI_Absorption[4] - AD.RI_Absorption[3]) / 3) * 100);
+                            Abs800Out.Value = (int)((AD.RI_Absorption[3] + 2 * (AD.RI_Absorption[4] - AD.RI_Absorption[3]) / 3) * 100);
+                            Abs1kOut.Value = (int)(AD.RI_Absorption[4] * 100);
+                            Abs1250Out.Value = (int)((AD.RI_Absorption[4] + (AD.RI_Absorption[5] - AD.RI_Absorption[4]) / 3) * 100);
+                            Abs1600Out.Value = (int)((AD.RI_Absorption[4] + 2 * (AD.RI_Absorption[5] - AD.RI_Absorption[4]) / 3) * 100);
+                            Abs2kOut.Value = (int)(AD.RI_Absorption[5] * 100);
+                            Abs2500Out.Value = (int)((AD.RI_Absorption[5] + (AD.RI_Absorption[6] - AD.RI_Absorption[5]) / 3) * 100);
+                            Abs3150Out.Value = (int)((AD.RI_Absorption[5] + 2 * (AD.RI_Absorption[6] - AD.RI_Absorption[5]) / 3) * 100);
+                            Abs4kOut.Value = (int)(AD.RI_Absorption[6] * 100);
+                            Abs5kOut.Value = (int)((AD.RI_Absorption[6] + (AD.RI_Absorption[7] - AD.RI_Absorption[6]) / 3) * 100);
+                            Abs6300Out.Value = (int)((AD.RI_Absorption[6] + 2 * (AD.RI_Absorption[7] - AD.RI_Absorption[6]) / 3) * 100);
+                            Abs8kOut.Value = (int)(AD.RI_Absorption[7] * 100);
+                            Abs10kOut.Value = (int)((AD.RI_Absorption[7] + (AD.RI_Absorption[7] - AD.RI_Absorption[6]) / 3) * 100);
+                        }
                         UpdateForm();
 
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                         int layer_index = (LayerDisplay.SelectedItem as layer).id;
-                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];A
                         layer.SetUserString("ABSType", "Coefficients");
 
                         Commit_Layer_Acoustics();
@@ -2372,6 +2580,64 @@ namespace Pachyderm_Acoustic
             {
                 for (int i = 0; i < IS_Path_Box.Items.Count; i++) IS_Path_Box.SetItemChecked(i, false);
                 IS_Path_Box_MouseUp(null, null);
+            }
+
+            private void Octave_Abs_CheckedChanged(object sender, EventArgs e)
+            {
+                if (Octave_Abs.Checked)
+                {
+                    Abs_Table.RowStyles[5].Height = 0;
+                    //63
+                    Abs_Table.RowStyles[7].Height = 0;
+                    Abs_Table.RowStyles[8].Height = 0;
+                    //125
+                    Abs_Table.RowStyles[10].Height = 0;
+                    Abs_Table.RowStyles[11].Height = 0;
+                    //250
+                    Abs_Table.RowStyles[13].Height = 0;
+                    Abs_Table.RowStyles[14].Height = 0;
+                    //500
+                    Abs_Table.RowStyles[16].Height = 0;
+                    Abs_Table.RowStyles[17].Height = 0;
+                    //1k
+                    Abs_Table.RowStyles[19].Height = 0;
+                    Abs_Table.RowStyles[20].Height = 0;
+                    //2k
+                    Abs_Table.RowStyles[22].Height = 0;
+                    Abs_Table.RowStyles[23].Height = 0;
+                    //4k
+                    Abs_Table.RowStyles[25].Height = 0;
+                    Abs_Table.RowStyles[26].Height = 0;
+                    //8k
+                    Abs_Table.RowStyles[28].Height = 0;
+                }else
+                {
+                    Abs_Table.RowStyles[5].Height = 40;
+                    //63
+                    Abs_Table.RowStyles[7].Height = 40;
+                    Abs_Table.RowStyles[8].Height = 40;
+                    //125
+                    Abs_Table.RowStyles[10].Height = 40;
+                    Abs_Table.RowStyles[11].Height = 40;
+                    //250
+                    Abs_Table.RowStyles[13].Height = 40;
+                    Abs_Table.RowStyles[14].Height = 40;
+                    //500
+                    Abs_Table.RowStyles[16].Height = 40;
+                    Abs_Table.RowStyles[17].Height = 40;
+                    //1k
+                    Abs_Table.RowStyles[19].Height = 40;
+                    Abs_Table.RowStyles[20].Height = 40;
+                    //2k
+                    Abs_Table.RowStyles[22].Height = 40;
+                    Abs_Table.RowStyles[23].Height = 40;
+                    //4k
+                    Abs_Table.RowStyles[25].Height = 40;
+                    Abs_Table.RowStyles[26].Height = 40;
+                    //8k
+                    Abs_Table.RowStyles[28].Height = 40;
+                }
+                Commit_Layer_Acoustics();
             }
         }
     }

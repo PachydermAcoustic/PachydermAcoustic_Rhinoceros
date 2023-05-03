@@ -391,7 +391,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Typ">0 for stationary, 1 for variable.</param>
             /// <param name="Sc">Scene object contains air attenuation, and speed of sound.</param>
             /// <returns></returns>
-            public static List<Receiver_Bank> GetReceivers(IEnumerable<Hare.Geometry.Point> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc)
+            public static List<Receiver_Bank> GetReceivers(IEnumerable<Hare.Geometry.Point> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc, bool Third_Octave)
             {
                 Receiver_Bank.Type RecType;
                 switch (Typ)
@@ -411,7 +411,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                    R.Add(new Receiver_Bank(ReceiverLocations, (Srcs.ElementAt<Source>(i)).Origin(), Sc, 1000, CutOffTime, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, (Srcs.ElementAt<Source>(i)).Origin(), Sc, 1000, CutOffTime, RecType, Third_Octave));
                 }
 
                 return R;
@@ -427,7 +427,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Typ">0 for stationary, 1 for variable.</param>
             /// <param name="Sc">Scene object contains air attenuation, and speed of sound.</param>
             /// <returns></returns>
-            public static List<Receiver_Bank> GetReceivers(IEnumerable<Hare.Geometry.Point> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc, int sample_rate)
+            public static List<Receiver_Bank> GetReceivers(IEnumerable<Hare.Geometry.Point> ReceiverLocations, IEnumerable<Source> Srcs, int No_of_Rays, int CutOffTime, int Typ, Scene Sc, int sample_rate, bool Third_Octave)
             {
                 Receiver_Bank.Type RecType;
                 switch (Typ)
@@ -447,7 +447,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Srcs.Count<Source>(); i++)
                 {
-                    R.Add(new Receiver_Bank(ReceiverLocations, Srcs.ElementAt<Source>(i).Origin(), Sc, sample_rate, CutOffTime, RecType));
+                    R.Add(new Receiver_Bank(ReceiverLocations, Srcs.ElementAt<Source>(i).Origin(), Sc, sample_rate, CutOffTime, RecType, Third_Octave));
                 }
 
                 return R;
