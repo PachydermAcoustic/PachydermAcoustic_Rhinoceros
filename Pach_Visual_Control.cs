@@ -158,7 +158,7 @@ namespace Pachyderm_Acoustic
                         else number = "0" + q.ToString();
                     }
                     else number = q.ToString();
-                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + string.Format(".jpg Width={0} Height={1} DrawGrid=No Enter", 2*w, 2*h), true);
+                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile \"" + Folder_Status.Text + "\\"[0] + "frame" + number + string.Format(".jpg\" Width={0} Height={1} DrawGrid=No Enter", 2*w, 2*h), true);
 
                     //Clean Up Model
                     Rhino.RhinoDoc.ActiveDoc.Objects.Delete(Particle_IDS, true);
@@ -168,6 +168,13 @@ namespace Pachyderm_Acoustic
 
             private void Preview_Click(object sender, EventArgs e)
             {
+                if (T != null && T.ThreadState == System.Threading.ThreadState.Running)
+                {
+                    Time_Preview.Enabled = true;
+                    Loop.Text = "Loop";
+                    T.Abort();
+                }
+
                 Loop.Enabled = false;
                 ForwButton.Enabled = false;
                 BackButton.Enabled = false;
@@ -411,9 +418,9 @@ namespace Pachyderm_Acoustic
 
                 for (int q = 0; q < RayCount; q++)
                 {
-                    Rhino.RhinoApp.SetCommandPrompt(string.Format("Finding Ray {0} of {1}", q, RayCount));
+                    Rhino.RhinoApp.SetCommandPrompt(string.Format("Finding Ray {0} of {1}", q+1, RayCount));
                     double SumLength = 0;
-                    Pachyderm_Acoustic.Environment.OctaveRay R = Source.Directions(q, 0, ref Rnd).SplitRay(5);
+                    Pachyderm_Acoustic.Environment.OctaveRay R = Source.Directions(0, ref Rnd).SplitRay(4);
                     double u = 0;
                     double v = 0;
                     int ChosenIndex = 0;

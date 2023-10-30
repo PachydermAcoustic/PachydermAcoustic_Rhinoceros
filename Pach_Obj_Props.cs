@@ -313,14 +313,14 @@ namespace Pachyderm_Acoustic
                             {
                                 Utilities.RC_PachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
                                 MaterialCode = Code;
-                                Abs63.Value = (int)(Absorption[0] * 100);
-                                Abs125.Value = (int)(Absorption[1] * 100);
-                                Abs250.Value = (int)(Absorption[2] * 100);
-                                Abs500.Value = (int)(Absorption[3] * 100);
-                                Abs1k.Value = (int)(Absorption[4] * 100);
-                                Abs2k.Value = (int)(Absorption[5] * 100);
-                                Abs4k.Value = (int)(Absorption[6] * 100);
-                                Abs8k.Value = (int)(Absorption[7] * 100);
+                                Abs63.Value = (int)(Absorption[0] * 1000);
+                                Abs125.Value = (int)(Absorption[1] * 1000);
+                                Abs250.Value = (int)(Absorption[2] * 1000);
+                                Abs500.Value = (int)(Absorption[3] * 1000);
+                                Abs1k.Value = (int)(Absorption[4] * 1000);
+                                Abs2k.Value = (int)(Absorption[5] * 1000);
+                                Abs4k.Value = (int)(Absorption[6] * 1000);
+                                Abs8k.Value = (int)(Absorption[7] * 1000);
                                 Scat63v.Value = (int)(Scattering[0] * 100);
                                 Scat125v.Value = (int)(Scattering[1] * 100);
                                 Scat250v.Value = (int)(Scattering[2] * 100);

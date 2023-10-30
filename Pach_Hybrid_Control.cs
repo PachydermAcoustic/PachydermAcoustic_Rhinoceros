@@ -24,6 +24,8 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;
+using Pachyderm_Acoustic.AbsorptionModels;
+using System.Drawing;
 
 namespace Pachyderm_Acoustic
 {
@@ -54,7 +56,7 @@ namespace Pachyderm_Acoustic
 
                 for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
                 {
-                    if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name,q));
+                    if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name, q));
                 }
                 LayerDisplay.Items.Clear();
                 LayerDisplay.Items.AddRange(LayerNames.ToArray());
@@ -143,6 +145,121 @@ namespace Pachyderm_Acoustic
                     return;
                 }
                 PScene.partition(P);
+
+                ///Needed as long as there are issues with compound reflections...
+                for (int i = 0; i < PScene.ObjectCount; i++)
+                {
+                    if (!PScene.IsPlanar(i))
+                    {
+                        if (ISBox.Checked)
+                        {
+                            if ((int)Image_Order.Value > 1)
+                            {
+                                System.Windows.Forms.MessageBox.Show("You have started a simulation with higher order image source in a model with curves. This version of Pachyderm uses an experimental method for deterministic curved reflections. At this time, it is not possible to perform the operation on more than one reflection. Even when it is possible, it will be prohibitively processor intensive. This simulation will be canceled, but you can proceed with an image source order of 1, or by turning image source off altogether. As always, scrutinize the results carefully, and email ORASE (info@orase.org) with any questions or concerns.", "Temporary Alert");
+                                CancelCalc();
+                                return;
+                            }
+                            else
+                            {
+                                DialogResult DR = System.Windows.Forms.MessageBox.Show("You have started a simulation with image source enabled in a model with curves. This version of Pachyderm uses an experimental method for deterministic curved reflections. Proceed with caution. If you would not like to participate in testing of this experimental feature, you can run your simulation with Image Source disabled for a more reliable result. Would you like to continue to run this simulation?", "Temporary Alert", MessageBoxButtons.YesNo);
+                                if (DR == DialogResult.Yes)
+                                {
+                                    System.Windows.Forms.MessageBox.Show("As always, scrutinize the results carefully, and email ORASE (info@orase.org) with any questions or concerns.", "Temporary Alert");
+                                    break;
+                                }
+                                else
+                                {
+                                    CancelCalc();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+                ///
+
+                double[] s_total = new double[8];
+                double[] a_total = new double[8];
+                double total_area = 0;
+                bool reviewedSCT = false;
+                bool reviewedABS = false;
+                ///User competence checks...
+                for (int i = 0; i < PScene.AbsorptionValue.Count; i++)
+                {
+                    double area = PScene.SurfaceArea(i);
+                    total_area += area;
+
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        double a = PScene.AbsorptionValue[i].Coefficient_A_Broad(oct);
+                        if (!reviewedABS && a == 0)
+                        {
+                            reviewedABS = true;
+                            System.Windows.Forms.MessageBox.Show("Your model has absorption coefficients of zero. Not only is this unrealistic, it will prevent your simulation from finishing in a timely manner. Please set more realistic absorption coefficients.", "Absorption Coefficient Alert");
+                        }
+                        a_total[oct] += area * a;
+                    }
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        double s = PScene.ScatteringValue[i].Coefficient(oct);
+                        s_total[oct] += area * s;
+                        if (!reviewedSCT)
+                        {
+                            DialogResult DR;
+                            if (s == 0)
+                            {
+                                reviewedSCT = true;
+                                DR = System.Windows.Forms.MessageBox.Show("Your model has scattering coefficients of zero. There are cases where a simulation of this kind can be useful, but the user is warned that all surfaces scatter at least a little bit. Very low scattering only occurs with very flat, smooth, uniformly heavy surfaces, such as steel or polished, painted concrete. We recommend that you use the guides on the scattering pane of the materials control. Would you like to proceed with these coefficients?", "Zero Scattering Alert", MessageBoxButtons.YesNo);
+                            }
+                            else if (s < 0.1)
+                            {
+                                reviewedSCT = true;
+                                DR = System.Windows.Forms.MessageBox.Show("Your model has very low scattering coefficients. The user is advised that rooms where these coefficients are valid are very unusual. Very low scattering only occurs with very flat, smooth, uniformly heavy surfaces, such as steel or polished, painted concrete, as might be found in a reverberation chamber. We recommend that you use the guides on the scattering pane of the materials control. Would you like to proceed with these coefficients?", "Low Scattering Alert", MessageBoxButtons.YesNo);
+                            }
+                            else continue;
+
+                            if (DR != DialogResult.Yes)
+                            {
+                                CancelCalc();
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                for(int oct = 0; oct < 8; oct++) 
+                {
+                    s_total[oct] /= total_area;
+                    a_total[oct] /= total_area;
+                    if (s_total[oct] < 0.15)
+                    {
+                        DialogResult DR;
+                        if (!reviewedSCT)
+                        {
+                            reviewedSCT = true;
+                            DR = System.Windows.Forms.MessageBox.Show("The total scattering of this model is very low. Are you sure?", "Low Total Scattering", MessageBoxButtons.YesNo);
+                            if (DR != DialogResult.Yes)
+                            {
+                                CancelCalc();
+                                return;
+                            }
+                        }
+                    }
+                    if (a_total[oct] < 0.1)
+                    {
+                        if (!reviewedABS)
+                        {
+                            reviewedABS = true;
+                            DialogResult DR = System.Windows.Forms.MessageBox.Show("The total absorption of this model is very low. There are cases where this is appropriate, but please be aware that this simulation may take a very long time to run. Are you sure?", "Low Total Absorption", MessageBoxButtons.YesNo);
+                            if (DR != DialogResult.Yes)
+                            {
+                                CancelCalc();
+                                return;
+                            }
+                        }
+                    }
+                }
+                ///
 
                 ////////////////////////////////////////////////
                 //in order to check coefficients for all polygons
@@ -260,7 +377,7 @@ namespace Pachyderm_Acoustic
                             Receiver[s] = RT_Data.GetReceiver;
                             Receiver[s].Create_Filter();
                             Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT_Data._currentRay.Sum(), RT_Data._rayTotal.Sum(), RT_Data._ts.Hours, RT_Data._ts.Minutes, RT_Data._ts.Seconds));
-                            Rhino.RhinoApp.WriteLine("Perecentage of energy lost: {0}%", RT_Data.PercentLost);
+                            Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT_Data.PercentLost);
                         }
                         else
                         {
@@ -280,7 +397,6 @@ namespace Pachyderm_Acoustic
                     {
                         Recs[q] = R[q];
                     }
-
                     if (SavePath != null) Utilities.FileIO.Write_Pac1(SavePath, Direct_Data, IS_Data, Receiver);
 
                     OpenAnalysis();
@@ -407,14 +523,14 @@ namespace Pachyderm_Acoustic
 
             private void UpdateForm()
             {
-                Abs63Out.Value = Abs63.Value;
-                Abs125Out.Value = Abs125.Value;
-                Abs250Out.Value = Abs250.Value;
-                Abs500Out.Value = Abs500.Value;
-                Abs1kOut.Value = Abs1k.Value;
-                Abs2kOut.Value = Abs2k.Value;
-                Abs4kOut.Value = Abs4k.Value;
-                Abs8kOut.Value = Abs8k.Value;
+                Abs63Out.Value = (decimal)Abs63.Value / 10;
+                Abs125Out.Value = (decimal)Abs125.Value / 10;
+                Abs250Out.Value = (decimal)Abs250.Value / 10;
+                Abs500Out.Value = (decimal)Abs500.Value / 10;
+                Abs1kOut.Value = (decimal)Abs1k.Value / 10;
+                Abs2kOut.Value = (decimal)Abs2k.Value / 10;
+                Abs4kOut.Value = (decimal)Abs4k.Value / 10;
+                Abs8kOut.Value = (decimal)Abs8k.Value / 10;
                 Scat63Out.Value = Scat63v.Value;
                 Scat125Out.Value = Scat125v.Value;
                 Scat250Out.Value = Scat250v.Value;
@@ -575,14 +691,14 @@ namespace Pachyderm_Acoustic
                     Material_Name.Text = Material_Lib.SelectedItem.ToString();
                     Material Mat = Materials.Abs_byKey(Selection);
                     
-                    Abs63.Value = (int)(Mat.Values[0] * 100);
-                    Abs125.Value = (int)(Mat.Values[1] * 100);
-                    Abs250.Value = (int)(Mat.Values[2] * 100);
-                    Abs500.Value = (int)(Mat.Values[3] * 100);
-                    Abs1k.Value = (int)(Mat.Values[4] * 100);
-                    Abs2k.Value = (int)(Mat.Values[5] * 100);
-                    Abs4k.Value = (int)(Mat.Values[6] * 100);
-                    Abs8k.Value = (int)(Mat.Values[7] * 100);
+                    Abs63.Value = (int)(Mat.Values[0] * 1000);
+                    Abs125.Value = (int)(Mat.Values[1] * 1000);
+                    Abs250.Value = (int)(Mat.Values[2] * 1000);
+                    Abs500.Value = (int)(Mat.Values[3] * 1000);
+                    Abs1k.Value = (int)(Mat.Values[4] * 1000);
+                    Abs2k.Value = (int)(Mat.Values[5] * 1000);
+                    Abs4k.Value = (int)(Mat.Values[6] * 1000);
+                    Abs8k.Value = (int)(Mat.Values[7] * 1000);
                     Commit_Layer_Acoustics();
 
                     Material_Mode(true);
@@ -632,14 +748,14 @@ namespace Pachyderm_Acoustic
                 int[] Abs = new int[8];
                 int[] Sct = new int[8];
                 int[] Trn = null;
-                Abs[0] = (int)Abs63Out.Value;
-                Abs[1] = (int)Abs125Out.Value;
-                Abs[2] = (int)Abs250Out.Value;
-                Abs[3] = (int)Abs500Out.Value;
-                Abs[4] = (int)Abs1kOut.Value;
-                Abs[5] = (int)Abs2kOut.Value;
-                Abs[6] = (int)Abs4kOut.Value;
-                Abs[7] = (int)Abs8kOut.Value;
+                Abs[0] = (int)(Abs63Out.Value * 10);
+                Abs[1] = (int)(Abs125Out.Value * 10);
+                Abs[2] = (int)(Abs250Out.Value * 10);
+                Abs[3] = (int)(Abs500Out.Value * 10);
+                Abs[4] = (int)(Abs1kOut.Value * 10);
+                Abs[5] = (int)(Abs2kOut.Value * 10);
+                Abs[6] = (int)(Abs4kOut.Value * 10);
+                Abs[7] = (int)(Abs8kOut.Value * 10);
                 Sct[0] = (int)Scat63Out.Value;
                 Sct[1] = (int)Scat125Out.Value;
                 Sct[2] = (int)Scat250Out.Value;
@@ -811,14 +927,14 @@ namespace Pachyderm_Acoustic
                     double[] Sct = new double[8];
                     double[] Trn = new double[1];
                     RC_PachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
-                    Abs63.Value = (int)(Abs[0] * 100);
-                    Abs125.Value = (int)(Abs[1] * 100);
-                    Abs250.Value = (int)(Abs[2] * 100);
-                    Abs500.Value = (int)(Abs[3] * 100);
-                    Abs1k.Value = (int)(Abs[4] * 100);
-                    Abs2k.Value = (int)(Abs[5] * 100);
-                    Abs4k.Value = (int)(Abs[6] * 100);
-                    Abs8k.Value = (int)(Abs[7] * 100);
+                    Abs63.Value = (int)(Abs[0] * 1000);
+                    Abs125.Value = (int)(Abs[1] * 1000);
+                    Abs250.Value = (int)(Abs[2] * 1000);
+                    Abs500.Value = (int)(Abs[3] * 1000);
+                    Abs1k.Value = (int)(Abs[4] * 1000);
+                    Abs2k.Value = (int)(Abs[5] * 1000);
+                    Abs4k.Value = (int)(Abs[6] * 1000);
+                    Abs8k.Value = (int)(Abs[7] * 1000);
                     Scat63v.Value = (int)(Sct[0] * 100);
                     Scat125v.Value = (int)(Sct[1] * 100);
                     Scat250v.Value = (int)(Sct[2] * 100);
@@ -932,49 +1048,49 @@ namespace Pachyderm_Acoustic
 
             private void Abs63Out_ValueChanged(object sender, EventArgs e)
             {
-                Abs63.Value = (int)Abs63Out.Value;
+                Abs63.Value = (int)(Abs63Out.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs125Out_ValueChanged(object sender, EventArgs e)
             {
-                Abs125.Value = (int)Abs125Out.Value;
+                Abs125.Value = (int)(Abs125Out.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs250Out_ValueChanged(object sender, EventArgs e)
             {
-                Abs250.Value = (int)Abs250Out.Value;
+                Abs250.Value = (int)(Abs250Out.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs500Out_ValueChanged(object sender, EventArgs e)
             {
-                Abs500.Value = (int)Abs500Out.Value;
+                Abs500.Value = (int)(Abs500Out.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs1kOut_ValueChanged(object sender, EventArgs e)
             {
-                Abs1k.Value = (int)Abs1kOut.Value;
+                Abs1k.Value = (int)(Abs1kOut.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs2kOut_ValueChanged(object sender, EventArgs e)
             {
-                Abs2k.Value = (int)Abs2kOut.Value;
+                Abs2k.Value = (int)(Abs2kOut.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs4kOut_ValueChanged(object sender, EventArgs e)
             {
-                Abs4k.Value = (int)Abs4kOut.Value;
+                Abs4k.Value = (int)(Abs4kOut.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
             private void Abs8kOut_ValueChanged(object sender, EventArgs e)
             {
-                Abs8k.Value = (int)Abs8kOut.Value;
+                Abs8k.Value = (int)(Abs8kOut.Value * 10);
                 Commit_Layer_Acoustics();
             }
 
@@ -1084,14 +1200,14 @@ namespace Pachyderm_Acoustic
                     case Pach_Absorption_Designer.AbsorptionModelResult.Random_Incidence:
                         //Assign Random Incidence Absorption Coefficients...
                         Material_Mode(true);
-                        Abs63Out.Value = (int)(AD.RI_Absorption[0] * 100);
-                        Abs125Out.Value = (int)(AD.RI_Absorption[1] * 100);
-                        Abs250Out.Value = (int)(AD.RI_Absorption[2] * 100);
-                        Abs500Out.Value = (int)(AD.RI_Absorption[3] * 100);
-                        Abs1kOut.Value = (int)(AD.RI_Absorption[4] * 100);
-                        Abs2kOut.Value = (int)(AD.RI_Absorption[5] * 100);
-                        Abs4kOut.Value = (int)(AD.RI_Absorption[6] * 100);
-                        Abs8kOut.Value = (int)(AD.RI_Absorption[7] * 100);
+                        Abs63Out.Value = (decimal)(AD.RI_Absorption[0] * 100);
+                        Abs125Out.Value = (decimal)(AD.RI_Absorption[1] * 100);
+                        Abs250Out.Value = (decimal)(AD.RI_Absorption[2] * 100);
+                        Abs500Out.Value = (decimal)(AD.RI_Absorption[3] * 100);
+                        Abs1kOut.Value = (decimal)(AD.RI_Absorption[4] * 100);
+                        Abs2kOut.Value = (decimal)(AD.RI_Absorption[5] * 100);
+                        Abs4kOut.Value = (decimal)(AD.RI_Absorption[6] * 100);
+                        Abs8kOut.Value = (decimal)(AD.RI_Absorption[7] * 100);
                         UpdateForm();
 
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
@@ -2218,6 +2334,75 @@ namespace Pachyderm_Acoustic
             private void savePTBFormatToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 Plot_PTB_Results();
+            }
+
+            private void saveEDCToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.Text != "Sabine RT" && Parameter_Choice.Text != "Eyring RT") { return; }
+                double[][][][] Schroeder = new double[Direct_Data.Length][][][];
+                //string[] paramtype = new string[] { "T30/s", "EDT/s", "D/%", "C/dB", "TS/ms", "G/dB", "LF%", "LFC%", "IACC" };//LF/% LFC/% IACC
+                string ReceiverLine = "Receiver{0};";
+                //double[,,,] ParamValues = new double[SourceList.Items.Count, Recs.Length, 8, paramtype.Length];
+
+                System.Windows.Forms.SaveFileDialog sf = new System.Windows.Forms.SaveFileDialog();
+                sf.DefaultExt = ".txt";
+                sf.AddExtension = true;
+                sf.Filter = "Text File (*.txt)|*.txt|" + "All Files|";
+
+                if (sf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    System.IO.StreamWriter SW = new System.IO.StreamWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
+                    try
+                    {
+                        SW.WriteLine("Pachyderm Acoustic Simulation Results");
+                        SW.WriteLine("Saved {0}", System.DateTime.Now.ToString());
+                        SW.WriteLine("Filename:{0}", Rhino.RhinoDoc.ActiveDoc.Name);
+
+                        for (int s = 0; s < Direct_Data.Length; s++)
+                        {
+                            Schroeder[s] = new double[Recs.Length][][];
+                            for (int r = 0; r < Recs.Length; r++)
+                            {
+                                Schroeder[s][r] = new double[8][];
+                                ReceiverLine = "S" + s.ToString() + "/" + "R" + r.ToString() + ";";
+                                SW.WriteLine(ReceiverLine + "63;125;250;500;1k;2k;4k;8k");
+
+                                double RhoC = Direct_Data[0].Rho_C[int.Parse(Receiver_Choice.Text)];
+                                double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, new List<int>() { s }, false, true);
+
+                                for (int oct = 0; oct < 8; oct++)
+                                {
+                                    ///Need a new PT_Curve method that will apply the correct power to each filter appropriately. This one forces only one power level to be used...)
+                                    double[] ETC = Audio.Pach_SP.FIR_Bandpass(ETC_BB, oct, SampleRate, 0);
+                                    for (int i = 0; i < ETC.Length; i++) ETC[i] *= ETC[i] / RhoC;
+                                    //double[] ETC = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, (int)(CO_TIME.Value / 1000), SampleRate, oct, r, s, false);
+                                    Schroeder[s][r][oct] = AcousticalMath.Log10Data(AcousticalMath.Schroeder_Integral(ETC),-100);
+                                }
+
+                                string line = ";";
+
+                                for (int i = 0; i < Schroeder[s][r][0].Length; i++) 
+                                {
+                                    for(int oct = 0; oct < 8; oct++) 
+                                    {
+                                        line += Math.Round(Schroeder[s][r][oct][i],3).ToString() + ";";
+                                    }
+                                    SW.WriteLine(line);
+                                    line = ";";
+                                }
+
+                                SW.WriteLine("");
+                            }
+                        }
+                        SW.Close();
+                    }
+                    catch (System.Exception)
+                    {
+                        SW.Close();
+                        Rhino.RhinoApp.WriteLine("File is open, and cannot be written over.");
+                        return;
+                    }
+                }
             }
 
             #endregion

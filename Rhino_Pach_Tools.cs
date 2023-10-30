@@ -281,7 +281,7 @@ namespace Pachyderm_Acoustic
             /// <param name="Abs">0 to 100</param>
             /// <param name="Scat">0 to 100</param>
             /// <returns></returns>
-            public static bool Material_SetLayer(int LayerIndex, int[] Abs, int[] Scat, int[] Trans)
+            public static bool Material_SetLayer(int LayerIndex, int[] Abs, int[] Scat, int[] Trans, bool TL = false)
             {
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[LayerIndex];
                 layer.SetUserString("ABSType", "");
@@ -670,14 +670,14 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public static void PlotMapValues(PachMapReceiver[] Rec_List, double[] Values)
+            public static void PlotMapValues(PachMapReceiver[] Rec_List, double[] Values, int decimals = 0)
             {
                 int step = (int)Math.Ceiling((double)Rec_List[0].Rec_List.Length / 100);
                 for (int i = 0; i < Rec_List[0].Rec_List.Length; i += step)
                 {
                     Plane P = Plane.WorldXY;
                     P.Origin = HPttoRPt(Rec_List[0].Rec_List[i].Origin);
-                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(((int)Values[i]).ToString(), P, Rec_List[0].Rec_List[0].Radius, "Arial", true, false);
+                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(((int)Math.Round(Values[i], decimals)).ToString(), P, Rec_List[0].Rec_List[0].Radius, "Arial", true, false);
                 }
             }
         }

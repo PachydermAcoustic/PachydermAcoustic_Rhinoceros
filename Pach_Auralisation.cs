@@ -25,10 +25,6 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
-using MathNet.Numerics.RootFinding;
-using MathNet.Numerics;
-using Pachyderm_Acoustic.AbsorptionModels;
-using System.Windows.Media.Media3D;
 
 namespace Pachyderm_Acoustic
 {
@@ -519,7 +515,7 @@ namespace Pachyderm_Acoustic
                 //for (int j = 0; j < Render_Response.Length; j++) Rende[j] = new double[maxlength];
 
                 float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 15)/ 20));
-                for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[Render_Response[c].Length];
+                for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[maxlength];
 
                 for (int j = 0; j < Render_Response[0].Length; j++)
                 {

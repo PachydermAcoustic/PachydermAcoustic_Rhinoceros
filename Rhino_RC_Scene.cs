@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
 using Hare.Geometry;
+using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
@@ -112,13 +113,17 @@ namespace Pachyderm_Acoustic
                         //New code for transmission loss incorporation...
                         string trans = Layer.GetUserString("Transmission");
                         Trans = (trans == "" || trans == null ) ? ( Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans = Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            double ret = Math.Pow(10, -Trans[oct] / 10);
-                            Trans[oct] = 1 - ret;
-                            //Abs[oct] *= ret;
-                        }
 
+                        //TODO: Test that this works.
+                        if (Layer.GetUserString("Transmission") == "True")
+                        {
+                            for (int oct = 0; oct < 8; oct++)
+                            {
+                                double ret = Math.Pow(10, -Trans[oct] / 10);
+                                Trans[oct] = 1 - ret;
+                                //Abs[oct] *= ret;
+                            }
+                        }
                         Mat_Layer.Add(new Environment.Basic_Material(Abs, new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 }));
                         Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
                         Trans_Layer.Add(Trans);
@@ -1253,17 +1258,17 @@ namespace Pachyderm_Acoustic
                 AbsorptionData[Ray.Surf_ID].Absorb(ref Ray, out cos_theta, Normal(Ray.Surf_ID, u, v));
             }
 
-            public override void Scatter_Early(ref BroadRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v)
+            public override void Scatter_Early(ref BroadRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v, double[] Transmission = null)
             {
-                ScatteringData[Ray.Surf_ID].Scatter_Early(ref Ray, ref Rays, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta);
+                ScatteringData[Ray.Surf_ID].Scatter_Early(ref Ray, ref Rays, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta, Transmission);
             }
 
-            public override void Scatter_Late(ref OctaveRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v)
+            public override void Scatter_Late(ref OctaveRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v, bool Transmission = false)
             {
                 ScatteringData[Ray.Surf_ID].Scatter_Late(ref Ray, ref Rays, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta);
             }
 
-            public override void Scatter_Simple(ref OctaveRay Ray, ref Random rand, double cos_theta, double u, double v)
+            public override void Scatter_Simple(ref OctaveRay Ray, ref Random rand, double cos_theta, double u, double v, bool Transmission = false)
             {
                 ScatteringData[Ray.Surf_ID].Scatter_VeryLate(ref Ray, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta);
             }

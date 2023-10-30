@@ -176,6 +176,13 @@ namespace Pachyderm_Acoustic
                 Commit();
             }
 
+            System.Windows.Forms.OpenFileDialog OF;
+            Balloon B;
+            String[] CODES;
+            string[] ballooncodes = new string[8];
+            double[] SWLmax = new double[8];
+            double[] SWLnom = new double[8];
+
             private void Select_Type()
             {
                 if (SourceType.SelectedIndex != 2 && SourceType.SelectedIndex != 3)
@@ -195,7 +202,6 @@ namespace Pachyderm_Acoustic
                     //Commit();
                     return;
                 }
-
 
                 if (SourceType.SelectedIndex == 2)
                 {
@@ -277,10 +283,7 @@ namespace Pachyderm_Acoustic
                 else if (SourceType.SelectedIndex == 3)
                 {
                     System.Windows.Forms.OpenFileDialog OF = new System.Windows.Forms.OpenFileDialog();
-                    Balloon B;
-                    String[] CODES;
-                    string[] ballooncodes = new string[8];
-                    double[] SWLmax = new double[8];
+
                     double[] SWLnom = new double[8];
                     if (OF.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
                     {
@@ -296,6 +299,26 @@ namespace Pachyderm_Acoustic
                         }
 
                         B = new Balloon(ballooncodes, Utilities.RC_PachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                    }
+                    else if (SourceType.SelectedIndex == 4)
+                    {
+                        //BRAS format CSV intake:
+                        OF = new System.Windows.Forms.OpenFileDialog();
+                        if (OF.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
+                        {
+                            CODES = Balloon.Read_Generic(OF.FileName);
+
+                            string[] nomcode = CODES[8].Split(';');
+                            string[] maxcode = CODES[9].Split(';');
+                            for (int oct = 0; oct < 8; oct++)
+                            {
+                                ballooncodes[oct] = CODES[oct];
+                                SWLnom[oct] = double.Parse(nomcode[oct]);
+                                SWLmax[oct] = double.Parse(maxcode[oct]);
+                            }
+
+                            B = new Balloon(ballooncodes, Utilities.RC_PachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                        }
                     }
                     else
                     {

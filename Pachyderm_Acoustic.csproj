@@ -127,6 +127,11 @@
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
     <Compile Include="Pach_Props_Page.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
     <Compile Include="Rhino_RC_Scene.cs" />
     <Compile Include="Classes_RCVoxel.cs" />
     <Compile Include="Pach_MapCustom.cs">
@@ -274,6 +279,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
     <None Include="Resources\PIcon1.ico" />
     <None Include="Resources\Source_Selected.bmp" />
   </ItemGroup>

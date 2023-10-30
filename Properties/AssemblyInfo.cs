@@ -7,13 +7,13 @@ using Rhino.PlugIns;
 // Plug-in Description Attributes - all of these are optional
 // These will show in Rhino's option dialog, in the tab Plug-ins
 [assembly: PlugInDescription(DescriptionType.Address, "-")]
-[assembly: PlugInDescription(DescriptionType.Country, "United Kingdom")]
-[assembly: PlugInDescription(DescriptionType.Email, "Pach.Acoustic.Sim@Gmail.com")]
+[assembly: PlugInDescription(DescriptionType.Country, "Earth")]
+[assembly: PlugInDescription(DescriptionType.Email, "info@orase.com")]
 [assembly: PlugInDescription(DescriptionType.Phone, "-")]
 [assembly: PlugInDescription(DescriptionType.Fax, "-")]
-[assembly: PlugInDescription(DescriptionType.Organization, "-")]
-[assembly: PlugInDescription(DescriptionType.UpdateUrl, "-")]
-[assembly: PlugInDescription(DescriptionType.WebSite, "http://www.perspectivesketch.com/pachyderm/")]
+[assembly: PlugInDescription(DescriptionType.Organization, "Open Research in Acoustical Science and Education, Inc.")]
+[assembly: PlugInDescription(DescriptionType.UpdateUrl, "http://www.orase.org/resources/")]
+[assembly: PlugInDescription(DescriptionType.WebSite, "http://www.orase.org/")]
 
 
 // General Information about an assembly is controlled through the following 

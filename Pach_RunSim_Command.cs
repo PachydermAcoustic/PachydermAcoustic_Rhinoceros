@@ -71,6 +71,9 @@ namespace Pachyderm_Acoustic
             ///<summary> This gets called when when the user runs this command.</summary>
             protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
             {
+                System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
+                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+
                 if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
                 {
                     System.Windows.Forms.MessageBox.Show("At this point in development, Pachyderm supports documents in meters only. Please set the document units to meters, and run the calculation again.\n(A quick way to get to the document units control is to type 'units' into the command prompt.)");
@@ -122,6 +125,7 @@ namespace Pachyderm_Acoustic
                 Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
                 //System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.Interactive;
                 Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
+                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
                 return CommandResult;
             }
 

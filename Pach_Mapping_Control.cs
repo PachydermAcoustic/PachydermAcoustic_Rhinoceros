@@ -121,7 +121,7 @@ namespace Pachyderm_Acoustic
                 {
                     Source[i].AppendPts(ref P);
                     Mesh Map_Mesh = Utilities.RC_PachTools.Create_Map_Mesh(Rec_Srfs, (double)Increment.Value * 0.01);
-                    Map[i] = new PachMapReceiver(Utilities.RC_PachTools.Rhino_to_HareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (int)RT_Count.Value, (double)CO_TIME.Value, Sum_Time.Checked, Disp_Audience.Checked, DirectionalToggle.Checked, Rec_Vertex.Checked, Offset_Mesh.Checked);
+                    Map[i] = new PachMapReceiver(Utilities.RC_PachTools.Rhino_to_HareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (double)CO_TIME.Value, Sum_Time.Checked, Disp_Audience.Checked, DirectionalToggle.Checked, Rec_Vertex.Checked, Offset_Mesh.Checked);
                 }
 
                 for (int s_id = 0; s_id < Source.Length; s_id++)
@@ -343,7 +343,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EDTMin, Current_EDTMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Reverberation Time (T-15)":
@@ -353,7 +353,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Reverberation Time (T-30)":
@@ -363,7 +363,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Speech Transmission Index - 2003":
@@ -391,7 +391,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI1Min, Current_STI1Max }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         } 
                         break;
                     case "Speech Transmission Index - Male":
@@ -419,7 +419,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI2Min, Current_STI2Max }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Speech Transmission Index - Female":
@@ -447,7 +447,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] {Current_STI3Min, Current_STI3Max }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Clarity (C-80)":
@@ -457,7 +457,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Definition (D-50)":
@@ -492,7 +492,7 @@ namespace Pachyderm_Acoustic
                             System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_GMin, Current_GMax }, c_scale);
                             Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 1);
                         }
                         break;
                     case "Percent who perceive echoes (EK)":
