@@ -2326,14 +2326,34 @@ namespace Pachyderm_Acoustic
                 OpenAnalysis();
             }
 
-            private void SaveResultsToolStripMenuItem_Click(object sender, EventArgs e)
+            private void SaveIntensityResultsToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                Plot_Results();
+                Plot_Results_Intensity();
             }
 
-            private void savePTBFormatToolStripMenuItem_Click(object sender, EventArgs e)
+            private void savePressureResultsToolStripMenuItem_Click_1(object sender, EventArgs e)
             {
-                Plot_PTB_Results();
+                Plot_Results_Pressure();
+            }
+
+            private void saveIntensityPTBFormatToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                Plot_PTB_Results_Intensity();
+            }
+
+            private void savePressurePTBFormatToolStripMenuItem_Click_1(object sender, EventArgs e)
+            {
+                Plot_PTB_Results_Pressure();
+            }
+
+            private void SavePressureResultsToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                Plot_Results_Pressure();
+            }
+
+            private void savePressurePTBFormatToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                Plot_PTB_Results_Pressure();
             }
 
             private void saveEDCToolStripMenuItem_Click(object sender, EventArgs e)

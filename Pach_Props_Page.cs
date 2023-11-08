@@ -16,6 +16,13 @@ namespace Pachyderm_Acoustic
             {
             }
 
+            public override bool OnActivate(bool active)
+            {
+                Pach_Properties.Instance.Refresh();
+                //Pach_Properties.Instance.Update();
+                return base.OnActivate(active);
+            }
+
             public override object PageControl //System.Windows.Forms.Control
             {
                 get
