@@ -19,124 +19,83 @@
 using System.Collections.Generic;
 using Rhino.Geometry;
 using Rhino.DocObjects;
+using Rhino.UI;
+using Eto.Drawing;
+using Eto.Forms;
+using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-        public partial class Pach_objProps
+        public partial class Pach_objProps : Panel, IPanel
         {
+            FreqSlider Absorption_Controls;
+            FreqSlider Scattering_Controls;
+            FreqSlider Transmission_Controls;
+            internal GroupBox Material_Pref;
+            internal RadioButton User_Materials;
+            internal RadioButton Acoustics_Layer;
+            private Label Abs_Label;
+            private Label Scat_Label;
+            private Label Trans_Label;
+
             public Pach_objProps()
             {
-                InitializeComponent();
+                this.Material_Pref = new GroupBox();
+                this.Material_Pref.Text = "Materials by:";
+                //this.Material_Pref.Width = this.Width / 2;
+                //Material_Pref.Height = 100;
+                this.User_Materials = new RadioButton();
+                this.User_Materials.Text = "Manual Choice";
+                this.User_Materials.CheckedChanged += this.User_Materials_CheckedChanged;
+                this.Acoustics_Layer = new RadioButton();
+                this.Acoustics_Layer.Checked = true;
+                this.Acoustics_Layer.Text = "Layer";
+                this.Acoustics_Layer.CheckedChanged += this.User_Materials_CheckedChanged;
+                Material_Pref.Content = new StackLayout
+                {
+                    Items = { User_Materials, Acoustics_Layer }
+                };
+
+                this.Abs_Label = new Label();
+                this.Abs_Label.Text = "Absorption Coefficient";
+                this.Absorption_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Absorption_Controls.MouseLeave += User_Materials_CheckedChanged;
+                this.Scat_Label = new Label();
+                this.Scat_Label.Text = "Scattering Coefficient";
+                this.Scattering_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Scattering_Controls.MouseLeave += User_Materials_CheckedChanged;
+                this.Trans_Label = new Label();
+                this.Trans_Label.Text = "Transparency Coefficient";
+                this.Transmission_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Transmission_Controls.MouseLeave += User_Materials_CheckedChanged;
+
+                StackLayout cont = new StackLayout();
+                cont.Items.Add(Material_Pref);
+                cont.Items.Add(Abs_Label);
+                cont.Items.Add(Absorption_Controls);
+                cont.Items.Add(Scat_Label);
+                cont.Items.Add(Scattering_Controls);
+                cont.Items.Add(Trans_Label);
+                cont.Items.Add(Transmission_Controls);
+
+                this.SizeChanged += (sender, e) => { Absorption_Controls.resize(this.Width); Scattering_Controls.resize(this.Width); Transmission_Controls.resize(this.Width); };
+
+                this.Content = cont;
             }
 
             private void User_Materials_CheckedChanged(object sender, System.EventArgs e)
             {
+                if (sender is RadioButton)
+                {
+                    if ((sender as RadioButton).Text == "Manual Choice" && (sender as RadioButton).Checked) { User_Materials.Checked = true; this.Acoustics_Layer.Checked = false; }
+                    else if ((sender as RadioButton).Checked) { this.User_Materials.Checked = false; Acoustics_Layer.Checked = true; }
+                    this.Invalidate(true);
+                }
+
                 Commit();
             }
-
-            #region scrolls
-            private void Abs63_Scroll(object sender, System.EventArgs e)
-            {
-                Abs63Out.Text = ((double)Abs63.Value / 100).ToString();
-            }
-            private void Abs125_Scroll(object sender, System.EventArgs e)
-            {
-                Abs125Out.Text = ((double)Abs125.Value / 100).ToString();
-            }
-            private void Abs250_Scroll(object sender, System.EventArgs e)
-            {
-                Abs250Out.Text = ((double)Abs250.Value / 100).ToString();
-            }
-            private void Abs500_Scroll(object sender, System.EventArgs e)
-            {
-                Abs500Out.Text = ((double)Abs500.Value / 100).ToString();
-            }
-            private void Abs1k_Scroll(object sender, System.EventArgs e)
-            {
-                Abs1kOut.Text = ((double)Abs1k.Value / 100).ToString();
-            }
-            private void Abs2k_Scroll(object sender, System.EventArgs e)
-            {
-                Abs2kOut.Text = ((double)Abs2k.Value / 100).ToString();
-            }
-            private void Abs4k_Scroll(object sender, System.EventArgs e)
-            {
-                Abs4kOut.Text = ((double)Abs4k.Value / 100).ToString();
-            }
-            private void Abs8k_Scroll(object sender, System.EventArgs e)
-            {
-                Abs8kOut.Text = ((double)Abs8k.Value / 100).ToString();
-            }
-
-            private void Scat63v_Scroll(object sender, System.EventArgs e)
-            {
-                Scat63Out.Text = ((double)Scat63v.Value / 100).ToString();
-            }
-            private void Scat125v_Scroll(object sender, System.EventArgs e)
-            {
-                Scat125Out.Text = ((double)Scat125v.Value / 100).ToString();
-            }
-            private void Scat250v_Scroll(object sender, System.EventArgs e)
-            {
-                Scat250Out.Text = ((double)Scat250v.Value / 100).ToString();
-            }
-            private void Scat500v_Scroll(object sender, System.EventArgs e)
-            {
-                Scat500Out.Text = ((double)Scat500v.Value / 100).ToString();
-            }
-            private void Scat1kv_Scroll(object sender, System.EventArgs e)
-            {
-                Scat1kOut.Text = ((double)Scat1kv.Value / 100).ToString();
-            }
-            private void Scat2kv_Scroll(object sender, System.EventArgs e)
-            {
-                Scat2kOut.Text = ((double)Scat2kv.Value / 100).ToString();
-            }
-            private void Scat4kv_Scroll(object sender, System.EventArgs e)
-            {
-                Scat4kOut.Text = ((double)Scat4kv.Value / 100).ToString();
-            }
-            private void Scat8kv_Scroll(object sender, System.EventArgs e)
-            {
-                Scat8kOut.Text = ((double)Scat8kv.Value / 100).ToString();
-            }
-
-            private void Trans63v_Scroll(object sender, System.EventArgs e)
-            {
-                Trans63Out.Text = ((double)Trans63v.Value / 100).ToString();
-            }
-            private void Trans125v_Scroll(object sender, System.EventArgs e)
-            {
-                Trans125Out.Text = ((double)Trans125v.Value / 100).ToString();
-            }
-            private void Trans250v_Scroll(object sender, System.EventArgs e)
-            {
-                Trans250Out.Text = ((double)Trans250v.Value / 100).ToString();
-            }
-            private void Trans500v_Scroll(object sender, System.EventArgs e)
-            {
-                Trans500Out.Text = ((double)Trans500v.Value / 100).ToString();
-            }
-            private void Trans1kv_Scroll(object sender, System.EventArgs e)
-            {
-                Trans1kOut.Text = ((double)Trans1kv.Value / 100).ToString();
-            }
-            private void Trans2kv_Scroll(object sender, System.EventArgs e)
-            {
-                Trans2kOut.Text = ((double)Trans2kv.Value / 100).ToString();
-            }
-            private void Trans4kv_Scroll(object sender, System.EventArgs e)
-            {
-                Trans4kOut.Text = ((double)Trans4kv.Value / 100).ToString();
-            }
-            private void Trans8kv_Scroll(object sender, System.EventArgs e)
-            {
-                Trans8kOut.Text = ((double)Trans8kv.Value / 100).ToString();
-            }
-            #endregion
-
 
             public string GetCode()
             {
@@ -145,90 +104,43 @@ namespace Pachyderm_Acoustic
 
             private string MaterialCode;
 
-            private void UpdateValues()
-            {
-                Abs63Out.Text = ((double)Abs63.Value / 100).ToString();
-                Abs125Out.Text = ((double)Abs125.Value / 100).ToString();
-                Abs250Out.Text = ((double)Abs250.Value / 100).ToString();
-                Abs500Out.Text = ((double)Abs500.Value / 100).ToString();
-                Abs1kOut.Text = ((double)Abs1k.Value / 100).ToString();
-                Abs2kOut.Text = ((double)Abs2k.Value / 100).ToString();
-                Abs4kOut.Text = ((double)Abs4k.Value / 100).ToString();
-                Abs8kOut.Text = ((double)Abs8k.Value / 100).ToString();
-                Scat63Out.Text = ((double)Scat63v.Value / 100).ToString();
-                Scat125Out.Text = ((double)Scat125v.Value / 100).ToString();
-                Scat250Out.Text = ((double)Scat250v.Value / 100).ToString();
-                Scat500Out.Text = ((double)Scat500v.Value / 100).ToString();
-                Scat1kOut.Text = ((double)Scat1kv.Value / 100).ToString();
-                Scat2kOut.Text = ((double)Scat2kv.Value / 100).ToString();
-                Scat4kOut.Text = ((double)Scat4kv.Value / 100).ToString();
-                Scat8kOut.Text = ((double)Scat8kv.Value / 100).ToString();
-                Trans63Out.Text = ((double)Trans63v.Value / 100).ToString();
-                Trans125Out.Text = ((double)Trans125v.Value / 100).ToString();
-                Trans250Out.Text = ((double)Trans250v.Value / 100).ToString();
-                Trans500Out.Text = ((double)Trans500v.Value / 100).ToString();
-                Trans1kOut.Text = ((double)Trans1kv.Value / 100).ToString();
-                Trans2kOut.Text = ((double)Trans2kv.Value / 100).ToString();
-                Trans4kOut.Text = ((double)Trans4kv.Value / 100).ToString();
-                Trans8kOut.Text = ((double)Trans8kv.Value / 100).ToString();
-            }
-
             public void UpdateForm()
             {
                 if (Acoustics_Layer.Checked == true)
                 {
-                    SettingsTable.Enabled = false;
-                    SettingsTable.Visible = false;
+                    User_Materials.Checked = false;
+                    Abs_Label.Visible = false;
+                    Scat_Label.Visible = false;
+                    Trans_Label.Visible = false;
+                    Absorption_Controls.Enabled = false;
+                    Scattering_Controls.Enabled = false;
+                    Transmission_Controls.Enabled = false;
+                    Absorption_Controls.Visible = false;
+                    Scattering_Controls.Visible = false;
+                    Transmission_Controls.Visible = false;
                 }
                 else if (User_Materials.Checked == true)
                 {
-                    SettingsTable.Enabled = true;
-                    SettingsTable.Visible = true;
+                    Acoustics_Layer.Checked = false;
+                    Abs_Label.Visible = true;
+                    Scat_Label.Visible = true;
+                    Trans_Label.Visible = true;
+                    Absorption_Controls.Enabled = true;
+                    Scattering_Controls.Enabled = true;
+                    Transmission_Controls.Enabled = true;
+                    Absorption_Controls.Visible = true;
+                    Scattering_Controls.Visible = true;
+                    Transmission_Controls.Visible = true;
                 }
 
-                int[] Abs = new int[8];
-                int[] Sct = new int[8];
-                int[] Trn = new int[8];
+                double[] Abs = Absorption_Controls.Value;
+                double[] Sct = Scattering_Controls.Value;
+                double[] Trn = Transmission_Controls.Value;
 
-                Abs[0] = (int)Abs63.Value;
-                Abs[1] = (int)Abs125.Value;
-                Abs[2] = (int)Abs250.Value;
-                Abs[3] = (int)Abs500.Value;
-                Abs[4] = (int)Abs1k.Value;
-                Abs[5] = (int)Abs2k.Value;
-                Abs[6] = (int)Abs4k.Value;
-                Abs[7] = (int)Abs8k.Value;
-                Sct[0] = (int)Scat63v.Value;
-                Sct[1] = (int)Scat125v.Value;
-                Sct[2] = (int)Scat250v.Value;
-                Sct[3] = (int)Scat500v.Value;
-                Sct[4] = (int)Scat1kv.Value;
-                Sct[5] = (int)Scat2kv.Value;
-                Sct[6] = (int)Scat4kv.Value;
-                Sct[7] = (int)Scat8kv.Value;
+                double TrnDet = Trn.Sum();
 
-                int TrnDet = 0;
-                Trn[0] = (int)Trans63v.Value;
-                TrnDet += Trn[0];
-                Trn[1] = (int)Trans125v.Value;
-                TrnDet += Trn[1];
-                Trn[2] = (int)Trans250v.Value;
-                TrnDet += Trn[2];
-                Trn[3] = (int)Trans500v.Value;
-                TrnDet += Trn[3];
-                Trn[4] = (int)Trans1kv.Value;
-                TrnDet += Trn[4];
-                Trn[5] = (int)Trans2kv.Value;
-                TrnDet += Trn[5];
-                Trn[6] = (int)Trans4kv.Value;
-                TrnDet += Trn[6];
-                Trn[7] = (int)Trans8kv.Value;
-                TrnDet += Trn[7];
-
-                if (TrnDet < 1) Trn = new int[1];
+                if (TrnDet < 1) Trn = new double[1];
                 MaterialCode = Utilities.RC_PachTools.EncodeAcoustics(Abs, Sct, Trn);
-
-                UpdateValues();
             }
 
             private void Commit()
@@ -237,6 +149,7 @@ namespace Pachyderm_Acoustic
                 {
                     if (Acoustics_Layer.Checked)
                     {
+                        User_Materials.Checked = false;
                         for (int i = 0; i < Objects.Count; i++)
                         {
                             Objects[i].Geometry.SetUserString("Acoustics_User", "no");
@@ -245,6 +158,7 @@ namespace Pachyderm_Acoustic
                     }
                     else if (User_Materials.Checked)
                     {
+                        Acoustics_Layer.Checked = false;
                         for(int i = 0; i < Objects.Count; i++)
                         {
                             Objects[i].Geometry.SetUserString("Acoustics_User", "yes");
@@ -253,7 +167,7 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-
+                Invalidate(true);
                 Load_Doc(Objects);
             }
 
@@ -313,30 +227,10 @@ namespace Pachyderm_Acoustic
                             {
                                 Utilities.RC_PachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
                                 MaterialCode = Code;
-                                Abs63.Value = (int)(Absorption[0] * 1000);
-                                Abs125.Value = (int)(Absorption[1] * 1000);
-                                Abs250.Value = (int)(Absorption[2] * 1000);
-                                Abs500.Value = (int)(Absorption[3] * 1000);
-                                Abs1k.Value = (int)(Absorption[4] * 1000);
-                                Abs2k.Value = (int)(Absorption[5] * 1000);
-                                Abs4k.Value = (int)(Absorption[6] * 1000);
-                                Abs8k.Value = (int)(Absorption[7] * 1000);
-                                Scat63v.Value = (int)(Scattering[0] * 100);
-                                Scat125v.Value = (int)(Scattering[1] * 100);
-                                Scat250v.Value = (int)(Scattering[2] * 100);
-                                Scat500v.Value = (int)(Scattering[3] * 100);
-                                Scat1kv.Value = (int)(Scattering[4] * 100);
-                                Scat2kv.Value = (int)(Scattering[5] * 100);
-                                Scat4kv.Value = (int)(Scattering[6] * 100);
-                                Scat8kv.Value = (int)(Scattering[7] * 100);
-                                Trans63v.Value = (int)(Transparency[0] * 100);
-                                Trans125v.Value = (int)(Transparency[1] * 100);
-                                Trans250v.Value = (int)(Transparency[2] * 100);
-                                Trans500v.Value = (int)(Transparency[3] * 100);
-                                Trans1kv.Value = (int)(Transparency[4] * 100);
-                                Trans2kv.Value = (int)(Transparency[5] * 100);
-                                Trans4kv.Value = (int)(Transparency[6] * 100);
-                                Trans8kv.Value = (int)(Transparency[7] * 100);
+
+                                Absorption_Controls.populate(Absorption);
+                                Scattering_Controls.populate(Scattering);
+                                Transmission_Controls.populate(Transparency);
                             }
                             else
                             {
@@ -366,33 +260,30 @@ namespace Pachyderm_Acoustic
             public void Clear()
             {
                 MaterialCode = null;
-                Abs63.Value = 1;
-                Abs125.Value = 1;
-                Abs250.Value = 1;
-                Abs500.Value = 1;
-                Abs1k.Value = 1;
-                Abs2k.Value = 1;
-                Abs4k.Value = 1;
-                Abs8k.Value = 1;
-                Scat63v.Value = 1;
-                Scat125v.Value = 1;
-                Scat250v.Value = 1;
-                Scat500v.Value = 1;
-                Scat1kv.Value = 1;
-                Scat2kv.Value = 1;
-                Scat4kv.Value = 1;
-                Scat8kv.Value = 1;
-                Trans63v.Value = 0;
-                Trans125v.Value = 0;
-                Trans250v.Value = 0;
-                Trans500v.Value = 0;
-                Trans1kv.Value = 0;
-                Trans2kv.Value = 0;
-                Trans4kv.Value = 0;
-                Trans8kv.Value = 0;
-
-                UpdateValues();
+                Absorption_Controls.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
+                Scattering_Controls.Value = new double[8] { 15, 15, 15, 15, 15, 15, 15, 15 };
+                Transmission_Controls.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
             }
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
         }
 
         public class Pach_Materials_Page : Rhino.UI.ObjectPropertiesPage

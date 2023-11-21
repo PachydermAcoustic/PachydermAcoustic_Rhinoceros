@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.props" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -85,21 +86,48 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CLF_Read">
-      <HintPath>Resources\CLF_Read.dll</HintPath>
+      <HintPath>..\CLF_Read_v2\CLF_Read\bin\Release\CLF_Read.dll</HintPath>
+    </Reference>
+    <Reference Include="CustomMarshalers" />
+    <Reference Include="Eto">
+      <HintPath>..\..\..\..\..\..\Program Files\Rhino 7\System\Eto.dll</HintPath>
     </Reference>
     <Reference Include="LibOptimization, Version=1.12.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\LibOptimization.1.12.1\lib\net40\LibOptimization.dll</HintPath>
     </Reference>
-    <Reference Include="MathNet.Numerics, Version=4.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\MathNet.Numerics.4.5.1\lib\net461\MathNet.Numerics.dll</HintPath>
+    <Reference Include="MathNet.Numerics, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\MathNet.Numerics.5.0.0\lib\net48\MathNet.Numerics.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.4.0, Culture=neutral, PublicKeyToken=8985beaab7ea3f04, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Microsoft-WindowsAPICodePack-Core.1.1.4\lib\net48\Microsoft.WindowsAPICodePack.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAPICodePack.Shell, Version=1.1.4.0, Culture=neutral, PublicKeyToken=8985beaab7ea3f04, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Microsoft-WindowsAPICodePack-Shell.1.1.4\lib\net48\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="RhinoCommon">
-      <HintPath>..\..\..\..\..\..\Program Files\Rhino 6\System\RhinoCommon.dll</HintPath>
+    <Reference Include="Rhino.UI">
+      <HintPath>..\..\..\..\..\..\Program Files\Rhino 7\System\Rhino.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RhinoCommon">
+      <HintPath>..\..\..\..\..\..\Program Files\Rhino 7\System\RhinoCommon.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="ScottPlot, Version=4.1.68.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ScottPlot.4.1.68\lib\net462\ScottPlot.dll</HintPath>
+    </Reference>
+    <Reference Include="ScottPlot.Eto, Version=4.1.68.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ScottPlot.Eto.4.1.68\lib\netstandard2.0\ScottPlot.Eto.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.Annotations, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.ComponentModel.Annotations.5.0.0\lib\net461\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -107,8 +135,31 @@
     <Reference Include="System.Data" />
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Drawing.Common, Version=4.0.0.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Drawing.Common.4.7.2\lib\net461\System.Drawing.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Resources.Extensions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Resources.Extensions.7.0.0\lib\net462\System.Resources.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xaml" />
@@ -126,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
+    <Compile Include="Panel_FreqSlider.cs" />
     <Compile Include="Pach_Props_Page.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -151,12 +203,7 @@
     <Compile Include="Pach_Auralisation.designer.cs">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pachyderm_Splash.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Pachyderm_Splash.Designer.cs">
-      <DependentUpon>Pachyderm_Splash.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pachyderm_Splash.cs" />
     <Compile Include="Pach_Special_Command.cs" />
     <Compile Include="Pach_FDTDControl.cs">
       <SubType>UserControl</SubType>
@@ -164,26 +211,11 @@
     <Compile Include="Pach_FDTDControl.Designer.cs">
       <DependentUpon>Pach_FDTDControl.cs</DependentUpon>
     </Compile>
-    <Compile Include="Pach_SourceControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_SourceControl.Designer.cs">
-      <DependentUpon>Pach_SourceControl.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Pach_Visual_Control.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Visual_Control.Designer.cs">
-      <DependentUpon>Pach_Visual_Control.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_SourceControl.cs" />
+    <Compile Include="Pach_Visual_Control.cs" />
     <Compile Include="Rhino_Balloons.cs" />
     <Compile Include="Classes_Particles.cs" />
-    <Compile Include="Pach_Obj_Props.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Obj_Props.Designer.cs">
-      <DependentUpon>Pach_Obj_Props.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_Obj_Props.cs" />
     <Compile Include="GetModel.cs" />
     <Compile Include="Insert_Receiver_Command.cs" />
     <Compile Include="Insert_Source_Command.cs" />
@@ -241,15 +273,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Pachyderm_Splash.resx">
-      <DependentUpon>Pachyderm_Splash.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Pach_Auralisation.resx">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Obj_Props.resx">
-      <DependentUpon>Pach_Obj_Props.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Pach_Hybrid_Control.resx">
       <DependentUpon>Pach_Hybrid_Control.cs</DependentUpon>
@@ -266,12 +292,6 @@
     <EmbeddedResource Include="Pach_FDTDControl.resx">
       <DependentUpon>Pach_FDTDControl.cs</DependentUpon>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_SourceControl.resx">
-      <DependentUpon>Pach_SourceControl.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Visual_Control.resx">
-      <DependentUpon>Pach_Visual_Control.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -328,4 +348,12 @@ Copy "$(ProjectDir)Resources\libfftw3-3.dll" "$(TargetDir)"</PostBuildEvent>
     <PreBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
+  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.targets')" />
+  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets'))" />
+  </Target>
 </Project>

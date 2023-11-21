@@ -20,34 +20,261 @@ using Rhino.DocObjects;
 using System;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.UI;
+using Rhino.UI;
+using Eto.Drawing;
+using Eto.Forms;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-        public partial class Pach_SourceControl : System.Windows.Forms.UserControl
+
+        public partial class Pach_SourceControl : Panel, IPanel
         {
             private List<Rhino.DocObjects.RhinoObject> Objects = new List<Rhino.DocObjects.RhinoObject>();
             private SourceConduit SC;
 
+            private ComboBox SourceType;
+
+            private Label H63;
+            private Label H125;
+            private Label H250;
+            private Label H500;
+            private Label H1k;
+            private Label H2k;
+            private Label H4k;
+            private Label H8k;
+
+            private DynamicLayout PowerTable;
+            private NumericUpDown SWL0;
+            private NumericUpDown SWL1;
+            private NumericUpDown SWL2;
+            private NumericUpDown SWL3;
+            private NumericUpDown SWL4;
+            private NumericUpDown SWL5;
+            private NumericUpDown SWL6;
+            private NumericUpDown SWL7;
+            private Label SPL1;
+            private Label SPL0;
+            private Label SPL2;
+            private Label SPL3;
+            private Label SPL4;
+            private Label SPL5;
+            private Label SPL6;
+            private Label SPL7;
+            private NumericUpDown Delay_ms;
+            private Button Maximum;
+            private Button Sensitivity;
+            private GroupBox SrcDIR;
+            private Label Altlbl;
+            private Label Azilbl;
+            private NumericUpDown Azi;
+            private NumericUpDown Alt;
+            private Label Rotlbl;
+            private NumericUpDown AxialRot;
+            private Button SrcDetails;
+            private Label OCT;
+            private Label SPL;
+            private Label SWL;
+            private Label label7;
+
             public Pach_SourceControl()
             {
                 SC = SourceConduit.Instance;
-                InitializeComponent();
+                StackLayout Layout = new StackLayout();
+                this.H63 = new Label();
+                this.H125 = new Label();
+                this.H250 = new Label();
+                this.H500 = new Label();
+                this.H1k = new Label();
+                this.H2k = new Label();
+                this.H4k = new Label();
+                this.H8k = new Label();
+                this.SPL = new Label();
+                this.SWL = new Label();
+                this.OCT = new Label();
+                this.PowerTable = new DynamicLayout();
+                this.SWL0 = new NumericUpDown();
+                this.SWL1 = new NumericUpDown();
+                this.SWL2 = new NumericUpDown();
+                this.SWL3 = new NumericUpDown();
+                this.SWL4 = new NumericUpDown();
+                this.SWL5 = new NumericUpDown();
+                this.SWL6 = new NumericUpDown();
+                this.SWL7 = new NumericUpDown();
+                this.SPL0 = new Label();
+                this.SPL1 = new Label();
+                this.SPL2 = new Label();
+                this.SPL3 = new Label();
+                this.SPL4 = new Label();
+                this.SPL5 = new Label();
+                this.SPL6 = new Label();
+                this.SPL7 = new Label();
+                this.SrcDIR = new GroupBox();
+                this.Rotlbl = new Label();
+                this.SrcDetails = new Button();
+                this.AxialRot = new NumericUpDown();
+                this.Altlbl = new Label();
+                this.Azilbl = new Label();
+                this.Azi = new NumericUpDown();
+                this.Alt = new NumericUpDown();
+                this.label7 = new Label();
+                this.Delay_ms = new NumericUpDown();
+                this.Maximum = new Button();
+                this.Sensitivity = new Button();
+                this.SourceType = new ComboBox();
+
+                // 
+                // SourceType
+                // 
+                this.SourceType.Items.Add("Geodesic Directional Distribution");
+                this.SourceType.Items.Add("Pseudo-Random Directional Distribution");
+                this.SourceType.Items.Add("Common Loudspeaker Format");
+                this.SourceType.Items.Add("Directional Source");
+
+                this.SourceType.SelectedIndex = 0;
+                this.SourceType.SelectedIndexChanged += this.SourceType_DropDownClosed;
+
+                Layout.Items.Add(SourceType);
+
+                this.OCT.Text = "Octave";
+                this.SWL.Text = "SWL";
+                this.SPL.Text = "SPL @ 1m.";
+                PowerTable.AddRow(OCT, SWL, SPL);
+ 
+                this.H63.Text = "63 Hz.";
+                this.H125.Text = "125 Hz.";
+                this.H250.Text = "250 Hz.";
+                this.H500.Text = "500 Hz.";
+                this.H1k.Text = "1 kHz.";
+                this.H2k.Text = "2 kHz.";
+                this.H4k.Text = "4 kHz.";
+                this.H8k.Text = "8 kHz.";
+
+                this.SWL0.DecimalPlaces = 2;
+                this.SWL0.MaxValue = 200;
+                this.SWL0.MinValue = 0;
+                this.SWL0.Value = 120;
+                this.SWL0.ValueChanged += SWL_ValueChanged;
+                this.SWL1.DecimalPlaces = 2;
+                this.SWL1.MaxValue = 200;
+                this.SWL1.MinValue = 0;
+                this.SWL1.Value = 120;
+                this.SWL1.ValueChanged += SWL_ValueChanged;
+                this.SWL2.DecimalPlaces = 2;
+                this.SWL2.MaxValue = 200;
+                this.SWL2.MinValue = 0;
+                this.SWL2.Value = 120;
+                this.SWL2.ValueChanged += SWL_ValueChanged;
+                this.SWL3.DecimalPlaces = 2;
+                this.SWL3.MaxValue = 200;
+                this.SWL3.MinValue = 0;
+                this.SWL3.Value = 120;
+                this.SWL3.ValueChanged += SWL_ValueChanged;
+                this.SWL4.DecimalPlaces = 2;
+                this.SWL4.MaxValue = 200;
+                this.SWL4.MinValue = 0;
+                this.SWL4.Value = 120;
+                this.SWL4.ValueChanged += SWL_ValueChanged;
+                this.SWL5.DecimalPlaces = 2;
+                this.SWL5.MaxValue = 200;
+                this.SWL5.MinValue = 0;
+                this.SWL5.Value = 120;
+                this.SWL5.ValueChanged += SWL_ValueChanged;
+                this.SWL6.DecimalPlaces = 2;
+                this.SWL6.MaxValue = 200;
+                this.SWL6.MinValue = 0;
+                this.SWL6.Value = 120;
+                this.SWL6.ValueChanged += SWL_ValueChanged;
+                this.SWL7.DecimalPlaces = 2;
+                this.SWL7.MaxValue = 200;
+                this.SWL7.MinValue = 0;
+                this.SWL7.Value = 120;
+                this.SWL7.ValueChanged += SWL_ValueChanged;
+
+                this.SPL0.Text = "109.00";
+                this.SPL1.Text = "109.00";
+                this.SPL2.Text = "109.00";
+                this.SPL3.Text = "109.00";
+                this.SPL4.Text = "109.00";
+                this.SPL5.Text = "109.00";
+                this.SPL6.Text = "109.00";
+                this.SPL7.Text = "109.00";
+
+                PowerTable.AddRow(OCT, SWL, SPL);
+                PowerTable.AddRow(H63, SWL0, SPL0);
+                PowerTable.AddRow(H125, SWL1, SPL1);
+                PowerTable.AddRow(H250, SWL2, SPL2);
+                PowerTable.AddRow(H500, SWL3, SPL3);
+                PowerTable.AddRow(H1k, SWL4, SPL4);
+                PowerTable.AddRow(H2k, SWL5, SPL5);
+                PowerTable.AddRow(H4k, SWL6, SPL6);
+                PowerTable.AddRow(H8k, SWL7, SPL7);
+
+                Layout.Items.Add(PowerTable);
+
+
+                this.label7.Text = "Delay (ms.)";
+                this.Delay_ms.DecimalPlaces = 4;
+                this.Delay_ms.MaxValue = 360;
+                this.Delay_ms.ValueChanged += this.Delay_ms_ValueChanged;
+                this.Maximum.Text = "Max";
+                this.Maximum.Click += this.Maximum_Click;
+                this.Sensitivity.Text = "Sensitivity";
+                this.Sensitivity.Click += this.Sensitivity_Click;
+
+                DynamicLayout Del = new DynamicLayout();
+                Del.AddRow(label7, Delay_ms);
+                Del.AddRow(Sensitivity, Maximum);
+
+                Layout.Items.Add(Del);
+
+                this.SrcDIR.Text = "Direction";
+                this.SrcDIR.Visible = false;
+
+
+                this.Rotlbl.Text = "Rotation (Axial):";
+                this.Altlbl.Text = "Altitude:";
+                this.Azilbl.Text = "Azimuth:";
+
+                this.SrcDetails.Enabled = false;
+                this.SrcDetails.Text = "Details...";
+                this.SrcDetails.Visible = false;
+                this.SrcDetails.Click += this.SrcDetails_Click;
+                this.AxialRot.MaxValue = 360;
+                this.AxialRot.ValueChanged += this.Rotation_ValueChanged;
+                this.Azi.MaxValue = 360;
+                this.Azi.ValueChanged += this.Rotation_ValueChanged;
+                this.Alt.MaxValue = 90;
+                this.Alt.MinValue = -90;
+                this.Alt.ValueChanged += this.Rotation_ValueChanged;
+
+                StackLayout det = new StackLayout();
+                DynamicLayout dir = new DynamicLayout(this);
+                dir.AddRow(Altlbl, Alt);
+                dir.AddRow(Azilbl, Azi);
+                dir.AddRow(Rotlbl, AxialRot);
+                det.Items.Add(dir);
+                det.Items.Add(SrcDetails);
+
+                SrcDIR.Content = det;
+                Layout.Items.Add(SrcDIR);
+
+                this.Content = Layout;
             }
 
             public void Load_Doc(List<Rhino.DocObjects.RhinoObject> Obj)
             {
                 Objects = Obj;
 
-                SWL0.Maximum = 200;
-                SWL1.Maximum = 200;
-                SWL2.Maximum = 200;
-                SWL3.Maximum = 200;
-                SWL4.Maximum = 200;
-                SWL5.Maximum = 200;
-                SWL6.Maximum = 200;
-                SWL7.Maximum = 200;
+                SWL0.MaxValue = 200;
+                SWL1.MaxValue = 200;
+                SWL2.MaxValue = 200;
+                SWL3.MaxValue = 200;
+                SWL4.MaxValue = 200;
+                SWL5.MaxValue = 200;
+                SWL6.MaxValue = 200;
+                SWL7.MaxValue = 200;
 
                 //Check to see if all objects have the same key values... 
                 string Mode = null;
@@ -92,22 +319,22 @@ namespace Pachyderm_Acoustic
                         SourceType.SelectedIndex = int.Parse(Mode);
                         string Power = Objects[0].Geometry.GetUserString("SWL");
                         double[] SWL = Utilities.PachTools.DecodeSourcePower(Power);
-                        SWL0.Value = (decimal)SWL[0];
-                        SWL1.Value = (decimal)SWL[1];
-                        SWL2.Value = (decimal)SWL[2];
-                        SWL3.Value = (decimal)SWL[3];
-                        SWL4.Value = (decimal)SWL[4];
-                        SWL5.Value = (decimal)SWL[5];
-                        SWL6.Value = (decimal)SWL[6];
-                        SWL7.Value = (decimal)SWL[7];
+                        SWL0.Value = (double)SWL[0];
+                        SWL1.Value = (double)SWL[1];
+                        SWL2.Value = (double)SWL[2];
+                        SWL3.Value = (double)SWL[3];
+                        SWL4.Value = (double)SWL[4];
+                        SWL5.Value = (double)SWL[5];
+                        SWL6.Value = (double)SWL[6];
+                        SWL7.Value = (double)SWL[7];
 
                         string Aim = Objects[0].Geometry.GetUserString("Aiming");
                         if (!string.IsNullOrEmpty(Aim))
                         {
                             string[] Aims = Aim.Split(';');
-                            Alt.Value = decimal.Parse(Aims[0]);
-                            Azi.Value = decimal.Parse(Aims[1]);
-                            AxialRot.Value = decimal.Parse(Aims[2]);
+                            Alt.Value = double.Parse(Aims[0]);
+                            Azi.Value = double.Parse(Aims[1]);
+                            AxialRot.Value = double.Parse(Aims[2]);
                         }
                         else
                         {
@@ -119,7 +346,7 @@ namespace Pachyderm_Acoustic
                         string delay = Objects[0].Geometry.GetUserString("Delay");
                         if (!string.IsNullOrEmpty(delay))
                         {                            
-                            Delay_ms.Value = decimal.Parse(delay);
+                            Delay_ms.Value = double.Parse(delay);
                         }
                         else
                         {
@@ -145,7 +372,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Objects.Count != 0)
                 {
-                    if (!SWL0.Focused && !SWL1.Focused && !SWL2.Focused && !SWL3.Focused && !SWL4.Focused && !SWL5.Focused && !SWL6.Focused && !SWL7.Focused && !SourceType.Focused) return;
+                    if (!SWL0.HasFocus && !SWL1.HasFocus && !SWL2.HasFocus && !SWL3.HasFocus && !SWL4.HasFocus && !SWL5.HasFocus && !SWL6.HasFocus && !SWL7.HasFocus && !SourceType.HasFocus) return;
                     foreach (RhinoObject OBJ in Objects)
                     {
                         OBJ.Geometry.SetUserString("SourceType", SourceType.SelectedIndex.ToString());
@@ -187,14 +414,14 @@ namespace Pachyderm_Acoustic
             {
                 if (SourceType.SelectedIndex != 2 && SourceType.SelectedIndex != 3)
                 {
-                    SWL0.Maximum = 200;
-                    SWL1.Maximum = 200;
-                    SWL2.Maximum = 200;
-                    SWL3.Maximum = 200;
-                    SWL4.Maximum = 200;
-                    SWL5.Maximum = 200;
-                    SWL6.Maximum = 200;
-                    SWL7.Maximum = 200;
+                    SWL0.MaxValue = 200;
+                    SWL1.MaxValue = 200;
+                    SWL2.MaxValue = 200;
+                    SWL3.MaxValue = 200;
+                    SWL4.MaxValue = 200;
+                    SWL5.MaxValue = 200;
+                    SWL6.MaxValue = 200;
+                    SWL7.MaxValue = 200;
                     SrcDetails.Enabled = false;
                     SrcDetails.Visible = false;
                     SrcDIR.Enabled = false;
@@ -258,23 +485,23 @@ namespace Pachyderm_Acoustic
                                 MSwl[oct] = float.Parse(strMSwl[oct]);
                             }
 
-                            SWL0.Maximum = (!float.IsInfinity(MSwl[0]) && !float.IsNaN(MSwl[0])) ? (decimal)MSwl[0] : (decimal)200;
-                            SWL1.Maximum = (!float.IsInfinity(MSwl[1]) && !float.IsNaN(MSwl[1])) ? (decimal)MSwl[1] : (decimal)200;
-                            SWL2.Maximum = (!float.IsInfinity(MSwl[2]) && !float.IsNaN(MSwl[2])) ? (decimal)MSwl[2] : (decimal)200;
-                            SWL3.Maximum = (!float.IsInfinity(MSwl[3]) && !float.IsNaN(MSwl[3])) ? (decimal)MSwl[3] : (decimal)200;
-                            SWL4.Maximum = (!float.IsInfinity(MSwl[4]) && !float.IsNaN(MSwl[4])) ? (decimal)MSwl[4] : (decimal)200;
-                            SWL5.Maximum = (!float.IsInfinity(MSwl[5]) && !float.IsNaN(MSwl[5])) ? (decimal)MSwl[5] : (decimal)200;
-                            SWL6.Maximum = (!float.IsInfinity(MSwl[6]) && !float.IsNaN(MSwl[6])) ? (decimal)MSwl[6] : (decimal)200;
-                            SWL7.Maximum = (!float.IsInfinity(MSwl[7]) && !float.IsNaN(MSwl[7])) ? (decimal)MSwl[7] : (decimal)200;
+                            SWL0.MaxValue = (!float.IsInfinity(MSwl[0]) && !float.IsNaN(MSwl[0])) ? (double)MSwl[0] : (double)200;
+                            SWL1.MaxValue = (!float.IsInfinity(MSwl[1]) && !float.IsNaN(MSwl[1])) ? (double)MSwl[1] : (double)200;
+                            SWL2.MaxValue = (!float.IsInfinity(MSwl[2]) && !float.IsNaN(MSwl[2])) ? (double)MSwl[2] : (double)200;
+                            SWL3.MaxValue = (!float.IsInfinity(MSwl[3]) && !float.IsNaN(MSwl[3])) ? (double)MSwl[3] : (double)200;
+                            SWL4.MaxValue = (!float.IsInfinity(MSwl[4]) && !float.IsNaN(MSwl[4])) ? (double)MSwl[4] : (double)200;
+                            SWL5.MaxValue = (!float.IsInfinity(MSwl[5]) && !float.IsNaN(MSwl[5])) ? (double)MSwl[5] : (double)200;
+                            SWL6.MaxValue = (!float.IsInfinity(MSwl[6]) && !float.IsNaN(MSwl[6])) ? (double)MSwl[6] : (double)200;
+                            SWL7.MaxValue = (!float.IsInfinity(MSwl[7]) && !float.IsNaN(MSwl[7])) ? (double)MSwl[7] : (double)200;
 
-                            SWL0.Value = (decimal)SenSwl[0];
-                            SWL1.Value = (decimal)SenSwl[1];
-                            SWL2.Value = (decimal)SenSwl[2];
-                            SWL3.Value = (decimal)SenSwl[3];
-                            SWL4.Value = (decimal)SenSwl[4];
-                            SWL5.Value = (decimal)SenSwl[5];
-                            SWL6.Value = (decimal)SenSwl[6];
-                            SWL7.Value = (decimal)SenSwl[7];
+                            SWL0.Value = (double)SenSwl[0];
+                            SWL1.Value = (double)SenSwl[1];
+                            SWL2.Value = (double)SenSwl[2];
+                            SWL3.Value = (double)SenSwl[3];
+                            SWL4.Value = (double)SenSwl[4];
+                            SWL5.Value = (double)SenSwl[5];
+                            SWL6.Value = (double)SenSwl[6];
+                            SWL7.Value = (double)SenSwl[7];
 
                             Commit();
                         }
@@ -350,23 +577,23 @@ namespace Pachyderm_Acoustic
                             SrcDIR.Enabled = true;
                             SrcDIR.Visible = true;
 
-                            SWL0.Maximum = (!double.IsInfinity(SWLmax[0]) && !double.IsNaN(SWLmax[0])) ? (decimal)SWLmax[0] : (decimal)200;
-                            SWL1.Maximum = (!double.IsInfinity(SWLmax[1]) && !double.IsNaN(SWLmax[1])) ? (decimal)SWLmax[1] : (decimal)200;
-                            SWL2.Maximum = (!double.IsInfinity(SWLmax[2]) && !double.IsNaN(SWLmax[2])) ? (decimal)SWLmax[2] : (decimal)200;
-                            SWL3.Maximum = (!double.IsInfinity(SWLmax[3]) && !double.IsNaN(SWLmax[3])) ? (decimal)SWLmax[3] : (decimal)200;
-                            SWL4.Maximum = (!double.IsInfinity(SWLmax[4]) && !double.IsNaN(SWLmax[4])) ? (decimal)SWLmax[4] : (decimal)200;
-                            SWL5.Maximum = (!double.IsInfinity(SWLmax[5]) && !double.IsNaN(SWLmax[5])) ? (decimal)SWLmax[5] : (decimal)200;
-                            SWL6.Maximum = (!double.IsInfinity(SWLmax[6]) && !double.IsNaN(SWLmax[6])) ? (decimal)SWLmax[6] : (decimal)200;
-                            SWL7.Maximum = (!double.IsInfinity(SWLmax[7]) && !double.IsNaN(SWLmax[7])) ? (decimal)SWLmax[7] : (decimal)200;
+                            SWL0.MaxValue = (!double.IsInfinity(SWLmax[0]) && !double.IsNaN(SWLmax[0])) ? (double)SWLmax[0] : (double)200;
+                            SWL1.MaxValue = (!double.IsInfinity(SWLmax[1]) && !double.IsNaN(SWLmax[1])) ? (double)SWLmax[1] : (double)200;
+                            SWL2.MaxValue = (!double.IsInfinity(SWLmax[2]) && !double.IsNaN(SWLmax[2])) ? (double)SWLmax[2] : (double)200;
+                            SWL3.MaxValue = (!double.IsInfinity(SWLmax[3]) && !double.IsNaN(SWLmax[3])) ? (double)SWLmax[3] : (double)200;
+                            SWL4.MaxValue = (!double.IsInfinity(SWLmax[4]) && !double.IsNaN(SWLmax[4])) ? (double)SWLmax[4] : (double)200;
+                            SWL5.MaxValue = (!double.IsInfinity(SWLmax[5]) && !double.IsNaN(SWLmax[5])) ? (double)SWLmax[5] : (double)200;
+                            SWL6.MaxValue = (!double.IsInfinity(SWLmax[6]) && !double.IsNaN(SWLmax[6])) ? (double)SWLmax[6] : (double)200;
+                            SWL7.MaxValue = (!double.IsInfinity(SWLmax[7]) && !double.IsNaN(SWLmax[7])) ? (double)SWLmax[7] : (double)200;
 
-                            SWL0.Value = (decimal)SWLnom[0];
-                            SWL1.Value = (decimal)SWLnom[1];
-                            SWL2.Value = (decimal)SWLnom[2];
-                            SWL3.Value = (decimal)SWLnom[3];
-                            SWL4.Value = (decimal)SWLnom[4];
-                            SWL5.Value = (decimal)SWLnom[5];
-                            SWL6.Value = (decimal)SWLnom[6];
-                            SWL7.Value = (decimal)SWLnom[7];
+                            SWL0.Value = (double)SWLnom[0];
+                            SWL1.Value = (double)SWLnom[1];
+                            SWL2.Value = (double)SWLnom[2];
+                            SWL3.Value = (double)SWLnom[3];
+                            SWL4.Value = (double)SWLnom[4];
+                            SWL5.Value = (double)SWLnom[5];
+                            SWL6.Value = (double)SWLnom[6];
+                            SWL7.Value = (double)SWLnom[7];
 
                             Commit();
                         }
@@ -403,13 +630,13 @@ namespace Pachyderm_Acoustic
 
             private void SourceType_DropDownClosed(object sender, System.EventArgs e)
             {
-                if (!SourceType.Focused) return;
+                if (!SourceType.HasFocus) return;
                 Select_Type();
             }
 
             private void Rotation_ValueChanged(object sender, System.EventArgs e)
             {
-                if (!AxialRot.Focused && !Azi.Focused && !Alt.Focused) return;
+                if (!AxialRot.HasFocus && !Azi.HasFocus && !Alt.HasFocus) return;
                 foreach (RhinoObject OBJ in Objects)
                 {
                     OBJ.Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
@@ -440,14 +667,14 @@ namespace Pachyderm_Acoustic
                         Ult_Levels[oct] = (Ult_Levels[oct] < levels[v][oct]) ? Ult_Levels[oct] : levels[v][oct];
                     }
                 }
-                SWL0.Value = (!double.IsInfinity(Ult_Levels[0]) && !double.IsNaN(Ult_Levels[0]) && (decimal)Ult_Levels[0] > SWL0.Minimum) ? (decimal)Ult_Levels[0] : 0;
-                SWL1.Value = (!double.IsInfinity(Ult_Levels[1]) && !double.IsNaN(Ult_Levels[1]) && (decimal)Ult_Levels[1] > SWL1.Minimum) ? (decimal)Ult_Levels[1] : 0;
-                SWL2.Value = (!double.IsInfinity(Ult_Levels[2]) && !double.IsNaN(Ult_Levels[2]) && (decimal)Ult_Levels[2] > SWL2.Minimum) ? (decimal)Ult_Levels[2] : 0;
-                SWL3.Value = (!double.IsInfinity(Ult_Levels[3]) && !double.IsNaN(Ult_Levels[3]) && (decimal)Ult_Levels[3] > SWL3.Minimum) ? (decimal)Ult_Levels[3] : 0;
-                SWL4.Value = (!double.IsInfinity(Ult_Levels[4]) && !double.IsNaN(Ult_Levels[4]) && (decimal)Ult_Levels[4] > SWL4.Minimum) ? (decimal)Ult_Levels[4] : 0;
-                SWL5.Value = (!double.IsInfinity(Ult_Levels[5]) && !double.IsNaN(Ult_Levels[5]) && (decimal)Ult_Levels[5] > SWL5.Minimum) ? (decimal)Ult_Levels[5] : 0;
-                SWL6.Value = (!double.IsInfinity(Ult_Levels[6]) && !double.IsNaN(Ult_Levels[6]) && (decimal)Ult_Levels[6] > SWL6.Minimum) ? (decimal)Ult_Levels[6] : 0;
-                SWL7.Value = (!double.IsInfinity(Ult_Levels[7]) && !double.IsNaN(Ult_Levels[7]) && (decimal)Ult_Levels[7] > SWL7.Minimum) ? (decimal)Ult_Levels[7] : 0;
+                SWL0.Value = (!double.IsInfinity(Ult_Levels[0]) && !double.IsNaN(Ult_Levels[0]) && (double)Ult_Levels[0] > SWL0.MinValue) ? (double)Ult_Levels[0] : 0;
+                SWL1.Value = (!double.IsInfinity(Ult_Levels[1]) && !double.IsNaN(Ult_Levels[1]) && (double)Ult_Levels[1] > SWL1.MinValue) ? (double)Ult_Levels[1] : 0;
+                SWL2.Value = (!double.IsInfinity(Ult_Levels[2]) && !double.IsNaN(Ult_Levels[2]) && (double)Ult_Levels[2] > SWL2.MinValue) ? (double)Ult_Levels[2] : 0;
+                SWL3.Value = (!double.IsInfinity(Ult_Levels[3]) && !double.IsNaN(Ult_Levels[3]) && (double)Ult_Levels[3] > SWL3.MinValue) ? (double)Ult_Levels[3] : 0;
+                SWL4.Value = (!double.IsInfinity(Ult_Levels[4]) && !double.IsNaN(Ult_Levels[4]) && (double)Ult_Levels[4] > SWL4.MinValue) ? (double)Ult_Levels[4] : 0;
+                SWL5.Value = (!double.IsInfinity(Ult_Levels[5]) && !double.IsNaN(Ult_Levels[5]) && (double)Ult_Levels[5] > SWL5.MinValue) ? (double)Ult_Levels[5] : 0;
+                SWL6.Value = (!double.IsInfinity(Ult_Levels[6]) && !double.IsNaN(Ult_Levels[6]) && (double)Ult_Levels[6] > SWL6.MinValue) ? (double)Ult_Levels[6] : 0;
+                SWL7.Value = (!double.IsInfinity(Ult_Levels[7]) && !double.IsNaN(Ult_Levels[7]) && (double)Ult_Levels[7] > SWL7.MinValue) ? (double)Ult_Levels[7] : 0;
             }
 
             private void Maximum_Click(object sender, System.EventArgs e)
@@ -473,48 +700,62 @@ namespace Pachyderm_Acoustic
                         Ult_Levels[oct] = (Ult_Levels[oct] < levels[v][oct]) ? Ult_Levels[oct] : levels[v][oct];
                     }
                 }
-                SWL0.Value = (!double.IsInfinity(Ult_Levels[0]) && !double.IsNaN(Ult_Levels[0])) ? (decimal)Ult_Levels[0] : 0;
-                SWL1.Value = (!double.IsInfinity(Ult_Levels[1]) && !double.IsNaN(Ult_Levels[1])) ? (decimal)Ult_Levels[1] : 0;
-                SWL2.Value = (!double.IsInfinity(Ult_Levels[2]) && !double.IsNaN(Ult_Levels[2])) ? (decimal)Ult_Levels[2] : 0;
-                SWL3.Value = (!double.IsInfinity(Ult_Levels[3]) && !double.IsNaN(Ult_Levels[3])) ? (decimal)Ult_Levels[3] : 0;
-                SWL4.Value = (!double.IsInfinity(Ult_Levels[4]) && !double.IsNaN(Ult_Levels[4])) ? (decimal)Ult_Levels[4] : 0;
-                SWL5.Value = (!double.IsInfinity(Ult_Levels[5]) && !double.IsNaN(Ult_Levels[5])) ? (decimal)Ult_Levels[5] : 0;
-                SWL6.Value = (!double.IsInfinity(Ult_Levels[6]) && !double.IsNaN(Ult_Levels[6])) ? (decimal)Ult_Levels[6] : 0;
-                SWL7.Value = (!double.IsInfinity(Ult_Levels[7]) && !double.IsNaN(Ult_Levels[7])) ? (decimal)Ult_Levels[7] : 0;
+                SWL0.Value = (!double.IsInfinity(Ult_Levels[0]) && !double.IsNaN(Ult_Levels[0])) ? (double)Ult_Levels[0] : 0;
+                SWL1.Value = (!double.IsInfinity(Ult_Levels[1]) && !double.IsNaN(Ult_Levels[1])) ? (double)Ult_Levels[1] : 0;
+                SWL2.Value = (!double.IsInfinity(Ult_Levels[2]) && !double.IsNaN(Ult_Levels[2])) ? (double)Ult_Levels[2] : 0;
+                SWL3.Value = (!double.IsInfinity(Ult_Levels[3]) && !double.IsNaN(Ult_Levels[3])) ? (double)Ult_Levels[3] : 0;
+                SWL4.Value = (!double.IsInfinity(Ult_Levels[4]) && !double.IsNaN(Ult_Levels[4])) ? (double)Ult_Levels[4] : 0;
+                SWL5.Value = (!double.IsInfinity(Ult_Levels[5]) && !double.IsNaN(Ult_Levels[5])) ? (double)Ult_Levels[5] : 0;
+                SWL6.Value = (!double.IsInfinity(Ult_Levels[6]) && !double.IsNaN(Ult_Levels[6])) ? (double)Ult_Levels[6] : 0;
+                SWL7.Value = (!double.IsInfinity(Ult_Levels[7]) && !double.IsNaN(Ult_Levels[7])) ? (double)Ult_Levels[7] : 0;
             }
 
             private void Delay_ms_ValueChanged(object sender, EventArgs e)
             {
-                if (!Delay_ms.Focused) return;
+                if (!Delay_ms.HasFocus) return;
                 foreach (RhinoObject OBJ in Objects)
                 {
                     OBJ.Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
                     this.SC.Update_Aiming(OBJ.Attributes.ObjectId, (float)Alt.Value, (float)Azi.Value, (float)AxialRot.Value);
                 }
             }
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
         }
 
-        public class Pach_SourceControl_Page : Rhino.UI.ObjectPropertiesPage
+        public class Pach_SourceControl_Page : ObjectPropertiesPage
         {
             Pach_SourceControl Source_Props = null;
 
             public Pach_SourceControl_Page()
             { }
 
-            public override string EnglishPageTitle
-            {
-                get { return "Sound Source Control"; }
-            }
+            public override string EnglishPageTitle => "Sound Source Control";
 
             public override System.Drawing.Icon Icon
             {
                 get { return Properties.Resources.PIcon1; }
             }
 
-            public override object PageControl //System.Windows.Forms.Control
-            {
-                get { return Source_Props; }
-            }
+            public override object PageControl => Source_Props ?? (Source_Props = new Pach_SourceControl()); 
 
             public List<RhinoObject> GetSelected()
             {
@@ -529,7 +770,6 @@ namespace Pachyderm_Acoustic
                 return Selected_Objects;
             }
 
-            [Obsolete]
             public override bool ShouldDisplay(RhinoObject obj)
             {
                 if (Source_Props == null) Source_Props = new Pach_SourceControl();
@@ -551,6 +791,8 @@ namespace Pachyderm_Acoustic
                     return "Sound Source Control";
                 }
             }
+
+            override 
         }
     }
 }

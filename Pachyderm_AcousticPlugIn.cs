@@ -21,6 +21,9 @@ using Rhino.Geometry;
 using System.Collections.Generic;
 using System;
 using System.Threading;
+using Eto.Forms;
+using Pachyderm_Acoustic.Properties;
+using Rhino.UI;
 
 namespace Pachyderm_Acoustic
 {
@@ -49,38 +52,6 @@ namespace Pachyderm_Acoustic
 
             public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
             {
-                //string PachPath;
-
-                //PachPath = this.GetPluginPath();
-                //if (PachPath == null || PachPath == "")
-                //{
-                //    if (Rhino.PlugIns.PlugIn.LoadPlugIn(new Guid("25895777-97d3-4058-8753-503183d4bc01")))
-                //    {
-                //        PachPath = Pachyderm_Acoustic.UI.PachydermAc_PlugIn.Instance.GetPluginPath();
-                //    }
-                //}
-
-                //PachPath = PachPath.Remove(PachPath.Length - 22);
-
-                //switch (e.Name)
-                //{
-                //    case "Hare":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "Hare.dll");
-                //    case "CLF_Read":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "CLF_Read.dll");
-                //    case "MathNet.Numerics":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "MathNet.Numerics.dll");
-                //    case "NAudio":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "NAudio.dll");
-                //    case "Pachyderm_Acoustic_Universal":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "Pachyderm_Acoustic_Universal.dll");
-                //    case "ZedGraph":
-                //        return System.Reflection.Assembly.LoadFile(PachPath + "ZedGraph.dll");
-                //}
-
-                //if (e.Name == "OxyPlot.Wpf")
-                //    return AppDomain.CurrentDomain.Load(e.Name);
-                //else return null;
                 return null;
             }
 
@@ -102,15 +73,24 @@ namespace Pachyderm_Acoustic
             protected override LoadReturnCode OnLoad(ref string errorMessage)            
             {
                 //the following should always be the case, but just to be paranoid 
-                Pach_Splash splash = new Pach_Splash();
+                //Pach_Splash splash = new Pach_Splash();
 
-                splash.Show();
-                splash.BringToFront();
-                    splash.Focus();
-                    splash.Refresh();
-                    splash.Close();
-                    splash.Dispose();
-                
+                ////splash.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                //splash.Closed += (sender, e) =>
+                //{
+                //    if (splash.pmode == 0)
+                //    {
+                //        splash.pmode++;
+                //        splash.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                //    }
+                //    else
+                //        return;
+                //};
+
+                //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Splash), "PachyDerm Splash", Properties.Resources.PIcon1);
+                //Rhino.UI.Panels.OpenPanel(new Guid("E022769F-AAF6-45BA-9EB6-CF0391E0B239"));
+
+
                 //Register the UserControl "Panels"
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_TD_Numeric_Control), "PachyDerm TimeDomain Models", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Hybrid_Control), "Pachyderm Hybrid Models", Properties.Resources.PIcon1);
@@ -118,7 +98,12 @@ namespace Pachyderm_Acoustic
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_MapCustom), "Pachyderm Custom Maps", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Visual_Control), "Pachyderm Particle Animation", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Auralisation), "Pachyderm Auralisation", Properties.Resources.PIcon1);
-                //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_SpeakerBuilder), "Pachyderm Speaker Builder", Properties.Resources.PIcon1);
+
+                Rhino.RhinoApp.Initialized += (sender, e) =>
+                {
+                    Pach_Splash splash = new Pach_Splash();
+                    splash.ShowModal();// SemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                };
 
                 return LoadReturnCode.Success;
             }

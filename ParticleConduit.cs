@@ -148,6 +148,7 @@ namespace Pachyderm_Acoustic
                         {
                             if (voxel[s] != null)
                             {
+                                //int ct = 0;
                                 double energy = e[s];
                                 foreach (int[] sp in SearchPattern)
                                 {
@@ -162,10 +163,13 @@ namespace Pachyderm_Acoustic
                                         double d2 = pt.X * pt.X + pt.Y * pt.Y + pt.Z * pt.Z;
                                         if (d2 < 1)
                                         {
+                                            ///TODO: Improved radius function would be good...
                                             energy += e[t] * (1 - d2);
+                                            //ct++;
                                         }
                                     }
                                 }
+                                //energy /= ct;
                                 S.WaitOne();
                                 PC.Add(pts[s], P_Color(Utilities.AcousticalMath.SPL_Intensity(energy)));
                                 S.Release();

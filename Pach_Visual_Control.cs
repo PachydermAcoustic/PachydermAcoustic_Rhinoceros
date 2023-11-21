@@ -16,85 +16,196 @@
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-using Rhino.Geometry;
 using System;
-using System.Windows.Forms;
+using Rhino.Geometry;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Visualization;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
+using Rhino.UI;
+using Eto.Drawing;
+using Eto.Forms;
+using Microsoft.WindowsAPICodePack.Shell;
+using System.Windows.Threading;
+using Pachyderm_Acoustic.Pach_Graphics;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("EA23F0D6-5462-4e42-9CFC-DC8E79723112")]
-        public partial class Pach_Visual_Control
+        public partial class Pach_Visual_Control : Panel, IPanel
         {
             Source[] Source;
 
-            // This call is required by the Windows Form Designer. 
+            internal Button Loop;
+            internal Button Forw;
+            internal Button Rev;
+            internal Button BackButton;
+            internal Label FrRate_Label;
+            internal DropDown VisualizationSelect;
+            internal Label VisLabel;
+            internal NumericUpDown Frame_Rate;
+            internal Label SecLabel;
+            internal NumericUpDown Seconds;
+            internal Label COTimeLabel;
+            internal NumericUpDown CO_TIME;
+            internal Label AirTemp;
+            internal NumericUpDown Air_Temp;
+            internal Label RayctLabel;
+            internal NumericUpDown RT_Count;
+            internal Button ForwButton;
+            internal Label Time_Preview;
+            internal Button Preview;
+            internal Color_Output_Control colorcontrol;
+            internal Label SelectOutput;
+            internal TextBox Folder_Status;
+            internal Button OpenFolder;
+
+            internal GroupBox SimSetBox;
+            internal GroupBox TimeBox;
+            internal GroupBox OutputFolder;
+
             public Pach_Visual_Control()
             {
-                InitializeComponent();
-                scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                Param_Scale.Image = scale.PIC;
-            }
+                this.Forw = new Button();
+                this.Rev = new Button();
+                this.TimeBox = new GroupBox();
+                this.Time_Preview = new Label();
+                this.Preview = new Button();
+                this.Loop = new Button();
+                this.BackButton = new Button();
+                this.VisualizationSelect = new ComboBox();
+                this.SimSetBox = new GroupBox();
+                this.FrRate_Label = new Label();
+                this.Frame_Rate = new NumericUpDown();
+                this.SecLabel = new Label();
+                this.Seconds = new NumericUpDown();
+                this.COTimeLabel = new Label();
+                this.CO_TIME = new NumericUpDown();
+                this.AirTemp = new Label();
+                this.Air_Temp = new NumericUpDown();
+                this.RayctLabel = new Label();
+                this.RT_Count = new NumericUpDown();
+                this.SelectOutput = new Label();
+                this.Folder_Status = new TextBox();
+                this.OpenFolder = new Button();
+                this.ForwButton = new Button();
+                this.VisLabel = new Label();
+                this.colorcontrol = new Color_Output_Control();
+                this.OutputFolder = new GroupBox();
 
-            private void Calculate_Click(object sender, System.EventArgs e)
-            {
-                Pach_GetModel_Command Model = new Pach_GetModel_Command();
-                Source[] Source;
+                colorcontrol.Refresh_Preview += On_Output_Change;
 
-                if (PachydermAc_PlugIn.Instance.Source(out Source) && !object.ReferenceEquals(FileLocation.SelectedPath, "")) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
-                ParticleRays[] RTParticles = new ParticleRays[Source.Length];
+                this.SimSetBox.Text = "Simulation Settings";
 
-                Calculate.Enabled = false;
-                PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
-                Scene Sc;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) Sc = RC_PachTools.Get_NURBS_Scene(0, (double)Air_Temp.Value, 0, 0, false);
-                else Sc = RC_PachTools.Get_Poly_Scene(0, false, (double)Air_Temp.Value, 0, 0, false);
-                
-                for (int i = 0; i < Source.Length; i++)
-                {
-                    if (Source != null)
-                    {
-                        List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
-                        for (int j = 0; j < Source.Length; j++)
-                        {
-                            L.Add(Source[j].Origin());
-                        }
+                this.VisLabel.Text = "Visualisation";
+                this.VisualizationSelect.Items.Add("Smart Particle Wave");
+                this.VisualizationSelect.Items.Add("Particle Wave");
+                this.VisualizationSelect.Items.Add("Mesh Wave");
+                this.VisualizationSelect.SelectedIndex = 0;
+                this.VisualizationSelect.Width = 250;
 
-                        if (plugin.Geometry_Spec() == 0)
-                        {
-                            Sc.partition(L, 15);
-                            RTParticles[i] = new ParticleRays(Source[i], Sc, (int)RT_Count.Value, CutOffLength());
-                        }
-                        else if (plugin.Geometry_Spec() == 1)
-                        {
-                            Sc.partition(L, 15);
-                            RTParticles[i] = new ParticleRays(Source[i], Sc, (int)RT_Count.Value, CutOffLength());
-                        }
-                        RTParticles[i].Begin();
-                    }
-                    else
-                    {
-                        Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
-                    }
+                TableLayout TimeControls = new TableLayout();
+                this.FrRate_Label.Text = "Frame Rate";
+                this.Frame_Rate.MaxValue = 80;
+                this.Frame_Rate.MinValue = 15;
+                this.Frame_Rate.Value = 30;
 
-                    Pachyderm_Acoustic.Visualization.Phonon P;
-                    if (ParticleChoice.SelectedIndex == 0)
-                    { P = new Tetrahedron(); }
-                    else if (ParticleChoice.SelectedIndex == 1)
-                    {
-                        P = new Icosahedron();
-                    }
-                    else { P = new Geodesic_sphere(); }
-                    RenderParticles(RTParticles, (double)(Frame_Rate.Value * Seconds.Value), P);
-                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
-                }
-                Calculate.Enabled = true;
+                this.SecLabel.Text = "Duration (seconds)";
+                this.Seconds.MaxValue = 8000;
+                this.Seconds.MinValue = 1;
+                Seconds.Value = 20;
+
+                this.COTimeLabel.Text = "Cut Off Time (ms)";
+                this.CO_TIME.MaxValue = 8000;
+                this.CO_TIME.MinValue = 1;
+                this.CO_TIME.Value = 300;
+
+                this.AirTemp.Text = "Air Temperature (C)";
+                this.Air_Temp.MaxValue = 80;
+                this.Air_Temp.MinValue = 0;
+                this.Air_Temp.Value = 20;
+
+                this.RayctLabel.Text = "Number of Rays";
+                this.RT_Count.Increment = 1000;
+                this.RT_Count.MaxValue = 10000000;
+                this.RT_Count.MinValue = 100;
+                this.RT_Count.Value = 250;
+
+                DynamicLayout TA = new DynamicLayout();
+                TA.DefaultSpacing = new Size(20, 8);
+                TA.Spacing = new Size(20, 8);
+                TA.AddRow(VisLabel, null, VisualizationSelect);
+                DynamicLayout TB = new DynamicLayout();
+                TB.DefaultSpacing = new Size(8, 8);
+                TB.AddRow(RayctLabel, null, RT_Count);
+                TB.AddRow(COTimeLabel, null, CO_TIME);
+                TB.AddRow(null);
+                TB.AddRow(AirTemp, null, Air_Temp);
+                TB.AddRow(null);
+                TB.AddRow(FrRate_Label, null, Frame_Rate);
+                TB.AddRow(SecLabel, null, Seconds);
+                /////////////////////////////////////
+                DynamicLayout TL = new DynamicLayout();
+                TL.DefaultSpacing = new Size(0, 8);
+                TL.AddRow(TA);
+                TL.AddRow(TB);
+                SimSetBox.Content = TL;
+
+                // 
+                // Playback Buttons
+                //
+                this.Preview.Text = "Preview";
+                this.Loop.Text = "Loop";
+                this.Preview.Click += this.onPreview_Click;
+                this.Loop.Click += this.Loop_Click;
+                this.BackButton.Text = "<<";
+                this.BackButton.Width = this.Width / 8;
+                this.BackButton.Click += this.Rev_Click;
+                this.ForwButton.Text = ">>";
+                this.ForwButton.Width = this.Width / 8;
+                this.ForwButton.Click += this.Forw_Click;
+                this.TimeBox.Content = Time_Preview;
+                this.Time_Preview.Text = "0 ms.";
+                //
+                // Time
+                //
+                this.TimeBox.Text = "Current Time (ms)";
+                DynamicLayout timecontrol = new DynamicLayout();
+                timecontrol.DefaultSpacing = new Size(8, 8);
+                timecontrol.AddRow(null, Time_Preview, null);
+                timecontrol.AddRow(BackButton, Loop, ForwButton);
+                DynamicLayout DL = new DynamicLayout();
+                DL.AddRow(timecontrol);
+                DL.AddRow(Preview);
+                DL.DefaultSpacing = new Size(0, 8);
+                TimeBox.Content = DL;
+
+                // 
+                // Folder_Status
+                // 
+                OutputFolder.Text = "Select Output Folder";
+                DynamicLayout output = new DynamicLayout();
+                output.DefaultSpacing = new Size(8, 8);
+                this.Folder_Status.ReadOnly = true;
+                this.OpenFolder.Text = "Open...";
+                this.OpenFolder.Click += this.OpenFolder_Click;
+                output.AddRow(OpenFolder, Folder_Status);
+                OutputFolder.Content = output;
+
+                //Final Control Assembly
+                DynamicLayout layout = new DynamicLayout();
+                layout.AddRow(SimSetBox);
+                layout.AddRow(TimeBox);
+                layout.AddRow(colorcontrol);
+                layout.AddRow(OutputFolder);
+                layout.DefaultSpacing = new Size(0, 20);
+                this.Content = layout;
+
+                this.SizeChanged += update;
+
             }
 
             private double CutOffLength()
@@ -107,66 +218,22 @@ namespace Pachyderm_Acoustic
                 return AcousticalMath.SoundSpeed((double)Air_Temp.Value);
             }
 
-            private FolderBrowserDialog FileLocation = new FolderBrowserDialog();
+            //Select folder for frames
+            private Eto.Forms.SelectFolderDialog FileLocation = new Eto.Forms.SelectFolderDialog();
             private void OpenFolder_Click(object sender, System.EventArgs e)
             {
-                if (FileLocation.ShowDialog() == DialogResult.OK)
+                if (FileLocation.ShowDialog(RhinoEtoApp.MainWindow) == DialogResult.Ok)
                 {
-                    Folder_Status.Text = FileLocation.SelectedPath;
+                    Folder_Status.Text = FileLocation.Directory;
                 }
             }
 
-            private void RenderParticles(ParticleRays[] Rays, double total_Frames, Pachyderm_Acoustic.Visualization.Phonon P)
+            private void On_Output_Change(object sender, EventArgs e)
             {
-                List<Guid> Particle_IDS = new List<Guid>();
-                double Increment = CutOffLength() / (double)(Frame_Rate.Value * Seconds.Value);
-                Point3d Point = default(Point3d);
-                double PMin = (double)this.Param_Min.Value;
-                double PMax = (double)this.Param_Max.Value;
-                double PRange = PMax - PMin;
-
-                int h = Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.Bounds.Height;
-                int w = Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.ActiveViewport.Bounds.Width;
-                
-                for (int q = 0; q < (int)total_Frames; q++)
-                {
-                    for (int i = 0; i < Rays.Length; i++)
-                    {
-                        for (int p = 0; p < Rays[i].Count(); p++)
-                        {
-                            Point3d N;
-                            double energy;
-                            if (Rays[i].RayPt(p, Increment * q, 4, out energy, out N, out Point))
-                            {
-                                Vector3d V = new Vector3d(N - Point);
-                                V.Unitize();
-                                double SPL = AcousticalMath.SPL_Intensity(energy);
-                                System.Drawing.Color C = scale.GetValue(SPL, PMin, PMax);
-                                Mesh M = P.Generate(Point, V);
-                                M.Scale((SPL - PMin) / PRange);
-                                System.Guid PG = Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(M);
-                                Rhino.RhinoDoc.ActiveDoc.Objects.Find(PG).Attributes.ObjectColor = C;
-                                Particle_IDS.Add(PG);
-                            }
-                        }
-                    }
-
-                    string number;
-                    if (q < 100)
-                    {
-                        if (q < 10) number = "00" + q.ToString();
-                        else number = "0" + q.ToString();
-                    }
-                    else number = q.ToString();
-                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile \"" + Folder_Status.Text + "\\"[0] + "frame" + number + string.Format(".jpg\" Width={0} Height={1} DrawGrid=No Enter", 2*w, 2*h), true);
-
-                    //Clean Up Model
-                    Rhino.RhinoDoc.ActiveDoc.Objects.Delete(Particle_IDS, true);
-                    Particle_IDS.Clear();
-                }
+                if (PreviewDisplay != null) PreviewDisplay.SetColorScale(colorcontrol.Scale, new double[2] { (double)colorcontrol.Min, (double)colorcontrol.Max });
             }
 
-            private void Preview_Click(object sender, EventArgs e)
+            private void onPreview_Click(object sender, EventArgs e)
             {
                 if (T != null && T.ThreadState == System.Threading.ThreadState.Running)
                 {
@@ -196,21 +263,19 @@ namespace Pachyderm_Acoustic
                 PreviewDisplay = null;
 
                 Pach_GetModel_Command Model = Pach_GetModel_Command.Instance;
-                if (object.ReferenceEquals(RoomSelection.SelectedItem, "Use Entire Model"))
-                {
-                    Model.Rel_Humidity = 50;//(double)Rel_Humidity.Value;
-                    Model.Air_Temp = (double)Air_Temp.Value;
-                    Model.Atm_pressure = 1000;//(double)Air_Pressure.Value;
-                    Model.Atten_Choice = 0;//Atten_Method.SelectedIndex;
-                    Rhino.RhinoApp.RunScript("GetModel", false);
-                }
+
+                Model.Rel_Humidity = 50;
+                Model.Air_Temp = (double)Air_Temp.Value;
+                Model.Atm_pressure = 1000;
+                Model.Atten_Choice = 0;
+                Rhino.RhinoApp.RunScript("GetModel", false);
 
                 plugin.Source(out Source);
 
-                if (MeshWave)
-                {
-                    for (int i = 0; i < Source.Length; i++) Source[i] = new GeodesicMeshSource(plugin.GetSourceSWL(i), Source[i].Origin(), (int)RT_Count.Value, i);
-                }
+                //if ()
+                //{
+                //    for (int i = 0; i < Source.Length; i++) Source[i] = new GeodesicMeshSource(plugin.GetSourceSWL(i), Source[i].Origin(), (int)RT_Count.Value, i);
+                //}
 
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];
                 List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
@@ -224,13 +289,13 @@ namespace Pachyderm_Acoustic
                     {
                         Model.Ret_NURBS_Scene.partition(L);
                         RTParticles[j] = new ParticleRays(Source[j], Model.Ret_NURBS_Scene, (int)RT_Count.Value, CutOffLength());
-                        PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_NURBS_Scene);
+                        PreviewDisplay = new WaveConduit(RTParticles, colorcontrol.Scale, new double[2] { colorcontrol.Min, colorcontrol.Max }, Model.Ret_NURBS_Scene);
                     }
                     else
                     {
                         Model.Ret_Mesh_Scene.partition(L);
                         RTParticles[j] = new ParticleRays(Source[j], Model.Ret_Mesh_Scene, (int)RT_Count.Value, CutOffLength());
-                        PreviewDisplay = new WaveConduit(RTParticles, scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value }, Model.Ret_Mesh_Scene);
+                        PreviewDisplay = new WaveConduit(RTParticles, colorcontrol.Scale, new double[2] { colorcontrol.Min, colorcontrol.Max }, Model.Ret_Mesh_Scene);
                     }
 
                     RTParticles[j].Begin();
@@ -240,30 +305,30 @@ namespace Pachyderm_Acoustic
                 BackButton.Enabled = true;
                 Loop.Enabled = true;
                 Loop.Text = "Stop";
-                FC = new ForCall(Forw_proc);
-                System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)); });
-                T = new System.Threading.Thread(St);
+                T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
                 T.Start();
+                //Advancer.Invoke(() => LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)));    
+                    
+                //LoopStart((int)(this.Frame_Rate.Value * Seconds.Value));
             }
+
+            Dispatcher Advancer = Dispatcher.CurrentDispatcher;
 
             WaveConduit PreviewDisplay = null;
             System.Threading.Thread T;
             int j = 0;
             int max = 0;
-            private void LoopStart(object obj)
+            private void LoopStart()
             {
                 do
                 {
-                    FC();
+                    Advancer.Invoke(() => Forw_proc());
                     System.Threading.Thread.Sleep(100);
                 }
                 while (true);
             }
 
-            private delegate void ForCall();
-            ForCall FC;
-
-            private void Rev_Click(object sender, EventArgs e)
+            private void Rev_Click(object sender, System.EventArgs e)
             {
                 Rev_proc();
             }
@@ -271,16 +336,21 @@ namespace Pachyderm_Acoustic
             private void Rev_proc()
             {
                 j -= 1;
-                if (j <= 0) j = max;
-                this.Invoke((MethodInvoker)delegate
+                if (j <= 0) j = max; 
+                
+                Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
+                if (this.VisualizationSelect.SelectedIndex == 1)
                 {
-                    Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
-                });
-                PreviewDisplay.Populate((double)CO_TIME.Value * C_Sound() / (max * 1000), SmartParticles);
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RC_PachTools.Hare_to_RhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                }
+                else
+                {
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), VisualizationSelect.SelectedIndex == 0);
+                }
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
-            private void Forw_Click(object sender, EventArgs e)
+            private void Forw_Click(object sender, System.EventArgs e)
             {
                 Forw_proc();
             }
@@ -293,13 +363,13 @@ namespace Pachyderm_Acoustic
                     j = 0;
                     return;
                 }
-                if (MeshWave)
+                if (this.VisualizationSelect.SelectedIndex == 1)
                 {
                     PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RC_PachTools.Hare_to_RhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
                 }
                 else
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), SmartParticles);
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), VisualizationSelect.SelectedIndex == 0);
                 }
                 ////////////////////////
                 if (Folder_Status.Text != "")
@@ -312,10 +382,10 @@ namespace Pachyderm_Acoustic
                     }
                     else number = j.ToString();
 
-                    this.Invoke((MethodInvoker)delegate { Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true); });
+                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
                 }
                 /////////////////////////
-                this.Invoke((MethodInvoker)delegate { Time_Preview.Text = (CO_TIME.Value * j / max).ToString(); });
+                Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
@@ -325,8 +395,7 @@ namespace Pachyderm_Acoustic
                 {
                     Time_Preview.Enabled = false;
                     Loop.Text = "Pause";
-                    System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart(this.Frame_Rate.Value * Seconds.Value); });
-                    T = new System.Threading.Thread(St);
+                    T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
                     T.Start();
                 }
                 else
@@ -337,59 +406,39 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            Pach_Graphics.colorscale scale;
-
-            private void Color_Selection_SelectedIndexChanged(object sender, EventArgs e)
+            public void update(object sender, System.EventArgs e)
             {
-                switch (this.Color_Selection.Text)
-                {
-                    case "R-O-Y-G-B-I-V":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "Y-G-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "R-O-Y":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "W-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "R-M-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    default:
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                }
-                if (PreviewDisplay != null) PreviewDisplay.SetColorScale(scale, new double[] { (double)Param_Min.Value, (double)Param_Max.Value });
+                this.Width = this.Parent.Width;
+
+                SimSetBox.Width = this.Width;
+                TimeBox.Width = this.Width;
+                OutputFolder.Width = this.Width;
+                colorcontrol.Size = new Size(this.Width, Height);
+                colorcontrol.Invalidate();
+                Loop.Width = (int)((double)this.Width * 0.75);
+                Invalidate(true);
             }
 
-            private void Param_Max_ValueChanged(object sender, EventArgs e)
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
             {
-                //if (T.ThreadState == System.Threading.ThreadState.Running) T.Suspend();
-                this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString();
-                this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString();
-                this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString();
-
-                if (PreviewDisplay != null) PreviewDisplay.SetColorScale(scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value });
-                //T.Resume();
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
             }
 
-            bool MeshWave = false;
-            bool SmartParticles = true;
-
-            private void SourceSelect_SelectedIndexChanged(object sender, EventArgs e)
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
             {
-                MeshWave = (SourceSelection.Text == "Mesh Wave");
-                SmartParticles = (SourceSelection.Text == "Smart Particle Wave");
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
             }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
         }
 
         public class ParticleRays
@@ -402,7 +451,7 @@ namespace Pachyderm_Acoustic
             private int RayCount;
             private Scene Room;
             private Source Source;
-            private static Random Rnd = new Random();
+            private static System.Random Rnd = new System.Random();
 
             public ParticleRays(Source S, Scene R, int No_of_Rays, double CO_Length)
             {
@@ -414,7 +463,7 @@ namespace Pachyderm_Acoustic
 
             public void Begin()
             {
-                Random Rnd = new Random();
+                System.Random Rnd = new System.Random();
 
                 for (int q = 0; q < RayCount; q++)
                 {
@@ -441,8 +490,7 @@ namespace Pachyderm_Acoustic
                             for (int i = 0; i < Start.Count; i++)
                             {
                                 Ray.Add(RC_PachTools.HPttoRPt(Start[i]));
-                                //IDs.Add(-1);
-                                R.Intensity *= Math.Pow(10,-.1 * Room.Attenuation(code[i])[5] * leg[i]);
+                                R.Intensity *= System.Math.Pow(10,-.1 * Room.Attenuation(code[i])[5] * leg[i]);
                                 SumLength += leg[i];
                             }
 
@@ -463,45 +511,15 @@ namespace Pachyderm_Acoustic
                                 R.Intensity *= (1 - Room.TransmissionValue[ChosenIndex][5]);
                             }
 
-                            P.Add((double)R.Intensity);
-                                
-                            //if (Rnd.NextDouble() < Room.ScatteringValue[ChosenIndex].Coefficient(5))
-                            //{
-                            //    Room.Scatter_Simple(ref R, ref Rnd);
-                            //    //Utilities.PachTools.Ray_Acoustics.LambertianReflection_Stoch(ref R.direction, ref Rnd, Room.Normal(ChosenIndex, u, v));
-
-                            //    if (trans)
-                            //    {
-                            //        R.direction *= -1;
-                            //        R.Intensity *= Room.TransmissionValue[ChosenIndex][5];
-                            //    }
-                            //    else
-                            //    {
-                            //        R.Intensity *= Room.AbsorptionValue[ChosenIndex].Coefficient_A_Broad()[5];
-                            //    }
-
-                            //}
-                            //else
-                            //{
-                            //    if (!trans)
-                            //    {
-                            //        Utilities.PachTools.Ray_Acoustics.SpecularReflection(ref R.direction, ref Room, ref u, ref v, ref ChosenIndex);
-                            //        R.Intensity *= Room.AbsorptionValue[ChosenIndex].Coefficient_A_Broad()[5];
-                            //    }
-                            //    else 
-                            //    {
-                            //        R.Intensity *= Room.TransmissionValue[ChosenIndex][5];
-                            //    }
-                            //}
+                            P.Add((double)R.Intensity);        
                         }
                         else
                         {
-                            //Rhino.RhinoDoc.ActiveDoc.Objects.AddLine(PachTools.HPttoRPt(R.origin), PachTools.HPttoRPt(R.origin + R.direction));
                             break;
                         }
                     }
                     while (SumLength < CutoffLength);
-                    //Poly_ID.Add(IDs);
+
                     if (SumLength > CutoffLength) Ray.Add(RC_PachTools.HPttoRPt(R.origin));
                     RayList.Add(Ray);
                     Power.Add(P);
@@ -547,5 +565,177 @@ namespace Pachyderm_Acoustic
                 return RhinoRays[Index];
             }
         }
+    }
+
+    public class Color_Output_Control : DynamicLayout
+    {
+        private Label OctaveLabel;
+        internal DropDown Octave;
+        private Label ColorLabel;
+        internal DropDown Color_Selection;
+        private NumericUpDown Param_Max;
+        private Label Param1_4;
+        private Label Param1_2;
+        private Label Param3_4;
+        private NumericUpDown Param_Min;
+        ImageView Param_Scale;
+        public Color_Output_Control()
+        {
+            Refresh_Preview += OnRefresh;
+            this.Height = 300;
+            this.Width = 200;
+            this.Octave = new DropDown();
+            this.OctaveLabel = new Label();
+            this.ColorLabel = new Label();
+            this.Color_Selection = new DropDown();
+            this.Param1_4 = new Label();
+            this.Param1_2 = new Label();
+            this.Param_Min = new NumericUpDown();
+            this.Param_Max = new NumericUpDown();
+            this.Param3_4 = new Label();
+
+            this.OctaveLabel.Text = "Octave Band Selection";
+            this.Octave.Items.Add("62.5 Hz.");
+            this.Octave.Items.Add("125 Hz.");
+            this.Octave.Items.Add("250 Hz.");
+            this.Octave.Items.Add("500 Hz.");
+            this.Octave.Items.Add("1 kHz.");
+            this.Octave.Items.Add("2 kHz.");
+            this.Octave.Items.Add("4 kHz.");
+            this.Octave.Items.Add("8 kHz.");
+            this.Octave.Items.Add("Summation: All Octaves");
+            this.Octave.SelectedIndex = 8;
+
+            this.ColorLabel.Text = "Color Selection";
+            this.Color_Selection.Items.Add("R-O-Y-G-B-I-V");
+            this.Color_Selection.Items.Add("R-O-Y");
+            this.Color_Selection.Items.Add("Y-G-B");
+            this.Color_Selection.Items.Add("W-B");
+            this.Color_Selection.Items.Add("R-B");
+            this.Color_Selection.SelectedIndex = 0;
+            this.Color_Selection.SelectedValueChanged += Color_Selection_SelectedIndexChanged;
+
+            this.Param1_4.Text = "00";
+            this.Param1_2.Text = "00";
+            this.Param3_4.Text = "00";
+            this.Param_Min.DecimalPlaces = 1;
+            this.Param_Max.DecimalPlaces = 1;
+            this.Param_Max.MaxValue = 200;
+            this.Param_Max.Value = 120;
+            this.Param_Max.ValueChanged += Param_Max_ValueChanged;
+            this.Param_Min.ValueChanged += Param_Max_ValueChanged;
+
+            this.Param_Scale = new ImageView();
+            Param_Scale.Height = 300;
+            Param_Scale.Width = (Width / 5);
+
+            scale = new Pach_Graphics.HSV_colorscale(300, Math.Max(Width / 5, 50), 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
+
+            Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+
+            StackLayout ControlCluster = new StackLayout();
+            ControlCluster.Spacing = 12;
+            ControlCluster.Items.Add(OctaveLabel);
+            ControlCluster.Items.Add(Octave);
+            ControlCluster.Items.Add(ColorLabel);
+            ControlCluster.Items.Add(Color_Selection);
+            ControlCluster.Width = 250;
+
+            StackLayout Scale_Labels = new StackLayout();
+            Scale_Labels.Items.Add(Param_Max);
+            Scale_Labels.Items.Add(null);
+            Scale_Labels.Items.Add(Param3_4);
+            Scale_Labels.Items.Add(null);
+            Scale_Labels.Items.Add(Param1_2);
+            Scale_Labels.Items.Add(null);
+            Scale_Labels.Items.Add(Param1_4);
+            Scale_Labels.Items.Add(null);
+            Scale_Labels.Items.Add(Param_Min);
+            Scale_Labels.HorizontalContentAlignment = HorizontalAlignment.Right;
+            Scale_Labels.AlignLabels = true;
+            this.AddRow(ControlCluster, null, Scale_Labels, Param_Scale);
+            //this.DefaultSpacing = new Size(4,4);
+
+            On_Output_Changed += Param_Max_ValueChanged;
+            On_Output_Changed(this, new System.EventArgs());
+        }
+
+        protected override void OnSizeChanged(System.EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            Width = this.Parent.Width;
+            Height = 300;
+            Invalidate();
+        }
+
+        public EventHandler On_Output_Changed;
+        public EventHandler Refresh_Preview;
+        private void Param_Max_ValueChanged(object sender, System.EventArgs e)
+        {
+            this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
+            this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString() + "---";
+            this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
+            Color_Selection_SelectedIndexChanged(sender, e);
+        }
+
+        public Pach_Graphics.colorscale scale;
+
+        private void Color_Selection_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            switch (this.Color_Selection.SelectedValue.ToString())
+            {
+                case "R-O-Y-G-B-I-V":
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+                case "Y-G-B":
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+                case "R-O-Y":
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+                case "W-B":
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+                case "R-M-B":
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+                default:
+                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
+                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                    break;
+            }
+            Refresh_Preview(sender, e);
+        }
+
+        public double Max
+        {
+            get { return Param_Max.Value; }
+        }
+
+        public double Min
+        {
+            get { return Param_Min.Value; }
+        }
+
+        public int Freq_Band_ID
+        {
+            get { return Octave.SelectedIndex; }
+        }
+
+        private void OnRefresh(object sender, System.EventArgs e)
+        {
+
+        }
+
+        public colorscale Scale
+        {
+            get { return scale; }
+        }
+
     }
 }
