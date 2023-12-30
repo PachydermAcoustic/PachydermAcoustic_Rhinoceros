@@ -10,7 +10,7 @@ namespace Pachyderm_Acoustic
     {
         public class Pach_Props_Page : Rhino.UI.OptionsDialogPage
         {
-
+            
             public Pach_Props_Page()
                 : base("Pachyderm Acoustic")
             {
@@ -18,24 +18,22 @@ namespace Pachyderm_Acoustic
 
             public override bool OnActivate(bool active)
             {
-                Pach_Properties.Instance.Refresh();
-                //Pach_Properties.Instance.Update();
+                //Pach_Properties.Instance.Refresh;
                 return base.OnActivate(active);
             }
 
-            public override object PageControl //System.Windows.Forms.Control
+            public override object PageControl
             {
                 get
                 {
-                    return Pach_Properties.Instance;
+                    return Pach_Properties_Panel.Instance;
                 }
-            }
+            }                   
 
             public override bool OnApply()
             {
                 if (Pach_Hybrid_Control.Instance != null) Pach_Hybrid_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 if (Pach_Mapping_Control.Instance != null) Pach_Mapping_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
-                //if (Pach_Auralisation.Instance != null) Pach_Auralisation.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 return base.OnApply();
             }
 
@@ -51,27 +49,27 @@ namespace Pachyderm_Acoustic
 
             public int Get_SP_Spec()
             {
-                return Pach_Properties.Instance.SP_Spec();
+                return Pach_Properties.Instance.Spatial_Optimization;
             }
 
             public int Get_Oct_Depth()
             {
-                return Pach_Properties.Instance.Oct_Depth();
+                return Pach_Properties.Instance.Oct_Depth;
             }
 
             public string Get_MatLib_Path()
             {
-                return Pach_Properties.Instance.Lib_Path();
+                return Pach_Properties.Instance.Lib_Path;
             }
 
             public int Get_VG_Domain()
             {
-                return Pach_Properties.Instance.VG_Domain();
+                return Pach_Properties.Instance.VoxelGrid_Domain;
             }
 
             public bool Save_Results()
             {
-                return Pach_Properties.Instance.SaveResults();
+                return Pach_Properties.Instance.SaveResults;
             }
 
             public override string LocalPageTitle

@@ -700,14 +700,17 @@ namespace Pachyderm_Acoustic
                     command.Reset();
 
                     Convergence_Progress CP = new Convergence_Progress();
-                    if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
+                    if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//Convergence_Progress.Instance.Show(); //new System.Threading.Thread(() => {  }).Start(); //
 
                     command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value);
 
-                    if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in (command.Sim as SplitRayTracer).Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Populate;
+                    if (!Spec_Rays.Checked)
+                    {
+                        foreach (SplitRayTracer.Convergence_Check c in (command.Sim as SplitRayTracer).Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Populate;
+                        CP.Conclusion += (command.Sim as SplitRayTracer).On_Concluding_Event;
+                    }
+                     
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
-
-
                     Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", (command.Sim as SplitRayTracer)._currentRay.Sum(), (command.Sim as SplitRayTracer)._rayTotal.Sum(), (command.Sim as SplitRayTracer)._ts.Hours, (command.Sim as SplitRayTracer)._ts.Minutes, (command.Sim as SplitRayTracer)._ts.Seconds));
                     Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", (command.Sim as SplitRayTracer).PercentLost);
 
@@ -723,6 +726,8 @@ namespace Pachyderm_Acoustic
                         Calculate.Enabled = true;
                         break;
                     }
+                    CP.Close();
+
                     command.Reset();
                     Map[s_id].AddDirect(Direct_Data, Source[s_id]);
                 }
@@ -1106,14 +1111,12 @@ namespace Pachyderm_Acoustic
             {
                 PachMapReceiver[] RT_IN = new PachMapReceiver[0];
                 if (!Utilities.FileIO.Read_pachm(ref RT_IN)) return;
-                //foreach (PachMapReceiver p in RT_IN) p.Correction(80000);
-
+                
                 Map = RT_IN;
                 SourceList.Clear();
                 for (int i = 0; i < Map.Length; i++)
                 {
                     SourceList.Populate(Map);
-                    //SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
                 }
 
                 WC = new WaveConduit(color_control.Scale, new double[] { Current_SPLMin, Current_SPLMax });
@@ -1323,35 +1326,23 @@ namespace Pachyderm_Acoustic
                     }
 
                     Analysis_View.Refresh();
-
-                    //Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
-
-                    //if (Receiver_Choic.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
 
                 }
                 catch (Exception x)
                 {
-                    //System.Windows.Forms.MessageBox.Show(x.Message);
                     return;
                 }
 
-                //Analysis_View.AxesChanged();
                 Analysis_View.Refresh();
-                //Update_Parameters();
             }
 
             Dispatcher Advancer = Dispatcher.CurrentDispatcher;
 
             System.Threading.Thread T;
-            //private delegate void ForCall();
-            //ForCall FC;
-            //private delegate void T_Call();
-            //T_Call TC;
 
             private void Flip_Toggle_Click(object sender, EventArgs e)
             {
-                //Update_Scale();
                 if (Flip_Toggle.Text == "Flip")
                 {
                     this.Flip_Toggle.Text = "Pause";
@@ -1388,9 +1379,6 @@ namespace Pachyderm_Acoustic
                     t_hi = t + (double)Integration_select.Value;
                 }
 
-                //this.Invoke((MethodInvoker)delegate { oct = PachTools.OctaveStr2Int(Octave.Text); });
-                //this.Invoke((MethodInvoker)delegate { Update_T(); });
-
                 double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, oct, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
                 System.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                 Mesh Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, c);
@@ -1407,8 +1395,6 @@ namespace Pachyderm_Acoustic
                         else number = "0" + t.ToString();
                     }
                     else number = t.ToString();
-
-                    //this.Invoke((MethodInvoker)delegate { Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true); });
                 }
                 //////////////////////////////
                 t++;

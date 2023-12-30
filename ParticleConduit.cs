@@ -271,7 +271,7 @@ namespace Pachyderm_Acoustic
                 this.Enabled = true;
             }
 
-            public void Populate(int[] X, int[] Y, int[] Z, Mesh C_mesh, double dx, List<List<double>> pressure, Mesh[][] M, bool Magnitude)
+            public void Populate(int[] X, int[] Y, int[] Z, Mesh C_mesh, double dx, List<List<double>> pressure, Mesh[][] M)
             {
                 DisplayMesh = new List<Mesh>();//[M.Length];    
                 Mesh_Vis = true;
@@ -320,7 +320,7 @@ namespace Pachyderm_Acoustic
                     //nullfaces = new List<int>();
                     for (int i = 0; i < DisplayMesh[j].Faces.Count; i++)
                     {
-                        double V = 10 * System.Math.Log(System.Math.Pow((Magnitude ? pressure[j][i] : pressure[j][i]), 2) / 0.0000000004);
+                        double V = 10 * System.Math.Log(pressure[j][i] * pressure[j][i] / 0.0000000004);//(Magnitude ? pressure[j][i] : pressure[j][i]), 2); / 0.0000000004);
 
                         //if (V < V_Bounds[0]) { nullfaces.Add(i); continue; }
 

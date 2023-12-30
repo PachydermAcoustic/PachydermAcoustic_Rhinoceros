@@ -18,39 +18,108 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using Rhino.Geometry;
 using System.Runtime.InteropServices;
+using Rhino.UI;
+using Eto.Forms;
+using Eto.Drawing;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("1c48c00e-abd8-40fd-8642-2ce7daa90ed5")]
-        public partial class Pach_MapCustom : UserControl
+        public class Pach_MapCustom : Panel, IPanel
         {
             double Current_Min;
             double Current_Max;
             Pach_Graphics.colorscale c_scale;
             List<ParaMesh> Collection = new List<ParaMesh>();
 
+            private Color_Output_Control color_control;
+            internal GroupBox TimeBox;
+            internal Label ETlabel;
+            internal Label STlabel;
+            private Label Par_Sel_Lbl;
+            private Label ColorSel_Lbl;
+            private CheckBox Discretize;
+            private NumericStepper End_Time_Control;
+            private NumericStepper Start_Time_Control;
+            private Label Sel_Lbl;
+            private SegmentedButton FileMenu;
+            private MenuSegmentedItem fileToolStripMenuItem;
+            private ButtonMenuItem saveDataToolStripMenuItem;
+            internal Button Plot_Values;
+            internal Button Calculate_Map;
+            private ListBox MeshList;
+
             public Pach_MapCustom()
             {
-                InitializeComponent();
-                Update_Scale();
+                this.TimeBox = new GroupBox();
+                this.ETlabel = new Label();
+                this.STlabel = new Label();
+                this.Par_Sel_Lbl = new Label();
+                this.ColorSel_Lbl = new Label();
+                this.End_Time_Control = new NumericStepper();
+                this.Start_Time_Control = new NumericStepper();
+                this.Sel_Lbl = new Label();
+                this.FileMenu = new SegmentedButton();
+                this.fileToolStripMenuItem = new MenuSegmentedItem();
+                this.saveDataToolStripMenuItem = new ButtonMenuItem();
+                this.MeshList = new ListBox();
+                this.color_control = new Color_Output_Control(true);
+
+                this.TimeBox.Text = "Time Interval";
+                DynamicLayout TDL = new DynamicLayout();
+                this.STlabel.Text = "Start Time (ms)";
+                this.Start_Time_Control.MaxValue = 10000;
+                this.ETlabel.Text = "End Time (ms)";
+                this.End_Time_Control.MaxValue = 10000;
+                this.End_Time_Control.Value = 50;
+                TDL.AddRow(this.STlabel, null, Start_Time_Control);
+                TDL.AddRow(this.ETlabel, null, End_Time_Control);
+                this.TimeBox.Content = TDL;
+
+                this.Sel_Lbl.Text = "Selection";
+
+                this.saveDataToolStripMenuItem.Text = "Save Data...";
+                this.saveDataToolStripMenuItem.Click += SaveDataToolStripMenuItem_Click;
+                this.fileToolStripMenuItem.Menu = new ContextMenu()
+                {
+                    Items = { this.saveDataToolStripMenuItem }
+                };
+                this.fileToolStripMenuItem.Text = "File";
+                FileMenu.Items.Add(fileToolStripMenuItem);
+
+                this.Plot_Values = new Button();
+                this.Calculate_Map = new Button();
+
+
+                this.Plot_Values.Text = "Plot Numerical Values";
+                this.Plot_Values.Click += Plot_Values_Click;
+
+                this.Calculate_Map.Text = "Create Map";
+                this.Calculate_Map.Click += Create_Map_Click;
+
+                DynamicLayout Layout = new DynamicLayout();
+                DynamicLayout FM = new DynamicLayout();
+                FM.AddRow(FileMenu, null);
+                Layout.AddRow(FM);
+                Layout.AddRow(MeshList);
+                Layout.AddRow(color_control);
+                Layout.AddRow(TimeBox);
+                Layout.AddRow(Calculate_Map);
+                Layout.AddRow(Plot_Values);
+                this.Content = Layout;
+
                 Instance = this;
             }
 
             public void Create_Map()
             {
-                Update_Scale();
+                //Update_Scale();
                 ParaMesh P = Collection[MeshList.SelectedIndex];
-                Utilities.RC_PachTools.CreateMap(P.M, Color_Selection.SelectedIndex, P.Params, (double)Param_Min.Value, (double)Param_Max.Value);
+                Utilities.RC_PachTools.CreateMap(P.M, color_control.Color_ID, P.Params, color_control.Min, color_control.Max);
             }
 
             public static Pach_MapCustom Instance
@@ -63,18 +132,6 @@ namespace Pachyderm_Acoustic
             {
                 Instance.Collection.Clear();
                 Instance.MeshList.Items.Clear();
-            }
-
-            /// <summary>
-            /// Adjust scale boundaries
-            /// </summary>
-            private void Commit_Param_Bounds()
-            {
-                Current_Min = (double)this.Param_Min.Value;
-                Current_Max = (double)this.Param_Max.Value;
-                this.Param1_4.Text = (((Current_Max - Current_Min) * .25) + Current_Min).ToString();
-                this.Param1_2.Text = (((Current_Max - Current_Min) * .5) + Current_Min).ToString();
-                this.Param3_4.Text = (((Current_Max - Current_Min) * .75) + Current_Min).ToString();
             }
 
             private void Create_Map_Click(object sender, EventArgs e)
@@ -95,83 +152,6 @@ namespace Pachyderm_Acoustic
                 Instance.Collection.Add(new ParaMesh(Title, Values, M));
             }
 
-            /// <summary>
-            /// Updates color scale
-            /// </summary>
-            public void Update_Scale()
-            {
-                double H_OFFSET;
-                double H_BREADTH;
-                double S_OFFSET;
-                double S_BREADTH;
-                double V_OFFSET;
-                double V_BREADTH;
-
-                System.Drawing.Color[] Colors;
-                switch (Color_Selection.Text)
-                {
-                    case "R-O-Y-G-B-I-V":
-                        H_OFFSET = 0;
-                        H_BREADTH = 4.0 / 3.0;
-                        S_OFFSET = 1;
-                        S_BREADTH = 0;
-                        V_OFFSET = 1;
-                        V_BREADTH = 0;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 24);
-                        break;
-                    case "R-O-Y":
-                        Colors = new System.Drawing.Color[2];
-                        H_OFFSET = 0;
-                        H_BREADTH = 1.0 / 3.0;
-                        S_OFFSET = 1;
-                        S_BREADTH = 0;
-                        V_OFFSET = 1;
-                        V_BREADTH = 0;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 12);
-                        break;
-                    case "Y-G":
-                        Colors = new System.Drawing.Color[2];
-                        H_OFFSET = Math.PI / 3.0;
-                        H_BREADTH = 1.0 / 3.0;
-                        S_OFFSET = 1;
-                        S_BREADTH = 0;
-                        V_OFFSET = 1;
-                        V_BREADTH = 0;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 12);
-                        break;
-                    case "R-M-B":
-                        Colors = new System.Drawing.Color[2];
-                        H_OFFSET = 0;
-                        H_BREADTH = -2.0 / 3.0;
-                        S_OFFSET = 1;
-                        S_BREADTH = 0;
-                        V_OFFSET = 1;
-                        V_BREADTH = 0;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 12);
-                        break;
-                    case "W-B":
-                        H_OFFSET = 0;
-                        H_BREADTH = 0;
-                        S_OFFSET = 0;
-                        S_BREADTH = 0;
-                        V_OFFSET = 1;
-                        V_BREADTH = -1;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 12);
-                        break;
-                    default:
-                        Rhino.RhinoApp.WriteLine("Whoops... Color selection invalid... Bright green substituted!");
-                        Colors = new System.Drawing.Color[2];
-                        H_OFFSET = 2.0 * Math.PI / 3;
-                        H_BREADTH = 0;
-                        S_OFFSET = 1;
-                        S_BREADTH = -1;
-                        V_OFFSET = 1;
-                        V_BREADTH = 0;
-                        c_scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, H_OFFSET, H_BREADTH, S_OFFSET, S_BREADTH, V_OFFSET, V_BREADTH, this.Discretize.Checked, 12);
-                        break;
-                }
-                this.Param_Scale.Image = c_scale.PIC;
-            }
 
             private class ParaMesh
             {
@@ -187,16 +167,6 @@ namespace Pachyderm_Acoustic
                     Params = p_in;
                     Title = Title_in;
                 }
-            }
-
-            private void Color_Selection_SelectedIndexChanged(object sender, EventArgs e)
-            {
-                Update_Scale();
-            }
-
-            private void Discretize_CheckedChanged(object sender, EventArgs e)
-            {
-                Update_Scale();
             }
 
             private void SaveDataToolStripMenuItem_Click(object sender, EventArgs e)
@@ -253,6 +223,28 @@ namespace Pachyderm_Acoustic
                     sw.Close();
                 }
             }
+
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
+
         }
     }
 }

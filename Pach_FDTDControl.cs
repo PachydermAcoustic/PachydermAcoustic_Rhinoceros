@@ -17,31 +17,459 @@
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
 using System;
-using System.Windows.Forms;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;
+using Eto.Forms;
+using System.Windows.Threading;
+using Rhino.UI;
+using Rhino.UI.Controls;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("7c62fae6-efa7-4c07-af12-cd440049c7fc")]
-        public partial class Pach_TD_Numeric_Control : System.Windows.Forms.UserControl
+        public class Pach_TD_Numeric_Control : Panel, IPanel
         {
+            Color_Output_Control scatcolorlayout;
+            private Label Freq_Feedback;
+            internal Eto.Forms.Button Forw;
+            private Eto.Forms.TabControl TabsPrime;
+            private Eto.Forms.TabPage EigenTab;
+            private Eto.Forms.TabPage ScatTab;
+            private Eto.Forms.CheckBox EdgeFreq;
+            internal Eto.Forms.Button Preview;
+            private Eto.Forms.GroupBox TimeContainer;
+            private Eto.Forms.Label Time_Preview;
+            internal Eto.Forms.Button PlayContinuous;
+            internal Eto.Forms.Button ForwVis;
+            internal Eto.Forms.ComboBox Color_Selection;
+            private Eto.Forms.NumericUpDown Pos_Select;
+            internal Eto.Forms.ComboBox AxisSelect;
+            private Eto.Forms.ListBox Map_Planes;
+            private Eto.Forms.Button AddPlane;
+            internal Eto.Forms.NumericUpDown Frequency_Selection;
+            internal Eto.Forms.NumericUpDown Freq_Max;
+            internal Eto.Forms.DropDown SourceSelect;
+            private Eto.Forms.DropDown Eigen_Extent;
+            private Eto.Forms.Button CalculateSim;
+            internal Eto.Forms.DropDown Receiver_Choice;
+            internal Eto.Forms.NumericUpDown CO_TIME;
+            private Eto.Forms.Button Export_Signal;
+            private ScottPlot.Eto.EtoPlot Frequency_View;
+            private ScottPlot.Eto.EtoPlot TransientView;
+            private Eto.Forms.ListBox EigenFrequencies;
+            internal Eto.Forms.TextBox Folder_Status;
+            private Eto.Forms.Button SetFolder;
+            private Eto.Forms.TabPage VisTab;
+            private Eto.Forms.Button CalculateScattering;
+            private Eto.Forms.Button ScatExport;
+            private ScottPlot.Eto.EtoPlot ScatteringGraph;
+            private Eto.Forms.DropDown Analysis_Technique;
+            private Eto.Forms.NumericUpDown ScatteringRadius;
+            private Eto.Forms.NumericUpDown Sample_Depth;
+            private Eto.Forms.DropDown ScatLimit;
+            private Eto.Forms.Slider Freq_Trackbar1;
+            private Eto.Forms.Slider Freq_Trackbar2;
+            internal Eto.Forms.DropDown Scat_Param_Select;
+            private Eto.Forms.GroupBox DirBox;
+            private Eto.Forms.CheckBox Scat_Dir_75;
+            private Eto.Forms.CheckBox Scat_Dir_60;
+            private Eto.Forms.CheckBox Scat_Dir_45;
+            private Eto.Forms.CheckBox Scat_Dir_30;
+            private Eto.Forms.CheckBox Scat_Dir_15;
+            private Eto.Forms.CheckBox Scat_Dir_00;
+            private Eto.Forms.CheckBox GroundPlane;
+            private Eto.Forms.Button DeletePlane;
+            private Eto.Forms.CheckBox EigenPML;
+            private Eto.Forms.CheckBox VisualPML;
+            private Medium_Properties_Group Medium;
+            private Color_Output_Control viscolor;
+
+
             // This call is required by the Windows Form Designer. 
             public Pach_TD_Numeric_Control()
             {
                 Instance = this;
-                InitializeComponent();
+
+                this.Forw = new Eto.Forms.Button();
+                this.TabsPrime = new Eto.Forms.TabControl();
+                this.EigenTab = new Eto.Forms.TabPage();
+                this.Export_Signal = new Eto.Forms.Button();
+                this.CO_TIME = new Eto.Forms.NumericUpDown();
+                this.CalculateSim = new Eto.Forms.Button();
+                this.Eigen_Extent = new Eto.Forms.ComboBox();
+                this.EigenFrequencies = new Eto.Forms.ListBox();
+                this.Receiver_Choice = new Eto.Forms.ComboBox();
+                this.EigenPML = new Eto.Forms.CheckBox();
+                this.VisTab = new Eto.Forms.TabPage();
+                this.DirBox = new Eto.Forms.GroupBox();
+                this.Scat_Dir_75 = new Eto.Forms.CheckBox();
+                this.Scat_Dir_60 = new Eto.Forms.CheckBox();
+                this.Scat_Dir_45 = new Eto.Forms.CheckBox();
+                this.Scat_Dir_30 = new Eto.Forms.CheckBox();
+                this.Scat_Dir_15 = new Eto.Forms.CheckBox();
+                this.Scat_Dir_00 = new Eto.Forms.CheckBox();
+                this.ScatExport = new Eto.Forms.Button();
+                this.ScatLimit = new Eto.Forms.DropDown();
+                this.Analysis_Technique = new Eto.Forms.DropDown();
+                this.Sample_Depth = new Eto.Forms.NumericUpDown();
+                this.ScatteringRadius = new Eto.Forms.NumericUpDown();
+                this.Freq_Trackbar1 = new Eto.Forms.Slider();
+                this.Freq_Trackbar2 = new Eto.Forms.Slider();
+                this.Scat_Param_Select = new Eto.Forms.DropDown();
+                this.CalculateScattering = new Eto.Forms.Button();
+                this.ScatTab = new Eto.Forms.TabPage();
+                this.EdgeFreq = new Eto.Forms.CheckBox();
+                this.Freq_Max = new Eto.Forms.NumericUpDown();
+                this.Frequency_Selection = new Eto.Forms.NumericUpDown();
+                this.SourceSelect = new Eto.Forms.ComboBox();
+                this.Preview = new Eto.Forms.Button();
+                this.TimeContainer = new Eto.Forms.GroupBox();
+                this.Time_Preview = new Eto.Forms.Label();
+                this.PlayContinuous = new Eto.Forms.Button();
+                this.ForwVis = new Eto.Forms.Button();
+                this.AxisSelect = new Eto.Forms.ComboBox();
+                this.Map_Planes = new Eto.Forms.ListBox();
+                this.AddPlane = new Eto.Forms.Button();
+                this.SetFolder = new Eto.Forms.Button();
+                this.Folder_Status = new Eto.Forms.TextBox();
+                this.GroundPlane = new Eto.Forms.CheckBox();
+                this.Pos_Select = new Eto.Forms.NumericUpDown();
+                this.DeletePlane = new Eto.Forms.Button();
+                this.VisualPML = new Eto.Forms.CheckBox();
+
+                ////Eigen values interface
+                this.TabsPrime.Pages.Add(this.EigenTab);
+                this.EigenTab.Text = "Eigen Values";
+
+                DynamicLayout DLE1 = new DynamicLayout();
+                Label label2 = new Label();
+                label2.Text = "Calculate up to:";
+                this.Eigen_Extent.Items.Add("63 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("125 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("250 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("500 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("1000 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("2000 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("4000 Hz. Octave Band");
+                this.Eigen_Extent.Items.Add("8000 Hz. Octave Band");
+                Label Explbl1 = new Label();
+                Explbl1.Text = "Experimental";
+                Explbl1.BackgroundColor = Eto.Drawing.Colors.Red;
+                Explbl1.TextColor = Eto.Drawing.Colors.White;
+                DLE1.AddRow(label2, this.Eigen_Extent, Explbl1);
+
+                DynamicLayout DLE2 = new DynamicLayout();
+                Label label5 = new Label();
+                label5.Text = "Cutoff Time (ms):";
+                this.CO_TIME.MaxValue = 8000;
+                this.CO_TIME.MinValue = 100;
+                this.CO_TIME.Value = 1000;
+                this.EigenPML.Checked = false;
+                this.EigenPML.Text = "PML";
+                DLE2.AddRow(label5, null, CO_TIME, EigenPML);
+
+                this.CalculateSim.Text = "Calculate";
+                this.CalculateSim.Click += this.CalculateSim_Click;
+
+                DynamicLayout DLE4 = new DynamicLayout();
+                Label label20 = new Label();
+                label20.Text = "Receiver";
+                this.Receiver_Choice.SelectedIndex = 0;
+                this.Receiver_Choice.SelectedIndexChanged += this.Receiver_Choice_SelectedIndexChanged;
+                this.Export_Signal.Text = "Export...";
+                this.Export_Signal.Click += this.Export_Signal_Click;
+                DLE4.AddRow(label20, null, Receiver_Choice, Export_Signal);
+
+                // 
+                // Frequency_View
+                // 
+                Frequency_View = new ScottPlot.Eto.EtoPlot();
+                Frequency_View.Size = new Eto.Drawing.Size(-1, 200);
+                Frequency_View.Plot.Title("Frequency Domain Response");
+                Frequency_View.Plot.XAxis.Label.Text = "Frequency (Hertz)";
+                Frequency_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
+                Frequency_View.Plot.TitlePanel.Label.Font.Size = 10;
+                Frequency_View.Plot.XAxis.Label.Font.Size = 10;
+                Frequency_View.Plot.YAxis.Label.Font.Size = 10;
+                // 
+                // TransientView
+                // 
+                TransientView = new ScottPlot.Eto.EtoPlot();
+                TransientView.Size = new Eto.Drawing.Size(-1, 200);
+                TransientView.Plot.Title("Time Domain Response");
+                TransientView.Plot.XAxis.Label.Text = "Time (seconds)";
+                TransientView.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
+                TransientView.Plot.TitlePanel.Label.Font.Size = 10;
+                TransientView.Plot.XAxis.Label.Font.Size = 10;
+                TransientView.Plot.YAxis.Label.Font.Size = 10;
+
+                DynamicLayout DLE7 = new DynamicLayout();
+                Label label6 = new Label();
+                label6.Text = "Eigen-Frequencies";
+                label6.TextAlignment = TextAlignment.Center;
+                label6.Width = 150;
+                this.EigenFrequencies.SelectedIndexChanged += this.EigenFrequencies_SelectedIndexChanged;
+                DLE7.AddRow(label6, EigenFrequencies);
+
+                DynamicLayout EigenLayout = new DynamicLayout();
+                EigenLayout.Spacing = new Eto.Drawing.Size(8, 8);
+                DLE1.Spacing = new Eto.Drawing.Size(8, 8);
+                EigenLayout.AddRow(DLE1);
+                DLE2.Spacing = new Eto.Drawing.Size(8, 8);
+                EigenLayout.AddRow(DLE2);
+                EigenLayout.AddRow(CalculateSim);
+                DLE4.Spacing = new Eto.Drawing.Size(8, 8);
+                EigenLayout.AddRow(DLE4);
+                EigenLayout.AddRow(TransientView);
+                EigenLayout.AddRow(Frequency_View);
+                DLE7.Spacing = new Eto.Drawing.Size(8, 8);
+                EigenLayout.AddRow(DLE7);
+
+                EigenTab.Content = EigenLayout;
+
+                ////Scattering Tab
+                this.TabsPrime.Pages.Add(this.ScatTab);
+                this.TabsPrime.MouseUp += this.ScatteringLab_Focus;
+                this.ScatTab.Text = "Scattering Analysis";
+                this.DirBox.Text = "Direction";
+
+                this.Scat_Dir_00.Checked = true;
+                this.Scat_Dir_00.Text = "Normal Incidence";
+                this.Scat_Dir_15.Text = "15 Degrees";
+                this.Scat_Dir_30.Text = "30 Degrees";
+                this.Scat_Dir_45.Text = "45 Degrees";
+                this.Scat_Dir_60.Text = "60 Degrees";
+                this.Scat_Dir_75.Text = "75 Degrees";
+                DirBox.Width = 125;
+                StackLayout dirlyt = new StackLayout();
+                dirlyt.Items.Add(Scat_Dir_00);
+                dirlyt.Items.Add(Scat_Dir_15);
+                dirlyt.Items.Add(Scat_Dir_30);
+                dirlyt.Items.Add(Scat_Dir_45);
+                dirlyt.Items.Add(Scat_Dir_60);
+                dirlyt.Items.Add(Scat_Dir_75);
+                dirlyt.Spacing = 5;
+                DirBox.Content = dirlyt;
+
+                DynamicLayout SCtrls = new DynamicLayout();
+                SCtrls.Spacing = new Eto.Drawing.Size(8, 8);
+                Label Explbl2 = new Label();
+                Explbl2.Text = "Experimental";
+                Explbl2.TextColor = Eto.Drawing.Colors.Red;
+                //Explbl2.TextColor = Eto.Drawing.Colors.White;
+
+                SCtrls.AddRow(Explbl2);
+
+                Label label9 = new Label();
+                label9.Text = "Analysis Type:";
+                Analysis_Technique.Width = 200;
+                this.Analysis_Technique.Items.Add("Correlation Scattering Coefficient");
+                this.Analysis_Technique.SelectedIndexChanged += this.LabGuideParametersChanged;
+                SCtrls.AddRow(label9, null, Analysis_Technique);
+
+                Label label12 = new Label();
+                label12.Text = "Calculate up to:";
+                this.ScatLimit.Items.Add("63 Hz. Octave Band");
+                this.ScatLimit.Items.Add("125 Hz. Octave Band");
+                this.ScatLimit.Items.Add("250 Hz. Octave Band");
+                this.ScatLimit.Items.Add("500 Hz. Octave Band");
+                this.ScatLimit.Items.Add("1000 Hz. Octave Band");
+                this.ScatLimit.Items.Add("2000 Hz. Octave Band");
+                this.ScatLimit.Items.Add("4000 Hz. Octave Band");
+                this.ScatLimit.Items.Add("8000 Hz. Octave Band");
+                this.ScatLimit.SelectedIndex = 3;
+                ScatLimit.Width = 200;
+                SCtrls.AddRow(label12, null, ScatLimit);
+
+                Label label11 = new Label();
+                label11.Text = "Depth of Sample (meters)";
+                Sample_Depth.Width = 200;
+                this.Sample_Depth.DecimalPlaces = 1;
+                this.Sample_Depth.Value = 5;
+                this.Sample_Depth.ValueChanged += this.LabGuideParametersChanged;
+                SCtrls.AddRow(label11, null, Sample_Depth);
+
+                Label label7 = new Label();
+                label7.Text = "Measurement Radius (meters)";
+                ScatteringRadius.Width = 200;
+                this.ScatteringRadius.DecimalPlaces = 1;
+                this.ScatteringRadius.Value = 5;
+                this.ScatteringRadius.ValueChanged += this.LabGuideParametersChanged;
+                SCtrls.AddRow(label7, null, ScatteringRadius);
+
+                DynamicLayout top = new DynamicLayout();
+                top.AddRow(SCtrls, DirBox);
+
+                DynamicLayout ScatLyt = new DynamicLayout();
+                ScatLyt.AddRow(top);
+
+                DynamicLayout calclyt = new DynamicLayout();
+                this.CalculateScattering.Text = "Calculate";
+                CalculateScattering.Width = 250;
+                this.CalculateScattering.Click += this.CalculateScattering_Click;
+                this.ScatExport.Text = "Export...";
+                calclyt.Spacing = new Eto.Drawing.Size(8, 8);
+                calclyt.AddRow(CalculateScattering, null, ScatExport);
+                ScatLyt.AddRow(calclyt);
+                ScatteringGraph = new ScottPlot.Eto.EtoPlot();
+                ScatteringGraph.Size = new Eto.Drawing.Size(-1, 200);
+                ScatteringGraph.Plot.Title("Scattering Performance");
+                ScatteringGraph.Plot.XAxis.Label.Text = "Frequency (Hz.)";
+                ScatteringGraph.Plot.YAxis.Label.Text = "Scattering Coefficient";
+                ScatteringGraph.Plot.TitlePanel.Label.Font.Size = 10;
+                ScatteringGraph.Plot.XAxis.Label.Font.Size = 10;
+                ScatteringGraph.Plot.YAxis.Label.Font.Size = 10;
+
+                ScatLyt.AddRow(ScatteringGraph);
+
+                DynamicLayout FreqCtrl = new DynamicLayout();
+
+                Label label18 = new Label();
+                label18.Text = "Parameter Selection";
+
+                this.Scat_Param_Select.Items.Add("Total Reflected Power");
+                this.Scat_Param_Select.Items.Add("Correlation Coefficient");
+                this.Scat_Param_Select.SelectedIndex = 0;
+                this.Scat_Param_Select.SelectedIndexChanged += this.Scat_Output_Changed;
+
+                Freq_Feedback = new Label();
+                this.Freq_Feedback.Text = "Frequency Selection: 0 to 8000 Hz.";
+
+                this.Freq_Trackbar1.Value = 1;
+                this.Freq_Trackbar1.MouseUp += this.Freq_Trackbar_Scroll;
+
+                this.Freq_Trackbar2.MaxValue = 4095;
+                this.Freq_Trackbar2.MouseUp += this.Freq_Trackbar_Scroll;
+                FreqCtrl.AddRow(label18);
+                FreqCtrl.AddRow(Scat_Param_Select);
+                FreqCtrl.AddRow(Freq_Feedback);
+                FreqCtrl.AddRow(Freq_Trackbar1);
+                FreqCtrl.AddRow(Freq_Trackbar2);
+                FreqCtrl.Spacing = new Eto.Drawing.Size(8, 8);
+
+                scatcolorlayout = new Color_Output_Control(FreqCtrl);
+                scatcolorlayout.On_Output_Changed += Scat_Output_Changed;
+
+                ScatLyt.AddRow(scatcolorlayout);
+                ScatLyt.Spacing = new Eto.Drawing.Size(8, 8);
+                ScatTab.Content = ScatLyt;
+
+                ////Visualization Tab
+                this.TabsPrime.Pages.Add(this.VisTab);
+
+                this.VisTab.Text = "Visualization";
+                DynamicLayout vislyt = new DynamicLayout();
+                vislyt.DefaultSpacing = new Eto.Drawing.Size(8, 8);
+                DynamicLayout Ctrls = new DynamicLayout();
+                Ctrls.Spacing = new Eto.Drawing.Size(8, 8);
+
+                Label label8 = new Label();
+                label8.Text = "Source Signal:";
+                this.SourceSelect.Items.Add("Sine Wave");
+                this.SourceSelect.Items.Add("Dirac Pulse");
+                this.SourceSelect.Items.Add("Sine Pulse");
+                this.SourceSelect.Items.Add("Pseudo Random Noise");
+                this.SourceSelect.Items.Add("Noise Spectrum");
+                SourceSelect.SelectedIndex = 0;
+                Label label17 = new Label();
+                label17.BackgroundColor = Eto.Drawing.Colors.Red;
+                label17.TextColor = Eto.Drawing.Colors.White;
+                label17.Text = "Experimental";
+                Ctrls.AddRow(label8, SourceSelect, label17);
+
+                Label label10 = new Label();
+                label10.Text = "Frequency Selection";
+                this.Frequency_Selection.MaxValue = 100000;
+                this.Frequency_Selection.MinValue = 1;
+                this.Frequency_Selection.Value = 250;
+                Ctrls.AddRow(label10, null, Frequency_Selection);
+
+                Label label1 = new Label();
+                label1.Text = "Frequency Max";
+                this.Freq_Max.MaxValue = 10000000;
+                this.Freq_Max.MinValue = 100;
+                this.Freq_Max.Value = 250;
+                Ctrls.AddRow(label1, null, Freq_Max);
+                vislyt.AddRow(Ctrls);
+
+                this.GroundPlane.Checked = false;
+                this.GroundPlane.Text = "Reflective Ground Plane";
+                this.VisualPML.Checked = true;
+                this.VisualPML.Text = "PML";
+                this.VisualPML.Checked = false;
+                DynamicLayout dtls = new DynamicLayout();
+                dtls.AddRow(null, VisualPML, null, GroundPlane, null);
+                vislyt.AddRow(dtls);
+
+                DynamicLayout playlyt = new DynamicLayout();
+                playlyt.Spacing = new Eto.Drawing.Size(8, 8);
+                PlayContinuous.Text = "Play Continuous";
+                PlayContinuous.Click += Loop_Click;
+                PlayContinuous.Width = 250;
+                this.ForwVis.Text = ">>";
+                this.ForwVis.Click += this.Forw_Click;
+                this.Preview.Text = "Calculate & Run";
+                this.Preview.Click += this.Calculate_Click;
+                this.TimeContainer.Text = "Current Time (ms)";
+                this.Time_Preview.Text = "Time_Preview";
+                TimeContainer.Content = Time_Preview;
+
+                playlyt.AddRow(TimeContainer, PlayContinuous, ForwVis);
+                vislyt.AddRow(playlyt);
+                vislyt.AddRow(Preview);
+
+                this.AxisSelect.Items.Add("X");
+                this.AxisSelect.Items.Add("Y");
+                this.AxisSelect.Items.Add("Z");
+                this.AxisSelect.SelectedIndex = 2;
+                this.AxisSelect.SelectedIndexChanged += this.AxisSelect_SelectedIndexChanged;
+                this.Pos_Select.ValueChanged += this.Pos_Select_ValueChanged;
+                DynamicLayout Planes = new DynamicLayout();
+                Planes.AddRow(Map_Planes);
+                DynamicLayout PlaneButtons = new DynamicLayout();
+                PlaneButtons.Spacing = new Eto.Drawing.Size(8, 8);
+                PlaneButtons.AddRow(AxisSelect, Pos_Select);
+                Planes.AddRow(PlaneButtons);
+
+                this.AddPlane.Text = "Add Plane";
+                this.AddPlane.Click += this.AddPlane_Click;
+                this.DeletePlane.Text = "Delete Plane";
+                this.DeletePlane.Click += this.DeletePlane_Click;
+                //this.Magnitude.Text = "Magnitude";
+                DynamicLayout buttons = new DynamicLayout();
+                buttons.AddRow(AddPlane, DeletePlane);
+                Planes.AddRow(buttons);
+                //Planes.AddRow(Magnitude);
+                Planes.Spacing = new Eto.Drawing.Size(8, 8);
+                viscolor = new Color_Output_Control(Planes);
+                viscolor.Update += Param_Max_ValueChanged;
+
+                vislyt.AddRow(viscolor);
+
+                this.SetFolder.Text = "Select Output Folder";
+                this.SetFolder.Click += this.SetFolder_Click;
+                this.Folder_Status.ReadOnly = true;
+                DynamicLayout OutFldr = new DynamicLayout();
+                OutFldr.Spacing = new Eto.Drawing.Size(8, 8);
+                OutFldr.AddRow(SetFolder, Folder_Status);
+                vislyt.AddRow(OutFldr);
+
+                Medium = new Medium_Properties_Group();
+                vislyt.AddRow(Medium);
+                VisTab.Content = vislyt;
+
+                this.TabsPrime.SelectedIndex = 0;
+                this.Content = TabsPrime;
+
                 Analysis_Technique.SelectedIndex = 0;
                 Eigen_Extent.SelectedIndex = 4;
-                scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                Param_Scale.Image = scale.PIC;
-                scatterscale = new Pach_Graphics.HSV_colorscale(Scatter_Scale.Height, Scatter_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                Scatter_Scale.Image = scatterscale.PIC;
+                scale = viscolor.Scale;
+                scatterscale = scatcolorlayout.Scale;
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -60,25 +488,22 @@ namespace Pachyderm_Acoustic
             WaveConduit P;
             SphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
-            //List<List<Rhino.Geometry.Point3d>> Pts;
             List<List<double>> Pressure;
             CellConduit c = new CellConduit();
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
-                FC = new ForCall(Forw_proc);
+                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius,Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                if (Rm == null || !Rm.Complete) return;
 
-                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
-                if (!Rm.Complete) return;
-
-                if (P == null) P = new WaveConduit(scale, new double[2] { (double)this.Param_Min.Value, (double)this.Param_Max.Value });
+                if (P == null) P = new WaveConduit(viscolor.scale, new double[2] { viscolor.Min, viscolor.Max });
                 Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
                 Hare.Geometry.Point[] Rec = RC_PachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
                 Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
 
-                switch (SourceSelect.Text)
+                switch (SourceSelect.SelectedKey)
                 {
                     case "Dirac Pulse":
                         s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
@@ -97,20 +522,19 @@ namespace Pachyderm_Acoustic
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RC_PachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
-                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked);
-                //FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, (double)Freq_Max.Value, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, new Hare.Geometry.Point(0,0,0), 8, 6, 5);
+                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked.Value? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked.Value);
                 M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
 
-                P.SetColorScale(new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12), new double[] { (double)Param_Min.Value, (double)Param_Max.Value });
+                P.SetColorScale(viscolor.Scale, new double[] { viscolor.Min, viscolor.Max });
                 P.Enabled = true;
 
-                if (AxisSelect.SelectedIndex == 0) Pos_Select.Maximum = FDTD.xDim - 1;
-                else if (AxisSelect.SelectedIndex == 1) Pos_Select.Maximum = FDTD.yDim - 1;
-                else if (AxisSelect.SelectedIndex == 2) Pos_Select.Maximum = FDTD.zDim - 1;
+                if (AxisSelect.SelectedIndex == 0) Pos_Select.MaxValue = FDTD.xDim - 1;
+                else if (AxisSelect.SelectedIndex == 1) Pos_Select.MaxValue = FDTD.yDim - 1;
+                else if (AxisSelect.SelectedIndex == 2) Pos_Select.MaxValue = FDTD.zDim - 1;
 
                 if (Map_Planes.Items.Count == 0)
                 {
-                    Pos_Select.Value = Pos_Select.Maximum / 2;
+                    Pos_Select.Value = Pos_Select.MaxValue / 2;
                     AddPlane_Click(new object(), new EventArgs());
                 }
 
@@ -124,7 +548,7 @@ namespace Pachyderm_Acoustic
 
             private double C_Sound()
             {
-                return AcousticalMath.SoundSpeed((double)Air_Temp.Value);
+                return AcousticalMath.SoundSpeed(Medium.Temp_Celsius);
             }
 
             System.Threading.Thread T;
@@ -134,7 +558,7 @@ namespace Pachyderm_Acoustic
                 {
                     if (Running)
                     {
-                        FC();
+                        Advancer.Invoke(() => Forw_proc());
                         System.Threading.Thread.Sleep(100);
                     }
                     else
@@ -145,9 +569,6 @@ namespace Pachyderm_Acoustic
                 while (true);
             }
 
-            private delegate void ForCall();
-            ForCall FC;
-
             private void Forw_Click(object sender, EventArgs e)
             {
                 Forw_proc();
@@ -157,7 +578,7 @@ namespace Pachyderm_Acoustic
             {
                 List<int> X = new List<int>(), Y = new List<int>(), Z = new List<int>();
 
-                foreach (CutPlane p in Map_Planes.Items)
+                foreach (CutPlane p in PlaneList)
                 {
                     if (p.axis == 0) X.Add(p.pos);
                     else if (p.axis == 1) Y.Add(p.pos);
@@ -166,7 +587,7 @@ namespace Pachyderm_Acoustic
 
                 List<List<Hare.Geometry.Point>> hpts = new List<List<Hare.Geometry.Point>>();
 
-                FDTD.Pressure_Points(ref hpts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, (double)Param_Min.Value / 20), false, false, true, Magnitude.Checked);
+                FDTD.Pressure_Points(ref hpts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, viscolor.Min / 20), false, false, true);
                 List<List<Rhino.Geometry.Point3d>> Pts = new List<List<Rhino.Geometry.Point3d>>();
 
                 Rhino.Geometry.Mesh C = new Rhino.Geometry.Mesh();
@@ -190,7 +611,7 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), C, FDTD.dx, Pressure, M, Magnitude.Checked);
+                P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), C, FDTD.dx, Pressure, M);
 
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
@@ -203,10 +624,8 @@ namespace Pachyderm_Acoustic
 
                 Show_Field();
 
-                this.Invoke((MethodInvoker)delegate
-                {
-                    Time_Preview.Text = Math.Round(t, 3).ToString();
-                });
+                Time_Preview.Text = Math.Round(t, 3).ToString();
+
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
 
                 ////////////////////////
@@ -221,7 +640,7 @@ namespace Pachyderm_Acoustic
                     }
                     else number = j.ToString();
 
-                    this.Invoke((MethodInvoker)delegate { Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true); });
+                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
                 }
                 /////////////////////////
 
@@ -237,13 +656,15 @@ namespace Pachyderm_Acoustic
 
             bool Running = false;
 
+            Dispatcher Advancer = Dispatcher.CurrentDispatcher;
+
             private void Loop_Click(object sender, EventArgs e)
             {
-                if (Loop.Text == "Loop")
+                if (PlayContinuous.Text == "Play Continuous")
                 {
                     Running = true;
                     Time_Preview.Enabled = false;
-                    Loop.Text = "Pause";
+                    PlayContinuous.Text = "Pause";
                     System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart(); });
                     T = new System.Threading.Thread(St);
                     T.Start();
@@ -252,53 +673,13 @@ namespace Pachyderm_Acoustic
                 {
                     Running = false;
                     Time_Preview.Enabled = true;
-                    Loop.Text = "Loop";
+                    PlayContinuous.Text = "Play Continuous";
                 }
             }
 
             private void Param_Max_ValueChanged(object sender, EventArgs e)
             {
-                this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString();
-                this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString();
-                this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString();
-
-                P.SetColorScale(scale, new double[2] { (double)Param_Min.Value, (double)Param_Max.Value });
-            }
-
-            private void Color_Selection_SelectedIndexChanged(object sender, EventArgs e)
-            {
-                Pach_Graphics.colorscale scale;
-                switch (this.Color_Selection.Text)
-                {
-                    case "R-O-Y-G-B-I-V":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "Y-G-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "R-O-Y":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "W-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    case "R-M-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                    default:
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
-                        Param_Scale.Image = scale.PIC;
-                        break;
-                }
-                if (P != null)
-                {
-                    P.SetColorScale(scale, new double[] { (double)Param_Min.Value, (double)Param_Max.Value });
-                }
+                P.SetColorScale(viscolor.Scale, new double[2] { viscolor.Min, viscolor.Max });
             }
 
             private void Output_Click(object sender, EventArgs e)
@@ -338,34 +719,37 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            List<CutPlane> PlaneList = new System.Collections.Generic.List<CutPlane>();
+
             private void AddPlane_Click(object sender, EventArgs e)
             {
-                Map_Planes.Items.Add(new CutPlane(AxisSelect.SelectedIndex, (int)Pos_Select.Value));
+                CutPlane CP = new CutPlane(AxisSelect.SelectedIndex, (int)Pos_Select.Value);
+                PlaneList.Add(CP);
+                Map_Planes.Items.Add(CP.ToString());
             }
 
             private void DeletePlane_Click(object sender, EventArgs e)
             {
+                if (PlaneList == null || PlaneList.Count == 0) return;
+                PlaneList.RemoveAt(Map_Planes.SelectedIndex);
                 Map_Planes.Items.RemoveAt(Map_Planes.SelectedIndex);
             }
 
             private void AxisSelect_SelectedIndexChanged(object sender, EventArgs e)
             {
                 if (Map_Planes.SelectedIndex < 0) return;
-                (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis = AxisSelect.SelectedIndex;
+                PlaneList[Map_Planes.SelectedIndex].axis = AxisSelect.SelectedIndex;
 
                 if (FDTD != null)
                 {
-                    Pos_Select.Maximum = (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 0 ? (int)(FDTD.xDim - 1) : (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).axis == 1 ? (int)(FDTD.yDim - 1) : (int)(FDTD.zDim - 1);
+                    Pos_Select.MaxValue = (PlaneList[Map_Planes.SelectedIndex].axis == 0 ? (int)(FDTD.xDim - 1) : PlaneList[Map_Planes.SelectedIndex].axis == 1 ? (int)(FDTD.yDim - 1) : (int)(FDTD.zDim - 1));
                 }
-
-                Map_Planes.Refresh();
             }
 
             private void Pos_Select_ValueChanged(object sender, EventArgs e)
             {
                 if (Map_Planes.SelectedIndex < 0) return;
-                (Map_Planes.Items[Map_Planes.SelectedIndex] as CutPlane).pos = (int)Pos_Select.Value;
-                Map_Planes.Update();
+                PlaneList[Map_Planes.SelectedIndex].pos = (int)Pos_Select.Value;
             }
 
             #endregion
@@ -377,9 +761,7 @@ namespace Pachyderm_Acoustic
             {
                 EigenFrequencies.Items.Clear();
                 Chosenfreq = 0;
-                FC = new ForCall(Forw_proc);
-
-                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                 if (!Rm.Complete) return;
 
                 Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
@@ -390,7 +772,7 @@ namespace Pachyderm_Acoustic
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
-                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, EigenPML.Checked);
+                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, EigenPML.Checked.Value);
                 FDTD.RuntoCompletion();
 
                 samplefrequency = FDTD.SampleFrequency;
@@ -422,11 +804,10 @@ namespace Pachyderm_Acoustic
                 Find_EigenFrequencies();
 
                 Receiver_Choice.Items.Clear();
-                for (int i = 0; i < result_signals.Length; i++) Receiver_Choice.Items.Add(i);
+                for (int i = 0; i < result_signals.Length; i++) Receiver_Choice.Items.Add(i.ToString());
                 Time = new double[result_signals[0].Length];
                 for (int i = 0; i < Time.Length; i++) Time[i] = (double)i / samplefrequency;
                 Receiver_Choice.SelectedIndex = 0;
-                Receiver_Choice.Update();
             }
 
             private void Find_EigenFrequencies()
@@ -451,13 +832,21 @@ namespace Pachyderm_Acoustic
                     Populate_EigenFrequencies(imag, freq, "Imaginary-Part");
                 }
 
-                object[] l = new object[EigenFrequencies.Items.Count];
+
+                IListItem[] l = new IListItem[EigenFrequencies.Items.Count];
                 EigenFrequencies.Items.CopyTo(l, 0);
                 l.Distinct();
-                List<object> lalpha = l.ToList();
-                lalpha.Sort();
+
+                List<string> eigens = new List<string>();
+                foreach (IListItem i in l)
+                {
+                    eigens.Add(i.ToString());
+                }
+                eigens.Sort();
+
                 EigenFrequencies.Items.Clear();
-                EigenFrequencies.Items.AddRange(lalpha.ToArray());
+
+                foreach(string i in eigens) EigenFrequencies.Items.Add(i);
             }
 
             double[] Time;
@@ -466,21 +855,19 @@ namespace Pachyderm_Acoustic
             private void Update_Graph(object sender, EventArgs e)
             {
                 double max = 0;
+                if (Receiver_Choice.Items.Count < 1) return;
                 double[] SPL = Utilities.AcousticalMath.SPL_Pressure_Signal(result_signals[Receiver_Choice.SelectedIndex]);
                 for (int i = 0; i < SPL.Length; i++) max = Math.Max(max, SPL[i]);
 
-                TransientView.GraphPane.CurveList.Clear();
-                TransientView.GraphPane.Title.Text = "Time Domain Response";
-                TransientView.GraphPane.XAxis.Title.Text = "Time (seconds)";
-                TransientView.GraphPane.YAxis.Title.Text = "Sound Pressure (Pa)";
-                TransientView.GraphPane.AddCurve("Time Domain Response", Time, Utilities.AcousticalMath.SPL_Pressure_Signal(result_signals[Receiver_Choice.SelectedIndex]), System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
-                TransientView.GraphPane.XAxis.Scale.Max = Time[Time.Length - 1];
-                TransientView.GraphPane.XAxis.Scale.Min = Time[0];
+                TransientView.Plot.Clear();
+                TransientView.Plot.Add.Signal(Utilities.AcousticalMath.SPL_Pressure_Signal(result_signals[Receiver_Choice.SelectedIndex]), Time[1] - Time[0], ScottPlot.Colors.Blue);
+                TransientView.Plot.AutoScale();
+                TransientView.Plot.XAxis.Max = Time[Time.Length - 1];
+                TransientView.Plot.XAxis.Min = Time[0];
 
-                TransientView.GraphPane.YAxis.Scale.Max = max * 1.2;
-                TransientView.GraphPane.YAxis.Scale.Min = 0;// -max;
+                TransientView.Plot.YAxis.Max = max * 1.2;
+                TransientView.Plot.YAxis.Min = 0;// -max;
 
-                TransientView.AxisChange();
                 TransientView.Invalidate();
 
                 System.Numerics.Complex[] fdom = Audio.Pach_SP.FFT_General(result_signals[Receiver_Choice.SelectedIndex], 0);
@@ -498,24 +885,38 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < mag.Length; i++) max = Math.Max(max, mag[i]);
 
-                Frequency_View.GraphPane.CurveList.Clear();
-                Frequency_View.GraphPane.Title.Text = "Frequency Domain Response";
-                Frequency_View.GraphPane.XAxis.Type = ZedGraph.AxisType.Log;
-                Frequency_View.GraphPane.XAxis.Title.Text = "Time (seconds)";
-                Frequency_View.GraphPane.YAxis.Title.Text = "Sound Pressure (Pa)";
-                Frequency_View.GraphPane.AddCurve("Magnitude", freq, mag, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
-                Frequency_View.GraphPane.AddCurve("Real-Part", freq, real, System.Drawing.Color.Blue, ZedGraph.SymbolType.None);
-                Frequency_View.GraphPane.AddCurve("Imaginary-Part", freq, imag, System.Drawing.Color.Gray, ZedGraph.SymbolType.None);
-                Frequency_View.GraphPane.XAxis.Scale.Max = freq[freq.Length - 1];
-                Frequency_View.GraphPane.XAxis.Scale.Min = 0;
+                Frequency_View.Plot.Clear();
 
-                Frequency_View.GraphPane.YAxis.Scale.Max = max * 1.2;
-                Frequency_View.GraphPane.YAxis.Scale.Min = 0;
+                ScottPlot.DataSources.ScatterSourceXsYs srcmag = new ScottPlot.DataSources.ScatterSourceXsYs(freq, mag);
+                ScottPlot.DataSources.ScatterSourceXsYs srcreal = new ScottPlot.DataSources.ScatterSourceXsYs(freq, real);
+                ScottPlot.DataSources.ScatterSourceXsYs srcimag = new ScottPlot.DataSources.ScatterSourceXsYs(freq, imag);
+                ScottPlot.Plottables.Scatter Smag = new ScottPlot.Plottables.Scatter(srcmag);
+                ScottPlot.Plottables.Scatter Sreal = new ScottPlot.Plottables.Scatter(srcreal);
+                ScottPlot.Plottables.Scatter Simag = new ScottPlot.Plottables.Scatter(srcimag);
+                Smag.MarkerStyle = new ScottPlot.MarkerStyle(ScottPlot.MarkerShape.None, 0);
+                Sreal.MarkerStyle = new ScottPlot.MarkerStyle(ScottPlot.MarkerShape.None, 0);
+                Simag.MarkerStyle = new ScottPlot.MarkerStyle(ScottPlot.MarkerShape.None, 0);
+                Smag.Color = ScottPlot.Colors.Red;
+                Sreal.Color = ScottPlot.Colors.Blue;
+                Simag.Color = ScottPlot.Colors.Gray;
 
-                Frequency_View.AxisChange();
+                Frequency_View.Plot.PlottableList.Add(Smag);
+                Frequency_View.Plot.PlottableList.Add(Sreal);
+                Frequency_View.Plot.PlottableList.Add(Simag);
+                Frequency_View.Plot.AutoScale();
+
+
+
+                Frequency_View.Plot.XAxis.Max = freq[freq.Length / 2 - 1] / 5;
+                
+                Frequency_View.Plot.XAxis.Min = 0;
+
+                Frequency_View.Plot.YAxis.Max = max * 1.2;
+                Frequency_View.Plot.YAxis.Min = 0;
+
                 Frequency_View.Invalidate();
 
-                Frequency_View.GraphPane.AddBar("Chosen_EigenFrequency", new double[1] { Chosenfreq }, new double[1] { 10000 }, System.Drawing.Color.Black);
+                Frequency_View.Plot.Add.VerticalLine(Chosenfreq, 3, ScottPlot.Colors.Black);
             }
 
             public void Populate_EigenFrequencies(double[] mag, double[] freq, string functiontype)
@@ -556,9 +957,9 @@ namespace Pachyderm_Acoustic
 
             private void Export_Signal_Click(object sender, EventArgs e)
             {
-                SaveFileDialog SaveWave = new SaveFileDialog();
+                Eto.Forms.SaveFileDialog SaveWave = new Eto.Forms.SaveFileDialog();
 
-                SaveWave.Filter = " Wave Audio (*.wav) |*.wav";
+                SaveWave.Filters.Add(" Wave Audio (*.wav) |*.wav");
 
                 float[][] RR = new float[result_signals.Length][];
                 int maxlength = 0;
@@ -570,7 +971,7 @@ namespace Pachyderm_Acoustic
                     for (int c = 0; c < result_signals.Length; c++) RR[c][j] = (j > result_signals[c].Length - 1) ? 0 : (float)result_signals[c][j];
                 }
 
-                if (SaveWave.ShowDialog() == DialogResult.OK)
+                if (SaveWave.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == DialogResult.Ok)
                 {
                     Audio.Pach_SP.Wave.Write(RR, (int)samplefrequency, SaveWave.FileName, 24);
                 }
@@ -580,19 +981,20 @@ namespace Pachyderm_Acoustic
 
             private void EigenFrequencies_SelectedIndexChanged(object sender, EventArgs e)
             {
-                Chosenfreq = double.Parse((EigenFrequencies.Items[EigenFrequencies.SelectedIndex] as string).Split(" "[0])[0]);
+                if (EigenFrequencies.Items.Count < 1) return;
+                Chosenfreq = double.Parse((EigenFrequencies.Items[EigenFrequencies.SelectedIndex].ToString()).Split(" "[0])[0]);
                 Update_Graph(sender, e);
-                Frequency_Selection.Value = (decimal)Chosenfreq;
-                Freq_Max.Value = (decimal)(62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex));
+                Frequency_Selection.Value = Chosenfreq;
+                Freq_Max.Value = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
                 VisualPML.Checked = EigenPML.Checked;
             }
 
-            private FolderBrowserDialog FileLocation = new FolderBrowserDialog();
+            private Eto.Forms.SelectFolderDialog FileLocation = new SelectFolderDialog();
             private void SetFolder_Click(object sender, EventArgs e)
             {
-                if (FileLocation.ShowDialog() == DialogResult.OK)
+                if (FileLocation.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == DialogResult.Ok)
                 {
-                    Folder_Status.Text = FileLocation.SelectedPath;
+                    Folder_Status.Text = FileLocation.Directory;
                 }
             }
 
@@ -629,24 +1031,24 @@ namespace Pachyderm_Acoustic
                 if (Analysis_Technique.SelectedIndex == 0)
                 {
                     List<double> dir = new List<double>();
-                    if (Scat_Dir_00.Checked) dir.Add(0);
-                    if (Scat_Dir_15.Checked) dir.Add(15 * Math.PI / 180);
-                    if (Scat_Dir_30.Checked) dir.Add(30 * Math.PI / 180);
-                    if (Scat_Dir_45.Checked) dir.Add(45 * Math.PI / 180);
-                    if (Scat_Dir_60.Checked) dir.Add(60 * Math.PI / 180);
-                    if (Scat_Dir_75.Checked) dir.Add(75 * Math.PI / 180);
+                    if (Scat_Dir_00.Checked.Value) dir.Add(0);
+                    if (Scat_Dir_15.Checked.Value) dir.Add(15 * Math.PI / 180);
+                    if (Scat_Dir_30.Checked.Value) dir.Add(30 * Math.PI / 180);
+                    if (Scat_Dir_45.Checked.Value) dir.Add(45 * Math.PI / 180);
+                    if (Scat_Dir_60.Checked.Value) dir.Add(60 * Math.PI / 180);
+                    if (Scat_Dir_75.Checked.Value) dir.Add(75 * Math.PI / 180);
 
                     Source[] Src = new Source[dir.Count];
                     for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i);
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
-                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, comboBox2.SelectedIndex);
+                    double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, ScatLimit.SelectedIndex);
 
                     t += 60 / fs;
 
-                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
+                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                     Rm.partition();
-                    Empty_Scene Rm_Ctrl = new Empty_Scene((double)Air_Temp.Value, (double)Rel_Humidity.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked, true, Rm.Min(), Rm.Max());
+                    Empty_Scene Rm_Ctrl = new Empty_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
                     Rm_Ctrl.partition();
 
@@ -686,8 +1088,8 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     }
 
-                    Freq_Trackbar1.Maximum = (int)(samplefrequency / 2);
-                    Freq_Trackbar2.Maximum = (int)(samplefrequency / 2);
+                    Freq_Trackbar1.MaxValue = (int)(samplefrequency / 2);
+                    Freq_Trackbar2.MaxValue = (int)(samplefrequency / 2);
 
                     System.Numerics.Complex[][] FCtrl = new System.Numerics.Complex[len][];
                     System.Numerics.Complex[][] FExp = new System.Numerics.Complex[len][];
@@ -803,7 +1205,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.WriteLine("At end of balloon points, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
 
                     Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), Math.Sqrt(dx * dx + dy * dy + dz * dz));
-                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { (double)this.ScatMin.Value, (double)this.ScatMax.Value });
+                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     else SP.plot = SPS;
 
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
@@ -815,8 +1217,8 @@ namespace Pachyderm_Acoustic
                 }
                 else if (Analysis_Technique.SelectedIndex == 1)
                 {
-                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene((double)Rel_Humidity.Value, false, (double)Air_Temp.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked);
-                    Empty_Scene Rm_Ctrl = new Empty_Scene((double)Air_Temp.Value, (double)Rel_Humidity.Value, (double)Air_Pressure.Value, Atten_Method.SelectedIndex, EdgeFreq.Checked, true, Rm.Min(), Rm.Max());
+                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    Empty_Scene Rm_Ctrl = new Empty_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
                     Rm_Ctrl.partition();
 
@@ -825,14 +1227,6 @@ namespace Pachyderm_Acoustic
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
                     Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0) };
-                    //List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
-
-                    //for (int phi = 0; phi < 18; phi++) for (int theta = 0; theta < 36; theta++)
-                    //    {
-                    //        double anglePhi = phi * Math.PI / 18;
-                    //        double angleTheta = theta * Utilities.Numerics.PiX2 / 36;
-                    //        Rec.Add(ArrayCenter + radius * new Hare.Geometry.Point(Math.Cos(angleTheta) * Math.Cos(anglePhi), Math.Sin(angleTheta) * Math.Cos(anglePhi), Math.Sin(anglePhi)));
-                    //    }
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
 
@@ -896,7 +1290,7 @@ namespace Pachyderm_Acoustic
                     }
 
                     Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
-                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { (double)this.ScatMin.Value, (double)this.ScatMax.Value });
+                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     MicS = Mic;
                 }
                 Update_Scattering_Graph(null, null);
@@ -913,31 +1307,19 @@ namespace Pachyderm_Acoustic
 
             private void Update_Scattering_Graph(object sender, EventArgs e)
             {
+                if (Scattering == null || Scattering.Length == 0) return;
                 double max = Scattering.Max();
 
-                ScatteringGraph.GraphPane.CurveList.Clear();
-                ScatteringGraph.GraphPane.Title.Text = "Scattering Performance";
-                ScatteringGraph.GraphPane.XAxis.Title.Text = "Frequency (Hz.)";
-                ScatteringGraph.GraphPane.YAxis.Title.Text = "Scattering Coefficient";
-
-                ScatteringGraph.GraphPane.XAxis.Scale.Max = samplefrequency / 2;
-                ScatteringGraph.GraphPane.XAxis.Scale.Min = 0;
+                ScatteringGraph.Plot.Clear();
+                ScatteringGraph.Plot.XAxis.Max = samplefrequency / 2;
+                ScatteringGraph.Plot.XAxis.Min = 0;
  
-                ScatteringGraph.GraphPane.YAxis.Scale.Max = 1.0;
-                if (max > 1) ScatteringGraph.GraphPane.YAxis.Scale.Max = max;
+                ScatteringGraph.Plot.YAxis.Max = 1.0;
+                if (max > 1) ScatteringGraph.Plot.YAxis.Max = max;
 
-                ScatteringGraph.GraphPane.YAxis.Scale.Min = 0;
+                ScatteringGraph.Plot.YAxis.Min = 0;
 
-                ScatteringGraph.AxisChange();
-                ScatteringGraph.Invalidate();
-
-                double[] freq = new double[Scattering.Length];
-                for (int i = 0; i < Scattering.Length; i++)
-                {
-                    freq[i] = ((double)i / Scattering.Length * samplefrequency);
-                }
-
-                ScatteringGraph.GraphPane.AddCurve("Scattering Function", freq, Scattering, System.Drawing.Color.Red, ZedGraph.SymbolType.None);
+                ScatteringGraph.Plot.Add.Signal(Scattering, samplefrequency / (Scattering.Length * 2), ScottPlot.Colors.Red);
 
                 System.Numerics.Complex[] SWC = new System.Numerics.Complex[FFTs.Length];
                 double[] SW = new double[FFTs.Length];
@@ -953,7 +1335,6 @@ namespace Pachyderm_Acoustic
                         for (int f = F[0]; f < F[1]; f++)
                         {
                             byte[] R = new byte[8], I = new byte[8];
-                            //fftreader.Position = f * 16;
                             fftreader.Read(R, 0, 8);
                             fftreader.Read(I, 0, 8);
                             System.Numerics.Complex X = new System.Numerics.Complex(System.BitConverter.ToDouble(R, 0), System.BitConverter.ToDouble(I, 0));
@@ -1011,7 +1392,8 @@ namespace Pachyderm_Acoustic
                         SW[i] = 100 * (1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio))/(F[1] - F[0]);
                     }
                 }
-                SP.Data_in(SW.ToArray(), new double[2] { (double)ScatMin.Value, (double)ScatMax.Value }, (double)ScatteringRadius.Value);
+                SP.Enabled = true;
+                SP.Data_in(SW.ToArray(), new double[2] { scatcolorlayout.Min, scatcolorlayout.Max }, (double)ScatteringRadius.Value);
             }
 
             private void Update_LabGuides()
@@ -1024,14 +1406,17 @@ namespace Pachyderm_Acoustic
 
             private void ScatteringLab_Focus(object sender, EventArgs e)
             {
-                c.Enabled = true;
-                Update_LabGuides();
-            }
-
-            private void ScatteringLab_FocusLost(object sender, EventArgs e)
-            {
-                c.Enabled = false;
-                c.labguide = false;
+                if (TabsPrime.SelectedPage == ScatTab)
+                {
+                    c.Enabled = true;
+                    c.labguide = true;
+                    Update_LabGuides();
+                }
+                else 
+                {
+                    c.Enabled = false;
+                    c.labguide = false;
+                }
             }
 
             private void LabGuideParametersChanged(object sender, EventArgs e)
@@ -1039,51 +1424,7 @@ namespace Pachyderm_Acoustic
                 Update_LabGuides();
             }
 
-            private void Scat_ValueChanged(object sender, EventArgs e)
-            {
-                Scat_Mid.Text = ((ScatMax.Value - ScatMin.Value) / 2 + ScatMin.Value).ToString();
-                Update_Scattering_Graph(null, null);
-            }
-
-            private void Scat_Color_SelectedIndexChanged(object sender, EventArgs e)
-            {
-                Pach_Graphics.colorscale scale;
-                switch (this.Color_Selection.Text)
-                {
-                    case "R-O-Y-G-B-I-V":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                    case "Y-G-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                    case "R-O-Y":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                    case "W-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                    case "R-M-B":
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                    default:
-                        scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
-                        Scatter_Scale.Image = scale.PIC;
-                        break;
-                }
-                if (SP != null)
-                {
-                    SP.SetColorScale(scale);
-                }
-
-                Update_Scattering_Graph(null, null);
-            }
-
-            private void Scat_Octave_SelectedIndexChanged(object sender, EventArgs e)
+            private void Scat_Output_Changed(object sender, EventArgs e)
             {
                 Update_Scattering_Graph(null, null);
             }
@@ -1093,6 +1434,27 @@ namespace Pachyderm_Acoustic
                 Freq_Feedback.Text = "Frequency Selection: " + Math.Round(d_f * Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " to " + Math.Round(d_f * Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " Hz.";
                 Update_Scattering_Graph(null, null);
             }
+
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
         }
     }
 }

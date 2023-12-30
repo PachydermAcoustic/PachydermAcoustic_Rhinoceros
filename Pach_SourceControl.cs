@@ -77,11 +77,15 @@ namespace Pachyderm_Acoustic
             private Label SPL;
             private Label SWL;
             private Label label7;
+            private DynamicLayout Directional_Controls;
 
             public Pach_SourceControl()
             {
                 SC = SourceConduit.Instance;
-                StackLayout Layout = new StackLayout();
+                DynamicLayout Layout = new DynamicLayout();
+                Layout.Padding = 8;
+                Layout.DefaultPadding = 8;
+                Layout.DefaultSpacing = new Size(4, 8);
                 this.H63 = new Label();
                 this.H125 = new Label();
                 this.H250 = new Label();
@@ -94,6 +98,9 @@ namespace Pachyderm_Acoustic
                 this.SWL = new Label();
                 this.OCT = new Label();
                 this.PowerTable = new DynamicLayout();
+                this.PowerTable.Padding = 8;
+                this.PowerTable.DefaultPadding = 8;
+                this.PowerTable.DefaultSpacing = new Size(4,8);
                 this.SWL0 = new NumericUpDown();
                 this.SWL1 = new NumericUpDown();
                 this.SWL2 = new NumericUpDown();
@@ -110,6 +117,14 @@ namespace Pachyderm_Acoustic
                 this.SPL5 = new Label();
                 this.SPL6 = new Label();
                 this.SPL7 = new Label();
+                SPL0.HorizontalAlign = HorizontalAlign.Center;
+                SPL1.HorizontalAlign = HorizontalAlign.Center;
+                SPL2.HorizontalAlign = HorizontalAlign.Center;
+                SPL3.HorizontalAlign = HorizontalAlign.Center;
+                SPL4.HorizontalAlign = HorizontalAlign.Center;
+                SPL5.HorizontalAlign = HorizontalAlign.Center;
+                SPL6.HorizontalAlign = HorizontalAlign.Center;
+                SPL7.HorizontalAlign = HorizontalAlign.Center;
                 this.SrcDIR = new GroupBox();
                 this.Rotlbl = new Label();
                 this.SrcDetails = new Button();
@@ -134,14 +149,16 @@ namespace Pachyderm_Acoustic
 
                 this.SourceType.SelectedIndex = 0;
                 this.SourceType.SelectedIndexChanged += this.SourceType_DropDownClosed;
+                this.SourceType.Width = 250;
 
-                Layout.Items.Add(SourceType);
+                Layout.AddRow(SourceType);
 
                 this.OCT.Text = "Octave";
                 this.SWL.Text = "SWL";
                 this.SPL.Text = "SPL @ 1m.";
+                this.OCT.Width = 150;
                 PowerTable.AddRow(OCT, SWL, SPL);
- 
+
                 this.H63.Text = "63 Hz.";
                 this.H125.Text = "125 Hz.";
                 this.H250.Text = "250 Hz.";
@@ -211,35 +228,35 @@ namespace Pachyderm_Acoustic
                 PowerTable.AddRow(H4k, SWL6, SPL6);
                 PowerTable.AddRow(H8k, SWL7, SPL7);
 
-                Layout.Items.Add(PowerTable);
-
+                Layout.AddRow(PowerTable);
 
                 this.label7.Text = "Delay (ms.)";
                 this.Delay_ms.DecimalPlaces = 4;
                 this.Delay_ms.MaxValue = 360;
                 this.Delay_ms.ValueChanged += this.Delay_ms_ValueChanged;
+
+                PowerTable.AddRow(label7, Delay_ms);
+
+                Directional_Controls = new DynamicLayout();
+                Directional_Controls.Padding = 8;
+                Directional_Controls.DefaultPadding = 8;
+                Directional_Controls.DefaultSpacing = new Size(4,8);
+
                 this.Maximum.Text = "Max";
                 this.Maximum.Click += this.Maximum_Click;
                 this.Sensitivity.Text = "Sensitivity";
                 this.Sensitivity.Click += this.Sensitivity_Click;
 
-                DynamicLayout Del = new DynamicLayout();
-                Del.AddRow(label7, Delay_ms);
-                Del.AddRow(Sensitivity, Maximum);
-
-                Layout.Items.Add(Del);
+                Directional_Controls.AddRow(new DynamicLayout(new DynamicRow(Sensitivity, Maximum)));
 
                 this.SrcDIR.Text = "Direction";
                 this.SrcDIR.Visible = false;
-
 
                 this.Rotlbl.Text = "Rotation (Axial):";
                 this.Altlbl.Text = "Altitude:";
                 this.Azilbl.Text = "Azimuth:";
 
-                this.SrcDetails.Enabled = false;
-                this.SrcDetails.Text = "Details...";
-                this.SrcDetails.Visible = false;
+                this.SrcDetails.Text = "details...";
                 this.SrcDetails.Click += this.SrcDetails_Click;
                 this.AxialRot.MaxValue = 360;
                 this.AxialRot.ValueChanged += this.Rotation_ValueChanged;
@@ -249,16 +266,45 @@ namespace Pachyderm_Acoustic
                 this.Alt.MinValue = -90;
                 this.Alt.ValueChanged += this.Rotation_ValueChanged;
 
-                StackLayout det = new StackLayout();
-                DynamicLayout dir = new DynamicLayout(this);
-                dir.AddRow(Altlbl, Alt);
-                dir.AddRow(Azilbl, Azi);
-                dir.AddRow(Rotlbl, AxialRot);
-                det.Items.Add(dir);
-                det.Items.Add(SrcDetails);
+                DynamicLayout dir = new DynamicLayout();
+                dir.AddRow(Altlbl, null, Alt);
+                dir.AddRow(Azilbl, null, Azi);
+                dir.AddRow(Rotlbl, null, AxialRot);
+                Directional_Controls.AddRow(dir);
+                Directional_Controls.AddRow(SrcDetails);
 
-                SrcDIR.Content = det;
-                Layout.Items.Add(SrcDIR);
+                Directional_Controls.Enabled = true;
+                Directional_Controls.Visible = true;
+
+                Layout.AddRow(Directional_Controls);
+
+                this.SizeChanged += (sender, e) => {
+                    Layout.Width = this.Width;
+                    PowerTable.Width = this.Width;
+                    SourceType.Width = this.Width;
+                    SPL0.Width = (this.Width - 150) / 2;
+                    SWL0.Width = (this.Width - 150) / 2;
+                    SPL1.Width = (this.Width - 150) / 2;
+                    SWL1.Width = (this.Width - 150) / 2;
+                    SPL2.Width = (this.Width - 150) / 2;
+                    SWL2.Width = (this.Width - 150) / 2;
+                    SPL3.Width = (this.Width - 150) / 2;
+                    SWL3.Width = (this.Width - 150) / 2;
+                    SPL4.Width = (this.Width - 150) / 2;
+                    SWL4.Width = (this.Width - 150) / 2;
+                    SPL5.Width = (this.Width - 150) / 2;
+                    SWL5.Width = (this.Width - 150) / 2;
+                    SPL6.Width = (this.Width - 150) / 2;
+                    SWL6.Width = (this.Width - 150) / 2;
+                    SPL7.Width = (this.Width - 150) / 2;
+                    SWL7.Width = (this.Width - 150) / 2;
+                    Directional_Controls.Width = this.Width;
+                    Sensitivity.Width = (Width - 40) / 2;
+                    Maximum.Width = (Width - 40) / 2;
+
+                    SrcDetails.Width = this.Width - 40;
+                    Invalidate();
+                };
 
                 this.Content = Layout;
             }
@@ -295,25 +341,13 @@ namespace Pachyderm_Acoustic
                         }
                         if (Mode == "0" || Mode == "1")
                         {
-                            Maximum.Enabled = false;
-                            Maximum.Visible = false;
-                            Sensitivity.Enabled = false;
-                            Sensitivity.Visible = false;
-                            SrcDIR.Enabled = false;
-                            SrcDIR.Visible = false;
-                            SrcDetails.Enabled = false;
-                            SrcDetails.Visible = false;
+                            Directional_Controls.Enabled = false;
+                            Directional_Controls.Visible = false;
                         }
                         else
                         {
-                            Maximum.Enabled = true;
-                            Maximum.Visible = true;
-                            Sensitivity.Enabled = true;
-                            Sensitivity.Visible = true;
-                            SrcDIR.Enabled = true;
-                            SrcDIR.Visible = true;
-                            SrcDetails.Enabled = true;
-                            SrcDetails.Visible = true;
+                            Directional_Controls.Enabled = true;
+                            Directional_Controls.Visible = true;
                         }
 
                         SourceType.SelectedIndex = int.Parse(Mode);
@@ -345,7 +379,7 @@ namespace Pachyderm_Acoustic
 
                         string delay = Objects[0].Geometry.GetUserString("Delay");
                         if (!string.IsNullOrEmpty(delay))
-                        {                            
+                        {
                             Delay_ms.Value = double.Parse(delay);
                         }
                         else
@@ -385,19 +419,19 @@ namespace Pachyderm_Acoustic
             private void SWL_ValueChanged(object sender, System.EventArgs e)
             {
                 double SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL0.Value), 12);
-                SPL0.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL0.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL1.Value), 12);
-                SPL1.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL1.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL2.Value), 12);
-                SPL2.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL2.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL3.Value), 12);
-                SPL3.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL3.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL4.Value), 12);
-                SPL4.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL4.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL5.Value), 12);
-                SPL5.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL5.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL6.Value), 12);
-                SPL6.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))),2).ToString();
+                SPL6.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL7.Value), 12);
                 SPL7.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 Commit();
@@ -426,7 +460,7 @@ namespace Pachyderm_Acoustic
                     SrcDetails.Visible = false;
                     SrcDIR.Enabled = false;
                     SrcDIR.Visible = false;
-                    //Commit();
+                    Commit();
                     return;
                 }
 
@@ -755,7 +789,15 @@ namespace Pachyderm_Acoustic
                 get { return Properties.Resources.PIcon1; }
             }
 
-            public override object PageControl => Source_Props ?? (Source_Props = new Pach_SourceControl()); 
+             public override object PageControl
+            {
+                get
+                {
+                    if (Source_Props == null) 
+                        Source_Props = new Pach_SourceControl();
+                    return Source_Props;
+                }
+            }
 
             public List<RhinoObject> GetSelected()
             {
@@ -792,7 +834,6 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            override 
         }
     }
 }

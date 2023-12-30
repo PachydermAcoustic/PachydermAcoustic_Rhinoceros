@@ -737,7 +737,7 @@ namespace Pachyderm_Acoustic
 
                 Material_Mode(false);
 
-                for (int i = 0; i < AD.Polar_Plot().Series.Count; i++) this.SmartMat_Display.Series.Add(AD.Polar_Plot().Series[i]);
+                //for (int i = 0; i < AD.Polar_Plot().Series.Count; i++) this.SmartMat_Display.Series.Add(AD.Polar_Plot().Series[i]);
             }
 
             private void Commit_Layer_Acoustics()
@@ -1193,7 +1193,7 @@ namespace Pachyderm_Acoustic
             private void Abs_Designer_Click(object sender, EventArgs e)
             {
                 Pach_Absorption_Designer AD = new Pach_Absorption_Designer();
-                AD.ShowDialog();
+                AD.Show();
 
                 switch (AD.Result)
                 {

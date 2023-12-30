@@ -106,8 +106,9 @@ namespace Pachyderm_Acoustic
                         {
                             break;
                         }
-                        System.Threading.Thread.Sleep(3000);
                         Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                        Rhino.RhinoApp.Wait();
+                        System.Threading.Thread.Sleep(3000);
                     } while (true);
 
                     Sim.Combine_ThreadLocal_Results();

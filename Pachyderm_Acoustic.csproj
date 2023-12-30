@@ -89,11 +89,12 @@
       <HintPath>..\CLF_Read_v2\CLF_Read\bin\Release\CLF_Read.dll</HintPath>
     </Reference>
     <Reference Include="CustomMarshalers" />
-    <Reference Include="Eto">
+    <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Rhino 7\System\Eto.dll</HintPath>
     </Reference>
-    <Reference Include="LibOptimization, Version=1.12.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\LibOptimization.1.12.1\lib\net40\LibOptimization.dll</HintPath>
+    <Reference Include="LibOptimization, Version=1.14.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\LibOptimization.1.14.0\lib\net48\LibOptimization.dll</HintPath>
     </Reference>
     <Reference Include="MathNet.Numerics, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\MathNet.Numerics.5.0.0\lib\net48\MathNet.Numerics.dll</HintPath>
@@ -114,11 +115,8 @@
       <HintPath>..\..\..\..\..\..\Program Files\Rhino 7\System\RhinoCommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ScottPlot, Version=4.1.68.0, Culture=neutral, PublicKeyToken=86698dc10387c39e, processorArchitecture=MSIL">
-      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ScottPlot.4.1.68\lib\net462\ScottPlot.dll</HintPath>
-    </Reference>
-    <Reference Include="ScottPlot.Eto, Version=4.1.68.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\ScottPlot.Eto.4.1.68\lib\netstandard2.0\ScottPlot.Eto.dll</HintPath>
+    <Reference Include="SkiaSharp, Version=2.88.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.2.88.6\lib\net462\SkiaSharp.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -177,7 +175,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auralisation_Conduit.cs" />
-    <Compile Include="Panel_FreqSlider.cs" />
+    <Compile Include="Classes_UI Components.cs" />
+    <Compile Include="Convergence_Progress.cs" />
+    <Compile Include="Pach_Absorption_Designer.cs" />
+    <Compile Include="Pach_Absorption_Designer.Designer.cs">
+      <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Pach_Properties_Panel.cs" />
     <Compile Include="Pach_Props_Page.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -186,16 +190,12 @@
     </Compile>
     <Compile Include="Rhino_RC_Scene.cs" />
     <Compile Include="Classes_RCVoxel.cs" />
-    <Compile Include="Pach_MapCustom.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_MapCustom.Designer.cs">
-      <DependentUpon>Pach_MapCustom.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_MapCustom.cs" />
     <Compile Include="Rhino_Absorption_Analytics.cs" />
     <Compile Include="Rhino_Compact_FDTD.cs" />
     <Compile Include="Rhino_Pach_Tools.cs" />
     <Compile Include="SphereConduit.cs" />
+    <Compile Include="VisualizeGraph.cs" />
     <Compile Include="VoxelConduit.cs" />
     <Compile Include="Pach_Auralisation.cs">
       <SubType>UserControl</SubType>
@@ -205,12 +205,7 @@
     </Compile>
     <Compile Include="Pachyderm_Splash.cs" />
     <Compile Include="Pach_Special_Command.cs" />
-    <Compile Include="Pach_FDTDControl.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_FDTDControl.Designer.cs">
-      <DependentUpon>Pach_FDTDControl.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_FDTDControl.cs" />
     <Compile Include="Pach_SourceControl.cs" />
     <Compile Include="Pach_Visual_Control.cs" />
     <Compile Include="Rhino_Balloons.cs" />
@@ -238,12 +233,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Pach_Mapping_Control.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Mapping_Control.Designer.cs">
-      <DependentUpon>Pach_Mapping_Control.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_Mapping_Control.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -273,6 +263,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Pach_Absorption_Designer.resx">
+      <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Pach_Auralisation.resx">
       <DependentUpon>Pach_Auralisation.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -284,13 +277,6 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Mapping_Control.resx">
-      <DependentUpon>Pach_Mapping_Control.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_FDTDControl.resx">
-      <DependentUpon>Pach_FDTDControl.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
@@ -333,6 +319,14 @@
       <Project>{95032bc9-057a-42e1-a698-82a64db1a360}</Project>
       <Name>Pachyderm_Acoustic_Universal</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj">
+      <Project>{1c731aba-d5d4-4eec-850a-feb62bc0288a}</Project>
+      <Name>ScottPlot.Eto</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj">
+      <Project>{a1060104-3e2f-438e-b8f6-605c5a5f5542}</Project>
+      <Name>ScottPlot</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -349,11 +343,13 @@ Copy "$(ProjectDir)Resources\libfftw3-3.dll" "$(TargetDir)"</PostBuildEvent>
     </PreBuildEvent>
   </PropertyGroup>
   <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Platform.macOS.2.8.1\build\Eto.Platform.macOS.targets')" />
-  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets')" />
+  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.macOS.2.88.6\build\net462\SkiaSharp.NativeAssets.macOS.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.macOS.2.88.6\build\net462\SkiaSharp.NativeAssets.macOS.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\Eto.Forms.2.5.11\build\Eto.Forms.targets'))" />
+    <Error Condition="!Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.macOS.2.88.6\build\net462\SkiaSharp.NativeAssets.macOS.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.macOS.2.88.6\build\net462\SkiaSharp.NativeAssets.macOS.targets'))" />
+    <Error Condition="!Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.Win32.2.88.6\build\net462\SkiaSharp.NativeAssets.Win32.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.Win32.2.88.6\build\net462\SkiaSharp.NativeAssets.Win32.targets'))" />
   </Target>
+  <Import Project="..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.Win32.2.88.6\build\net462\SkiaSharp.NativeAssets.Win32.targets" Condition="Exists('..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\SkiaSharp.NativeAssets.Win32.2.88.6\build\net462\SkiaSharp.NativeAssets.Win32.targets')" />
 </Project>

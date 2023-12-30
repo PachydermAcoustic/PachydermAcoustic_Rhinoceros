@@ -37,14 +37,14 @@ namespace Pachyderm_Acoustic
         public class PachydermAc_PlugIn : Rhino.PlugIns.PlugIn
         {
             public static Guid Instance_ID = Guid.NewGuid();
-            public Pach_Properties_Panel Pach_Props;
+            public Pach_Properties Pach_Props;
 
             public PachydermAc_PlugIn()
             {
                 new SourceConduit();
                 new ReceiverConduit();
                 new CellConduit();
-                Pach_Props = Pach_Properties_Panel.Instance;
+                Pach_Props = Pach_Properties.Instance;
                 Audio.Pach_SP.Initialize_FFTW();
                 System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
                 Instance = this;

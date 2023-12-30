@@ -46,15 +46,15 @@ namespace Pachyderm_Acoustic
             internal Label FrRate_Label;
             internal DropDown VisualizationSelect;
             internal Label VisLabel;
-            internal NumericUpDown Frame_Rate;
+            internal NumericStepper Frame_Rate;
             internal Label SecLabel;
-            internal NumericUpDown Seconds;
+            internal NumericStepper Seconds;
             internal Label COTimeLabel;
-            internal NumericUpDown CO_TIME;
+            internal NumericStepper CO_TIME;
             internal Label AirTemp;
-            internal NumericUpDown Air_Temp;
+            internal NumericStepper Air_Temp;
             internal Label RayctLabel;
-            internal NumericUpDown RT_Count;
+            internal NumericStepper RT_Count;
             internal Button ForwButton;
             internal Label Time_Preview;
             internal Button Preview;
@@ -79,15 +79,15 @@ namespace Pachyderm_Acoustic
                 this.VisualizationSelect = new ComboBox();
                 this.SimSetBox = new GroupBox();
                 this.FrRate_Label = new Label();
-                this.Frame_Rate = new NumericUpDown();
+                this.Frame_Rate = new NumericStepper();
                 this.SecLabel = new Label();
-                this.Seconds = new NumericUpDown();
+                this.Seconds = new NumericStepper();
                 this.COTimeLabel = new Label();
-                this.CO_TIME = new NumericUpDown();
+                this.CO_TIME = new NumericStepper();
                 this.AirTemp = new Label();
-                this.Air_Temp = new NumericUpDown();
+                this.Air_Temp = new NumericStepper();
                 this.RayctLabel = new Label();
-                this.RT_Count = new NumericUpDown();
+                this.RT_Count = new NumericStepper();
                 this.SelectOutput = new Label();
                 this.Folder_Status = new TextBox();
                 this.OpenFolder = new Button();
@@ -96,7 +96,7 @@ namespace Pachyderm_Acoustic
                 this.colorcontrol = new Color_Output_Control();
                 this.OutputFolder = new GroupBox();
 
-                colorcontrol.Refresh_Preview += On_Output_Change;
+                colorcontrol.Update += On_Output_Change;
 
                 this.SimSetBox.Text = "Simulation Settings";
 
@@ -107,7 +107,7 @@ namespace Pachyderm_Acoustic
                 this.VisualizationSelect.SelectedIndex = 0;
                 this.VisualizationSelect.Width = 250;
 
-                TableLayout TimeControls = new TableLayout();
+                DynamicLayout TimeControls = new DynamicLayout();
                 this.FrRate_Label.Text = "Frame Rate";
                 this.Frame_Rate.MaxValue = 80;
                 this.Frame_Rate.MinValue = 15;
@@ -204,7 +204,7 @@ namespace Pachyderm_Acoustic
                 layout.DefaultSpacing = new Size(0, 20);
                 this.Content = layout;
 
-                this.SizeChanged += update;
+                //this.SizeChanged += update;
 
             }
 
@@ -565,177 +565,5 @@ namespace Pachyderm_Acoustic
                 return RhinoRays[Index];
             }
         }
-    }
-
-    public class Color_Output_Control : DynamicLayout
-    {
-        private Label OctaveLabel;
-        internal DropDown Octave;
-        private Label ColorLabel;
-        internal DropDown Color_Selection;
-        private NumericUpDown Param_Max;
-        private Label Param1_4;
-        private Label Param1_2;
-        private Label Param3_4;
-        private NumericUpDown Param_Min;
-        ImageView Param_Scale;
-        public Color_Output_Control()
-        {
-            Refresh_Preview += OnRefresh;
-            this.Height = 300;
-            this.Width = 200;
-            this.Octave = new DropDown();
-            this.OctaveLabel = new Label();
-            this.ColorLabel = new Label();
-            this.Color_Selection = new DropDown();
-            this.Param1_4 = new Label();
-            this.Param1_2 = new Label();
-            this.Param_Min = new NumericUpDown();
-            this.Param_Max = new NumericUpDown();
-            this.Param3_4 = new Label();
-
-            this.OctaveLabel.Text = "Octave Band Selection";
-            this.Octave.Items.Add("62.5 Hz.");
-            this.Octave.Items.Add("125 Hz.");
-            this.Octave.Items.Add("250 Hz.");
-            this.Octave.Items.Add("500 Hz.");
-            this.Octave.Items.Add("1 kHz.");
-            this.Octave.Items.Add("2 kHz.");
-            this.Octave.Items.Add("4 kHz.");
-            this.Octave.Items.Add("8 kHz.");
-            this.Octave.Items.Add("Summation: All Octaves");
-            this.Octave.SelectedIndex = 8;
-
-            this.ColorLabel.Text = "Color Selection";
-            this.Color_Selection.Items.Add("R-O-Y-G-B-I-V");
-            this.Color_Selection.Items.Add("R-O-Y");
-            this.Color_Selection.Items.Add("Y-G-B");
-            this.Color_Selection.Items.Add("W-B");
-            this.Color_Selection.Items.Add("R-B");
-            this.Color_Selection.SelectedIndex = 0;
-            this.Color_Selection.SelectedValueChanged += Color_Selection_SelectedIndexChanged;
-
-            this.Param1_4.Text = "00";
-            this.Param1_2.Text = "00";
-            this.Param3_4.Text = "00";
-            this.Param_Min.DecimalPlaces = 1;
-            this.Param_Max.DecimalPlaces = 1;
-            this.Param_Max.MaxValue = 200;
-            this.Param_Max.Value = 120;
-            this.Param_Max.ValueChanged += Param_Max_ValueChanged;
-            this.Param_Min.ValueChanged += Param_Max_ValueChanged;
-
-            this.Param_Scale = new ImageView();
-            Param_Scale.Height = 300;
-            Param_Scale.Width = (Width / 5);
-
-            scale = new Pach_Graphics.HSV_colorscale(300, Math.Max(Width / 5, 50), 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-
-            Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-
-            StackLayout ControlCluster = new StackLayout();
-            ControlCluster.Spacing = 12;
-            ControlCluster.Items.Add(OctaveLabel);
-            ControlCluster.Items.Add(Octave);
-            ControlCluster.Items.Add(ColorLabel);
-            ControlCluster.Items.Add(Color_Selection);
-            ControlCluster.Width = 250;
-
-            StackLayout Scale_Labels = new StackLayout();
-            Scale_Labels.Items.Add(Param_Max);
-            Scale_Labels.Items.Add(null);
-            Scale_Labels.Items.Add(Param3_4);
-            Scale_Labels.Items.Add(null);
-            Scale_Labels.Items.Add(Param1_2);
-            Scale_Labels.Items.Add(null);
-            Scale_Labels.Items.Add(Param1_4);
-            Scale_Labels.Items.Add(null);
-            Scale_Labels.Items.Add(Param_Min);
-            Scale_Labels.HorizontalContentAlignment = HorizontalAlignment.Right;
-            Scale_Labels.AlignLabels = true;
-            this.AddRow(ControlCluster, null, Scale_Labels, Param_Scale);
-            //this.DefaultSpacing = new Size(4,4);
-
-            On_Output_Changed += Param_Max_ValueChanged;
-            On_Output_Changed(this, new System.EventArgs());
-        }
-
-        protected override void OnSizeChanged(System.EventArgs e)
-        {
-            base.OnSizeChanged(e);
-            Width = this.Parent.Width;
-            Height = 300;
-            Invalidate();
-        }
-
-        public EventHandler On_Output_Changed;
-        public EventHandler Refresh_Preview;
-        private void Param_Max_ValueChanged(object sender, System.EventArgs e)
-        {
-            this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
-            this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString() + "---";
-            this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
-            Color_Selection_SelectedIndexChanged(sender, e);
-        }
-
-        public Pach_Graphics.colorscale scale;
-
-        private void Color_Selection_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            switch (this.Color_Selection.SelectedValue.ToString())
-            {
-                case "R-O-Y-G-B-I-V":
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-                case "Y-G-B":
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-                case "R-O-Y":
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-                case "W-B":
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-                case "R-M-B":
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-                default:
-                    scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, false, 12);
-                    Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
-                    break;
-            }
-            Refresh_Preview(sender, e);
-        }
-
-        public double Max
-        {
-            get { return Param_Max.Value; }
-        }
-
-        public double Min
-        {
-            get { return Param_Min.Value; }
-        }
-
-        public int Freq_Band_ID
-        {
-            get { return Octave.SelectedIndex; }
-        }
-
-        private void OnRefresh(object sender, System.EventArgs e)
-        {
-
-        }
-
-        public colorscale Scale
-        {
-            get { return scale; }
-        }
-
     }
 }
