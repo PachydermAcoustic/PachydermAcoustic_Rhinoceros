@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -729,7 +729,7 @@ namespace Pachyderm_Acoustic
 
                 if (Source != null)
                 {
-                    SourceList.Populate(Source, Map);
+                    SourceList.Populate(null, null, Map);
 
                     if (SavePath != null) Utilities.FileIO.Write_pachm(SavePath, Map);
                 }
@@ -1080,8 +1080,6 @@ namespace Pachyderm_Acoustic
                 if (WC != null) WC.SetColorScale(color_control.Scale, new double[2] { color_control.Min, color_control.Max });
             }
 
-
-
             private void Calculate_Map_Click(object sender, EventArgs e)
             {
                 Create_Map(false);
@@ -1096,27 +1094,39 @@ namespace Pachyderm_Acoustic
 
             private void SaveDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                if (Map != null)
+                Eto.Forms.OpenFileDialog of = new Eto.Forms.OpenFileDialog();
+                of.CurrentFilter = ".pachm";
+                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm|" + "All Files|");
+                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Ok)
                 {
-                    Utilities.FileIO.Write_pachm(Map);
+                    if (Map != null)
+                    {
+                        Utilities.FileIO.Write_pachm(of.FileName, Map);
+                    }
                 }
             }
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                PachMapReceiver[] RT_IN = new PachMapReceiver[0];
-                if (!Utilities.FileIO.Read_pachm(ref RT_IN)) return;
-                //foreach (PachMapReceiver p in RT_IN) p.Correction(80000);
-
-                Map = RT_IN;
-                SourceList.Clear();
-                for (int i = 0; i < Map.Length; i++)
+                Eto.Forms.OpenFileDialog of = new Eto.Forms.OpenFileDialog();
+                of.CurrentFilter = ".pachm";
+                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm|" + "All Files|");
+                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Ok)
                 {
-                    SourceList.Populate(Map);
-                    //SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
-                }
+                    PachMapReceiver[] RT_IN = new PachMapReceiver[0];
+                    if (!Utilities.FileIO.Read_pachm(of.FileName,ref RT_IN)) return;
+                    //foreach (PachMapReceiver p in RT_IN) p.Correction(80000);
 
-                WC = new WaveConduit(color_control.Scale, new double[] { Current_SPLMin, Current_SPLMax });
+                    Map = RT_IN;
+                    SourceList.Clear();
+                    //for (int i = 0; i < Map.Length; i++)
+                    //{
+                    SourceList.Populate(null, null, Map);
+                    //SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
+                    //}
+
+                    WC = new WaveConduit(color_control.Scale, new double[] { Current_SPLMin, Current_SPLMax });
+                }
             }
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)
@@ -1509,7 +1519,10 @@ namespace Pachyderm_Acoustic
                     if (DR == DialogResult.Yes)
                     {
                         Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
-                        for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(); //this.Map[i].Create_Pressure(Map[i].SWL);
+                        ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                        VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                        for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
+                        VB.Close();
                     }
                 }
             }

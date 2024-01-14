@@ -253,7 +253,7 @@ namespace Pachyderm_Acoustic
                         {
                             if (!Custom_Method)
                             {
-                                Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
+                                Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
                                 Complete = false;
                                 return;
                             }
@@ -280,8 +280,8 @@ namespace Pachyderm_Acoustic
                             id++;
                             if (meshes[t].Faces.Count < 1)
                             {
-                                Status = System.Windows.Forms.MessageBox.Show("A surface in the model does not generate a rendermesh. This surface will not be represented in the simulation. It is recommended that you cancel this simulation and repair the affected surface. It can be located in shaded view by finding the surface which generates boundary and isoparm lines, but does not generate a fill. It can sometimes be repaired by running the command 'ShrinkTrimmedSurface'. If this does not work, it will have to be replaced by some means which would generate a proper surface.", "Surface without Rendermesh", System.Windows.Forms.MessageBoxButtons.OKCancel);
-                                if (Status == System.Windows.Forms.DialogResult.Cancel)
+                                Eto.Forms.DialogResult Status = Eto.Forms.MessageBox.Show("A surface in the model does not generate a rendermesh. This surface will not be represented in the simulation. It is recommended that you cancel this simulation and repair the affected surface. It can be located in shaded view by finding the surface which generates boundary and isoparm lines, but does not generate a fill. It can sometimes be repaired by running the command 'ShrinkTrimmedSurface'. If this does not work, it will have to be replaced by some means which would generate a proper surface.", "Surface without Rendermesh", Eto.Forms.MessageBoxButtons.OKCancel);
+                                if (Status == Eto.Forms.DialogResult.Cancel)
                                 {
                                     Complete = false;
                                     return;
@@ -428,7 +428,7 @@ namespace Pachyderm_Acoustic
                                     continue;
                                 case EdgeAdjacency.NonManifold:
                                     //Ignore tnis edge, but alert the user...
-                                    System.Windows.Forms.MessageBox.Show("Non-Manifold Edges. Could you please send a copy of this model to Pach.Acoustic.Sim@gmail.com? Also - if you know how you built this, please don't do it again...");
+                                    Eto.Forms.MessageBox.Show("Non-Manifold Edges. Could you please send a copy of this model to Pach.Acoustic.Sim@gmail.com? Also - if you know how you built this, please don't do it again...");
                                     break;
                             }
                         }
@@ -967,7 +967,7 @@ namespace Pachyderm_Acoustic
                             {
                                 if (!Custom_Method)
                                 {
-                                    Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
+                                    Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
                                     Complete = false;
                                     return;
                                 }
@@ -1005,7 +1005,7 @@ namespace Pachyderm_Acoustic
                             {
                                 if (!Custom_Method)
                                 {
-                                    Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
+                                    Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
                                     Complete = false;
                                     return;
                                 }
@@ -1096,7 +1096,7 @@ namespace Pachyderm_Acoustic
                         {
                             if (!Custom_Method)
                             {
-                                Status = System.Windows.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", System.Windows.Forms.MessageBoxButtons.OK);
+                                Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
                                 Complete = false;
                                 return;
                             }

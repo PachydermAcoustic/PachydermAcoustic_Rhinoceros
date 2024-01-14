@@ -1,5 +1,4 @@
-﻿using Eto.Forms;
-using Pachyderm_Acoustic.Environment;
+﻿using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Pach_Graphics;
 using System;
 using System.Collections.Generic;
@@ -8,6 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
+using Rhino.Runtime.RhinoAccounts;
+using System.Diagnostics.Eventing.Reader;
+using Rhino.UI;
 
 namespace Pachyderm_Acoustic
 {
@@ -19,7 +21,11 @@ namespace Pachyderm_Acoustic
             private ButtonMenuItem DelayMod;
             private ButtonMenuItem PowerMod;
             private List<string> Srcs;
-            PachMapReceiver[] Map;
+            Pachyderm_Acoustic.Direct_Sound[] DS = null;
+            Pachyderm_Acoustic.ImageSourceData[] IS = null;
+            Pachyderm_Acoustic.Environment.Receiver_Bank[] Rec;
+            
+            public double[] Delay;
             public event EventHandler Update;
             List<CheckBox> SrcBoxes = new List<CheckBox>();
 
@@ -39,44 +45,55 @@ namespace Pachyderm_Acoustic
                 Clear();
             }
 
-            public void Populate(Pachyderm_Acoustic.Environment.Source[] Sourceobjs, PachMapReceiver[] SimResults)
-            {
-                Map = SimResults;
-                SrcBoxes.Clear();
-                DynamicLayout SrcLayout = new DynamicLayout();
+            //public void Populate(Pachyderm_Acoustic.Environment.Source[] Sourceobjs, Pachyderm_Acoustic.Environment.Receiver_Bank[] SimResults)
+            //{
+            //    DS = null;
+            //    IS = null;
+            //    Rec = SimResults;
+            //    SrcBoxes.Clear();
+            //    DynamicLayout SrcLayout = new DynamicLayout();
+            //    Delay = new double[Sourceobjs.Length];
 
-                foreach (Source s in Sourceobjs)
-                {
-                    CheckBox src = new CheckBox();
-                    src.Text = String.Format("S{0}-", s.Source_ID()) + s.Type();
-                    src.MouseUp += update_proxy;
-                    SrcBoxes.Add(src);
-                    SrcLayout.AddRow(src);
-                }
-                this.Content = SrcLayout;
-            }
+            //    foreach (Source s in Sourceobjs)
+            //    {
+            //        CheckBox src = new CheckBox();
+            //        src.Text = String.Format("S{0}-", s.Source_ID()) + s.Type();
+            //        src.MouseUp += update_proxy;
+            //        SrcBoxes.Add(src);
+            //        SrcLayout.AddRow(src);
+            //    }
+            //    this.Content = SrcLayout;
+            //}
 
             private void update_proxy(object sender, EventArgs e)
             {
                 Update(sender, e);
             }
 
-            public void Populate(PachMapReceiver[] SimResults)
+            public void Populate(Direct_Sound[] Direct = null, ImageSourceData[] ISdata = null, Receiver_Bank[] Receiver = null)
             {
-                Map = SimResults;
+                if (Direct == null && Receiver == null) { throw new Exception("Misuse of Source list component - must have eithe direct sound or a raytracing receiver."); }
+                DS = Direct;
+                IS = ISdata;
+                Rec = Receiver;
                 SrcBoxes.Clear();
                 DynamicLayout SrcLayout = new DynamicLayout();
+                int ct = (Direct != null) ? Direct.Length : Receiver.Length;
+                Delay = new double[ct];
 
-                for (int i = 0; i < SimResults.Length; i++)
+                for (int i = 0; i < ct; i++)
                 {
+                    string type = (Direct != null) ? Direct[i].type : Receiver[i].SrcType;
+                    Delay[i] = (Direct != null) ? Direct[i].Delay_ms : Receiver[i].delay_ms;
+
                     CheckBox src = new CheckBox();
                     src.MouseUp += update_proxy;
-                    src.Text = String.Format("S{0}-", i) + Map[i].SrcType;
+                    src.Text = String.Format("S{0}-", i) + type;
+                    SrcBoxes.Add(src);
                     SrcLayout.AddRow(src);
                 }
                 this.Content = SrcLayout;
             }
-
 
             public void Clear()
             {
@@ -87,22 +104,6 @@ namespace Pachyderm_Acoustic
                 Empty.AddRow(Nothing);
                 this.Content = Empty;
             }
-
-            //public void Populate(List<string> SourceNames, PachMapReceiver[] SimResults)
-            //{
-            //    Map = SimResults;
-            //    Srcs = SourceNames;
-            //    Sources.Menu.Items.Clear();
-            //    foreach (string name in SourceNames)
-            //    {
-            //        CheckMenuItem src = new CheckMenuItem();
-            //        src.Text = name;
-            //        Sources.Menu.Items.Add(src);
-            //    }
-
-            //    Sources.Menu.Items.Add(PowerMod);
-            //    Sources.Menu.Items.Add(DelayMod);
-            //}
 
             public List<int> SelectedSources()
             {
@@ -119,15 +120,15 @@ namespace Pachyderm_Acoustic
             private void DelayMod_Click(object sender, System.EventArgs e)
             {
                 //Interface for time selection...
-
                 List<int> SrcID = SelectedSources();
 
-                double t = Map[SrcID[0]].delay_ms;
+                double t = Rec[SrcID[0]].delay_ms;
                 Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
 
                 foreach (int id in SrcID)
                 {
-                    Map[id].delay_ms = t;
+                    Delay[id] = t;
+                    if (Rec != null) Rec[id].delay_ms = t;
                 }
 
                 Update(this, EventArgs.Empty);
@@ -137,19 +138,187 @@ namespace Pachyderm_Acoustic
             {
                 List<int> SrcID = SelectedSources();
 
+
                 if (SrcID.Count < 1) return;
-                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Map[SrcID[0]].SWL);
-                mod.ShowDialog();
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Rec[SrcID[0]].SWL);
+                mod.ShowModal();
                 if (mod.accept)
                 {
                     foreach (int i in SrcID)
                     {
-                        double[] factor = Map[i].PowerModFactor(mod.Power);
-                        Map[i].Set_Power(factor);
+                        double[] factor = null;
+                        if (DS != null)
+                        {
+                            factor = DS[i].Set_Power(mod.Power);
+                            DS[i].Create_Filter();
+                        }
+                        if (Rec != null)
+                        {
+                            if (factor == null) factor = Rec[i].PowerModFactor(mod.Power);
+                            Rec[i].Set_Power(factor);
+                            Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Creating Filter...");
+                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                            Rec[i].Create_Filter(VB);
+                            VB.Close();
+                        }
+                        if(IS != null)
+                        {
+                            Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
+                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc ,Rhino.UI.RhinoEtoApp.MainWindow);
+                            IS[i].Set_Power(factor);
+                            IS[i].Create_Filter(mod.Power, 4096, VB);
+                            VB.Close();
+                        }
+                        
                     }
                 }
                 Update(this, EventArgs.Empty);
             }
+
+            public void Set_Src_Checked(int index, bool Checked)
+            {
+                SrcBoxes[index].Checked = Checked;
+                this.Invalidate();
+            }
+
+            public int Count
+            { get { return SrcBoxes.Count; } }
+        }
+
+        public class PathListBox : Scrollable
+        {
+            private ContextMenu PathOperations;
+            private ButtonMenuItem CheckAll;
+            private ButtonMenuItem UncheckAll;
+            private ButtonMenuItem SortArrival;
+            private ButtonMenuItem SortOrder;
+            List<Deterministic_Reflection> IS_Paths;
+            public event EventHandler Update;
+            List<CheckBox> PathBoxes = new List<CheckBox>();
+
+            public PathListBox()
+            {
+                PathOperations = new ContextMenu();
+                CheckAll = new ButtonMenuItem();
+                UncheckAll = new ButtonMenuItem();
+                SortArrival = new ButtonMenuItem();
+                SortOrder = new ButtonMenuItem();
+                CheckAll.Text = "Check all...";
+                UncheckAll.Text = "Uncheck all...";
+                SortArrival.Text = "Sort by arrival time...";
+                SortOrder.Text = "Sort by order...";
+                CheckAll.Click += ISCheckAll_Click;
+                UncheckAll.Click += ISUncheckAll_Click;
+                SortArrival.Click += SortPathsArrival;
+                SortOrder.Click += SortPathsOrder;
+                PathOperations.Items.Add(UncheckAll);
+                PathOperations.Items.Add(CheckAll);
+                PathOperations.Items.Add(SortArrival);
+                PathOperations.Items.Add(SortOrder);
+                this.ContextMenu = PathOperations;
+                this.MouseUp += update_proxy;
+
+                Clear();
+            }
+
+            public void Populate(ImageSourceData[] SimResults, List<int> source, int receiver)
+            {
+                if (IS_Paths == null) IS_Paths = new List<Deterministic_Reflection>(); 
+                IS_Paths.Clear();
+
+                foreach (int s in source)
+                {
+                    for (int i = 0; i < SimResults.Length; i++)
+                    {
+                        IS_Paths.AddRange(SimResults[i].Paths[receiver]);
+                    }
+                }
+
+                Populate();
+                SortPathsArrival(this, null);
+            }
+
+            private void Populate()
+            {
+                DynamicLayout SrcLayout = new DynamicLayout();
+                PathBoxes.Clear();
+                foreach (Deterministic_Reflection s in IS_Paths)
+                {
+                    CheckBox path = new CheckBox();
+                    path.Text = s.ToString();
+                    PathBoxes.Add(path);
+                    SrcLayout.AddRow(path);
+                }
+                this.Content = SrcLayout;
+            }
+
+            private void update_proxy(object sender, EventArgs e)
+            {
+                Update(sender, e);
+            }
+
+            public void Clear()
+            {
+                PathBoxes = new List<CheckBox>();
+                DynamicLayout Empty = new DynamicLayout();
+                Label Nothing = new Label();
+                Nothing.Text = "No Source Objects Present...";
+                Empty.AddRow(Nothing);
+                this.Content = Empty;
+            }
+
+            public List<Deterministic_Reflection> SelectedPaths()
+            {
+                List<Deterministic_Reflection> paths = new List<Deterministic_Reflection>();
+                if (PathBoxes == null || PathBoxes.Count == 0) return new List<Deterministic_Reflection>();
+
+                for (int i = 0; i < PathBoxes.Count; i++)
+                {
+                    if (PathBoxes[i].Checked.Value) paths.Add(IS_Paths[i]);
+                }
+                return paths;
+            }
+
+            private void SortPathsArrival(object sender, EventArgs e)
+            {
+                //Sort by time.
+                Deterministic_Reflection[] DR = IS_Paths.Cast<Deterministic_Reflection>().ToArray();
+                DR = DR.OrderBy<Deterministic_Reflection, double>(i => (i.TravelTime)).ToArray();
+                IS_Paths.Clear();
+                IS_Paths.AddRange(DR);
+                Populate();
+            }
+
+            private void SortPathsOrder(object Sender, EventArgs e)
+            {
+                //Sort by order.
+                Deterministic_Reflection[] DR = IS_Paths.Cast<Deterministic_Reflection>().ToArray();
+                DR = DR.OrderBy<Deterministic_Reflection, int>(i => (i.Reflection_Sequence.Length)).ToArray();
+                IS_Paths.Clear();
+                IS_Paths.AddRange(DR);
+                Populate();
+            }
+
+            private void ISCheckAll_Click(object sender, EventArgs e)
+            {
+                for (int i = 0; i < PathBoxes.Count; i++) SetItemChecked(i, true);
+                Update(this, null);
+                //IS_Path_Box_MouseUp(null, null);
+            }
+
+            private void ISUncheckAll_Click(object sender, EventArgs e)
+            {
+                for (int i = 0; i < PathBoxes.Count; i++) SetItemChecked(i, false);
+                Update(this, null);
+                //IS_Path_Box_MouseUp(null, null);
+            }
+
+            public void SetItemChecked(int index, bool Checked)
+            {
+                PathBoxes[index].Checked = Checked;
+            }
+
+            public int Count {  get { return PathBoxes.Count; } }
         }
 
         public class Medium_Properties_Group : GroupBox
@@ -547,62 +716,80 @@ namespace Pachyderm_Acoustic
 
         public partial class FreqSlider : Panel
         {
+            bands bandwidth;
             System.Collections.Generic.List<Oct_Slider> sliders = new System.Collections.Generic.List<Oct_Slider>();
-            int _width = 0;
-            public FreqSlider(bands precision, int width)
+            public FreqSlider(bands precision, bool decibels = false)
             {
-                _width = width;
-                buildSliders(precision, width);
+                buildSliders(precision, decibels);
             }
 
-            private void buildSliders(bands precision, int width)
+            private void buildSliders(bands precision, bool decibels = false)
             {
-                if (precision == bands.Octave)
-                {
-                    sliders.Add(new Oct_Slider("62.5 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("125 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("250 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("500 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("1 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("2 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("4 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("8 kHz: ", this.Width));
-                }
-                else
-                {
-                    sliders.Add(new Oct_Slider("    40.0 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("62.5 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    80 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    100 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("125 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    160 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    200 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("250 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    315 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    400 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("500 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    630 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    800 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("1 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    1250 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    1600 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("2 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    2500 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    3150 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("4 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    5000 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    6300 Hz: ", this.Width));
-                    sliders.Add(new Oct_Slider("8 kHz: ", this.Width));
-                    sliders.Add(new Oct_Slider("    10 kHz: ", this.Width));
-                }
-                Content = new TableLayout(sliders);
+                sliders.Add(new Oct_Slider("    40.0 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("62.5 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    80 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    100 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("125 Hz: ",  decibels));
+                sliders.Add(new Oct_Slider("    160 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    200 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("250 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    315 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    400 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("500 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    630 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    800 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("1 kHz: ", decibels));
+                sliders.Add(new Oct_Slider("    1250 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    1600 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("2 kHz: ", decibels));
+                sliders.Add(new Oct_Slider("    2500 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    3150 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("4 kHz: ", decibels));
+                sliders.Add(new Oct_Slider("    5000 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    6300 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("8 kHz: ", decibels));
+                sliders.Add(new Oct_Slider("    10 kHz: ", decibels));
+                sliders.Add(new Oct_Slider("Flatten", decibels));
+
+                sliders[24].MouseUp += FlatAdjust;
+
+                DynamicLayout sliderlayout = new DynamicLayout();
+                foreach (Oct_Slider s in sliders) sliderlayout.AddRow(s);
+                //sliderlayout.Size = new Size(8, 4);
+
+                Content = sliderlayout;
+                bandmode(precision);
+
+                this.Invalidate();
+            }
+
+            public void bandmode(bands b)
+            {
+                bandwidth = b;
+                bool mode = b == bands.Third_Octave;
+                sliders[0].Visible = mode;
+                sliders[2].Visible = mode;
+                sliders[3].Visible = mode;
+                sliders[5].Visible = mode;
+                sliders[6].Visible = mode;
+                sliders[8].Visible = mode;
+                sliders[9].Visible = mode;
+                sliders[11].Visible = mode;
+                sliders[12].Visible = mode;
+                sliders[14].Visible = mode;
+                sliders[15].Visible = mode;
+                sliders[17].Visible = mode;
+                sliders[18].Visible = mode;
+                sliders[20].Visible = mode;
+                sliders[21].Visible = mode;
+                sliders[23].Visible = mode;
                 this.Invalidate();
             }
 
             public void populate(double[] values)
             {
-                if (values.Length == 8 && sliders.Count != 8) buildSliders(bands.Octave, this.Width);
-                else if (values.Length == 24 && sliders.Count != 24) buildSliders(bands.Third_Octave, this.Width);
+                if (values.Length == 8 && sliders.Count != 8) buildSliders(bands.Octave);
+                else if (values.Length == 24 && sliders.Count != 24) buildSliders(bands.Third_Octave);
                 else if (values.Length != sliders.Count) throw new Exception("input to octave band sliders is not octave band or third-octave band, or is incomplete or in an unsupported format...");
 
                 for (int i = 0; i < sliders.Count; i++)
@@ -623,21 +810,58 @@ namespace Pachyderm_Acoustic
             {
                 get
                 {
-                    double[] values = new double[sliders.Count];
-                    for (int i = 0; i < sliders.Count; i++)
+                    double[] values;
+                    if (bandwidth == bands.Third_Octave)
                     {
-                        values[i] = sliders[i].Value;
+                        values = new double[sliders.Count];
+                        for (int i = 0; i < sliders.Count; i++)
+                        {
+                            values[i] = sliders[i].Value;
+                        }
+                    }
+                    else
+                    {
+                        values = new double[8];
+                        values[0] = sliders[1].Value;
+                        values[1] = sliders[4].Value;
+                        values[2] = sliders[7].Value;
+                        values[3] = sliders[10].Value;
+                        values[4] = sliders[13].Value;
+                        values[5] = sliders[16].Value;
+                        values[6] = sliders[19].Value;
+                        values[7] = sliders[22].Value;
                     }
                     return values;
                 }
                 set
                 {
-                    if (value.Length == 8) { if (sliders.Count != 8) buildSliders(bands.Octave, this.Width); }
-                    else if (value.Length == 24) { if (sliders.Count != 24) buildSliders(bands.Octave, this.Width); }
-                    else throw new Exception("Material properties format not recognized...");
-
-                    for (int i = 0; i < sliders.Count; i++) sliders[i].Value = value[i];
+                    if (value.Length == 8)
+                    {
+                        bandmode(bands.Octave);
+                        sliders[1].Value = value[0];
+                        sliders[4].Value = value[1];
+                        sliders[7].Value = value[2];
+                        sliders[10].Value = value[3];
+                        sliders[13].Value = value[4];
+                        sliders[16].Value = value[5];
+                        sliders[19].Value = value[6];
+                        sliders[22].Value = value[7];
+                    }
+                    else if (value.Length == 24)
+                    {
+                        bandmode(bands.Third_Octave);
+                        for (int i = 0; i < sliders.Count; i++) sliders[i].Value = value[i];
+                    }
+                    else
+                    { 
+                        throw new Exception("Incorrect number of bands...");
+                    }
                 }
+            }
+
+            public void FlatAdjust(object sender, EventArgs e)
+            {
+                foreach (Oct_Slider s in sliders) s.Value = sliders[24].Value;
             }
 
             public enum bands
@@ -657,27 +881,47 @@ namespace Pachyderm_Acoustic
 
         public class Oct_Slider : TableRow
         {
+            Label l = new Label();
             Slider oct_Slider = new Slider();
             Label oct_out = new Label();
-
-            public Oct_Slider(string text, int width)
+            Label units = new Label();
+            public EventHandler MouseUp;
+            public Oct_Slider(string text, bool decibels = false)
             : base()
             {
-                Label l = new Label();
                 this.oct_Slider.TickFrequency = 100;
                 this.oct_Slider.Value = 1;
                 this.oct_Slider.Size = new Size(400, 20);
                 this.oct_Slider.MaxValue = 1000;
                 this.oct_Slider.ValueChanged += UpdateValue;
+                if (!decibels) { units.Text = "%"; }
+                else { units.Text = "decibels"; }
 
                 l.Text = text;
+                l.Width = 65;
+                oct_out.Width = 35;
+                units.Width = 65;
                 this.Cells.Add(l);
                 this.Cells.Add(oct_Slider);
                 this.Cells.Add(oct_out);
+                this.Cells.Add(units);
             }
             private void UpdateValue(object sender, System.EventArgs e)
             {
                 oct_out.Text = ((double)oct_Slider.Value / 10).ToString();
+                if (this.MouseUp != null) this.MouseUp(sender, e);
+            }
+
+            public bool Visible
+            {
+                get { return oct_Slider.Visible; }
+                set 
+                {
+                    l.Visible = value;
+                    oct_Slider.Visible = value;
+                    oct_out.Visible = value;
+                    units.Visible = value;
+                }
             }
 
             public double Value

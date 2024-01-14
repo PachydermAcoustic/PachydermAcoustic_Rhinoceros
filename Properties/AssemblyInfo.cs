@@ -11,7 +11,8 @@ using Rhino.PlugIns;
 [assembly: PlugInDescription(DescriptionType.Email, "info@orase.com")]
 [assembly: PlugInDescription(DescriptionType.Phone, "-")]
 [assembly: PlugInDescription(DescriptionType.Fax, "-")]
-[assembly: PlugInDescription(DescriptionType.Organization, "Open Research in Acoustical Science and Education, Inc.")]
+[assembly: PlugInDescription(DescriptionType.Organization
+    , "Open Research in Acoustical Science and Education, Inc.")]
 [assembly: PlugInDescription(DescriptionType.UpdateUrl, "http://www.orase.org/resources/")]
 [assembly: PlugInDescription(DescriptionType.WebSite, "http://www.orase.org/")]
 

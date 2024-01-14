@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -684,8 +684,8 @@ namespace Pachyderm_Acoustic
 
             private void Output_Click(object sender, EventArgs e)
             {
-                System.Windows.Forms.FolderBrowserDialog sf = new System.Windows.Forms.FolderBrowserDialog();
-                if (sf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                Eto.Forms.SelectFolderDialog sf = new Eto.Forms.SelectFolderDialog();
+                if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
                     for (int i = 0; i < FDTD.zDim; i++)
                     {
@@ -697,7 +697,7 @@ namespace Pachyderm_Acoustic
                                 V = (V > 200) ? 200 : (V < 0) ? 0 : V;
                                 BM.SetPixel(j, k, System.Drawing.Color.FromArgb(255, V, V, V));
                             }
-                        BM.Save(sf.SelectedPath + "\\" + i.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                        BM.Save(sf.Directory + "\\" + i.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
                     }
                 }
             }

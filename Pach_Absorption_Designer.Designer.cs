@@ -69,7 +69,7 @@ namespace Pachyderm_Acoustic
             this.diameter = new Eto.Forms.NumericStepper();
             this.label18 = new Eto.Forms.Label();
             this.SoundSpeed = new Eto.Forms.NumericStepper();
-            this.PolarTitle = new Eto.Forms.Label();
+            //this.PolarTitle = new Eto.Forms.Label();
             this.label21 = new Eto.Forms.Label();
             this.label22 = new Eto.Forms.Label();
             this.Air_Term = new Eto.Forms.RadioButton();
@@ -450,7 +450,7 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.Label pitch_label;
             private Eto.Forms.Label PorosityLabel;
             private Eto.Forms.NumericStepper Porosity_Percent;
-            private Eto.Forms.Label PolarTitle;
+            //private Eto.Forms.Label PolarTitle;
             private Eto.Forms.Button Smart_Mat;
             private Eto.Forms.Label label6;
             private Eto.Forms.Label label9;

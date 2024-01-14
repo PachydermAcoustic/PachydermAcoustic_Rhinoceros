@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -76,7 +76,7 @@ namespace Pachyderm_Acoustic
 
                 if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
                 {
-                    System.Windows.Forms.MessageBox.Show("At this point in development, Pachyderm supports documents in meters only. Please set the document units to meters, and run the calculation again.\n(A quick way to get to the document units control is to type 'units' into the command prompt.)");
+                    Eto.Forms.MessageBox.Show("At this point in development, Pachyderm supports documents in meters only. Please set the document units to meters, and run the calculation again.\n(A quick way to get to the document units control is to type 'units' into the command prompt.)");
                     CommandResult = Result.Cancel;
                     return CommandResult;
                 }

@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -20,32 +20,318 @@ using Rhino.Geometry;
 using System.Linq;
 using System.Collections.Generic;
 using System;
-using System.Windows.Forms;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
+using Eto.Forms;
+using Eto.Drawing;
+using Rhino.UI;
+using System.CodeDom;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("12db68c3-c995-43c6-860a-6bd106b94a4c")]
-        public partial class Pach_Auralisation
+        public class Pach_Auralisation: Panel, IPanel
         {
+            internal TabPage Render_Settings;
+            internal DropDown Source_Aim;
+            private NumericStepper Alt_Choice;
+            private NumericStepper Azi_Choice;
+            internal Button RenderBtn;
+            private ScottPlot.Eto.EtoPlot Analysis_View;
+            private NumericStepper DryChannel;
+            internal TextBox Signal_Status;
+            internal Button OpenSignal;
+            internal DropDown Receiver_Choice;
+            internal TabControl Tabs;
+            private TabPage Data_Source;
+            internal SourceListBox SourceList;
+            internal DropDown DistributionType;
+            private RadioButton Hybrid_Select;
+            private RadioButton Mapping_Select;
+            internal DropDown Graph_Octave;
+            private ListBox Channel_View;
+            private GroupBox Data_From;
+            private Button Remove_Channel;
+            private Button Save_Channels;
+            private Button Add_Channel;
+            private NumericStepper Crossover;
+            private CheckBox Supplement_Numerical;
+            private Button Move_Down;
+            private Button Move_Up;
+            internal Button Export_Filter;
+            private DropDown Sample_Freq_Selection;
+            private NumericStepper Normalization_Choice;
+            private CheckBox PlayAuralization;
+
             AuralisationConduit A;
             bool Linear_Phase;
             int[] SrcRendered;
             int RecRendered;
             double[][] Response;
             int SFreq_Rendered;
-            // This call is required by the Windows Form Designer. 
             public Pach_Auralisation()
             {
+                Label label26 = new Label();
+                Label label27 = new Label();
+                Label label6 = new Label();
+                Label label3 = new Label();
+                Label label1 = new Label();
+                Label ChLbl = new Label();
+                Label Hznbelow = new Label();
+                Label For = new Label();
+                Label label25 = new Label();
+                Label label16 = new Label();
+                Label label20 = new Label();
+                this.Tabs = new TabControl();
+                this.Data_Source = new TabPage();
+                this.Render_Settings = new TabPage();
+                Tabs.Pages.Add(Data_Source);
+                Tabs.Pages.Add(Render_Settings);
+
+                this.Azi_Choice = new NumericStepper();
+                this.Alt_Choice = new NumericStepper();
+                this.Source_Aim = new DropDown();
+                this.SourceList = new SourceListBox();
+                this.Normalization_Choice = new NumericStepper();
+                this.Receiver_Choice = new DropDown();
+                this.Graph_Octave = new DropDown();
+                this.RenderBtn = new Button();
+                this.Analysis_View = new ScottPlot.Eto.EtoPlot();
+                this.DryChannel = new NumericStepper();
+                this.Signal_Status = new TextBox();
+                this.OpenSignal = new Button();
+                this.Export_Filter = new Button();
+                this.Sample_Freq_Selection = new DropDown();
+                this.PlayAuralization = new CheckBox();
+
+                this.Save_Channels = new Button();
+                this.Remove_Channel = new Button();
+                this.Move_Down = new Button();
+                this.DistributionType = new DropDown();
+                this.Move_Up = new Button();
+                this.Channel_View = new ListBox();
+                this.Add_Channel = new Button();
+                this.Data_From = new GroupBox();
+                this.Crossover = new NumericStepper();
+                this.Supplement_Numerical = new CheckBox();
+                this.Hybrid_Select = new RadioButton();
+                this.Mapping_Select = new RadioButton();
+
+                this.Tabs.SelectedIndexChanged += this.Tab_Selecting;
+                this.Data_Source.Text = "Data Source";
+
+                DynamicLayout DS_Layout = new DynamicLayout();
+                DS_Layout.DefaultSpacing = new Size(8, 8);
+                this.Data_From.Text = "Data From:";
+                DynamicLayout Datasource = new DynamicLayout();
+                Datasource.DefaultSpacing = new Size(8, 8);
+                DynamicLayout DL2 = new DynamicLayout();
+                DL2.DefaultSpacing = new Size(8, 8);
+                DynamicLayout DL3 = new DynamicLayout();
+                DL3.DefaultSpacing = new Size(8, 8);
+                this.Supplement_Numerical.Enabled = false;
+                this.Supplement_Numerical.Text = "Supplement Numerical for Low Frequencies";
+                For.Text = "For :";
+                this.Crossover.MaxValue = 22000;
+                this.Crossover.MinValue = 20;
+                this.Crossover.Value = 160;
+                Hznbelow.Text = "Hz. and below.";
+                this.Hybrid_Select.Text = "Hybrid";
+                this.Hybrid_Select.CheckedChanged += this.Tab_Selecting;
+                this.Mapping_Select.Text = "Mapping";
+                this.Mapping_Select.CheckedChanged += this.Tab_Selecting;
+                DL2.AddRow(Hybrid_Select);
+                DL2.AddRow(Mapping_Select);
+                DynamicLayout inter = new DynamicLayout(this);
+                inter.DefaultSpacing = new Size(8, 8);
+                inter.AddRow(Supplement_Numerical);
+                DL3.AddRow(inter);
+                DL3.AddRow(For, Crossover, Hznbelow);
+                Datasource.AddRow(DL2, DL3);
+                Data_From.Content = DL2;
+
+                DS_Layout.AddRow(Data_From);
+
+                DynamicLayout TOA_DL = new DynamicLayout();
+                TOA_DL.DefaultSpacing = new Size(8, 8);
+                label1.Text = "Type of Auralisation:";
+                this.DistributionType.Items.Add("Monaural");
+                this.DistributionType.Items.Add("Stereo");
+                this.DistributionType.Items.Add("Binaural (select file...)");
+                this.DistributionType.Items.Add("A-Format (type I-A)");
+                this.DistributionType.Items.Add("A-Format (type II-A)");
+                this.DistributionType.Items.Add("First Order Ambisonics (ACN+SN3D)");
+                this.DistributionType.Items.Add("First Order Ambisonics (FuMa+SN3D)");
+                this.DistributionType.Items.Add("Second Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Second Order Ambisonics(FuMa+SN3D)");
+                this.DistributionType.Items.Add("Third Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Third Order Ambisonics(FuMa+SN3D)");
+                this.DistributionType.Items.Add("Surround Array (select file...)");
+                this.DistributionType.SelectedIndex = 1;
+                this.DistributionType.SelectedValueChanged += this.DistributionType_SelectedIndexChanged;
+
+                TOA_DL.AddRow(label1, DistributionType);
+                DS_Layout.AddRow(TOA_DL);
+
+                ChLbl.Text = "Channels:";
+                DS_Layout.AddRow(ChLbl);
+
+                this.Channel_View.Items.Add(channel.Left(0));
+                this.Channel_View.Items.Add(channel.Right(1));
+                DS_Layout.AddRow(Channel_View);
+
+                DynamicLayout buttons = new DynamicLayout();
+                buttons.DefaultSpacing = new Size(8, 8);
+
+                this.Move_Up.Text = "Move Up";
+                this.Move_Up.Visible = false;
+                this.Move_Up.Click += this.Move_Up_Click;
+
+                this.Move_Down.Enabled = false;
+                this.Move_Down.Text = "Move Down";
+                this.Move_Down.Visible = false;
+                this.Move_Down.Click += this.Move_Down_Click;
+
+                buttons.AddRow(Move_Up, Move_Down);
+
+                this.Add_Channel.Enabled = false;
+                this.Add_Channel.Text = "Add";
+                this.Add_Channel.Visible = false;
+                this.Add_Channel.Click += this.Add_Channel_Click;
+
+                this.Remove_Channel.Enabled = false;
+                this.Remove_Channel.Text = "Remove";
+                this.Remove_Channel.Visible = false;
+                this.Remove_Channel.Click += this.Remove_Channel_Click;
+
+                buttons.AddRow(Add_Channel, Remove_Channel);
+
+                DS_Layout.AddRow(buttons);
+
+                this.Save_Channels.Enabled = false;
+                this.Save_Channels.Text = "Save Configuration";
+                this.Save_Channels.Visible = false;
+                this.Save_Channels.Click += this.Save_Channels_Click;
+                DS_Layout.AddRow(Save_Channels);
+
+                Data_Source.Content = DS_Layout;
+
+                this.Render_Settings.Padding = new Padding(6);
+                this.Render_Settings.Text = "Render Settings";
+
+                DynamicLayout RSLayout = new DynamicLayout();
+                RSLayout.DefaultSpacing = new Size(8, 8);
+                DynamicLayout Top = new DynamicLayout();
+                Top.DefaultSpacing = new Size(8, 8);
+                DynamicLayout GraphCtrls = new DynamicLayout();
+                GraphCtrls.DefaultSpacing = new Size(8, 8);
+
+                label20.Text = "Receiver";
+                this.Receiver_Choice.Items.Add("0");
+                this.Receiver_Choice.SelectedIndex = 0;
+                this.Receiver_Choice.SelectedIndexChanged += this.Receiver_Choice_SelectedIndexChanged;
+                GraphCtrls.AddRow(label20, Receiver_Choice);
+
+                label25.Text = "Aim at Source";
+                this.Source_Aim.SelectedIndexChanged += this.Source_Aim_SelectedIndexChanged;
+                GraphCtrls.AddRow(label25, Source_Aim);
+
+                label27.Text = "Altitude";
+                this.Alt_Choice.DecimalPlaces = 2;
+                this.Alt_Choice.MaxValue = 90;
+                this.Alt_Choice.MinValue = -90;
+                this.Alt_Choice.ValueChanged += this.Alt_Choice_ValueChanged;
+                GraphCtrls.AddRow(label27, Alt_Choice);
+
+                label26.Text = "Azimuth";
+                this.Azi_Choice.DecimalPlaces = 2;
+                this.Azi_Choice.MaxValue = 360;
+                this.Azi_Choice.MinValue = 1;
+                this.Azi_Choice.ValueChanged += this.Azi_Choice_ValueChanged;
+                GraphCtrls.AddRow(label26, Azi_Choice);
+
+                label6.Text = "Max Output (dB):";
+                this.Normalization_Choice.DecimalPlaces = 2;
+                this.Normalization_Choice.MaxValue = 200;
+                this.Normalization_Choice.MinValue = 0;
+                GraphCtrls.AddRow(label6, Normalization_Choice);
+
+                DynamicLayout TL = new DynamicLayout();
+                TL.DefaultSpacing = new Size(8, 8);
+                SourceList.Size = new Size(-1, 120);
+                TL.AddRow(SourceList);
+
+                this.Graph_Octave.Items.Add("62.5 Hz.");
+                this.Graph_Octave.Items.Add("125 Hz.");
+                this.Graph_Octave.Items.Add("250 Hz.");
+                this.Graph_Octave.Items.Add("500 Hz.");
+                this.Graph_Octave.Items.Add("1 kHz.");
+                this.Graph_Octave.Items.Add("2 kHz.");
+                this.Graph_Octave.Items.Add("4 kHz.");
+                this.Graph_Octave.Items.Add("8 kHz.");
+                this.Graph_Octave.Items.Add("Summation: All Octaves");
+                this.Graph_Octave.SelectedIndex = 8;
+                this.Graph_Octave.SelectedIndexChanged += this.Graph_Octave_SelectedIndexChanged;
+                this.Graph_Octave.Size = new Size(-1, 25);
+                TL.AddRow(Graph_Octave);
+
+                Top.AddRow(TL, GraphCtrls);
+                RSLayout.AddRow(Top);
+
+                RSLayout.AddRow(Analysis_View);
+                Analysis_View.Size = new Size(-1, 300);
+
+                DynamicLayout OC = new DynamicLayout();
+                OC.DefaultSpacing = new Size(8, 8);
+
+                this.OpenSignal.Text = "Open...";
+                this.OpenSignal.Click += this.OpenSignal_Click;
+
+                label16.Text = "Selected Channel";
+
+                OC.AddRow(OpenSignal, label16, DryChannel);
+                RSLayout.AddRow(OC);
+
+                this.Signal_Status.ReadOnly = true;
+                RSLayout.AddRow(Signal_Status);
+
+                this.RenderBtn.Enabled = false;
+                this.RenderBtn.Text = "Render Auralization";
+                this.RenderBtn.Click += this.RenderBtn_Click;
+
+                this.PlayAuralization.Text = "Play Rendering";
+                this.PlayAuralization.CheckedChanged += this.PlayAuralization_CheckedChanged;
+                DynamicLayout RP = new DynamicLayout();
+                RP.DefaultSpacing = new Size(8, 8);
+                RP.AddRow(RenderBtn, PlayAuralization);
+                RSLayout.Add(RP);
+
+                label3.Text = "Sample Frequency:";
+
+                this.Sample_Freq_Selection.Items.Add("22050 Hz.");
+                this.Sample_Freq_Selection.Items.Add("44100 Hz.");
+                this.Sample_Freq_Selection.Items.Add("48000 Hz.");
+                this.Sample_Freq_Selection.Items.Add("96000 Hz.");
+                this.Sample_Freq_Selection.Items.Add("192000 Hz.");
+                this.Sample_Freq_Selection.Items.Add("384000 Hz.");
+
+                this.Export_Filter.Text = "Export IR as Wave File";
+                this.Export_Filter.Click += this.ExportFilter;
+                DynamicLayout FE = new DynamicLayout();
+                FE.DefaultSpacing = new Size(8, 8);
+                FE.AddRow(label3, Sample_Freq_Selection, Export_Filter);
+                RSLayout.AddRow(FE);
+
+                Render_Settings.Content = RSLayout;
+                this.Content = Tabs;
+
                 A = new AuralisationConduit();
-                InitializeComponent();
+
                 DistributionType.SelectedIndex = 1;
-                Graph_Octave.SelectedIndex = 5;
                 DistributionType_SelectedIndexChanged(this, new EventArgs());
                 Sample_Freq_Selection.SelectedIndex = 1;
                 Instance = this;
@@ -109,14 +395,12 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < this.Channel_View.Items.Count; i++)
                     {
                         Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
-                        //Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, -(double)Azi_Choice.Value, -(double)Alt_Choice.Value, true);
                         TempDir.Normalize();
                         pts.Add(Recs[0] + (TempDir) * -.343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
                         Dirs.Add(new Vector3d(TempDir.x, TempDir.y, TempDir.z));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
                     AuralisationConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RC_PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
-                    //AuralisationConduit.Instance.set_direction(Utilities.PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), -(double)Azi_Choice.Value, -(double)Alt_Choice.Value, true)));
                 }
                 else if (Mapping_Select.Checked)
                 {
@@ -141,8 +425,12 @@ namespace Pachyderm_Acoustic
                 if ((Linear_Phase != true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase != false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System) || Direct_Data[0].F == null)
                 {
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
-                    for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096);
-                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter();
+                    ProgressBox VB = new ProgressBox("Creating IR Filters for Deterministic Reflections...");
+                    VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                    for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096, VB);
+                    VB.change_title("Creating Impulse Responses...");
+                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
+                    VB.Close();
                     this.Linear_Phase = Linear_Phase;
                 }
             }
@@ -151,16 +439,19 @@ namespace Pachyderm_Acoustic
             {
                 double[][] Temp;
                 double[][] Response;
-                switch (DistributionType.Text)
+                ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+
+                switch (DistributionType.SelectedValue as string)
                 {
                     case "Monaural":
                         Response = new double[1][];
-                        Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
+                        Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB));
                         break;
                     case "First Order Ambisonics (ACN+SN3D)":
                         Response = new double[4][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -168,7 +459,7 @@ namespace Pachyderm_Acoustic
                     case "First Order Ambisonics (FuMa+SN3D)":
                         Response = new double[4][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -176,7 +467,7 @@ namespace Pachyderm_Acoustic
                     case "Second Order Ambisonics(ACN+SN3D)":
                         Response = new double[9][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -190,7 +481,7 @@ namespace Pachyderm_Acoustic
                     case "Second Order Ambisonics(FuMa+SN3D)":
                         Response = new double[9][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -204,7 +495,7 @@ namespace Pachyderm_Acoustic
                     case "Third Order Ambisonics(ACN+SN3D)":
                         Response = new double[16][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -227,7 +518,7 @@ namespace Pachyderm_Acoustic
                     case "Third Order Ambisonics(FuMa+SN3D)":
                         Response = new double[16][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -256,7 +547,7 @@ namespace Pachyderm_Acoustic
                             if (alt < -90) alt += 180;
                             if (azi > 360) azi -= 360;
                             if (azi < 0) azi += 360;
-                            Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, PachTools.OctaveStr2Int(Graph_Octave.Text), Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true);
+                            Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Graph_Octave.SelectedIndex, Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true, VB);
                         }
                         break;
                 }
@@ -265,28 +556,27 @@ namespace Pachyderm_Acoustic
 
             private void Update_Graph(object sender, EventArgs e)
             {
-                Analysis_View.GraphPane.CurveList.Clear();
+                Analysis_View.Plot.Clear();
                 
                 int REC_ID = 0;
                 try
                 {
-                    REC_ID = int.Parse(Receiver_Choice.Text);
+                    REC_ID = Receiver_Choice.SelectedIndex;
 
-                    int OCT_ID = PachTools.OctaveStr2Int(Graph_Octave.Text);
-                    Analysis_View.GraphPane.Title.Text = "Logarithmic Energy Time Curve";
-                    Analysis_View.GraphPane.XAxis.Title.Text = "Time (seconds)";
-                    Analysis_View.GraphPane.YAxis.Title.Text = "Sound Pressure Level (dB)";
+                    int OCT_ID = Graph_Octave.SelectedIndex;
+                    Analysis_View.Plot.Title("Logarithmic Energy Time Curve");
+                    Analysis_View.Plot.XAxis.Label.Text = "Time (seconds)";
+                    Analysis_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
 
-                    List<int> SrcIDs = new List<int>();
-                    foreach (int i in SourceList.CheckedIndices) SrcIDs.Add(i);
+                    List<int> SrcIDs = SourceList.SelectedSources();
 
-                    List<System.Drawing.Color> C = new List<System.Drawing.Color> {System.Drawing.Color.Red, System.Drawing.Color.OrangeRed, System.Drawing.Color.Orange, System.Drawing.Color.DarkGoldenrod, System.Drawing.Color.Olive, System.Drawing.Color.Green, System.Drawing.Color.Aquamarine, System.Drawing.Color.Azure, System.Drawing.Color.Blue, System.Drawing.Color.Indigo, System.Drawing.Color.Violet};
+                    List<ScottPlot.Color> C = new List<ScottPlot.Color> {ScottPlot.Colors.Red, ScottPlot.Colors.OrangeRed, ScottPlot.Colors.Orange, ScottPlot.Colors.DarkGoldenRod, ScottPlot.Colors.Olive, ScottPlot.Colors.Green, ScottPlot.Colors.Aquamarine, ScottPlot.Colors.Azure, ScottPlot.Colors.Blue, ScottPlot.Colors.Indigo, ScottPlot.Colors.Violet};
 
                     Response = Render_Filter(44100);
 
                     //Get the maximum value of the Direct Sound
                     double DirectMagnitude = 0;
-                    foreach (int i in SourceList.CheckedIndices)
+                    foreach (int i in SrcIDs)
                     {
                         double[] E = Direct_Data[i].EnergyValue(OCT_ID, REC_ID);
                         for (int j = 0; j < E.Length; j++)
@@ -308,34 +598,35 @@ namespace Pachyderm_Acoustic
                         {
                             double[] filter = Audio.Pach_SP.FIR_Bandpass(Response[i], OCT_ID, SampleRate, 0);
                             Array.Resize(ref filter, filter.Length - 12288);
-                            Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10], ZedGraph.SymbolType.None);
+                            //String.Format("Channel {0}", i)
+                            Analysis_View.Plot.Add.Scatter(time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10]);
                         }
                         else
                         {
-                            Analysis_View.GraphPane.AddCurve(String.Format("Channel {0}", i), time, AcousticalMath.SPL_Pressure_Signal(Response[i]), C[i % 10], ZedGraph.SymbolType.None);
+                            Analysis_View.Plot.Add.Scatter(time, AcousticalMath.SPL_Pressure_Signal(Response[i]), C[i % 10]);
+                        //String.Format("Channel {0}", i),
                         }
                     }
-                    Analysis_View.GraphPane.XAxis.Scale.Max = time[time.Length - 1];
-                    Analysis_View.GraphPane.XAxis.Scale.Min = time[0];
-                    Analysis_View.GraphPane.YAxis.Scale.Max = DirectMagnitude;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
-                    Analysis_View.GraphPane.YAxis.Scale.Min = DirectMagnitude - 100;
+                    Analysis_View.Plot.XAxis.Max = time[time.Length - 1];
+                    Analysis_View.Plot.XAxis.Min = time[0];
+                    Analysis_View.Plot.YAxis.Max = DirectMagnitude;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
+                    Analysis_View.Plot.YAxis.Min = DirectMagnitude - 100;
 
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch { return; }
-                Analysis_View.AxisChange();
                 Analysis_View.Invalidate();
                 Draw_Feedback();
             }
 
             public void Read_Array()
             {
-                GetWave.Filter = " Array Description Text File (*.txt) |*.txt";
-                if (GetWave.ShowDialog() == DialogResult.OK)
+                GetWave.Filters.Add(" Array Description Text File (*.txt) |*.txt");
+                if (GetWave.ShowDialog(this) == DialogResult.Ok)
                 {
                     Channel_View.Items.Clear();
                     System.IO.StreamReader Reader;
-                    Reader = new System.IO.StreamReader(GetWave.OpenFile());
+                    Reader = new System.IO.StreamReader(GetWave.FileName);
                     do
                     {
                         try
@@ -357,25 +648,25 @@ namespace Pachyderm_Acoustic
 
             #region Tab 2
             //Signal Processing 
-            private OpenFileDialog GetWave = new OpenFileDialog();
+            private Eto.Forms.OpenFileDialog GetWave = new Eto.Forms.OpenFileDialog();
 
             private void OpenSignal_Click(object sender, System.EventArgs e)
             {
-                GetWave.Filter = " Wave Audio (*.wav) |*.wav";
-                if (GetWave.ShowDialog() == DialogResult.OK)
+                GetWave.Filters.Add(" Wave Audio (*.wav) |*.wav");
+                if (GetWave.ShowDialog(this) == DialogResult.Ok)
                 {
                     Signal_Status.Text = GetWave.FileName;
                     RenderBtn.Enabled = true;
                     int[][] signal = Audio.Pach_SP.Wave.ReadtoInt(Signal_Status.Text, false, out SampleRate);
-                    DryChannel.Minimum = 1;
-                    DryChannel.Maximum = signal.Length;
+                    DryChannel.MinValue = 1;
+                    DryChannel.MaxValue = signal.Length;
                 }
             }
 
             private List<int> SelectedSources()
             {
                 List<int> indices = new List<int>();
-                foreach (int i in SourceList.CheckedIndices) indices.Add(i);
+                indices = SourceList.SelectedSources();
                 return indices;
             }
 
@@ -394,12 +685,14 @@ namespace Pachyderm_Acoustic
 
             private bool IsRendered()
             {
+                List<int> srcs = SourceList.SelectedSources();
+
                 if (Receiver_Choice.SelectedIndex != RecRendered) return false;
                 if ((Response == null) || (Response[0] == null)) return false;
-                if (SrcRendered == null || SrcRendered.Length != SourceList.CheckedIndices.Count) return false;
-                for (int i = 0; i < SourceList.CheckedIndices.Count; i++)
+                if (SrcRendered == null || SrcRendered.Length != srcs.Count) return false;
+                for (int i = 0; i < srcs.Count; i++)
                 {
-                    if (SrcRendered[i] != SourceList.CheckedIndices[i]) return false;
+                    if (SrcRendered[i] != srcs[i]) return false;
                 }
                 return true;
             }
@@ -431,25 +724,27 @@ namespace Pachyderm_Acoustic
                     for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 60)/20));
                 }
 
-                SrcRendered = new int[SourceList.CheckedIndices.Count];
-                for (int j = 0; j < SourceList.CheckedIndices.Count; j++)
+                List<int> srcs = SourceList.SelectedSources();
+
+                SrcRendered = new int[srcs.Count];
+                for (int j = 0; j < srcs.Count; j++)
                 {
-                    SrcRendered[j] = SourceList.CheckedIndices[j];
+                    SrcRendered[j] = srcs[j];
                 }
-                RecRendered = int.Parse(Receiver_Choice.Text);
+                RecRendered = Receiver_Choice.SelectedIndex;
                 SFreq_Rendered = SamplesPerSec;
 
-                SaveFileDialog SaveWave = new SaveFileDialog();
+                Eto.Forms.SaveFileDialog SaveWave = new Eto.Forms.SaveFileDialog();
                 if (NewSignal.Length < 4)
                 {
-                    SaveWave.Filter = " Wave Audio (*.wav) |*.wav";
+                    SaveWave.Filters.Add(" Wave Audio (*.wav) |*.wav");
                 }
                 else 
                 {
-                    SaveWave.Filter = "Extended Wave Audio (*.wavex) |*.wavex";
+                    SaveWave.Filters.Add("Extended Wave Audio (*.wavex) |*.wavex");
                 }
 
-                if (SaveWave.ShowDialog() == DialogResult.OK)
+                if (SaveWave.ShowDialog(this) == DialogResult.Ok)
                 {
                     if (Response == null || Response.Length == 0)
                     {
@@ -459,9 +754,7 @@ namespace Pachyderm_Acoustic
 
                     Audio.Pach_SP.Wave.Write(NewSignal, SamplesPerSec, SaveWave.FileName);
 
-                    //TODO: Users find this annoying - make it optional, and provide a way to kill it.
-
-                    if (PlayAuralization.Checked)
+                    if (PlayAuralization.Checked.Value)
                     {
                         Player = new System.Media.SoundPlayer(SaveWave.FileName);
                         Player.Play();
@@ -473,15 +766,15 @@ namespace Pachyderm_Acoustic
 
             private void ExportFilter(object sender, EventArgs e)
             {
-                SaveFileDialog SaveWave = new SaveFileDialog();
+                Eto.Forms.SaveFileDialog SaveWave = new Eto.Forms.SaveFileDialog();
 
                 if (Response.Length < 4)
                 {
-                    SaveWave.Filter = "Wave Audio (*.wav) |*.wav";
+                    SaveWave.Filters.Add("Wave Audio (*.wav) |*.wav");
                 }
                 else 
                 {
-                    SaveWave.Filter = "Wave Audio (*.wavex) |*.wavex";
+                    SaveWave.Filters.Add("Wave Audio (*.wavex) |*.wavex");
                 }
 
                 int SamplesPerSec = 44100;
@@ -512,7 +805,6 @@ namespace Pachyderm_Acoustic
                 float[][] RR = new float[Render_Response.Length][];
                 int maxlength = 0;
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
-                //for (int j = 0; j < Render_Response.Length; j++) Rende[j] = new double[maxlength];
 
                 float mod = (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 15)/ 20));
                 for (int c = 0; c < Render_Response.Length; c++) RR[c] = new float[maxlength];
@@ -522,7 +814,7 @@ namespace Pachyderm_Acoustic
                     for (int c = 0; c < Render_Response.Length; c++)  RR[c][j] = (j > Render_Response[c].Length - 1)? 0 : (float)Render_Response[c][j] * mod;
                 }
 
-                if (SaveWave.ShowDialog() == DialogResult.OK)
+                if (SaveWave.ShowDialog(this) == DialogResult.Ok)
                 {
                     Audio.Pach_SP.Wave.Write(RR, SamplesPerSec, SaveWave.FileName, 24);
                 }
@@ -552,15 +844,15 @@ namespace Pachyderm_Acoustic
 
                 PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
 
-                Alt_Choice.Value = (decimal)alt;
-                Azi_Choice.Value = (decimal)azi;
+                Alt_Choice.Value = alt;
+                Azi_Choice.Value = azi;
             }
 
             private void DistributionType_SelectedIndexChanged(object sender, EventArgs e)
             {
                 Channel_View.Items.Clear();                
                 disable_CEdit();
-                switch (DistributionType.Text)
+                switch (DistributionType.SelectedValue.ToString())
                 {
                     case "Monaural":
                         Channel_View.Items.Add(channel.Monaural(0));
@@ -570,8 +862,8 @@ namespace Pachyderm_Acoustic
                         Channel_View.Items.Add(channel.Right(1));
                         break;
                     case "Binaural (select file...)":
-                        System.Windows.Forms.MessageBox.Show("Not yet implemented... If you would like to see this area completed, please help. Get in touch with me to suggest an HRTF standard, and possibly help implement. --Arthur");
-                        DistributionType.Text = "Stereo";
+                        Eto.Forms.MessageBox.Show("Not yet implemented... If you would like to see this area completed, please help. Get in touch with me to suggest an HRTF standard, and possibly help implement. --Arthur");
+                        DistributionType.SelectedIndex = 1;
                         break;
                     case "A-Format (type I-A)":
                         Channel_View.Items.Add(channel.FLU(0));
@@ -626,7 +918,7 @@ namespace Pachyderm_Acoustic
 
             private void Tab_Selecting(object sender, EventArgs e)
             {
-                if (Tabs.SelectedTab.Text == "Render Settings")
+                if (Tabs.SelectedIndex == 1)
                 {
                     Receiver_Choice.Items.Clear();
                     if (Receiver != null && Receiver.Length > 0)
@@ -639,9 +931,9 @@ namespace Pachyderm_Acoustic
                         Update_Graph(this, new System.EventArgs());
                     }
                 }
-                else if (Tabs.SelectedTab.Text == "Data Source")
+                else if (Tabs.SelectedIndex == 0)
                 {
-                    SourceList.Items.Clear();
+                    SourceList.Clear();
                     Source_Aim.Items.Clear();
 
                     if (Hybrid_Select.Checked)
@@ -653,26 +945,31 @@ namespace Pachyderm_Acoustic
                             CutoffTime = Direct_Data[0].Cutoff_Time;
                             SampleRate = (int)Direct_Data[0].SampleRate;
                         }
+                        else { return; }
                         if (Direct_Data != null && Direct_Data.Length > 0)
                         {
                             for (int i = 0; i < Direct_Data.Length; i++)
                             {
-                                SourceList.Items.Add(String.Format("S{0}-", i) + Direct_Data[i].Src.Type());
+                            //    SourceList.Add(String.Format("S{0}-", i) + Direct_Data[i].Src.Type());
                                 Source_Aim.Items.Add(String.Format("S{0}-", i) + Direct_Data[i].Src.Type());
                             }
-                            SourceList.SetItemChecked(0, true);
+                            SourceList.Populate(null, null, Receiver);
+                            SourceList.Set_Src_Checked(0, true);
                             Source_Aim.SelectedIndex = 0;
                         }
 
                         double max = 0;
                         for (int i = 0; i < Direct_Data.Length; i++)
                         {
-                            double[] Response = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, 44100, i, SelectedSources(), false, true));
+                            ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                            VB.ShowModal();
+                            double[] Response = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, 44100, i, SelectedSources(), false, true, VB));
+                            VB.Close();
                             double tmax = Math.Max(Response.Max(), Math.Abs(Response.Min()));
                             max = Math.Max(max, tmax);
                         }
                         max = AcousticalMath.SPL_Pressure(max);
-                        Normalization_Choice.Value = (decimal)max;
+                        Normalization_Choice.Value = max;
                     }
                     else if (Mapping_Select.Checked)
                     {
@@ -686,12 +983,14 @@ namespace Pachyderm_Acoustic
                         {
                             for (int i = 0; i < Maps.Length; i++)
                             {
-                                SourceList.Items.Add(String.Format("S{0}-", i) + Maps[i].SrcType);
+                                //SourceList.Items.Add(String.Format("S{0}-", i) + Maps[i].SrcType);
                                 Source_Aim.Items.Add(String.Format("S{0}-", i) + Maps[i].SrcType);
                             }
-                            SourceList.SetItemChecked(0, true);
+                            SourceList.Populate(null, null, Receiver);
+                            SourceList.Set_Src_Checked(0, true);
                             Source_Aim.SelectedIndex = 0;
                         }
+                        else { return; }
                     }
                 }
                 Draw_Feedback();
@@ -701,7 +1000,7 @@ namespace Pachyderm_Acoustic
             {
                 int s = Channel_View.SelectedIndex;
                 channel t = (channel)Channel_View.Items[s];
-                Channel_View.Items.Insert(s-1,t);
+                Channel_View.Items.Insert(s-1,(IListItem)t);
                 Channel_View.Items.RemoveAt(s + 1);
                 Update_Channel_IDS();
                 Clear_Render();
@@ -711,7 +1010,7 @@ namespace Pachyderm_Acoustic
             {
                 int s = Channel_View.SelectedIndex;
                 channel t = (channel)Channel_View.Items[s];
-                Channel_View.Items.Insert(s + 1, t);
+                Channel_View.Items.Insert(s + 1, (IListItem)t);
                 Channel_View.Items.RemoveAt(s - 1);
                 Update_Channel_IDS();
                 Clear_Render();
@@ -751,10 +1050,10 @@ namespace Pachyderm_Acoustic
 
             private void Save_Channels_Click(object sender, EventArgs e)
             {
-                SaveFileDialog SaveArray = new SaveFileDialog();
-                SaveArray.Filter = " Array Description Text File (*.txt) |*.txt";
+                Eto.Forms.SaveFileDialog SaveArray = new Eto.Forms.SaveFileDialog();
+                SaveArray.Filters.Add(" Array Description Text File (*.txt) |*.txt");
 
-                if (SaveArray.ShowDialog() == DialogResult.OK)
+                if (SaveArray.ShowDialog(this) == DialogResult.Ok)
                 {
                     System.IO.StreamWriter SW = new System.IO.StreamWriter(SaveArray.FileName);
 
@@ -768,12 +1067,16 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private class channel
+            private class channel: IListItem
             {
                 public double delay;
                 public Hare.Geometry.Vector V;
                 public channel_type Type;
                 public int _index;
+
+                string IListItem.Text { get => this.ToString(); set => throw new Exception(); }
+
+                string IListItem.Key => this.ToString();
 
                 public channel(int index, Hare.Geometry.Vector Dir, channel_type c, double delay_ms)
                 {
@@ -898,9 +1201,38 @@ namespace Pachyderm_Acoustic
 
             private void PlayAuralization_CheckedChanged(object sender, EventArgs e)
             {
-                if (PlayAuralization.Checked) Player.Play();
+                if (PlayAuralization.Checked.Value) Player.Play();
                 else Player.Stop();
             }
+
+            public string Text
+            {
+                get
+                {
+                    return this.ToString();
+                }
+            }
+
+            #region IPanel methods
+            public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is made visible, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
+            {
+                // Called when the panel tab is hidden, in Mac Rhino this will happen
+                // for a document panel when a new document becomes active, the previous
+                // documents panel will get hidden and the new current panel will get shown.
+            }
+
+            public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
+            {
+                // Called when the document or panel container is closed/destroyed
+            }
+            #endregion IPanel methods
         }
     }
 }

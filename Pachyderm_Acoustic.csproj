@@ -158,8 +158,6 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\PachydermAcoustic_BigBang\Pachyderm_Whole\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="UIAutomationProvider">
@@ -183,6 +181,7 @@
     </Compile>
     <Compile Include="Pach_Properties_Panel.cs" />
     <Compile Include="Pach_Props_Page.cs" />
+    <Compile Include="ProgressBox.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
@@ -194,15 +193,11 @@
     <Compile Include="Rhino_Absorption_Analytics.cs" />
     <Compile Include="Rhino_Compact_FDTD.cs" />
     <Compile Include="Rhino_Pach_Tools.cs" />
+    <Compile Include="SourcePowerMod.cs" />
     <Compile Include="SphereConduit.cs" />
     <Compile Include="VisualizeGraph.cs" />
     <Compile Include="VoxelConduit.cs" />
-    <Compile Include="Pach_Auralisation.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Auralisation.designer.cs">
-      <DependentUpon>Pach_Auralisation.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Pach_Auralisation.cs" />
     <Compile Include="Pachyderm_Splash.cs" />
     <Compile Include="Pach_Special_Command.cs" />
     <Compile Include="Pach_FDTDControl.cs" />
@@ -216,15 +211,7 @@
     <Compile Include="Insert_Source_Command.cs" />
     <Compile Include="Pachyderm_AcousticPlugIn.cs" />
     <Compile Include="Pachyderm_Acoustic_command.cs" />
-    <Compile Include="Pach_Hybrid_Control.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Pach_Hybrid_Control.designer.cs">
-      <DependentUpon>Pach_Hybrid_Control.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Pach_Hybrid_UI_IO.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
+    <Compile Include="Pach_Hybrid_Control.cs" />
     <Compile Include="Pach_RunSim_Command.cs" />
     <Compile Include="ParticleConduit.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -265,14 +252,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Pach_Absorption_Designer.resx">
       <DependentUpon>Pach_Absorption_Designer.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Auralisation.resx">
-      <DependentUpon>Pach_Auralisation.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Pach_Hybrid_Control.resx">
-      <DependentUpon>Pach_Hybrid_Control.cs</DependentUpon>
-      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

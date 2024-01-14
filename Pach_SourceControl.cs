@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -437,7 +437,7 @@ namespace Pachyderm_Acoustic
                 Commit();
             }
 
-            System.Windows.Forms.OpenFileDialog OF;
+            Eto.Forms.OpenFileDialog OF;
             Balloon B;
             String[] CODES;
             string[] ballooncodes = new string[8];
@@ -543,10 +543,10 @@ namespace Pachyderm_Acoustic
                 }
                 else if (SourceType.SelectedIndex == 3)
                 {
-                    System.Windows.Forms.OpenFileDialog OF = new System.Windows.Forms.OpenFileDialog();
+                    Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
 
                     double[] SWLnom = new double[8];
-                    if (OF.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
+                    if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
                     {
                         CODES = Balloon.Read_Generic(OF.FileName);
 
@@ -564,8 +564,8 @@ namespace Pachyderm_Acoustic
                     else if (SourceType.SelectedIndex == 4)
                     {
                         //BRAS format CSV intake:
-                        OF = new System.Windows.Forms.OpenFileDialog();
-                        if (OF.ShowDialog() != System.Windows.Forms.DialogResult.Cancel)
+                        OF = new Eto.Forms.OpenFileDialog();
+                        if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
                         {
                             CODES = Balloon.Read_Generic(OF.FileName);
 

@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -172,11 +172,10 @@ namespace Pachyderm_Acoustic
             private void SaveDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
-                System.Windows.Forms.SaveFileDialog sf = new System.Windows.Forms.SaveFileDialog();
-                sf.DefaultExt = ".pccm";
-                sf.AddExtension = true;
-                sf.Filter = "Pachyderm Custom Map file (*.pccm)|*.pccm|" + "All Files|";
-                if (sf.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
+                sf.CurrentFilter = ".pccm";
+                sf.Filters.Add("Pachyderm Custom Map file (*.pccm)|*.pccm|" + "All Files|");
+                if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
                     System.IO.BinaryWriter sw = new System.IO.BinaryWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
                     //1. Date & Time (String)

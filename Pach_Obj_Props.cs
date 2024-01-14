@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2019, Arthur van der Harten 
+//'Copyright (c) 2008-2024, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -60,15 +60,15 @@ namespace Pachyderm_Acoustic
 
                 this.Abs_Label = new Label();
                 this.Abs_Label.Text = "Absorption Coefficient";
-                this.Absorption_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Absorption_Controls = new FreqSlider(FreqSlider.bands.Octave);
                 this.Absorption_Controls.MouseLeave += User_Materials_CheckedChanged;
                 this.Scat_Label = new Label();
                 this.Scat_Label.Text = "Scattering Coefficient";
-                this.Scattering_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Scattering_Controls = new FreqSlider(FreqSlider.bands.Octave);
                 this.Scattering_Controls.MouseLeave += User_Materials_CheckedChanged;
                 this.Trans_Label = new Label();
                 this.Trans_Label.Text = "Transparency Coefficient";
-                this.Transmission_Controls = new FreqSlider(FreqSlider.bands.Octave, this.Width);
+                this.Transmission_Controls = new FreqSlider(FreqSlider.bands.Octave);
                 this.Transmission_Controls.MouseLeave += User_Materials_CheckedChanged;
 
                 StackLayout cont = new StackLayout();

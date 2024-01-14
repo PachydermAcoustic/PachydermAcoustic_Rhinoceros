@@ -273,10 +273,10 @@ namespace Pachyderm_Acoustic
 
         private void Browse_Material_Click(object sender, EventArgs e)
         {
-            System.Windows.Forms.FolderBrowserDialog FBD = new System.Windows.Forms.FolderBrowserDialog();
+            Eto.Forms.SelectFolderDialog FBD = new Eto.Forms.SelectFolderDialog();
 
-            if (FBD.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
-            Library_Path.Text = FBD.SelectedPath;
+            if (FBD.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Ok) return;
+            Library_Path.Text = FBD.Directory;
             Pach_Properties.Instance.Lib_Path = Library_Path.Text;
         }
 
