@@ -1039,7 +1039,7 @@ namespace Pachyderm_Acoustic
                     if (Scat_Dir_75.Checked.Value) dir.Add(75 * Math.PI / 180);
 
                     Source[] Src = new Source[dir.Count];
-                    for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i);
+                    for (int i = 0; i < dir.Count; i++) Src[i] = new GeodesicSource(new double[8] {120,120,120,120,120,120,120,120}, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * (radius) + new Hare.Geometry.Vector(0,0,(double)Sample_Depth.Value), i, false);
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, ScatLimit.SelectedIndex);
@@ -1226,17 +1226,17 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Point ArrayCenter = new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + (double)Sample_Depth.Value);
 
-                    Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0) };
+                    Source[] Src = new Source[1] { new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z + radius + (double)Sample_Depth.Value), 0, false) };
 
                     double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Analysis_Technique.SelectedIndex);
 
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
-                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();// Rec.ToArray());
+                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.TransparencyLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDS.RuntoCompletion();
 
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
-                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();// Rec.ToArray());
+                    Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 

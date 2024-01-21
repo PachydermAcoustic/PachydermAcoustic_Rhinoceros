@@ -230,10 +230,10 @@ namespace Pachyderm_Acoustic
                         {
                             case "":
                             case "0":
-                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id);
+                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "1":
-                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id);
+                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "2":
                             case "3":
@@ -244,7 +244,7 @@ namespace Pachyderm_Acoustic
                                 else
                                     B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id);
+                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
                                 break;
                         }
                     }
@@ -289,7 +289,7 @@ namespace Pachyderm_Acoustic
                             //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(pts[i]);
                             Samples[i] = Utilities.RC_PachTools.RPttoHPt(pts[i]);
                         }
-                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id);
+                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false);
                     }
                 }
                 if (S.Length > 0) return true;

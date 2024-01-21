@@ -124,7 +124,7 @@ namespace Pachyderm_Acoustic
                                 //Abs[oct] *= ret;
                             }
                         }
-                        Mat_Layer.Add(new Environment.Basic_Material(Abs, new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 }));
+                        Mat_Layer.Add(new Environment.Basic_Material(Abs));
                         Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
                         Trans_Layer.Add(Trans);
                     }
@@ -141,7 +141,7 @@ namespace Pachyderm_Acoustic
                         {
                             double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
                             Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
-                            Mat_Obj.Add(new Basic_Material(ABS, new double[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
+                            Mat_Obj.Add(new Basic_Material(ABS));
                             Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
                             Trans_Obj.Add(TRANS);
                         }
@@ -161,7 +161,7 @@ namespace Pachyderm_Acoustic
                             {
                                 double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
                                 Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
-                                Mat_Obj.Add(new Basic_Material(ABS, new double[] { 0, 0, 0, 0, 0, 0, 0, 0 }));
+                                Mat_Obj.Add(new Basic_Material(ABS));
                                 Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
                                 Trans_Obj.Add(TRANS);
                             }
@@ -948,12 +948,10 @@ namespace Pachyderm_Acoustic
                         string Mode = null;
                         string AcousticsData = null;
                         double[] Absorption = new double[8];
-                        double[] phase = new double[8];
                         double[] Transparency = new double[8];
                         double[] Transmission = new double[8];
                         Mode = BObj.GetUserString("Acoustics_User");
                         double[] Scat = new double[8];
-                        for (int oct = 0; oct < 8; oct++) phase[oct] = 0;
 
                         if (Mode == "yes")
                         {
@@ -961,7 +959,7 @@ namespace Pachyderm_Acoustic
                             if (AcousticsData != "")
                             {
                                 Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
-                                AbsorptionData.Add(new Basic_Material(Absorption, phase));
+                                AbsorptionData.Add(new Basic_Material(Absorption));
                             }
                             else
                             {
@@ -999,7 +997,7 @@ namespace Pachyderm_Acoustic
                                     Transmission[oct] = 1 - ret;
                                     //Absorption[oct] *= ret; 
                                 }
-                                AbsorptionData.Add(new Basic_Material(Absorption, phase));
+                                AbsorptionData.Add(new Basic_Material(Absorption));
                             }
                             else
                             {

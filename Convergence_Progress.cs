@@ -18,7 +18,7 @@ namespace Pachyderm_Acoustic
     namespace UI
     {
         //[GuidAttribute("79B97A26-CEBC-4FA8-8275-9D961ADF1772")]
-        public class Convergence_Progress : Eto.Forms.FloatingForm //Panel, Rhino.UI.IPanel
+        public class Convergence_Progress : Eto.Forms.FloatingForm, Pachyderm_Acoustic.I_Conv_Progress
         {
             //private static Convergence_Progress instance = null;
             private Queue<double> history1 = new Queue<double>();

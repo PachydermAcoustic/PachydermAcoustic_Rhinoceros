@@ -702,7 +702,7 @@ namespace Pachyderm_Acoustic
                     Convergence_Progress CP = new Convergence_Progress();
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value);
+                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in (command.Sim as SplitRayTracer).Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Populate;
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);

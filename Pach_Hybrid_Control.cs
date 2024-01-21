@@ -848,7 +848,7 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Source.Length; s++)
                 {
-                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), Source[s], PScene, SampleRate, CutoffTime, T);
+                    Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), Source[s], PScene, SampleRate, CutoffTime, T, false);
 
                     command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
                     Rhino.RhinoApp.RunScript("Run_Simulation", false);
@@ -906,7 +906,9 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.Checked.Value)
                     {
-                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value);
+                        Convergence_Progress CP = new Convergence_Progress();
+                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                        if (!Spec_Rays.Checked) CP.Show();
 
                         Rhino.RhinoApp.RunScript("Run_Simulation", false);
                         if (command.CommandResult != Rhino.Commands.Result.Cancel)
