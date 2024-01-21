@@ -240,7 +240,7 @@ namespace Pachyderm_Acoustic
             protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
             {
                 Pach_Absorption_Designer PAD = new Pach_Absorption_Designer();
-                PAD.Show();
+                PAD.ShowModal();
                 return Result.Success;
             }
         }

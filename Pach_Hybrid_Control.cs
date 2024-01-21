@@ -49,6 +49,8 @@ namespace Pachyderm_Acoustic
                 this.savePressurePTBFormatToolStripMenuItem = new ButtonMenuItem();
                 this.saveEDCToolStripMenuItem = new ButtonMenuItem();
 
+                DynamicLayout File = new DynamicLayout();
+                File.AddRow(MenuStrip, null);
                 this.MenuStrip.Items.Add(this.fileToolStripMenuItem);
                 fileToolStripMenuItem.Menu = new ContextMenu();
                 this.fileToolStripMenuItem.Menu.Items.Add(openDataToolStripMenuItem);
@@ -97,7 +99,8 @@ namespace Pachyderm_Acoustic
                 this.saveEDCToolStripMenuItem.Click += this.saveEDCToolStripMenuItem_Click;
 
                 DynamicLayout HybridLO = new DynamicLayout();
-                HybridLO.AddRow(MenuStrip);
+                HybridLO.AddRow(File);
+                
 
                 this.Tabs = new TabControl();
                 this.Tabs.SelectedIndexChanged += this.Tab_Selecting;
@@ -152,10 +155,10 @@ namespace Pachyderm_Acoustic
                 this.RTBox.Text = "Raytracing Solution";
                 this.RTBox.CheckedChanged += this.CalcType_CheckedChanged;
                 Ctrls.AddRow(RTBox);
-                this.labelConv = new Label();
-                this.labelConv.Text = "Convergence:";
+                GroupBox labelConv = new GroupBox();
+                labelConv.Text = "Convergence:";
                 this.Spec_Rays = new RadioButton();
-                this.Spec_Rays.Text = "Specify Ray Count";
+                this.Spec_Rays.Text = "Specify Ray Count (no convergence)";
                 this.Spec_Rays.MouseUp += this.Convergence_CheckedChanged;
                 this.Minimum_Convergence = new RadioButton();
                 this.Minimum_Convergence.Checked = true;
@@ -164,8 +167,14 @@ namespace Pachyderm_Acoustic
                 this.DetailedConvergence = new RadioButton();
                 this.DetailedConvergence.Text = "Detailed Convergence";
                 this.DetailedConvergence.MouseUp += this.Convergence_CheckedChanged;
-                Ctrls.AddRow(labelConv, Spec_Rays, Minimum_Convergence, DetailedConvergence);
-
+                DynamicLayout conv = new DynamicLayout();
+                conv.AddRow(Minimum_Convergence);
+                conv.AddRow(DetailedConvergence);
+                conv.AddRow(Spec_Rays);
+                labelConv.Content = conv;
+                Impulse_LO.AddRow(Ctrls);
+                Impulse_LO.AddRow(labelConv);
+                DynamicLayout Ctrls2 = new DynamicLayout();
                 Label LabelRayNo = new Label();
                 this.RT_Count = new NumericStepper();
                 LabelRayNo.Text = "Number of Rays";
@@ -174,7 +183,7 @@ namespace Pachyderm_Acoustic
                 this.RT_Count.MaxValue = 10000000;
                 this.RT_Count.MinValue = 1;
                 this.RT_Count.Value = 10000;
-                Ctrls.AddRow(LabelRayNo, null, null, RT_Count);
+                Ctrls2.AddRow(LabelRayNo, null, null, RT_Count);
 
                 Label COTime = new Label();
                 COTime.Text = "Cut Off Time (ms)";
@@ -182,18 +191,17 @@ namespace Pachyderm_Acoustic
                 this.CO_TIME.MaxValue = 15000;
                 this.CO_TIME.MinValue = 1;
                 this.CO_TIME.Value = 1000;
-                Ctrls.AddRow(COTime, null, null, CO_TIME);
-                Impulse_LO.AddRow(Ctrls);
+                Ctrls2.AddRow(COTime, null, null, CO_TIME);
+                Impulse_LO.AddRow(Ctrls2);
                 this.Calculate = new Button();
                 this.Calculate.Text = "Calculate Solution";
                 this.Calculate.Click += this.Calculate_Click;
                 Impulse_LO.AddRow(Calculate);
                 this.MediumProps = new Medium_Properties_Group();
+                Impulse_LO.AddSpace();
                 Impulse_LO.AddRow(MediumProps);
                 TabImpulse.Content = Impulse_LO;
                 this.Tabs.Pages.Add(this.TabImpulse);
-
-
 
                 this.TabMaterials = new TabPage();
                 this.TabMaterials.Text = "Materials";
@@ -266,9 +274,6 @@ namespace Pachyderm_Acoustic
                 AL.AddSpace();
                 Absorption.Content = AL;
 
-                //this.AbsFlat.TickFrequency = 10;
-                //this.AbsFlat.ValueChanged += this.AbsFlat_ValueChanged;
-
                 this.Scattering = new TabPage();
                 this.Scattering.Text = "Scattering";
                 this.tabCoef.Pages.Add(Scattering);
@@ -313,10 +318,6 @@ namespace Pachyderm_Acoustic
                 SL.AddSpace();
                 Scattering.Content = SL;
 
-                //this.ScatFlat.TickFrequency = 10;
-                //this.ScatFlat.Value = 1;
-                //this.ScatFlat.ValueChanged += this.ScatFlat_ValueChanged;
-
                 this.Transparency = new TabPage();
                 this.Transparency.Text = "Transparency";
                 this.tabCoef.Pages.Add(this.Transparency);
@@ -334,14 +335,11 @@ namespace Pachyderm_Acoustic
                 Label labelTC = new Label();
                 labelTC.Text = "Transmission Coefficients (%  non-absorbed transmitted energy)";
 
-                //this.Trans_Flat.Enabled = false;
-                //this.Trans_Flat.MaxValue = 100;
-                //this.Trans_Flat.TickFrequency = 10;
-                //this.Trans_Flat.ValueChanged += this.TransFlat_ValueChanged;
                 DynamicLayout TCL = new DynamicLayout();
                 TCL.DefaultSpacing = new Size(8, 8);
                 TCL.AddRow(labelTC);
                 TRANSSlider = new FreqSlider(FreqSlider.bands.Octave);
+                TRANSSlider.Enabled = false;
                 TRANSSlider.MouseUp += Acoustics_Coef_Update;
                 TCL.AddRow(TRANSSlider);
                 this.Trans_Check = new CheckBox();
@@ -350,9 +348,6 @@ namespace Pachyderm_Acoustic
                 TCL.AddRow(Trans_Check);
                 TCL.AddSpace();
                 tabTC.Content = TCL;
-                //this.labelFlatten = new Label();
-                //this.Trans_Flat = new Slider();
-                //this.labelFlatten.Text = "Flatten All";
 
                 DynamicLayout TLLO = new DynamicLayout();
                 TLLO.DefaultSpacing = new Size(8, 8);
@@ -390,6 +385,7 @@ namespace Pachyderm_Acoustic
                 labelTL.Text = "Transmission Loss (decibels lost)";
                 TLLO.AddRow(labelTL);
                 TLSlider = new FreqSlider(FreqSlider.bands.Octave, true);
+                TLSlider.Enabled = false;
                 TLSlider.MouseUp += Acoustics_Coef_Update;
                 TLLO.AddRow(TLSlider);
                 this.TL_Check = new CheckBox();
@@ -421,7 +417,6 @@ namespace Pachyderm_Acoustic
                 PB.AddRow(Parameter_Choice, ISOCOMP);
                 ParameterBox = new GroupBox();
                 this.ParameterBox.Text = "Parametric Analysis";
-                this.ParameterBox = new GroupBox();
                 this.ISOCOMP = new Label();
                 this.ISOCOMP.Text = "ISO-Compliant:";
 
@@ -479,6 +474,7 @@ namespace Pachyderm_Acoustic
                 this.Receiver_Choice.Text = "No Results Calculated...";
                 this.Receiver_Choice.SelectedIndexChanged += this.Receiver_Choice_SelectedIndexChanged;
                 Rec.AddRow(labelRec, Receiver_Choice);
+                SrcL.AddSpace();
                 SrcL.AddRow(Rec);
                 AnaTop.AddRow(SrcL, ParameterBox);
 
@@ -1070,37 +1066,9 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private void UpdateForm()
-            {
-            //    Abs63Out.Value = Abs63.Value / 10;
-            //    Abs125Out.Value = (decimal)Abs125.Value / 10;
-            //    Abs250Out.Value = (decimal)Abs250.Value / 10;
-            //    Abs500Out.Value = (decimal)Abs500.Value / 10;
-            //    Abs1kOut.Value = (decimal)Abs1k.Value / 10;
-            //    Abs2kOut.Value = (decimal)Abs2k.Value / 10;
-            //    Abs4kOut.Value = (decimal)Abs4k.Value / 10;
-            //    Abs8kOut.Value = (decimal)Abs8k.Value / 10;
-            //    Scat63Out.Value = Scat63v.Value;
-            //    Scat125Out.Value = Scat125v.Value;
-            //    Scat250Out.Value = Scat250v.Value;
-            //    Scat500Out.Value = Scat500v.Value;
-            //    Scat1kOut.Value = Scat1kv.Value;
-            //    Scat2kOut.Value = Scat2kv.Value;
-            //    Scat4kOut.Value = Scat4kv.Value;
-            //    Scat8kOut.Value = Scat8kv.Value;
-            //    Trans_63_Out.Value = Trans_63v.Value;
-            //    Trans_125_Out.Value = Trans_125v.Value;
-            //    Trans_250_Out.Value = Trans_250v.Value;
-            //    Trans_500_Out.Value = Trans_500v.Value;
-            //    Trans_1k_Out.Value = Trans_1kv.Value;
-            //    Trans_2k_Out.Value = Trans_2kv.Value;
-            //    Trans_4k_Out.Value = Trans_4kv.Value;
-            //    Trans_8k_Out.Value = Trans_8kv.Value;
-            }
-
             private void Acoustics_Coef_Update(object sender, System.EventArgs e)
             {
-                UpdateForm();
+                //UpdateForm();
                 Commit_Layer_Acoustics();
             }
 
@@ -1121,15 +1089,6 @@ namespace Pachyderm_Acoustic
                 }
     
                 double[] Abs = ABSSlider.Value;
-                //double[] Abs = new double[8];
-                //Abs[0] = (double)Abs63Out.Value / 100;
-                //Abs[1] = (double)Abs125Out.Value / 100;
-                //Abs[2] = (double)Abs250Out.Value / 100;
-                //Abs[3] = (double)Abs500Out.Value / 100;
-                //Abs[4] = (double)Abs1kOut.Value / 100;
-                //Abs[5] = (double)Abs2kOut.Value / 100;
-                //Abs[6] = (double)Abs4kOut.Value / 100;
-                //Abs[7] = (double)Abs8kOut.Value / 100;
 
                 Materials.Add_Unique_Abs(Material_Name.Text, Abs);
                 Material_Lib.Items.Add(Material_Name.Text);
@@ -1155,15 +1114,6 @@ namespace Pachyderm_Acoustic
                 }
 
                 double[] TL = TLSlider.Value;
-                //double[] TL = new double[8];
-                //TL[0] = (double)TL63.Value;
-                //TL[1] = (double)TL125.Value;
-                //TL[2] = (double)TL250.Value;
-                //TL[3] = (double)TL500.Value;
-                //TL[4] = (double)TL1k.Value;
-                //TL[5] = (double)TL2k.Value;
-                //TL[6] = (double)TL4k.Value;
-                //TL[7] = (double)TL8k.Value;
 
                 Materials.Add_Unique_TL(IsolationAssemblies.Text, TL);
                 Isolation_Lib.Items.Add(IsolationAssemblies.Text);
@@ -1210,14 +1160,6 @@ namespace Pachyderm_Acoustic
                     Material Mat = Materials.TL_byKey(Selection);
 
                     TLSlider.Value = Mat.Values;
-                    //TL63.Value = (int)(Mat.Values[0]);
-                    //TL125.Value = (int)(Mat.Values[1]);
-                    //TL250.Value = (int)(Mat.Values[2]);
-                    //TL500.Value = (int)(Mat.Values[3]);
-                    //TL1k.Value = (int)(Mat.Values[4]);
-                    //TL2k.Value = (int)(Mat.Values[5]);
-                    //TL4k.Value = (int)(Mat.Values[6]);
-                    //TL8k.Value = (int)(Mat.Values[7]);
                     Commit_Layer_Acoustics();
 
                     Material_Mode(true);
@@ -1246,14 +1188,6 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < Mat.Values.Length; i++) mat[i] = Mat.Values[i] * 100;
 
                     ABSSlider.Value = mat;
-                    //Abs63.Value = (int)(Mat.Values[0] * 1000);
-                    //Abs125.Value = (int)(Mat.Values[1] * 1000);
-                    //Abs250.Value = (int)(Mat.Values[2] * 1000);
-                    //Abs500.Value = (int)(Mat.Values[3] * 1000);
-                    //Abs1k.Value = (int)(Mat.Values[4] * 1000);
-                    //Abs2k.Value = (int)(Mat.Values[5] * 1000);
-                    //Abs4k.Value = (int)(Mat.Values[6] * 1000);
-                    //Abs8k.Value = (int)(Mat.Values[7] * 1000);
                     Commit_Layer_Acoustics();
 
                     Material_Mode(true);
@@ -1272,7 +1206,6 @@ namespace Pachyderm_Acoustic
 
             private void Commit_SmartMaterial(Pach_Absorption_Designer AD)
             {
-                //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                 int layer_index = LayerDisplay.SelectedIndex;
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                 if (AD.Is_Finite)
@@ -1291,21 +1224,18 @@ namespace Pachyderm_Acoustic
                 SmartMat_Display.Plot.Clear();
 
                 Material_Mode(false);
-
-                //for (int i = 0; i < AD.Polar_Plot().Series.Count; i++) this.SmartMat_Display.Series.Add(AD.Polar_Plot().Series[i]);
             }
 
             private void Commit_Layer_Acoustics()
             {
                 if (LayerDisplay.SelectedValue == "") return;
-                //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                 int layer_index = LayerDisplay.SelectedIndex;
                 double[] Absd = ABSSlider.Value;
                 double[] Sctd = SCATSlider.Value;
                 int[] Abs = new int[Absd.Length];
                 int[] Sct = new int[Sctd.Length];
                 int[] Trn = null;
-                for(int i = 0; i < Absd.Length; i++) Abs[i] = (int)(Absd[i]);
+                for(int i = 0; i < Absd.Length; i++) Abs[i] = (int)(Absd[i]*10);
                 for(int i = 0; i < Sctd.Length; i++) Sct[i] = (int)(Sctd[i]);
 
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
@@ -1354,19 +1284,10 @@ namespace Pachyderm_Acoustic
                     if (TL_Check.Checked.Value) Trans_Check.Checked = false;
                     else
                     {
-                        //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                         int layer_index = LayerDisplay.SelectedIndex;// (LayerDisplay.SelectedItem as layer).id;
                         Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                         layer.SetUserString("Transmission", "");
                         TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                        //TL63.Value = 0;
-                        //TL125.Value = 0;
-                        //TL250.Value = 0;
-                        //TL500.Value = 0;
-                        //TL1k.Value = 0;
-                        //TL2k.Value = 0;
-                        //TL4k.Value = 0;
-                        //TL8k.Value = 0;
                     }
                 }
                 else
@@ -1379,46 +1300,12 @@ namespace Pachyderm_Acoustic
                         Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                         layer.SetUserString("Transmission", "");
                         TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                        //TL63.Value = 0;
-                        //TL125.Value = 0;
-                        //TL250.Value = 0;
-                        //TL500.Value = 0;
-                        //TL1k.Value = 0;
-                        //TL2k.Value = 0;
-                        //TL4k.Value = 0;
-                        //TL8k.Value = 0;
                     }
                 }
 
                 TRANSSlider.Enabled = Trans_Check.Checked.Value;
-                //Trans_63_Out.Enabled = Trans_Check.Checked;
-                //Trans_63v.Enabled = Trans_Check.Checked;
-                //Trans_125_Out.Enabled = Trans_Check.Checked;
-                //Trans_125v.Enabled = Trans_Check.Checked;
-                //Trans_250_Out.Enabled = Trans_Check.Checked;
-                //Trans_250v.Enabled = Trans_Check.Checked;
-                //Trans_500_Out.Enabled = Trans_Check.Checked;
-                //Trans_500v.Enabled = Trans_Check.Checked;
-                //Trans_1k_Out.Enabled = Trans_Check.Checked;
-                //Trans_1kv.Enabled = Trans_Check.Checked;
-                //Trans_2k_Out.Enabled = Trans_Check.Checked;
-                //Trans_2kv.Enabled = Trans_Check.Checked;
-                //Trans_4k_Out.Enabled = Trans_Check.Checked;
-                //Trans_4kv.Enabled = Trans_Check.Checked;
-                //Trans_8k_Out.Enabled = Trans_Check.Checked;
-                //Trans_8kv.Enabled = Trans_Check.Checked;
-                //Trans_Flat.Enabled = Trans_Check.Checked;
 
                 TLSlider.Enabled = TL_Check.Checked.Value;
-
-                //TL63.Enabled = TL_Check.Checked;
-                //TL125.Enabled = TL_Check.Checked;
-                //TL250.Enabled = TL_Check.Checked;
-                //TL500.Enabled = TL_Check.Checked;
-                //TL1k.Enabled = TL_Check.Checked;
-                //TL2k.Enabled = TL_Check.Checked;
-                //TL4k.Enabled = TL_Check.Checked;
-                //TL8k.Enabled = TL_Check.Checked;
 
                 Commit_Layer_Acoustics();
             }
@@ -1483,38 +1370,15 @@ namespace Pachyderm_Acoustic
                     RC_PachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
                     double[] AbsI = new double[Abs.Length];
                     double[] SctI = new double[Sct.Length];
-                    for(int i = 0; i < AbsI.Length; i++) AbsI[i] = Abs[i] * 1000;
+                    for(int i = 0; i < AbsI.Length; i++) AbsI[i] = Abs[i] * 100;
                     for (int i = 0; i < SctI.Length; i++) SctI[i] = Sct[i] * 100;
-                    //Abs63.Value = (int)(Abs[0] * 1000);
-                    //Abs125.Value = (int)(Abs[1] * 1000);
-                    //Abs250.Value = (int)(Abs[2] * 1000);
-                    //Abs500.Value = (int)(Abs[3] * 1000);
-                    //Abs1k.Value = (int)(Abs[4] * 1000);
-                    //Abs2k.Value = (int)(Abs[5] * 1000);
-                    //Abs4k.Value = (int)(Abs[6] * 1000);
-                    //Abs8k.Value = (int)(Abs[7] * 1000);
-                    //Scat63v.Value = (int)(Sct[0] * 100);
-                    //Scat125v.Value = (int)(Sct[1] * 100);
-                    //Scat250v.Value = (int)(Sct[2] * 100);
-                    //Scat500v.Value = (int)(Sct[3] * 100);
-                    //Scat1kv.Value = (int)(Sct[4] * 100);
-                    //Scat2kv.Value = (int)(Sct[5] * 100);
-                    //Scat4kv.Value = (int)(Sct[6] * 100);
-                    //Scat8kv.Value = (int)(Sct[7] * 100);
+
                     ABSSlider.Value = AbsI;
                     SCATSlider.Value = SctI;
                     if (TL != "" && TL != null)
                     {
                         double[] T_Loss = PachTools.DecodeTransmissionLoss(TL);
                         TLSlider.Value = T_Loss;
-                        //TL63.Value = (decimal)T_Loss[0];
-                        //TL125.Value = (decimal)T_Loss[1];
-                        //TL250.Value = (decimal)T_Loss[2];
-                        //TL500.Value = (decimal)T_Loss[3];
-                        //TL1k.Value = (decimal)T_Loss[4];
-                        //TL2k.Value = (decimal)T_Loss[5];
-                        //TL4k.Value = (decimal)T_Loss[6];
-                        //TL8k.Value = (decimal)T_Loss[7];
                         TL_Check.Checked = true;
                     }
                     else if (Trn != null && Trn.Length == 8 && Trn.Sum() > 0)
@@ -1522,14 +1386,6 @@ namespace Pachyderm_Acoustic
                         double[] TrnI = new double[Trn.Length];
                         for (int i = 0; i < TrnI.Length; i++) TrnI[i] = Trn[i] * 100;
                         TRANSSlider.Value = TrnI;
-                        //Trans_63v.Value = (int)(Trn[0] * 100);
-                        //Trans_125v.Value = (int)(Trn[1] * 100);
-                        //Trans_250v.Value = (int)(Trn[2] * 100);
-                        //Trans_500v.Value = (int)(Trn[3] * 100);
-                        //Trans_1kv.Value = (int)(Trn[4] * 100);
-                        //Trans_2kv.Value = (int)(Trn[5] * 100);
-                        //Trans_4kv.Value = (int)(Trn[6] * 100);
-                        //Trans_8kv.Value = (int)(Trn[7] * 100);
                         Trans_Check.Checked = true;
                     }
                     else
@@ -1540,85 +1396,16 @@ namespace Pachyderm_Acoustic
                 else
                 {
                     ABSSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
-                    //Abs63.Value = 1;
-                    //Abs125.Value = 1;
-                    //Abs250.Value = 1;
-                    //Abs500.Value = 1;
-                    //Abs1k.Value = 1;
-                    //Abs2k.Value = 1;
-                    //Abs4k.Value = 1;
-                    //Abs8k.Value = 1;
                     SCATSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
-                    //Scat63v.Value = 1;
-                    //Scat125v.Value = 1;
-                    //Scat250v.Value = 1;
-                    //Scat500v.Value = 1;
-                    //Scat1kv.Value = 1;
-                    //Scat2kv.Value = 1;
-                    //Scat4kv.Value = 1;
-                    //Scat8kv.Value = 1;
                     TRANSSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                    //Trans_63v.Value = 0;
-                    //Trans_125v.Value = 0;
-                    //Trans_250v.Value = 0;
-                    //Trans_500v.Value = 0;
-                    //Trans_1kv.Value = 0;
-                    //Trans_2kv.Value = 0;
-                    //Trans_4kv.Value = 0;
-                    //Trans_8kv.Value = 0;
                     TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                    //TL63.Value = 0;
-                    //TL125.Value = 0;
-                    //TL250.Value = 0;
-                    //TL500.Value = 0;
-                    //TL1k.Value = 0;
-                    //TL2k.Value = 0;
-                    //TL4k.Value = 0;
-                    //TL8k.Value = 0;
                 }
             }
-
-            private void ScatFlat_ValueChanged(object sender, EventArgs e)
-            {
-                //Scat63v.Value = ScatFlat.Value;
-                //Scat125v.Value = ScatFlat.Value;
-                //Scat250v.Value = ScatFlat.Value;
-                //Scat500v.Value = ScatFlat.Value;
-                //Scat1kv.Value = ScatFlat.Value;
-                //Scat2kv.Value = ScatFlat.Value;
-                //Scat4kv.Value = ScatFlat.Value;
-                //Scat8kv.Value = ScatFlat.Value;
-            }
-
-            //private void TransFlat_ValueChanged(object sender, EventArgs e)
-            //{
-            //    Trans_63v.Value = Trans_Flat.Value;
-            //    Trans_125v.Value = Trans_Flat.Value;
-            //    Trans_250v.Value = Trans_Flat.Value;
-            //    Trans_500v.Value = Trans_Flat.Value;
-            //    Trans_1kv.Value = Trans_Flat.Value;
-            //    Trans_2kv.Value = Trans_Flat.Value;
-            //    Trans_4kv.Value = Trans_Flat.Value;
-            //    Trans_8kv.Value = Trans_Flat.Value;
-            //}
-
-            //private void AbsFlat_ValueChanged(object sender, EventArgs e)
-            //{
-            //    Abs63.Value = AbsFlat.Value;
-            //    Abs125.Value = AbsFlat.Value;
-            //    Abs250.Value = AbsFlat.Value;
-            //    Abs500.Value = AbsFlat.Value;
-            //    Abs1k.Value = AbsFlat.Value;
-            //    Abs2k.Value = AbsFlat.Value;
-            //    Abs4k.Value = AbsFlat.Value;
-            //    Abs8k.Value = AbsFlat.Value;
-            //}
-
 
             private void Abs_Designer_Click(object sender, EventArgs e)
             {
                 Pach_Absorption_Designer AD = new Pach_Absorption_Designer();
-                AD.Show();
+                AD.ShowModal();
 
                 switch (AD.Result)
                 {
@@ -1628,15 +1415,6 @@ namespace Pachyderm_Acoustic
                         double[] abs = new double[8];
                         for (int i = 0; i < 8; i++) abs[i] = AD.RI_Absorption[i] * 100;
                         ABSSlider.Value = abs;
-                        //Abs63Out.Value = (AD.RI_Absorption[0] * 100);
-                        //Abs125Out.Value = (AD.RI_Absorption[1] * 100);
-                        //Abs250Out.Value = (AD.RI_Absorption[2] * 100);
-                        //Abs500Out.Value = (AD.RI_Absorption[3] * 100);
-                        //Abs1kOut.Value = (decimal)(AD.RI_Absorption[4] * 100);
-                        //Abs2kOut.Value = (decimal)(AD.RI_Absorption[5] * 100);
-                        //Abs4kOut.Value = (decimal)(AD.RI_Absorption[6] * 100);
-                        //Abs8kOut.Value = (decimal)(AD.RI_Absorption[7] * 100);
-                        //UpdateForm();
 
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                         int layer_index = LayerDisplay.SelectedIndex;
@@ -1659,32 +1437,6 @@ namespace Pachyderm_Acoustic
 
             private void Material_Mode(bool RI)
             {
-                //Label6.Visible = RI;
-                //Label7.Visible = RI;
-                //Label8.Visible = RI;
-                //Label9.Visible = RI;
-                //Label10.Visible = RI;
-                //Label11.Visible = RI;
-                //Label12.Visible = RI;
-                //Label13.Visible = RI;
-                //Abs63Out.Visible = RI;
-                //Abs63.Visible = RI;
-                //Abs125Out.Visible = RI;
-                //Abs125.Visible = RI;
-                //Abs250Out.Visible = RI;
-                //Abs250.Visible = RI;
-                //Abs500Out.Visible = RI;
-                //Abs500.Visible = RI;
-                //Abs1kOut.Visible = RI;
-                //Abs1k.Visible = RI;
-                //Abs2kOut.Visible = RI;
-                //Abs2k.Visible = RI;
-                //Abs4kOut.Visible = RI;
-                //Abs4k.Visible = RI;
-                //Abs8kOut.Visible = RI;
-                //Abs8k.Visible = RI;
-                //AbsFlat.Visible = RI;
-                //label24.Visible = RI;
 
                 if (RI)
                 {
@@ -1734,7 +1486,7 @@ namespace Pachyderm_Acoustic
 
             private void Update_Parameters()
             {
-                if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.SelectedValue.ToString() != "Sabine RT" && Parameter_Choice.SelectedValue.ToString() != "Eyring RT") { return; }
+                if (Direct_Data == null && IS_Data == null && Receiver == null) { return; }
                 double[] Schroeder;
 
                 List<int> SrcIDs = SourceList.SelectedSources();
@@ -2268,8 +2020,6 @@ namespace Pachyderm_Acoustic
                         for (int oct = 0; oct < 8; oct++)
                         {
                             ETCm[oct] = IR_Construction.ETCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, int.Parse(Receiver_Choice.Text), SrcIDs, false);
-                            //ETCm[oct] = new double[ptc.Length];
-                            //for (int s = 0; s < ptc.Length; s++) ETCm[oct][s] = ptc[s] * ptc[s];
                         }
                         double[] MTI = AcousticalMath.Modulation_Transfer_Index(ETCm, 1.2 * 343, NoiseM, SampleRate);
                         SRT1.Text = "";
@@ -2421,8 +2171,6 @@ namespace Pachyderm_Acoustic
                     List<Deterministic_Reflection> Paths = IS_Path_Box.SelectedPaths();
                     foreach (Deterministic_Reflection Path in Paths)
                     {
-                        //Polyline P = IS_Data[s].GetPLINE(pathid, int.Parse(Receiver_Choice.Text));
-                        //if (P == null) continue;
                         foreach (Hare.Geometry.Point[] P in Path.Path)
                         {
                             List<Point3d> pts = new List<Point3d>();
@@ -2553,8 +2301,6 @@ namespace Pachyderm_Acoustic
 
                         foreach (Deterministic_Reflection i in Paths)
                         {
-                            //int ct = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(0, SampleRate).Length;
-                            //double[] refl = (IS_Path_Box.Items[i] as Deterministic_Reflection).Energy(OCT_ID, SampleRate);
                             double[] refl = i.Energy(OCT_ID, SampleRate);
                             for (int j = 0; j < refl.Length; j++)
                             {
@@ -2634,7 +2380,6 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                //Analysis_View.AxisChange();
                 Analysis_View.Invalidate();
                 Update_Parameters();
             }
@@ -2739,7 +2484,6 @@ namespace Pachyderm_Acoustic
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                //Pach_Auralisation.Instance.Reset();
                 Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
                 OF.CurrentFilter = ".pac1";
                 OF.Filters.Add("Pachyderm Ray Data file (*.pac1)|*.pac1|" + "All Files|");
@@ -2902,8 +2646,24 @@ namespace Pachyderm_Acoustic
 
             private void Convergence_CheckedChanged(object sender, EventArgs e)
             {
-                if (Spec_Rays.Checked) RT_Count.Enabled = true;
-                else RT_Count.Enabled = false;
+                if (sender == Spec_Rays)
+                {
+                    Minimum_Convergence.Checked = false;
+                    DetailedConvergence.Checked = false;
+                    RT_Count.Enabled = true;
+                }
+                else if (sender == Minimum_Convergence)
+                {
+                    Spec_Rays.Checked = false;
+                    DetailedConvergence.Checked = false;
+                    RT_Count.Enabled = false;
+                }
+                else if (sender == DetailedConvergence)
+                {
+                    Spec_Rays.Checked = false;
+                    Minimum_Convergence.Checked = false;
+                    RT_Count.Enabled = false;
+                }
             }
 
             private void Variegaton_Scroll(object sender, EventArgs e)

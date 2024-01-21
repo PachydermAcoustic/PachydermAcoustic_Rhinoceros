@@ -35,7 +35,7 @@ namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-        public partial class Pach_Absorption_Designer : Eto.Forms.FloatingForm
+        public partial class Pach_Absorption_Designer : Eto.Forms.Dialog
         {
             public Environment.Smart_Material sm;
             public static double c_sound = 343;

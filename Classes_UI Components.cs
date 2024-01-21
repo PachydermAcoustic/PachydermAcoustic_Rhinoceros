@@ -262,7 +262,7 @@ namespace Pachyderm_Acoustic
                 PathBoxes = new List<CheckBox>();
                 DynamicLayout Empty = new DynamicLayout();
                 Label Nothing = new Label();
-                Nothing.Text = "No Source Objects Present...";
+                Nothing.Text = "No Reflections Present...";
                 Empty.AddRow(Nothing);
                 this.Content = Empty;
             }
@@ -891,20 +891,28 @@ namespace Pachyderm_Acoustic
             {
                 this.oct_Slider.TickFrequency = 100;
                 this.oct_Slider.Value = 1;
-                this.oct_Slider.Size = new Size(400, 20);
+                this.oct_Slider.Size = new Size(-1, 20);
                 this.oct_Slider.MaxValue = 1000;
                 this.oct_Slider.ValueChanged += UpdateValue;
-                if (!decibels) { units.Text = "%"; }
-                else { units.Text = "decibels"; }
+                if (!decibels) 
+                {
+                    units.Text = "%";
+                    units.Width = 15;
+                }
+                else 
+                {
+                    units.Text = "decibels";
+                    units.Width = 50;
+                }
 
                 l.Text = text;
                 l.Width = 65;
                 oct_out.Width = 35;
-                units.Width = 65;
                 this.Cells.Add(l);
                 this.Cells.Add(oct_Slider);
                 this.Cells.Add(oct_out);
                 this.Cells.Add(units);
+                this.Cells[1].ScaleWidth = true;
             }
             private void UpdateValue(object sender, System.EventArgs e)
             {
