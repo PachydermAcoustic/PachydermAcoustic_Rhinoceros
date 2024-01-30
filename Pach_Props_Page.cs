@@ -32,7 +32,7 @@ namespace Pachyderm_Acoustic
 
             public override bool OnApply()
             {
-                if (Pach_Hybrid_Control.Instance != null) Pach_Hybrid_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
+                if (PachHybridControl.Instance != null) PachHybridControl.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 if (Pach_Mapping_Control.Instance != null) Pach_Mapping_Control.Instance.Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                 return base.OnApply();
             }
@@ -57,17 +57,11 @@ namespace Pachyderm_Acoustic
                 return Pach_Properties.Instance.Oct_Depth;
             }
 
-            public string Get_MatLib_Path()
-            {
-                return Pach_Properties.Instance.Lib_Path;
-            }
+            public static string MatLibPath => Pach_Properties.Instance.Lib_Path;
 
-            public int Get_VG_Domain()
-            {
-                return Pach_Properties.Instance.VoxelGrid_Domain;
-            }
+            public static int VGDomain => Pach_Properties.Instance.VoxelGrid_Domain;
 
-            public bool Save_Results()
+            public static bool SaveResults()
             {
                 return Pach_Properties.Instance.SaveResults;
             }

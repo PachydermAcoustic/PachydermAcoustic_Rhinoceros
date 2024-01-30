@@ -29,7 +29,7 @@ namespace Pachyderm_Acoustic
         /// <summary>
         /// The OnRayShooter does not return the surface that was hit, so this class partitions the NURBS model and speedily hunts for the surface that the intersection point is on.
         /// </summary>
-        public class VoxelGrid_RC
+        public class VoxelGridRC
         {
             //This is required as a handicap for the ONRayShooter, which does not yet return the surface that the ray hit...
             private double X_Incr;
@@ -38,10 +38,12 @@ namespace Pachyderm_Acoustic
             private int VoxelCT;
             private List<int>[, ,] VoxelInventory;
             private BoundingBox OverallBBox = new BoundingBox();
-            private List<Point3d>[, ,] Voxel;
             double Radius2;
+            #pragma warning disable CA1814
+            private List<Point3d>[, ,] Voxel;
+            #pragma warning restore CA1814
 
-            public VoxelGrid_RC(Environment.RhCommon_Scene ModelSurfaces, List<Point3d> Pts, int VG_Domain)
+            public VoxelGridRC(Environment.RhCommon_Scene ModelSurfaces, List<Point3d> Pts, int VG_Domain)
             {
                 VoxelCT = VG_Domain;
                 VoxelInventory = new List<int>[VoxelCT, VoxelCT, VoxelCT];

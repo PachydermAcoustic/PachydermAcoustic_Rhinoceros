@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
 using Hare.Geometry;
-using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
@@ -112,7 +111,7 @@ namespace Pachyderm_Acoustic
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(spec, ref Abs, ref Scat, ref Trans);
                         //New code for transmission loss incorporation...
                         string trans = Layer.GetUserString("Transmission");
-                        Trans = (trans == "" || trans == null ) ? ( Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans = Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
+                        Trans = (trans == "" || trans == null ) ? ( Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
 
                         //TODO: Test that this works.
                         if (Layer.GetUserString("Transmission") == "True")
@@ -326,12 +325,12 @@ namespace Pachyderm_Acoustic
                                     if (isDegenerate(ref P)) continue;
                                 }
 
-                                B.Surfaces[0].ClosestPoint(Utilities.RC_PachTools.HPttoRPt(Centroid), out double _u, out double _v);
+                                B.Surfaces[0].ClosestPoint(Utilities.RCPachTools.HPttoRPt(Centroid), out double _u, out double _v);
                                 SurfaceCurvature SC = B.Surfaces[0].CurvatureAt(_u, _v);
                                 //Kurvatures[Kurvatures.Count - 1][u] = new double[2] { SC.Kappa(0), SC.Kappa(1) };
                                 //Frame_Axes[Kurvatures.Count - 1][u] = new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) };
                                 temp_K.Add(new double[2] { SC.Kappa(0), SC.Kappa(1) });
-                                temp_Frames.Add(new Vector[2] { Utilities.RC_PachTools.RPttoHPt(SC.Direction(0)), Utilities.RC_PachTools.RPttoHPt(SC.Direction(1)) });
+                                temp_Frames.Add(new Vector[2] { Utilities.RCPachTools.RPttoHPt(SC.Direction(0)), Utilities.RCPachTools.RPttoHPt(SC.Direction(1)) });
 
                                 bool Trans = false;
                                 for (int t_oct = 0; t_oct < 8; t_oct++)
@@ -700,7 +699,7 @@ namespace Pachyderm_Acoustic
                                             }
                                             else
                                             {
-                                                passed.AddRange(Rhino.Geometry.Curve.CreateBooleanDifference(totest, c));
+                                                passed.AddRange(Rhino.Geometry.Curve.CreateBooleanDifference(totest, c, 0.1));
                                             }
                                         }
                                     }
@@ -794,7 +793,7 @@ namespace Pachyderm_Acoustic
                         break;
                     }
 
-                    Plane P;
+                    Rhino.Geometry.Plane P;
                     i.PerpendicularFrameAt(t, out P);
                     Curve[] Csects1, Csects2;
                     Point3d[] Psects;
@@ -908,11 +907,11 @@ namespace Pachyderm_Acoustic
         public class RhCommon_Scene : Scene
         {
             private List<Brep> BrepList = new List<Brep>();
-            private List<Plane> Plane = new List<Plane>();
+            private List<Rhino.Geometry.Plane> Plane = new List<Rhino.Geometry.Plane>();
             private List<bool> PlaneBoolean = new List<bool>();
             private List<Vector3d> PlanarNormal = new List<Vector3d>();
             private List<Transform> Mirror = new List<Transform>();
-            private VoxelGrid_RC Voxels;
+            private VoxelGridRC Voxels;
             int XVoxel, YVoxel, ZVoxel;
             private Point3d S_Origin;
             List<int> SurfaceIndex;
@@ -922,7 +921,7 @@ namespace Pachyderm_Acoustic
                 : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
             {
                 Vector3d NormalHolder = new Vector3d();
-                Plane PlaneHolder = new Plane();
+                Rhino.Geometry.Plane PlaneHolder = new Rhino.Geometry.Plane();
                 Transform XHolder = new Transform();
                 Random RND = new Random();
                 ObjectList = new List<Rhino.DocObjects.ObjRef>();
@@ -1036,7 +1035,7 @@ namespace Pachyderm_Acoustic
                             Origin = BObj.Faces[j].PointAt(0, 0);
                             Normal = BObj.Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
                             Mirror.Add(Transform.Mirror(Origin, Normal));
-                            Plane.Add(new Plane(Origin, Normal));
+                            Plane.Add(new Rhino.Geometry.Plane(Origin, Normal));
                             PlanarNormal.Add(Normal);
                         }
                         else
@@ -1129,7 +1128,7 @@ namespace Pachyderm_Acoustic
                             Origin = BObj.Faces[j].PointAt(0, 0);
                             Normal = BObj.Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
                             Mirror.Add(Transform.Mirror(Origin, Normal));
-                            Plane.Add(new Plane(Origin, Normal));
+                            Plane.Add(new Rhino.Geometry.Plane(Origin, Normal));
                             PlanarNormal.Add(Normal);
                         }
                         else
@@ -1278,7 +1277,7 @@ namespace Pachyderm_Acoustic
 
             public override bool shoot(Ray R, out double u, out double v, out int Srf_ID, out Hare.Geometry.Point X_PT, out double t)
             {
-                S_Origin = Utilities.RC_PachTools.HPttoRPt(R.origin);
+                S_Origin = Utilities.RCPachTools.HPttoRPt(R.origin);
                 Srf_ID = 0;
 
                 while (true)
@@ -1458,7 +1457,7 @@ namespace Pachyderm_Acoustic
             public void partition(List<Point3d> P, int SP_PARAM)
             {
                 Partitioned = true;
-                Voxels = new VoxelGrid_RC(this, P, SP_PARAM);
+                Voxels = new VoxelGridRC(this, P, SP_PARAM);
             }
 
             public override void partition(List<Hare.Geometry.Point> P, int SP_PARAM)
@@ -1469,7 +1468,7 @@ namespace Pachyderm_Acoustic
                 {
                     PTS.Add(new Point3d(PT.x, PT.y, PT.z));
                 }
-                Voxels = new VoxelGrid_RC(this, PTS, SP_PARAM);
+                Voxels = new VoxelGridRC(this, PTS, SP_PARAM);
             }
 
             public void partition(List<Hare.Geometry.Point> P)
@@ -1480,13 +1479,13 @@ namespace Pachyderm_Acoustic
                 {
                     PTS.Add(new Point3d(PT.x, PT.y, PT.z));
                 }
-                Voxels = new VoxelGrid_RC(this, PTS, UI.PachydermAc_PlugIn.Instance.VG_Domain());
+                Voxels = new VoxelGridRC(this, PTS, UI.PachydermAc_PlugIn.VGDomain);
             }
 
             public void partition(List<Point3d> P)
             {
                 Partitioned = true;
-                Voxels = new VoxelGrid_RC(this, P, UI.PachydermAc_PlugIn.Instance.VG_Domain());
+                Voxels = new VoxelGridRC(this, P, UI.PachydermAc_PlugIn.VGDomain);
             }
 
             public override string Scene_Type()
@@ -1626,13 +1625,13 @@ namespace Pachyderm_Acoustic
             public override Hare.Geometry.Point Max()
             {
                 if (this.Voxels == null) return null;
-                return Utilities.RC_PachTools.RPttoHPt(Voxels.OverallBounds().Max);
+                return Utilities.RCPachTools.RPttoHPt(Voxels.OverallBounds().Max);
             }
 
             public override Hare.Geometry.Point Min()
             {
                 if (this.Voxels == null) return null;
-                return Utilities.RC_PachTools.RPttoHPt(Voxels.OverallBounds().Min);
+                return Utilities.RCPachTools.RPttoHPt(Voxels.OverallBounds().Min);
             }
 
             public override double Sound_speed(Hare.Geometry.Point pt)

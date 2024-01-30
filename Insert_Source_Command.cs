@@ -700,7 +700,7 @@ namespace Pachyderm_Acoustic
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             ft = rhino_object.Geometry.GetUserString("FileType");
-                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RC_PachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RCPachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
                             L.CurrentAxi = float.Parse(A[2]);
@@ -724,7 +724,7 @@ namespace Pachyderm_Acoustic
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             //ft = rhino_object.Geometry.GetUserString("FileType");
-                            Balloon L = new Balloon(strballoon, Utilities.RC_PachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            Balloon L = new Balloon(strballoon, Utilities.RCPachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
                             L.CurrentAxi = float.Parse(A[2]);
@@ -776,7 +776,7 @@ namespace Pachyderm_Acoustic
                                 {
                                     //Display the balloon for 1khz.
                                     e.Display.DrawSprite(LS, pt, 0.25f, true);// screen_pt, 32.0f);
-                                    e.Display.DrawMeshWires(Utilities.RC_PachTools.Hare_to_RhinoMesh(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
+                                    e.Display.DrawMeshWires(Utilities.RCPachTools.HaretoRhinoMesh(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
                                     e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
                                     double Theta = (m_Balloons[index].CurrentAlt + 270) * System.Math.PI / 180;
                                     double Phi = (m_Balloons[index].CurrentAzi - 90) * System.Math.PI / 180;
@@ -912,7 +912,7 @@ namespace Pachyderm_Acoustic
             public void Update_Position(int ID, Rhino.Geometry.Point3d P)
             {
                 if (m_Balloons[ID] == null) return;
-                m_Balloons[ID].Update_Position(Utilities.RC_PachTools.RPttoHPt(P));
+                m_Balloons[ID].Update_Position(Utilities.RCPachTools.RPttoHPt(P));
             }
 
             public double[] SWL(int idx)

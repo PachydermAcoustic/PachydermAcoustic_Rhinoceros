@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using Pachyderm_Acoustic.Environment;
 using Rhino.Geometry;
@@ -8,14 +10,14 @@ namespace Pachyderm_Acoustic
 {
     namespace Utilities
     {
-        public class RC_PachTools: PachTools
+        public class RCPachTools: PachTools
         {
             /// <summary>
             /// Shorthand tool used to run a simulation.
             /// </summary>
             /// <param name="Sim">the simulation to run...</param>
             /// <returns>the completed simulation...</returns>
-            public static Simulation_Type Run_Simulation(Simulation_Type Sim)
+            public static Simulation_Type RunSimulation(Simulation_Type Sim)
             {
                 UI.PachydermAc_PlugIn plugin = UI.PachydermAc_PlugIn.Instance;
                 UI.Pach_RunSim_Command command = UI.Pach_RunSim_Command.Instance;
@@ -45,7 +47,7 @@ namespace Pachyderm_Acoustic
             /// <param name="AirAttenMethod"></param>
             /// <param name="EdgeFreq">Use edge frequency correction?</param>
             /// <returns></returns>
-            public static Environment.RhCommon_Scene Get_NURBS_Scene(double Rel_Humidity, double AirTempC, double AirPressurePa, int AirAttenMethod, bool EdgeFreq)
+            public static Environment.RhCommon_Scene GetNURBSScene(double RelHumidity, double AirTempC, double AirPressurePa, int AirAttenMethod, bool EdgeFreq)
             {
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 settings.DeletedObjects = false;
@@ -64,7 +66,7 @@ namespace Pachyderm_Acoustic
                 }
                 if (RC_List.Count != 0)
                 {
-                    return new Environment.RhCommon_Scene(RC_List, AirTempC, Rel_Humidity, AirPressurePa, AirAttenMethod, EdgeFreq, false);
+                    return new Environment.RhCommon_Scene(RC_List, AirTempC, RelHumidity, AirPressurePa, AirAttenMethod, EdgeFreq, false);
                 }
                 return null;
             }
@@ -102,20 +104,20 @@ namespace Pachyderm_Acoustic
                 return null;
             }
 
-            public static void Plot_Hare_Topology(Pachyderm_Acoustic.Environment.Polygon_Scene S)
+            public static void PlotHareTopology(Pachyderm_Acoustic.Environment.Polygon_Scene S)
             {
-                Plot_Hare_Topology(S.Hare_Data);
+                PlotHareTopology(S.Hare_Data);
             }
 
-            public static void Plot_Hare_Topology(Hare.Geometry.Topology T)
+            public static void PlotHareTopology(Hare.Geometry.Topology T)
             {
-                Mesh m_RhinoMesh = Hare_to_RhinoMesh(T, true);
+                Mesh m_RhinoMesh = HaretoRhinoMesh(T, true);
                 m_RhinoMesh.FaceNormals.ComputeFaceNormals();
                 m_RhinoMesh.Normals.ComputeNormals();
                 Rhino.RhinoDoc.ActiveDoc.Objects.Add(m_RhinoMesh);
             }
 
-            public static Hare.Geometry.Topology Rhino_to_HareMesh(Mesh M)
+            public static Hare.Geometry.Topology RhinotoHareMesh(Mesh M)
             {
                 Hare.Geometry.Point[][] polys = new Hare.Geometry.Point[M.Faces.Count][];
 
@@ -144,7 +146,7 @@ namespace Pachyderm_Acoustic
                 return HM;
             }
 
-            public static Mesh Hare_to_RhinoMesh(Hare.Geometry.Topology T, bool welded)
+            public static Mesh HaretoRhinoMesh(Hare.Geometry.Topology T, bool welded)
             {
                 Mesh m_RhinoMesh = new Mesh();
                 int ct = 0;
@@ -153,7 +155,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int j = 0; j < T.Vertex_Count; j++)
                     {
-                        m_RhinoMesh.Vertices.Add(Utilities.RC_PachTools.HPttoRPt(T[j]));
+                        m_RhinoMesh.Vertices.Add(Utilities.RCPachTools.HPttoRPt(T[j]));
                     }
                     for (int j = 0; j < T.Polygon_Count; j++)
                     {
@@ -167,7 +169,7 @@ namespace Pachyderm_Acoustic
                         }
                         else
                         {
-                            throw new Exception("Faces of more than 4 vertices not supported...");
+                            throw new InvalidDataException("Faces of more than 4 vertices not supported...");
                         }
                     }
                 }
@@ -241,7 +243,7 @@ namespace Pachyderm_Acoustic
             {
                 Rhino.DocObjects.RhinoObject obj = Rhino.RhinoDoc.ActiveDoc.Objects.Find(ID);
                 obj.Geometry.SetUserString("Acoustics_User", "yes");
-                string MaterialCode = RC_PachTools.EncodeAcoustics(Abs, Scat, Trans);
+                string MaterialCode = RCPachTools.EncodeAcoustics(Abs, Scat, Trans);
                 bool result = obj.Geometry.SetUserString("Acoustics", MaterialCode);
                 return result;
             }
@@ -268,9 +270,9 @@ namespace Pachyderm_Acoustic
             /// <returns></returns>
             public static bool Material_SetLayer(string LayerName, int[] Abs, int[] Scat, int[] Trans = null)
             {
-                int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerName, true);
+                int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.FindName(LayerName).Index;
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
-                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Scat, Trans));
+                layer.SetUserString("Acoustics", RCPachTools.EncodeAcoustics(Abs, Scat, Trans));
                 return Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
             }
 
@@ -285,7 +287,7 @@ namespace Pachyderm_Acoustic
             {
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[LayerIndex];
                 layer.SetUserString("ABSType", "");
-                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Scat, Trans));
+                layer.SetUserString("Acoustics", RCPachTools.EncodeAcoustics(Abs, Scat, Trans));
                 return Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, LayerIndex, false);
             }
 
@@ -543,8 +545,8 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Values.Length; i++)
                 {
-                    System.Drawing.Color color = c_scale.GetValue(Values[i], LBound, UBound);
-                    mesh.VertexColors.SetColor(i, color);
+                    Eto.Drawing.Color color = c_scale.GetValue(Values[i], LBound, UBound);
+                    mesh.VertexColors.SetColor(i, color.Rb, color.Gb, color.Bb);
                 }
 
                 return Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(mesh).ToString();
@@ -625,9 +627,9 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public static Mesh PlotMesh(PachMapReceiver[] Rec_List, System.Drawing.Color[] C)
+            public static Mesh PlotMesh(PachMapReceiver[] Rec_List, Eto.Drawing.Color[] C)
             {
-                Mesh MM = Hare_to_RhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
+                Mesh MM = HaretoRhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
 
                 if (!Rec_List[0].Rec_Vertex)
                 {
@@ -642,10 +644,10 @@ namespace Pachyderm_Acoustic
                             MF.Vertices.Add(MM.Vertices[MM.Faces[i].D]);
                             int f = MF.Vertices.Count - 4;
                             MF.Faces.AddFace(f, f + 1, f + 2, f + 3);
-                            MF.VertexColors.SetColor(f, C[i]);
-                            MF.VertexColors.SetColor(f + 1, C[i]);
-                            MF.VertexColors.SetColor(f + 2, C[i]);
-                            MF.VertexColors.SetColor(f + 3, C[i]);
+                            MF.VertexColors.SetColor(f, C[i].Rb, C[i].Gb, C[i].Bb);
+                            MF.VertexColors.SetColor(f + 1, C[i].Rb, C[i].Gb, C[i].Bb);
+                            MF.VertexColors.SetColor(f + 2, C[i].Rb, C[i].Gb, C[i].Bb);
+                            MF.VertexColors.SetColor(f + 3, C[i].Rb, C[i].Gb, C[i].Bb);
                         }
                         else
                         {
@@ -654,9 +656,9 @@ namespace Pachyderm_Acoustic
                             MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
                             int f = MF.Vertices.Count - 3;
                             MF.Faces.AddFace(f, f + 1, f + 2);
-                            MF.VertexColors.SetColor(f, C[i]);
-                            MF.VertexColors.SetColor(f + 1, C[i]);
-                            MF.VertexColors.SetColor(f + 2, C[i]);
+                            MF.VertexColors.SetColor(f, C[i].Rb, C[i].Gb, C[i].Bb);
+                            MF.VertexColors.SetColor(f + 1, C[i].Rb, C[i].Gb, C[i].Bb);
+                            MF.VertexColors.SetColor(f + 2, C[i].Rb, C[i].Gb, C[i].Bb);
                         }
                     }
                     MF.CollapseFacesByArea(0.01,1000);
@@ -665,19 +667,22 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    MM.VertexColors.SetColors(C);
+                    List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
+                    foreach (Eto.Drawing.Color c in C) colors.Add(System.Drawing.Color.FromArgb(c.Ab, c.Rb, c.Gb, c.Bb));
+                    MM.VertexColors.SetColors(colors.ToArray());
                     return MM;
                 }
             }
 
-            public static void PlotMapValues(PachMapReceiver[] Rec_List, double[] Values, int decimals = 0)
+            public static void PlotMapValues(PachMapReceiver[] RecList, double[] Values, int decimals = 0)
             {
-                int step = (int)Math.Ceiling((double)Rec_List[0].Rec_List.Length / 100);
-                for (int i = 0; i < Rec_List[0].Rec_List.Length; i += step)
+                if (RecList == null) throw new ArgumentNullException();
+                int step = (int)Math.Ceiling((double)RecList[0].Rec_List.Length / 100);
+                for (int i = 0; i < RecList[0].Rec_List.Length; i += step)
                 {
                     Plane P = Plane.WorldXY;
-                    P.Origin = HPttoRPt(Rec_List[0].Rec_List[i].Origin);
-                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(((int)Math.Round(Values[i], decimals)).ToString(), P, Rec_List[0].Rec_List[0].Radius, "Arial", true, false);
+                    P.Origin = HPttoRPt(RecList[0].Rec_List[i].Origin);
+                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(((int)Math.Round(Values[i], decimals)).ToString(), P, RecList[0].Rec_List[0].Radius, "Arial", true, false);
                 }
             }
         }

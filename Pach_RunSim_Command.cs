@@ -97,7 +97,7 @@ namespace Pachyderm_Acoustic
                     {
                         if (CancelCalc)
                         {
-                            Sim.Abort_Calculation();
+                            //Sim.Abort_Calculation();
                             CommandResult = Result.Cancel;
                             Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
                             return CommandResult;

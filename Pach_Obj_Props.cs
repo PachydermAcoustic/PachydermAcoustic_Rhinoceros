@@ -23,6 +23,7 @@ using Rhino.UI;
 using Eto.Drawing;
 using Eto.Forms;
 using System.Linq;
+using System;
 
 namespace Pachyderm_Acoustic
 {
@@ -140,7 +141,7 @@ namespace Pachyderm_Acoustic
                 double TrnDet = Trn.Sum();
 
                 if (TrnDet < 1) Trn = new double[1];
-                MaterialCode = Utilities.RC_PachTools.EncodeAcoustics(Abs, Sct, Trn);
+                MaterialCode = Utilities.RCPachTools.EncodeAcoustics(Abs, Sct, Trn);
             }
 
             private void Commit()
@@ -225,7 +226,7 @@ namespace Pachyderm_Acoustic
                             //And if there is a predefined value... 
                             if (Code != null)
                             {
-                                Utilities.RC_PachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
+                                Utilities.RCPachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
                                 MaterialCode = Code;
 
                                 Absorption_Controls.populate(Absorption);
@@ -317,6 +318,7 @@ namespace Pachyderm_Acoustic
                 return Selected_Objects;
             }
 
+            [Obsolete]
             public override bool ShouldDisplay(RhinoObject obj)
             {
                 if (obj_Props == null) obj_Props = new Pach_objProps();

@@ -26,16 +26,14 @@ using System.Runtime.InteropServices;
 using Rhino.UI;
 using Eto.Drawing;
 using Eto.Forms;
-using Microsoft.WindowsAPICodePack.Shell;
-using System.Windows.Threading;
-using Pachyderm_Acoustic.Pach_Graphics;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("EA23F0D6-5462-4e42-9CFC-DC8E79723112")]
-        public partial class Pach_Visual_Control : Panel, IPanel
+        public partial class PachVisualControl : Panel, IPanel
         {
             Source[] Source;
 
@@ -67,7 +65,7 @@ namespace Pachyderm_Acoustic
             internal GroupBox TimeBox;
             internal GroupBox OutputFolder;
 
-            public Pach_Visual_Control()
+            public PachVisualControl()
             {
                 this.Forw = new Button();
                 this.Rev = new Button();
@@ -239,7 +237,8 @@ namespace Pachyderm_Acoustic
                 {
                     Time_Preview.Enabled = true;
                     Loop.Text = "Loop";
-                    T.Abort();
+                    stop = true;
+                    System.Threading.Thread.Sleep(1000);
                 }
 
                 Loop.Enabled = false;
@@ -259,7 +258,7 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                if (T != null && T.ThreadState == System.Threading.ThreadState.Running) T.Abort();
+                if (T != null && T.ThreadState == System.Threading.ThreadState.Running) ;
                 PreviewDisplay = null;
 
                 Pach_GetModel_Command Model = Pach_GetModel_Command.Instance;
@@ -285,7 +284,7 @@ namespace Pachyderm_Acoustic
                 }
                 for (int j = 0; j < Source.Length; j++)
                 {
-                    if (plugin.Geometry_Spec() == 0)
+                    if (plugin.Geometry_Spec == 0)
                     {
                         Model.Ret_NURBS_Scene.partition(L);
                         RTParticles[j] = new ParticleRays(Source[j], Model.Ret_NURBS_Scene, (int)RT_Count.Value, CutOffLength());
@@ -305,25 +304,25 @@ namespace Pachyderm_Acoustic
                 BackButton.Enabled = true;
                 Loop.Enabled = true;
                 Loop.Text = "Stop";
+                stop = false;
                 T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
                 T.Start();
                 //Advancer.Invoke(() => LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)));    
-                    
+
                 //LoopStart((int)(this.Frame_Rate.Value * Seconds.Value));
             }
-
-            Dispatcher Advancer = Dispatcher.CurrentDispatcher;
 
             WaveConduit PreviewDisplay = null;
             System.Threading.Thread T;
             int j = 0;
             int max = 0;
-            private void LoopStart()
+            bool stop = false;
+            private async void LoopStart()
             {
                 do
                 {
-                    Advancer.Invoke(() => Forw_proc());
-                    System.Threading.Thread.Sleep(100);
+                    await Task.Run(() => Forw_proc());
+                    if (stop) break;
                 }
                 while (true);
             }
@@ -336,12 +335,12 @@ namespace Pachyderm_Acoustic
             private void Rev_proc()
             {
                 j -= 1;
-                if (j <= 0) j = max; 
-                
+                if (j <= 0) j = max;
+
                 Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
                 if (this.VisualizationSelect.SelectedIndex == 1)
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RC_PachTools.Hare_to_RhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
                 }
                 else
                 {
@@ -365,14 +364,14 @@ namespace Pachyderm_Acoustic
                 }
                 if (this.VisualizationSelect.SelectedIndex == 1)
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RC_PachTools.Hare_to_RhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
                 }
                 else
                 {
                     PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), VisualizationSelect.SelectedIndex == 0);
                 }
                 ////////////////////////
-                if (Folder_Status.Text != "")
+                if (Folder_Status.Text.Length > 0)
                 {
                     string number;
                     if (j < 100)
@@ -389,10 +388,12 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
+
             private void Loop_Click(object sender, EventArgs e)
             {
                 if (Loop.Text == "Loop")
                 {
+                    stop = false;
                     Time_Preview.Enabled = false;
                     Loop.Text = "Pause";
                     T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
@@ -400,9 +401,9 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
+                    stop = true;
                     Time_Preview.Enabled = true;
                     Loop.Text = "Loop";
-                    T.Abort();
                 }
             }
 
@@ -417,6 +418,39 @@ namespace Pachyderm_Acoustic
                 colorcontrol.Invalidate();
                 Loop.Width = (int)((double)this.Width * 0.75);
                 Invalidate(true);
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                FileLocation.Dispose();
+                BackButton.Dispose();
+                FrRate_Label.Dispose();
+                VisLabel.Dispose();
+                SecLabel.Dispose();
+                COTimeLabel.Dispose();
+                RayctLabel.Dispose();
+                ForwButton.Dispose();
+                Loop.Dispose();
+                Forw.Dispose();
+                Rev.Dispose();
+                VisualizationSelect.Dispose();
+                Frame_Rate.Dispose();
+                Seconds.Dispose();
+                CO_TIME.Dispose();
+                AirTemp.Dispose();
+                Air_Temp.Dispose();
+                RT_Count.Dispose();
+                Forw.Dispose();
+                Time_Preview.Dispose();
+                Preview.Dispose();
+                colorcontrol.Dispose();
+                SelectOutput.Dispose();
+                Folder_Status.Dispose();
+                OpenFolder.Dispose();
+                SimSetBox.Dispose();
+                TimeBox.Dispose();
+                OutputFolder.Dispose();
             }
 
             #region IPanel methods
@@ -478,7 +512,7 @@ namespace Pachyderm_Acoustic
                     List<int> code = new List<int> { 0 };
                     List<Hare.Geometry.Point> Start;
                     //List<int> IDs = new List<int>();
-                    Ray.Add(RC_PachTools.HPttoRPt(R.origin));
+                    Ray.Add(RCPachTools.HPttoRPt(R.origin));
                     List<double> P = new List<double> { R.Intensity };
                     do
                     {
@@ -489,7 +523,7 @@ namespace Pachyderm_Acoustic
 
                             for (int i = 0; i < Start.Count; i++)
                             {
-                                Ray.Add(RC_PachTools.HPttoRPt(Start[i]));
+                                Ray.Add(RCPachTools.HPttoRPt(Start[i]));
                                 R.Intensity *= System.Math.Pow(10,-.1 * Room.Attenuation(code[i])[5] * leg[i]);
                                 SumLength += leg[i];
                             }
@@ -520,7 +554,7 @@ namespace Pachyderm_Acoustic
                     }
                     while (SumLength < CutoffLength);
 
-                    if (SumLength > CutoffLength) Ray.Add(RC_PachTools.HPttoRPt(R.origin));
+                    if (SumLength > CutoffLength) Ray.Add(RCPachTools.HPttoRPt(R.origin));
                     RayList.Add(Ray);
                     Power.Add(P);
                 }
@@ -533,9 +567,6 @@ namespace Pachyderm_Acoustic
 
             public bool RayPt(int Index, double u, int oct, out double energy, out Point3d Next, out Point3d Result)
             {
-                ///TODO: Use new protocol here.
-
-                //double energy = 1.0;
                 double S_Length = 0;
                 for (int q = 0; q < RayList[Index].Count - 1; q++)
                 {
@@ -546,7 +577,7 @@ namespace Pachyderm_Acoustic
                     {
                         //energy *= Math.Pow(10,-.1 * Room.Attenuation[oct] * u) / (4 * Math.PI * u * u);
                         Point3d Point = RayList[Index].PointAt(q + ((u - (S_Length - Modifier)) / Modifier));
-                        energy = Power[Index][q] * Math.Pow(10, -.1 * Room.Attenuation(RC_PachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier);//  / (4*Math.PI * u * u);
+                        energy = Power[Index][q] * Math.Pow(10, -.1 * Room.Attenuation(RCPachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier);//  / (4*Math.PI * u * u);
                         Next = RayList[Index][q + 1];
                         Result = Point;
                         return true;
@@ -563,7 +594,7 @@ namespace Pachyderm_Acoustic
             public Rhino.DocObjects.CurveObject Ray(int Index)
             {
                 return RhinoRays[Index];
-            }
+            }            
         }
     }
 }

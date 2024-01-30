@@ -42,15 +42,15 @@ namespace Pachyderm_Acoustic
             int nx, ny, nz;
             Point3d min;
 
-            public WaveConduit(Pach_Graphics.colorscale C_in, double[] V_Bounds_in)
+            public WaveConduit(Pach_Graphics.Colorscale C_in, double[] V_Bounds_in)
             {
                 C = C_in;
                 V_Bounds = V_Bounds_in;
             }
 
-            public WaveConduit(Pach_Graphics.colorscale C_in, double[] V_Bounds_in, Scene S)
+            public WaveConduit(Pach_Graphics.Colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.RC_PachTools.HPttoRPt(S.Min());
+                min = Utilities.RCPachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.x);
                 ny = (int)System.Math.Ceiling(range.y);
@@ -69,9 +69,9 @@ namespace Pachyderm_Acoustic
                 V_Bounds = V_Bounds_in;
             }
 
-            public WaveConduit(ParticleRays[] PR_in, Pach_Graphics.colorscale C_in, double[] V_Bounds_in, Scene S)
+            public WaveConduit(ParticleRays[] PR_in, Pach_Graphics.Colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.RC_PachTools.HPttoRPt(S.Min());
+                min = Utilities.RCPachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.x);
                 ny = (int)System.Math.Ceiling(range.y);
@@ -169,9 +169,9 @@ namespace Pachyderm_Acoustic
                                         }
                                     }
                                 }
-                                //energy /= ct;
                                 S.WaitOne();
-                                PC.Add(pts[s], P_Color(Utilities.AcousticalMath.SPL_Intensity(energy)));
+                                Eto.Drawing.Color c = P_Color(Utilities.AcousticalMath.SPL_Intensity(energy));
+                                PC.Add(pts[s], System.Drawing.Color.FromArgb(c.ToArgb()));
                                 S.Release();
                             }
                         }
@@ -185,7 +185,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int s = 0; s < pts.Length; s++)
                     {
-                        PC.Add(pts[s], P_Color(Utilities.AcousticalMath.SPL_Intensity(e[s])));
+                        PC.Add(pts[s], System.Drawing.Color.FromArgb(P_Color(Utilities.AcousticalMath.SPL_Intensity(e[s])).ToArgb()));
                     }
                 }
 
@@ -228,7 +228,7 @@ namespace Pachyderm_Acoustic
                         if (!PR[s].RayPt(q, Dist, 4, out SPL, out N, out PT)) continue;
                         SPLList.Add(SPL);
                         DM.Vertices[q] = new Point3f((float)PT.X, (float)PT.Y, (float)PT.Z);
-                        C[q] = P_Color(SPL);
+                        C[q] = System.Drawing.Color.FromArgb(P_Color(SPL).ToArgb());
                     }
                     DM.VertexColors.AppendColors(C);
                     DM.Normals.ComputeNormals();
@@ -257,7 +257,7 @@ namespace Pachyderm_Acoustic
                     {
                         for (int i = 0; i < P[j].Count; i++)
                         {
-                            PC.Add(P[j][i], P_Color(20 * System.Math.Log(pressure[j][i] / 2E-5)));//0.0000000004
+                            PC.Add(P[j][i], System.Drawing.Color.FromArgb(P_Color(20 * System.Math.Log(pressure[j][i] / 2E-5)).ToArgb()));//0.0000000004
                         }
                     }
                 }
@@ -326,7 +326,7 @@ namespace Pachyderm_Acoustic
 
                         if (pressure[j].Count > 0)
                         {
-                            System.Drawing.Color C = P_Color(V);
+                            System.Drawing.Color C = System.Drawing.Color.FromArgb(P_Color(V).ToArgb());
                             int i4 = i * 4;
                             DisplayMesh[j].VertexColors.SetColor(i4,C);
                             DisplayMesh[j].VertexColors.SetColor(i4+1,C);
@@ -407,7 +407,7 @@ namespace Pachyderm_Acoustic
             /// </summary>
             /// <param name="Value">strength of particle</param>
             /// <returns></returns>
-            private System.Drawing.Color P_Color(double Value)
+            private Eto.Drawing.Color P_Color(double Value)
             {
                 try
                 {
@@ -415,20 +415,20 @@ namespace Pachyderm_Acoustic
                 }
                 catch 
                 {
-                    return System.Drawing.Color.Black;
+                    return Eto.Drawing.Colors.Black;
                 }
             }
 
             System.Drawing.Color[] C_Bounds;
             double[] V_Bounds;
-            Pach_Graphics.colorscale C;
+            Pach_Graphics.Colorscale C;
 
             /// <summary>
             /// Allows user to change the colors of the particles.
             /// </summary>
             /// <param name="Colors"></param>
             /// <param name="Values"></param>
-            public void SetColorScale(Pach_Graphics.colorscale C_in, double[] Values)
+            public void SetColorScale(Pach_Graphics.Colorscale C_in, double[] Values)
             {
                 V_Bounds = Values;
                 C = C_in;

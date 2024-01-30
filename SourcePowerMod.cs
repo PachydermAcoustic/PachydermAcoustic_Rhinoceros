@@ -1,6 +1,5 @@
 ﻿using Eto.Forms;
 using System;
-using System.Windows.Forms;
 
 namespace Pachyderm_Acoustic
 {
@@ -63,6 +62,8 @@ namespace Pachyderm_Acoustic
             this.OK = new Eto.Forms.Button();
             this.Cancel = new Eto.Forms.Button();
 
+            this.DefaultButton = OK;
+            this.AbortButton = Cancel;
 
             H63.Text = "63 Hz.";
             H63.TextAlignment = Eto.Forms.TextAlignment.Center;
@@ -265,6 +266,37 @@ namespace Pachyderm_Acoustic
         {
             accept = false;
             Close();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            SWL0.Dispose();
+            SWL1.Dispose();
+            SWL2.Dispose();
+            SWL3.Dispose();
+            SWL4.Dispose();
+            SWL5.Dispose();
+            SWL6.Dispose();
+            SWL7.Dispose();
+            SPL1.Dispose();
+            SPL0.Dispose();
+            SPL2.Dispose();
+            SPL3.Dispose();
+            SPL4.Dispose();
+            SPL5.Dispose();
+            SPL6.Dispose();
+            SPL7.Dispose();
+            swl63.Dispose();
+            swl125.Dispose();
+            swl250.Dispose();
+            swl500.Dispose();
+            swl1k.Dispose();
+            swl2k.Dispose();
+            swl4k.Dispose();
+            swl8k.Dispose();
+            Cancel.Dispose();
+            OK.Dispose();
         }
 
         private Eto.Forms.NumericStepper SWL0;

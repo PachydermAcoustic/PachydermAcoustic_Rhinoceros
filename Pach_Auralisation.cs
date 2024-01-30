@@ -36,13 +36,13 @@ namespace Pachyderm_Acoustic
         [GuidAttribute("12db68c3-c995-43c6-860a-6bd106b94a4c")]
         public class Pach_Auralisation: Panel, IPanel
         {
-            internal TabPage Render_Settings;
+             internal TabPage Render_Settings;
             internal DropDown Source_Aim;
-            private NumericStepper Alt_Choice;
-            private NumericStepper Azi_Choice;
+            internal NumericStepper Alt_Choice;
+            internal NumericStepper Azi_Choice;
             internal Button RenderBtn;
             private ScottPlot.Eto.EtoPlot Analysis_View;
-            private NumericStepper DryChannel;
+            internal NumericStepper DryChannel;
             internal TextBox Signal_Status;
             internal Button OpenSignal;
             internal DropDown Receiver_Choice;
@@ -58,13 +58,13 @@ namespace Pachyderm_Acoustic
             private Button Remove_Channel;
             private Button Save_Channels;
             private Button Add_Channel;
-            private NumericStepper Crossover;
+            internal NumericStepper Crossover;
             private CheckBox Supplement_Numerical;
             private Button Move_Down;
             private Button Move_Up;
             internal Button Export_Filter;
             private DropDown Sample_Freq_Selection;
-            private NumericStepper Normalization_Choice;
+            internal NumericStepper Normalization_Choice;
             private CheckBox PlayAuralization;
 
             AuralisationConduit A;
@@ -369,7 +369,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Hybrid_Select.Checked && Direct_Data != null)
                 {
-                    if (Pach_Hybrid_Control.Instance != null && Receiver_Choice.SelectedIndex < 0) return;
+                    if (PachHybridControl.Instance != null && Receiver_Choice.SelectedIndex < 0) return;
                     Hare.Geometry.Point[] rec = new Hare.Geometry.Point[Recs.Length];
                     for (int i = 0; i < Recs.Length; i++) rec[i] = Recs[i];
                     AuralisationConduit.Instance.Enabled = true;
@@ -385,7 +385,7 @@ namespace Pachyderm_Acoustic
                             List<Rhino.Geometry.Point3d> PTS = new List<Rhino.Geometry.Point3d>();
                             foreach (Hare.Geometry.Point hpt in P)
                             {
-                                PTS.Add(Utilities.RC_PachTools.HPttoRPt(hpt));
+                                PTS.Add(Utilities.RCPachTools.HPttoRPt(hpt));
                             }
                             Lines.Add(new Polyline(PTS));
                         }
@@ -400,7 +400,7 @@ namespace Pachyderm_Acoustic
                         Dirs.Add(new Vector3d(TempDir.x, TempDir.y, TempDir.z));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
-                    AuralisationConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RC_PachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
+                    AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
                 }
                 else if (Mapping_Select.Checked)
                 {
@@ -435,7 +435,7 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            public double[][] Render_Filter(int Sample_Frequency)
+            public double[][] RenderFilter(int Sample_Frequency)
             {
                 double[][] Temp;
                 double[][] Response;
@@ -572,7 +572,7 @@ namespace Pachyderm_Acoustic
 
                     List<ScottPlot.Color> C = new List<ScottPlot.Color> {ScottPlot.Colors.Red, ScottPlot.Colors.OrangeRed, ScottPlot.Colors.Orange, ScottPlot.Colors.DarkGoldenRod, ScottPlot.Colors.Olive, ScottPlot.Colors.Green, ScottPlot.Colors.Aquamarine, ScottPlot.Colors.Azure, ScottPlot.Colors.Blue, ScottPlot.Colors.Indigo, ScottPlot.Colors.Violet};
 
-                    Response = Render_Filter(44100);
+                    Response = RenderFilter(44100);
 
                     //Get the maximum value of the Direct Sound
                     double DirectMagnitude = 0;
@@ -619,7 +619,7 @@ namespace Pachyderm_Acoustic
                 Draw_Feedback();
             }
 
-            public void Read_Array()
+            public void ReadArray()
             {
                 GetWave.Filters.Add(" Array Description Text File (*.txt) |*.txt");
                 if (GetWave.ShowDialog(this) == DialogResult.Ok)
@@ -715,7 +715,7 @@ namespace Pachyderm_Acoustic
                 for (int j = 0; j < SignalBuffer.Length; j++) SignalBuffer[j] /= maxvalue;
                 //Convert pressure response to a 24-bit dynamic range:
 
-                double[][] Render_Response = Render_Filter(SamplesPerSec);
+                double[][] Render_Response = RenderFilter(SamplesPerSec);
 
                 float[][] NewSignal = new float[(int)Render_Response.Length][];
                 for (int i = 0; i < Render_Response.Length; i++)
@@ -756,13 +756,13 @@ namespace Pachyderm_Acoustic
 
                     if (PlayAuralization.Checked.Value)
                     {
-                        Player = new System.Media.SoundPlayer(SaveWave.FileName);
-                        Player.Play();
+                        //Player = new System.Media.SoundPlayer(SaveWave.FileName);
+                        //Player.Play();
                     }
                 }
             }
 
-            System.Media.SoundPlayer Player =  new System.Media.SoundPlayer();
+            ///System.Media.SoundPlayer Player =  new System.Media.SoundPlayer();
 
             private void ExportFilter(object sender, EventArgs e)
             {
@@ -801,7 +801,7 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
-                double[][] Render_Response = Render_Filter(SamplesPerSec);
+                double[][] Render_Response = RenderFilter(SamplesPerSec);
                 float[][] RR = new float[Render_Response.Length][];
                 int maxlength = 0;
                 for (int j = 0; j < Render_Response.Length; j++) maxlength = Math.Max(Render_Response[j].Length, maxlength);
@@ -882,7 +882,7 @@ namespace Pachyderm_Acoustic
                         break;
                     case "Surround Array (select file...)":
                         enable_CEdit();
-                        Read_Array();
+                        ReadArray();
                         break;
                 }
                 Draw_Feedback();
@@ -938,7 +938,7 @@ namespace Pachyderm_Acoustic
 
                     if (Hybrid_Select.Checked)
                     {
-                        UI.Pach_Hybrid_Control.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
+                        UI.PachHybridControl.Instance.GetSims(ref Srcs, ref Recs, ref Direct_Data, ref IS_Data, ref Receiver);
                         //Set_Phase_Regime(Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System);
                         if (Direct_Data != null)
                         {
@@ -1201,8 +1201,8 @@ namespace Pachyderm_Acoustic
 
             private void PlayAuralization_CheckedChanged(object sender, EventArgs e)
             {
-                if (PlayAuralization.Checked.Value) Player.Play();
-                else Player.Stop();
+                //if (PlayAuralization.Checked.Value) Player.Play();
+                //else Player.Stop();
             }
 
             public string Text
@@ -1212,6 +1212,43 @@ namespace Pachyderm_Acoustic
                     return this.ToString();
                 }
             }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                Render_Settings.Dispose();
+                Source_Aim.Dispose();
+                Alt_Choice.Dispose();
+                Azi_Choice.Dispose();
+                RenderBtn.Dispose();
+                Analysis_View.Dispose();
+                DryChannel.Dispose();
+                Signal_Status.Dispose();
+                OpenSignal.Dispose();
+                Receiver_Choice.Dispose();
+                Tabs.Dispose();
+                Data_Source.Dispose();
+                SourceList.Dispose();
+                DistributionType.Dispose();
+                Hybrid_Select.Dispose();
+                Mapping_Select.Dispose();
+                Graph_Octave.Dispose();
+                Channel_View.Dispose();
+                Data_From.Dispose();
+                Remove_Channel.Dispose();
+                Save_Channels.Dispose();
+                Add_Channel.Dispose();
+                Crossover.Dispose();
+                Supplement_Numerical.Dispose();
+                Move_Down.Dispose();
+                Move_Up.Dispose();
+                Export_Filter.Dispose();
+                Sample_Freq_Selection.Dispose();
+                Normalization_Choice.Dispose();
+                PlayAuralization.Dispose();
+                GetWave.Dispose();
+            }
+
 
             #region IPanel methods
             public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)

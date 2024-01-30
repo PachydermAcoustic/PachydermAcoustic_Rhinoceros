@@ -27,9 +27,6 @@ using System.Runtime.InteropServices;
 using Rhino.Display;
 using System.Linq;
 using Rhino.UI;
-using System.Runtime.Remoting.Channels;
-using System.Windows.Threading;
-using MathNet.Numerics.Statistics.Mcmc;
 
 namespace Pachyderm_Acoustic
 {
@@ -605,7 +602,7 @@ namespace Pachyderm_Acoustic
                 PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
                 string SavePath = null;
 
-                if (plugin.Save_Results())
+                if (PachydermAc_PlugIn.SaveResults)
                 {
                     Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
                     sf.CurrentFilter = ".pachm";
@@ -635,7 +632,7 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point> P = new List<Hare.Geometry.Point>();
                 P.AddRange(SPT);
 
-                Polygon_Scene PScene = Utilities.RC_PachTools.Get_Poly_Scene(Env_Control.RelHumidity, false, Env_Control.Temp_Celsius, Env_Control.StaticPressure_kPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
+                Polygon_Scene PScene = Utilities.RCPachTools.Get_Poly_Scene(Env_Control.RelHumidity, false, Env_Control.Temp_Celsius, Env_Control.StaticPressure_kPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
                 if (!PScene.Complete)
                 {
                     Calculate.Enabled = true;
@@ -645,11 +642,11 @@ namespace Pachyderm_Acoustic
 
                 PScene.partition(P);
                 Scene Flex_Scene;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0) 
+                if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0) 
                 {
-                    RhCommon_Scene NScene = Utilities.RC_PachTools.Get_NURBS_Scene(Env_Control.RelHumidity, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
+                    RhCommon_Scene NScene = Utilities.RCPachTools.GetNURBSScene(Env_Control.RelHumidity, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
                     if (!NScene.Complete) return;
-                    NScene.partition(P, plugin.VG_Domain());
+                    NScene.partition(P, PachydermAc_PlugIn.VGDomain);
                     Flex_Scene = NScene;
                 } 
                 else
@@ -661,8 +658,8 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Source.Length; i++)
                 {
                     Source[i].AppendPts(ref P);
-                    Mesh Map_Mesh = Utilities.RC_PachTools.Create_Map_Mesh(Rec_Srfs, (double)Increment.Value * 0.01);
-                    Map[i] = new PachMapReceiver(Utilities.RC_PachTools.Rhino_to_HareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (double)CO_TIME.Value, Sum_Time.Checked.Value, Disp_Audience.Checked, DirectionalToggle.Checked.Value, Rec_Vertex.Checked, Offset_Mesh.Checked.Value);
+                    Mesh Map_Mesh = Utilities.RCPachTools.Create_Map_Mesh(Rec_Srfs, (double)Increment.Value * 0.01);
+                    Map[i] = new PachMapReceiver(Utilities.RCPachTools.RhinotoHareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (double)CO_TIME.Value, Sum_Time.Checked.Value, Disp_Audience.Checked, DirectionalToggle.Checked.Value, Rec_Vertex.Checked, Offset_Mesh.Checked.Value);
                 }
 
                 for (int s_id = 0; s_id < Source.Length; s_id++)
@@ -699,7 +696,7 @@ namespace Pachyderm_Acoustic
                     }
                     command.Reset();
 
-                    Convergence_Progress CP = new Convergence_Progress();
+                    ConvergenceProgress CP = new ConvergenceProgress();
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
                     command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
@@ -822,21 +819,21 @@ namespace Pachyderm_Acoustic
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                             //Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Utilities.RC_PachTools.Hare_to_RhinoMesh(Map[0].MapMesh(),true));
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
                         }
                         break;
                     case "Sound Pressure Level (A-weighted)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_SPLA_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLAMin, Current_SPLAMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLAMin, Current_SPLAMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
                         }
                         break;
                     case "Directionality":
@@ -849,30 +846,30 @@ namespace Pachyderm_Acoustic
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_EDT_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EDTMin, Current_EDTMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EDTMin, Current_EDTMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Reverberation Time (T-15)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_RT_Map(Map, 15, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Reverberation Time (T-30)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_RT_Map(Map, 30, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Speech Transmission Index - 2003":
@@ -881,7 +878,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n != "")
+                            if (n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -897,10 +894,10 @@ namespace Pachyderm_Acoustic
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SourceList.SelectedSources(), 0, Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI1Min, Current_STI1Max }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI1Min, Current_STI1Max }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         } 
                         break;
                     case "Speech Transmission Index - Male":
@@ -909,7 +906,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n != "")
+                            if (n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -925,10 +922,10 @@ namespace Pachyderm_Acoustic
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SourceList.SelectedSources(), 1, Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI2Min, Current_STI2Max }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_STI2Min, Current_STI2Max }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Speech Transmission Index - Female":
@@ -937,7 +934,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n != "")
+                            if (n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -953,30 +950,30 @@ namespace Pachyderm_Acoustic
                             }
 
                             double[] Values = PachMapReceiver.Get_STI_Map(Map, Noise, SourceList.SelectedSources(), 2, Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] {Current_STI3Min, Current_STI3Max }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] {Current_STI3Min, Current_STI3Max }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Clarity (C-80)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 80, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 2);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
                     case "Definition (D-50)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_Definition_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_DMin, Current_DMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_DMin, Current_DMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
                         }
                         break;
                     case "Strength/Loudness (G)":
@@ -998,20 +995,20 @@ namespace Pachyderm_Acoustic
                                 SWL = 10 * Math.Log10(SWL);
                             }
                             double[] Values = PachMapReceiver.Get_G_Map(Map, oct, SWL, SrcID, Coherent.Checked);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_GMin, Current_GMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_GMin, Current_GMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values, 1);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 1);
                         }
                         break;
                     case "Percent who perceive echoes (EK)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_EchoCritPercent_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources());
-                            System.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EMin, Current_EMax }, color_control.Scale);
-                            Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, C);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EMin, Current_EMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RC_PachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
                         }
                         break;
                     default:
@@ -1351,8 +1348,6 @@ namespace Pachyderm_Acoustic
                 //Update_Parameters();
             }
 
-            Dispatcher Advancer = Dispatcher.CurrentDispatcher;
-
             System.Threading.Thread T;
             //private delegate void ForCall();
             //ForCall FC;
@@ -1361,9 +1356,9 @@ namespace Pachyderm_Acoustic
 
             private void Flip_Toggle_Click(object sender, EventArgs e)
             {
-                //Update_Scale();
                 if (Flip_Toggle.Text == "Flip")
                 {
+                    stop = false;
                     this.Flip_Toggle.Text = "Pause";
                     System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { Flip_Forward(); });
                     T = new System.Threading.Thread(St);
@@ -1372,7 +1367,7 @@ namespace Pachyderm_Acoustic
                 else 
                 {
                     Flip_Toggle.Text = "Flip";
-                    T.Abort();
+                    stop = true;
                 }
             }
 
@@ -1402,13 +1397,13 @@ namespace Pachyderm_Acoustic
                 //this.Invoke((MethodInvoker)delegate { Update_T(); });
 
                 double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, oct, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
-                System.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
-                Mesh Mesh_Map = Utilities.RC_PachTools.PlotMesh(Map, c);
+                Eto.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
+                Mesh Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, c);
                 if (WC == null) return;
                 WC.Populate(Mesh_Map);
                 
                 //////////////////////////////
-                if (Folder_Status.Text != "")
+                if (Folder_Status.Text.Length > 0)
                 {
                     string number;
                     if (t < 100)
@@ -1426,12 +1421,16 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
-            private void Flip_Forward()
+            bool stop = false;
+
+            private async void Flip_Forward()
             {
+                stop = false;   
                 do
                 {
-                    Advancer.Invoke(() => Step_Forward());
-                    System.Threading.Thread.Sleep(100);
+                    await System.Threading.Tasks.Task.Run(() => Step_Forward());
+                    if (stop) break;
+                    //System.Threading.Thread.Sleep(100);
                 }
                 while (true);
             }
@@ -1445,8 +1444,8 @@ namespace Pachyderm_Acoustic
                 Min_Time_out.Text = t_lo.ToString();
                 Max_Time_out.Text = t_hi.ToString();
                 double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
-                System.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
-                Mesh Map_Mesh = Utilities.RC_PachTools.PlotMesh(Map, c);
+                Eto.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
+                Mesh Map_Mesh = Utilities.RCPachTools.PlotMesh(Map, c);
                 WC.Populate(Map_Mesh);
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
@@ -1537,7 +1536,7 @@ namespace Pachyderm_Acoustic
             }
 
 
-            public class Map_indicator : Rhino.Display.DisplayConduit
+            public class Mapindicator : Rhino.Display.DisplayConduit
             {
                 Rhino.Geometry.Point3d PT;
 
@@ -1548,14 +1547,14 @@ namespace Pachyderm_Acoustic
 
                 protected override void DrawForeground(DrawEventArgs e)
                 {
-                    if (PT == null) return;
+                    //if (PT == null) return;
                     Rhino.Geometry.Point2d screen_pt = e.Display.Viewport.WorldToClient(PT);                    
                     e.Display.Draw2dRectangle(new System.Drawing.Rectangle((int)screen_pt.X, (int)screen_pt.Y, 5, 5), System.Drawing.Color.Green, 2, System.Drawing.Color.Yellow);
                     return;
                 }
             }
 
-            Map_indicator ReceiverPointer = new Map_indicator();
+            Mapindicator ReceiverPointer = new Mapindicator();
 
             private void ReceiverSelection_ValueChanged(object sender, EventArgs e)
             {
@@ -1574,7 +1573,7 @@ namespace Pachyderm_Acoustic
                 if (SrcID.Count < 1) return;
 
                 ReceiverPointer.Enabled = true;
-                ReceiverPointer.setPoint(Utilities.RC_PachTools.HPttoRPt(Map[(int)(SrcID[0])].Origin((int)Receiver_Selection.Value)));
+                ReceiverPointer.setPoint(Utilities.RCPachTools.HPttoRPt(Map[(int)(SrcID[0])].Origin((int)Receiver_Selection.Value)));
                 Update_Graph(sender, e);
             }
 
@@ -1630,6 +1629,101 @@ namespace Pachyderm_Acoustic
             {
                 if (sender == ZeroAtDirect) { ZeroAtSource.Checked = false; }
                 else { ZeroAtDirect.Checked = false;}
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                FileLocation.Dispose();
+                FileMenu.Dispose();
+                fileToolStripMenuItem.Dispose();
+                saveDataToolStripMenuItem.Dispose();
+                openDataToolStripMenuItem.Dispose();
+
+                tabsPrime.Dispose();
+                tabCalculation.Dispose();
+                TabAnalysis.Dispose();
+                TabOutputModes.Dispose();
+
+                RecDispLbl.Dispose();
+                RecOrientLbl.Dispose();
+                GeoLbl.Dispose();
+                ConvLbl.Dispose();
+                Screen_Attenuation.Dispose();
+                Rec_Centroid.Dispose();
+                Rec_Vertex.Dispose();
+                Offset_Mesh.Dispose();
+                Sum_Time.Dispose();
+                Disp_Other.Dispose();
+                Disp_Audience.Dispose();
+                DirectionalToggle.Dispose();
+                Spec_Rays.Dispose();
+                DetailedConvergence.Dispose();
+                Minimum_Convergence.Dispose();
+                MapIncr.Dispose();
+                Increment.Dispose();
+                COTime.Dispose();
+                CO_TIME.Dispose();
+                RayNo.Dispose();
+                RT_Count.Dispose();
+                Select_Map.Dispose();
+                Calculate.Dispose();
+                Env_Control.Dispose();
+
+                tabOutput.Dispose();
+                SourceList.Dispose();
+                Plot_Values.Dispose();
+                groupBox_Time.Dispose();
+                IntervalControl.Dispose();
+                MTLbl.Dispose();
+                Max_Time_out.Dispose();
+                Min_Time_out.Dispose();
+                MinTLbl.Dispose();
+                groupBox_ZeroTime.Dispose();
+                ZeroAtSource.Dispose();
+                ZeroAtDirect.Dispose();
+                groupBox_IRSum.Dispose();
+                Coherent.Dispose();
+                Incoherent.Dispose();
+                Discretize.Dispose();
+                Parameter_Selection.Dispose();
+                color_control.Dispose();
+                End_Time_Control.Dispose();
+                Start_Time_Control.Dispose();
+                ETlbl.Dispose();
+                STlbl.Dispose();
+                Calculate_Map.Dispose();
+
+                tabIRs.Dispose();
+                Octave.Dispose();
+                OctLbl.Dispose();
+                Analysis_View.Dispose();
+                Normalize_Graph.Dispose();
+                LockUserScale.Dispose();
+                Graph_Octave.Dispose();
+                Graph_Type.Dispose();
+                Receiver_Selection.Dispose();
+                RecLbl.Dispose();
+                Auralisation.Dispose();
+
+                tabTflip.Dispose();
+                Integration_select.Dispose();
+                IntDmnLbl.Dispose();
+                Step_Select.Dispose();
+                T_End_select.Dispose();
+                ETLbl.Dispose();
+                STLbl.Dispose();
+                T_Start_Select.Dispose();
+                StpLbl.Dispose();
+                Flip_Toggle.Dispose();
+                Start_Over.Dispose();
+                Back_Step.Dispose();
+                Forw_Step.Dispose();
+                Tick_Select.Dispose();
+                TickLbl.Dispose();
+                Folder_Status.Dispose();
+                OutLbl.Dispose();
+                OpenFolder.Dispose();
             }
 
             #region IPanel methods

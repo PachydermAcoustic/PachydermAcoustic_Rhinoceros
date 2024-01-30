@@ -3,12 +3,8 @@ using Pachyderm_Acoustic.Pach_Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Eto.Drawing;
 using Eto.Forms;
-using Rhino.Runtime.RhinoAccounts;
-using System.Diagnostics.Eventing.Reader;
 using Rhino.UI;
 
 namespace Pachyderm_Acoustic
@@ -319,6 +315,16 @@ namespace Pachyderm_Acoustic
             }
 
             public int Count {  get { return PathBoxes.Count; } }
+
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                PathOperations.Dispose();
+                CheckAll.Dispose();
+                UncheckAll.Dispose();
+                SortArrival.Dispose();
+                SortOrder.Dispose();
+            }
         }
 
         public class Medium_Properties_Group : GroupBox
@@ -639,7 +645,7 @@ namespace Pachyderm_Acoustic
                 Update(this, EventArgs.Empty);
             }
 
-            public Pach_Graphics.colorscale scale;
+            public Pach_Graphics.Colorscale scale;
 
             private void Color_Selection_SelectedIndexChanged(object sender, System.EventArgs e)
             {
@@ -647,27 +653,27 @@ namespace Pachyderm_Acoustic
                 {
                     case "R-O-Y-G-B-I-V":
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 4.0 / 3.0, 1, 0, 1, 1, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                     case "Y-G-B":
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, Math.PI / 3.0, 2.0 / 3.0, 1, 0, 1, 0, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                     case "R-O-Y":
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 1.0 / 3.0, 1, 0, 1, 0, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                     case "W-B":
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 0, 0, 1, -1, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                     case "R-M-B":
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, 0, 1, 0, 1, -1, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                     default:
                         scale = new Pach_Graphics.HSV_colorscale(Param_Scale.Height, Param_Scale.Width, 0, Math.PI / 2.0, 0, 0, 1, 1, Discretize.Checked.Value, 12);
-                        Param_Scale.Image = Rhino.UI.EtoExtensions.ToEto(scale.PIC);
+                        Param_Scale.Image = scale.PIC;
                         break;
                 }
                 On_Output_Changed(this, EventArgs.Empty);
@@ -707,7 +713,7 @@ namespace Pachyderm_Acoustic
 
             }
 
-            public colorscale Scale
+            public Colorscale Scale
             {
                 get { return scale; }
             }

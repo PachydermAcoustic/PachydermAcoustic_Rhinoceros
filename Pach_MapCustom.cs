@@ -33,7 +33,7 @@ namespace Pachyderm_Acoustic
         {
             double Current_Min;
             double Current_Max;
-            Pach_Graphics.colorscale c_scale;
+            Pach_Graphics.Colorscale c_scale;
             List<ParaMesh> Collection = new List<ParaMesh>();
 
             private Color_Output_Control color_control;
@@ -119,7 +119,7 @@ namespace Pachyderm_Acoustic
             {
                 //Update_Scale();
                 ParaMesh P = Collection[MeshList.SelectedIndex];
-                Utilities.RC_PachTools.CreateMap(P.M, color_control.Color_ID, P.Params, color_control.Min, color_control.Max);
+                Utilities.RCPachTools.CreateMap(P.M, color_control.Color_ID, P.Params, color_control.Min, color_control.Max);
             }
 
             public static Pach_MapCustom Instance

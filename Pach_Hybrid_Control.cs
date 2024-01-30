@@ -23,21 +23,20 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;
-using Pachyderm_Acoustic.AbsorptionModels;
 using Eto.Drawing;
 using Eto.Forms;
-using System.Runtime.Remoting.Channels;
 using Rhino.UI;
+using static Rhino.UI.Internal.DwgOptions;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("8559be06-21d7-4535-803e-95a9dd3a2898")]
-        public class Pach_Hybrid_Control : Panel, IPanel
+        public class PachHybridControl : Panel, IPanel
         {
             // This call is required by the Windows Form Designer. 
-            public Pach_Hybrid_Control()
+            public PachHybridControl()
             {
                 this.MenuStrip = new SegmentedButton();
                 this.fileToolStripMenuItem = new MenuSegmentedItem();
@@ -110,8 +109,8 @@ namespace Pachyderm_Acoustic
                 Impulse_LO.DefaultSpacing = new Size(8, 8);
                 DynamicLayout RL = new DynamicLayout();
                 RL.DefaultSpacing = new Size(8, 8);
-                this.LabelRec = new Label();
-                this.LabelRec.Text = "Receiver:";
+                Label LabelRec = new Label();
+                LabelRec.Text = "Receiver:";
 
                 this.ReceiverSelection = new ComboBox();
                 this.ReceiverSelection.Items.Add("1 m. Stationary Receiver");
@@ -306,7 +305,7 @@ namespace Pachyderm_Acoustic
                 Label labelScat = new Label();
                 labelScat.Text = "Scattering Coefficients (% non-specular reflected energy)";
                 SCATSlider = new FreqSlider(FreqSlider.bands.Octave);
-                SCATSlider.MouseUp += Acoustics_Coef_Update;
+                SCATSlider.MouseLeave += Acoustics_Coef_Update;
                 SL.AddRow(labelScat);
                 SL.AddRow(SCATSlider);
                 this.SmartMat_Display = new ScottPlot.Eto.EtoPlot();
@@ -340,7 +339,7 @@ namespace Pachyderm_Acoustic
                 TCL.AddRow(labelTC);
                 TRANSSlider = new FreqSlider(FreqSlider.bands.Octave);
                 TRANSSlider.Enabled = false;
-                TRANSSlider.MouseUp += Acoustics_Coef_Update;
+                TRANSSlider.MouseLeave += Acoustics_Coef_Update;
                 TCL.AddRow(TRANSSlider);
                 this.Trans_Check = new CheckBox();
                 this.Trans_Check.Text = "Semi-Transparent Material";
@@ -386,7 +385,7 @@ namespace Pachyderm_Acoustic
                 TLLO.AddRow(labelTL);
                 TLSlider = new FreqSlider(FreqSlider.bands.Octave, true);
                 TLSlider.Enabled = false;
-                TLSlider.MouseUp += Acoustics_Coef_Update;
+                TLSlider.MouseLeave += Acoustics_Coef_Update;
                 TLLO.AddRow(TLSlider);
                 this.TL_Check = new CheckBox();
                 this.TL_Check.Text = "Transmissive Assembly";
@@ -468,7 +467,7 @@ namespace Pachyderm_Acoustic
                 SrcL.AddRow(SourceList);
                 DynamicLayout Rec = new DynamicLayout();
                 Rec.DefaultSpacing = new Size(8, 8);
-                this.labelRec = new Label();
+                Label labelRec = new Label();
                 labelRec.Text = "Receiver";
                 this.Receiver_Choice = new ComboBox();
                 this.Receiver_Choice.Text = "No Results Calculated...";
@@ -601,7 +600,7 @@ namespace Pachyderm_Acoustic
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
-            public static Pach_Hybrid_Control Instance
+            public static PachHybridControl Instance
             {
                 get;
                 private set;
@@ -629,7 +628,7 @@ namespace Pachyderm_Acoustic
                 string SavePath = null;
                 CutoffTime = (double)this.CO_TIME.Value;
 
-                if (plugin.Save_Results())
+                if (PachydermAc_PlugIn.SaveResults)
                 {
                     Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
                     sf.CurrentFilter = ".pac1";
@@ -670,7 +669,7 @@ namespace Pachyderm_Acoustic
                 P.AddRange(RPT);
                 P.AddRange(SPT);
 
-                Polygon_Scene PScene = RC_PachTools.Get_Poly_Scene(MediumProps.RelHumidity, this.BTM_ED.Checked.Value, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, MediumProps.Edge_Frequency);
+                Polygon_Scene PScene = RCPachTools.Get_Poly_Scene(MediumProps.RelHumidity, this.BTM_ED.Checked.Value, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, MediumProps.Edge_Frequency);
                 if (PScene == null || !PScene.Complete)
                 {
                     CancelCalc();
@@ -808,15 +807,15 @@ namespace Pachyderm_Acoustic
                 ///////////////
 
                 Scene Flex_Scene;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec() == 0)
+                if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0)
                 {
-                    RhCommon_Scene NScene = RC_PachTools.Get_NURBS_Scene(MediumProps.RelHumidity, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, EdgeFreq.Checked.Value);
+                    RhCommon_Scene NScene = RCPachTools.GetNURBSScene(MediumProps.RelHumidity, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, EdgeFreq.Checked.Value);
                     if (!NScene.Complete)
                     {
                         CancelCalc();
                         return;
                     }
-                    NScene.partition(P, plugin.VG_Domain());
+                    NScene.partition(P, PachydermAc_PlugIn.VGDomain);
                     Flex_Scene = NScene;
                 }
                 else
@@ -906,7 +905,7 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.Checked.Value)
                     {
-                        Convergence_Progress CP = new Convergence_Progress();
+                        ConvergenceProgress CP = new ConvergenceProgress();
                         command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
                         if (!Spec_Rays.Checked) CP.Show();
 
@@ -1230,7 +1229,7 @@ namespace Pachyderm_Acoustic
 
             private void Commit_Layer_Acoustics()
             {
-                if (LayerDisplay.SelectedValue == "") return;
+                if (LayerDisplay.SelectedValue.ToString().Length == 0) return;
                 int layer_index = LayerDisplay.SelectedIndex;
                 double[] Absd = ABSSlider.Value;
                 double[] Sctd = SCATSlider.Value;
@@ -1257,7 +1256,7 @@ namespace Pachyderm_Acoustic
                     layer.SetUserString("Transmission", PachTools.EncodeTransmissionLoss(TL));
                 }
 
-                layer.SetUserString("Acoustics", RC_PachTools.EncodeAcoustics(Abs, Sct, Trn));
+                layer.SetUserString("Acoustics", RCPachTools.EncodeAcoustics(Abs, Sct, Trn));
                 Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
             }
 
@@ -1369,7 +1368,7 @@ namespace Pachyderm_Acoustic
                     double[] Abs = new double[8];
                     double[] Sct = new double[8];
                     double[] Trn = new double[1];
-                    RC_PachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
+                    RCPachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
                     double[] AbsI = new double[Abs.Length];
                     double[] SctI = new double[Sct.Length];
                     for(int i = 0; i < AbsI.Length; i++) AbsI[i] = Abs[i] * 100;
@@ -2176,7 +2175,7 @@ namespace Pachyderm_Acoustic
                         foreach (Hare.Geometry.Point[] P in Path.Path)
                         {
                             List<Point3d> pts = new List<Point3d>();
-                            foreach (Hare.Geometry.Point p in P) pts.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                            foreach (Hare.Geometry.Point p in P) pts.Add(Utilities.RCPachTools.HPttoRPt(p));
                             ShownPaths.Add(Rhino.RhinoDoc.ActiveDoc.Objects.AddPolyline(new Polyline(pts)));
                         }
                     }
@@ -2373,7 +2372,7 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
-                    if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
+                    if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch (Exception x)
@@ -2425,7 +2424,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver != null) RT = Receiver;
             }
 
-            public bool Auralisation_Ready()
+            public bool AuralisationReady()
             {
                 if (Receiver != null) return true;
                 return false;
@@ -2705,20 +2704,109 @@ namespace Pachyderm_Acoustic
                 if (f > 12544) SCT[7] = 20;
                 else if (f < 6272) SCT[7] = 90;
                 else SCT[7] = 20 + 70f * (1 - (f - 6272f) / 6272f);
+
+                SCATSlider.Value = SCT;
+                Commit_Layer_Acoustics();
             }
 
             private void PlasterScatter_Click(object sender, EventArgs e)
             {
                 SCATSlider.Value = new double[8] { 25, 25, 25, 25, 25, 25, 25, 25 };
+                Commit_Layer_Acoustics();
             }
 
             private void GlassScatter_Click(object sender, EventArgs e)
             {
                 SCATSlider.Value = new double[8] { 15, 15, 15, 15, 15, 15, 15, 15 };
+                Commit_Layer_Acoustics();
             }
 
-            #region IO Methods
-            private void Write_File()
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                Calculate.Dispose();
+                RTBox.Dispose();
+                ISBox.Dispose();
+                Tabs.Dispose();
+                TabImpulse.Dispose();
+                Image_Order.Dispose();
+                RT_Count.Dispose();
+                CO_TIME.Dispose();
+                Spec_RayCount.Dispose();
+                TabAnalysis.Dispose();
+                TabMaterials.Dispose();
+                Material_Lib.Dispose();
+                ReceiverSelection.Dispose();
+                ParameterBox.Dispose();
+                LayerDisplay.Dispose();
+                PathCount.Dispose();
+                Parameter_Choice.Dispose();
+                MediumProps.Dispose();
+                Specular_Trace.Dispose();
+                Receiver_Choice.Dispose();
+                ScatFlat.Dispose();
+                SaveAbsBox.Dispose();
+                Save_Material.Dispose();
+                Material_Name.Dispose();
+                EdgeFreq.Dispose();
+                SourceList.Dispose();
+                ISOCOMP.Dispose();
+                BTM_ED.Dispose();
+                Alt_Choice.Dispose();
+                Azi_Choice.Dispose();
+                IS_Path_Box.Dispose();
+                Graph_Octave.Dispose();
+                Analysis_View.Dispose();
+                Normalize_Graph.Dispose();
+                LockUserScale.Dispose();
+                Graph_Type.Dispose();
+                Source_Aim.Dispose();
+                AimatSrc.Dispose();
+                Abs_Designer.Dispose();
+                SmartMat_Display.Dispose();
+                tabCoef.Dispose();
+                Absorption.Dispose();
+                Scattering.Dispose();
+                Transparency.Dispose();
+                Trans_Flat.Dispose();
+
+                MenuStrip.Dispose();
+                fileToolStripMenuItem.Dispose();
+                saveDataToolStripMenuItem.Dispose();
+                openDataToolStripMenuItem.Dispose();
+                saveParameterResultsToolStripMenuItem.Dispose();
+                savePTBFormatToolStripMenuItem.Dispose();
+                saveEDCToolStripMenuItem.Dispose();
+                savePressureResultsToolStripMenuItem.Dispose();
+                savePressurePTBFormatToolStripMenuItem.Dispose();
+
+                Auralisation.Dispose();
+                Delete_Material.Dispose();
+
+                Spec_Rays.Dispose();
+                DetailedConvergence.Dispose();
+                Minimum_Convergence.Dispose();
+                quart_lambda.Dispose();
+                user_quart_lambda.Dispose();
+                PlasterScatter.Dispose();
+                GlassScatter.Dispose();
+
+                tabTransControls.Dispose();
+                tabTC.Dispose();
+                Trans_Check.Dispose();
+                tabTL.Dispose();
+
+                SaveTLBox.Dispose();
+                DeleteAssembly.Dispose();
+                SaveAssembly.Dispose();
+                IsolationAssemblies.Dispose();
+                TL_Check.Dispose();
+                Isolation_Lib.Dispose();
+                labelVar.Dispose();
+        }
+
+        #region IO Methods
+        private void Write_File()
             {
                 if (Direct_Data == null && IS_Data == null && IS_Data == null && this.Receiver != null)
                 {
@@ -2939,8 +3027,8 @@ namespace Pachyderm_Acoustic
                         goto fileread;
                     }
 
-
                     double[] Schroeder;
+                    #pragma warning disable CA1814
                     double[,,] EDT = new double[SourceList.Count, Recs.Length, 8];
                     double[,,] T10 = new double[SourceList.Count, Recs.Length, 8];
                     double[,,] T15 = new double[SourceList.Count, Recs.Length, 8];
@@ -2953,6 +3041,7 @@ namespace Pachyderm_Acoustic
                     double[,,] TS = new double[SourceList.Count, Recs.Length, 8];
                     double[,,] LF = new double[SourceList.Count, Recs.Length, 8];
                     double[,,] LE = new double[SourceList.Count, Recs.Length, 8];
+                    #pragma warning restore CA1814
 
                     for (int s = 0; s < SourceList.Count; s++)
                     {
@@ -3191,7 +3280,6 @@ namespace Pachyderm_Acoustic
             internal TabPage TabAnalysis;
             internal TabPage TabMaterials;
             internal ListBox Material_Lib;
-            internal Label LabelRec;
             internal DropDown ReceiverSelection;
             internal GroupBox ParameterBox;
             internal DropDown LayerDisplay;
@@ -3199,11 +3287,9 @@ namespace Pachyderm_Acoustic
             internal DropDown Parameter_Choice;
             internal Medium_Properties_Group MediumProps;
             internal Label Label3;
-            internal Label AirTemp;
             internal Label Label19;
             internal CheckBox Specular_Trace;
             internal ComboBox Receiver_Choice;
-            internal Label labelRec;
             internal Slider ScatFlat;
             private GroupBox SaveAbsBox;
             private Button Save_Material;
@@ -3211,7 +3297,6 @@ namespace Pachyderm_Acoustic
             private CheckBox EdgeFreq;
             internal SourceListBox SourceList;
             private Label ISOCOMP;
-            private Slider AbsFlat;
             internal CheckBox BTM_ED;
             private NumericStepper Alt_Choice;
             private NumericStepper Azi_Choice;

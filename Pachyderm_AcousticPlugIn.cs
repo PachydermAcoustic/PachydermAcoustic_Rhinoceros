@@ -46,22 +46,24 @@ namespace Pachyderm_Acoustic
                 new CellConduit();
                 Pach_Props = Pach_Properties_Panel.Instance;
                 Audio.Pach_SP.Initialize_FFTW();
-                System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
+                //System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
                 Instance = this;
             }
 
-            public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
-            {
-                return null;
-            }
 
-            public Guid InstanceID
-            {
-                get
-                {
-                    return Instance_ID;
-                }
-            }
+
+            //public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
+            //{
+            //    return null;
+            //}
+
+            //public Guid InstanceID
+            //{
+            //    get
+            //    {
+            //        return Instance_ID;
+            //    }
+            //}
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
             public static PachydermAc_PlugIn Instance
@@ -92,17 +94,17 @@ namespace Pachyderm_Acoustic
 
 
                 //Register the UserControl "Panels"
-                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_TD_Numeric_Control), "PachyDerm TimeDomain Models", Properties.Resources.PIcon1);
-                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Hybrid_Control), "Pachyderm Hybrid Models", Properties.Resources.PIcon1);
+                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.PachTDNumericControl), "PachyDerm TimeDomain Models", Properties.Resources.PIcon1);
+                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.PachHybridControl), "Pachyderm Hybrid Models", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Mapping_Control), "Pachyderm Mapping Method", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_MapCustom), "Pachyderm Custom Maps", Properties.Resources.PIcon1);
-                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Visual_Control), "Pachyderm Particle Animation", Properties.Resources.PIcon1);
+                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.PachVisualControl), "Pachyderm Particle Animation", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Auralisation), "Pachyderm Auralisation", Properties.Resources.PIcon1);
                 //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Convergence_Progress), "Convergence Progress", Properties.Resources.PIcon1);
 
                 Rhino.RhinoApp.Initialized += (sender, e) =>
                 {
-                    Pach_Splash splash = new Pach_Splash();
+                    PachSplash splash = new PachSplash();
                     splash.ShowModal();// SemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
                 };
 
@@ -113,6 +115,7 @@ namespace Pachyderm_Acoustic
             public UI.Pach_Materials_Page m_Obj_Page = new UI.Pach_Materials_Page();
             public UI.Pach_SourceControl_Page m_Source_Page = new UI.Pach_SourceControl_Page();
 
+            [Obsolete]
             protected override void ObjectPropertiesPages(List<Rhino.UI.ObjectPropertiesPage> pages)
             {
                 pages.Add(m_Obj_Page);
@@ -124,42 +127,21 @@ namespace Pachyderm_Acoustic
                 pages.Add(m_Doc_Page);
             }
 
-            public int ProcessorSpec()
-            {
-                return m_Doc_Page.Get_Processor_Spec();
-            }
+            public int ProcessorSpec => m_Doc_Page.Get_Processor_Spec();
 
-            public int Geometry_Spec()
-            {
-                return m_Doc_Page.Get_Geometry_Spec();
-            }
+            public int Geometry_Spec => m_Doc_Page.Get_Geometry_Spec();
 
-            public int SP_Spec()
-            {
-                return m_Doc_Page.Get_SP_Spec();
-            }
+            public int SPSpec => m_Doc_Page.Get_SP_Spec();
 
-            public int Oct_Depth()
-            {
-                return m_Doc_Page.Get_Oct_Depth();
-            }
+            public int OctDepth => m_Doc_Page.Get_Oct_Depth();
 
-            public int VG_Domain()
-            {
-                return m_Doc_Page.Get_VG_Domain();
-            }
+            public static int VGDomain => Pach_Props_Page.VGDomain;
 
-            public string ML_Path()
-            {
-                return m_Doc_Page.Get_MatLib_Path();
-            }
+            public static string MLPath => Pach_Props_Page.MatLibPath;
 
-            public bool Save_Results()
-            {
-                return m_Doc_Page.Save_Results();
-            }
+            public static bool SaveResults => Pach_Props_Page.SaveResults();
 
-            public string SpecialCode = "";
+            private string specialCode = "";
 
             public bool SourceRef(out List<Rhino.DocObjects.RhinoObject> Points)
             {
@@ -188,17 +170,16 @@ namespace Pachyderm_Acoustic
                 {
                     System.Guid S_ID = SourceConduit.Instance.UUID[i];
                     if (S_ID == System.Guid.Empty || S_ID == System.Guid.NewGuid()) break;
-                    Points[i] = Utilities.RC_PachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min);
+                    Points[i] = Utilities.RCPachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min);
                 }
 
                 if (Points.Length > 0) return true;
                 return false;
             }
              
-            public string GetPluginPath()
-            {
-                return System.Reflection.Assembly.GetExecutingAssembly().Location;
-            }
+            public string GetPluginPath => System.Reflection.Assembly.GetExecutingAssembly().Location;
+
+            public string SpecialCode { get => specialCode; set => specialCode = value; }
 
             public bool Source(out Environment.Source[] S)
             {
@@ -230,10 +211,10 @@ namespace Pachyderm_Acoustic
                         {
                             case "":
                             case "0":
-                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "1":
-                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "2":
                             case "3":
@@ -244,7 +225,7 @@ namespace Pachyderm_Acoustic
                                 else
                                     B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RC_PachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
+                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
                                 break;
                         }
                     }
@@ -287,7 +268,7 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < pts.Length; i++)
                         {
                             //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(pts[i]);
-                            Samples[i] = Utilities.RC_PachTools.RPttoHPt(pts[i]);
+                            Samples[i] = Utilities.RCPachTools.RPttoHPt(pts[i]);
                         }
                         S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false);
                     }
@@ -305,7 +286,7 @@ namespace Pachyderm_Acoustic
                 {
                     System.Guid R_ID = ReceiverConduit.Instance.UUID[i];
                     if (R_ID == System.Guid.Empty || R_ID == System.Guid.NewGuid()) break;
-                    Point.Add(Utilities.RC_PachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
+                    Point.Add(Utilities.RCPachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
                 }
 
                 if (Point.Count > 0) return true;
@@ -409,12 +390,13 @@ namespace Pachyderm_Acoustic
                             }
                         }
                         Type = null;
-                    }catch(Exception)
+                    }
+                    catch (Exception)
                     {
                         break;
                     }
                 }
-                while (objectId != null);
+                while (true);//objectId != null);
             }
 
             /// <summary>

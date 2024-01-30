@@ -31,11 +31,11 @@ namespace Pachyderm_Acoustic
         public class SphereConduit : DisplayConduit
         {
             Rhino.Geometry.Mesh Sphere;
-            public Pach_Graphics.colorscale C;
+            public Pach_Graphics.Colorscale C;
             public Sphere_Plot plot;
             Hare.Geometry.Point center;
 
-            public SphereConduit(Sphere_Plot plot_in, Hare.Geometry.Point center_in, Pach_Graphics.colorscale C_in, double[] V_Bounds_in)
+            public SphereConduit(Sphere_Plot plot_in, Hare.Geometry.Point center_in, Pach_Graphics.Colorscale C_in, double[] V_Bounds_in)
             {
                 plot = plot_in;
                 center = center_in;
@@ -59,15 +59,19 @@ namespace Pachyderm_Acoustic
             /// </summary>
             /// <param name="Colors"></param>
             /// <param name="Values"></param>
-            public void SetColorScale(Pach_Graphics.colorscale C_in)
+            public void SetColorScale(Pach_Graphics.Colorscale C_in)
             {
                 C = C_in;
             }
 
             public void Data_in(double[] magnitude, double[] bounds, double display_diameter)
             {
-                Mesh m = Utilities.RC_PachTools.Hare_to_RhinoMesh(plot.Output(magnitude, bounds[0], bounds[1], display_diameter), true);
-                for (int i = 0; i < magnitude.Length; i++) m.VertexColors.Add(C.GetValue(magnitude[i], bounds[0], bounds[1]));
+                Mesh m = Utilities.RCPachTools.HaretoRhinoMesh(plot.Output(magnitude, bounds[0], bounds[1], display_diameter), true);
+                for (int i = 0; i < magnitude.Length; i++)
+                {
+                    Eto.Drawing.Color c = C.GetValue(magnitude[i], bounds[0], bounds[1]);
+                    m.VertexColors.Add(c.Rb, c.Gb, c.Bb);
+                }
                 m.UnifyNormals();
                 Sphere = m;
                 this.Enabled = true;

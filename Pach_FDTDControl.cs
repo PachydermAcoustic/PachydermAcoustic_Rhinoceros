@@ -23,16 +23,14 @@ using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;
 using Eto.Forms;
-using System.Windows.Threading;
 using Rhino.UI;
-using Rhino.UI.Controls;
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
         [GuidAttribute("7c62fae6-efa7-4c07-af12-cd440049c7fc")]
-        public class Pach_TD_Numeric_Control : Panel, IPanel
+        public class PachTDNumericControl : Panel, IPanel
         {
             Color_Output_Control scatcolorlayout;
             private Label Freq_Feedback;
@@ -47,17 +45,17 @@ namespace Pachyderm_Acoustic
             internal Eto.Forms.Button PlayContinuous;
             internal Eto.Forms.Button ForwVis;
             internal Eto.Forms.ComboBox Color_Selection;
-            private Eto.Forms.NumericUpDown Pos_Select;
+            private Eto.Forms.NumericStepper Pos_Select;
             internal Eto.Forms.ComboBox AxisSelect;
             private Eto.Forms.ListBox Map_Planes;
             private Eto.Forms.Button AddPlane;
-            internal Eto.Forms.NumericUpDown Frequency_Selection;
-            internal Eto.Forms.NumericUpDown Freq_Max;
+            internal Eto.Forms.NumericStepper Frequency_Selection;
+            internal Eto.Forms.NumericStepper Freq_Max;
             internal Eto.Forms.DropDown SourceSelect;
             private Eto.Forms.DropDown Eigen_Extent;
             private Eto.Forms.Button CalculateSim;
             internal Eto.Forms.DropDown Receiver_Choice;
-            internal Eto.Forms.NumericUpDown CO_TIME;
+            internal Eto.Forms.NumericStepper CO_TIME;
             private Eto.Forms.Button Export_Signal;
             private ScottPlot.Eto.EtoPlot Frequency_View;
             private ScottPlot.Eto.EtoPlot TransientView;
@@ -69,8 +67,8 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.Button ScatExport;
             private ScottPlot.Eto.EtoPlot ScatteringGraph;
             private Eto.Forms.DropDown Analysis_Technique;
-            private Eto.Forms.NumericUpDown ScatteringRadius;
-            private Eto.Forms.NumericUpDown Sample_Depth;
+            private Eto.Forms.NumericStepper ScatteringRadius;
+            private Eto.Forms.NumericStepper Sample_Depth;
             private Eto.Forms.DropDown ScatLimit;
             private Eto.Forms.Slider Freq_Trackbar1;
             private Eto.Forms.Slider Freq_Trackbar2;
@@ -89,9 +87,7 @@ namespace Pachyderm_Acoustic
             private Medium_Properties_Group Medium;
             private Color_Output_Control viscolor;
 
-
-            // This call is required by the Windows Form Designer. 
-            public Pach_TD_Numeric_Control()
+            public PachTDNumericControl()
             {
                 Instance = this;
 
@@ -99,7 +95,7 @@ namespace Pachyderm_Acoustic
                 this.TabsPrime = new Eto.Forms.TabControl();
                 this.EigenTab = new Eto.Forms.TabPage();
                 this.Export_Signal = new Eto.Forms.Button();
-                this.CO_TIME = new Eto.Forms.NumericUpDown();
+                this.CO_TIME = new Eto.Forms.NumericStepper();
                 this.CalculateSim = new Eto.Forms.Button();
                 this.Eigen_Extent = new Eto.Forms.ComboBox();
                 this.EigenFrequencies = new Eto.Forms.ListBox();
@@ -116,16 +112,16 @@ namespace Pachyderm_Acoustic
                 this.ScatExport = new Eto.Forms.Button();
                 this.ScatLimit = new Eto.Forms.DropDown();
                 this.Analysis_Technique = new Eto.Forms.DropDown();
-                this.Sample_Depth = new Eto.Forms.NumericUpDown();
-                this.ScatteringRadius = new Eto.Forms.NumericUpDown();
+                this.Sample_Depth = new Eto.Forms.NumericStepper();
+                this.ScatteringRadius = new Eto.Forms.NumericStepper();
                 this.Freq_Trackbar1 = new Eto.Forms.Slider();
                 this.Freq_Trackbar2 = new Eto.Forms.Slider();
                 this.Scat_Param_Select = new Eto.Forms.DropDown();
                 this.CalculateScattering = new Eto.Forms.Button();
                 this.ScatTab = new Eto.Forms.TabPage();
                 this.EdgeFreq = new Eto.Forms.CheckBox();
-                this.Freq_Max = new Eto.Forms.NumericUpDown();
-                this.Frequency_Selection = new Eto.Forms.NumericUpDown();
+                this.Freq_Max = new Eto.Forms.NumericStepper();
+                this.Frequency_Selection = new Eto.Forms.NumericStepper();
                 this.SourceSelect = new Eto.Forms.ComboBox();
                 this.Preview = new Eto.Forms.Button();
                 this.TimeContainer = new Eto.Forms.GroupBox();
@@ -138,7 +134,7 @@ namespace Pachyderm_Acoustic
                 this.SetFolder = new Eto.Forms.Button();
                 this.Folder_Status = new Eto.Forms.TextBox();
                 this.GroundPlane = new Eto.Forms.CheckBox();
-                this.Pos_Select = new Eto.Forms.NumericUpDown();
+                this.Pos_Select = new Eto.Forms.NumericStepper();
                 this.DeletePlane = new Eto.Forms.Button();
                 this.VisualPML = new Eto.Forms.CheckBox();
 
@@ -472,8 +468,68 @@ namespace Pachyderm_Acoustic
                 scatterscale = scatcolorlayout.Scale;
             }
 
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                FileLocation.Dispose();
+                scatcolorlayout.Dispose();
+                Freq_Feedback.Dispose();
+                Forw.Dispose();
+                TabsPrime.Dispose();
+                EigenTab.Dispose();
+                ScatTab.Dispose();
+                EdgeFreq.Dispose();
+                Preview.Dispose();
+                TimeContainer.Dispose();
+                Time_Preview.Dispose();
+                PlayContinuous.Dispose();
+                ForwVis.Dispose();
+                Color_Selection.Dispose();
+                Pos_Select.Dispose();
+                AxisSelect.Dispose();
+                Map_Planes.Dispose();
+                AddPlane.Dispose();
+                Frequency_Selection.Dispose();
+                Freq_Max.Dispose();
+                SourceSelect.Dispose();
+                Eigen_Extent.Dispose();
+                CalculateSim.Dispose();
+                Receiver_Choice.Dispose();
+                CO_TIME.Dispose();
+                Export_Signal.Dispose();
+                Frequency_View.Dispose();
+                TransientView.Dispose();
+                EigenFrequencies.Dispose();
+                Folder_Status.Dispose();
+                SetFolder.Dispose();
+                VisTab.Dispose();
+                CalculateScattering.Dispose();
+                ScatExport.Dispose();
+                ScatteringGraph.Dispose();
+                Analysis_Technique.Dispose();
+                ScatteringRadius.Dispose();
+                Sample_Depth.Dispose();
+                ScatLimit.Dispose();
+                Freq_Trackbar1.Dispose();
+                Freq_Trackbar2.Dispose();
+                Scat_Param_Select.Dispose();
+                DirBox.Dispose();
+                Scat_Dir_75.Dispose();
+                Scat_Dir_60.Dispose();
+                Scat_Dir_45.Dispose();
+                Scat_Dir_30.Dispose();
+                Scat_Dir_15.Dispose();
+                Scat_Dir_00.Dispose();
+                GroundPlane.Dispose();
+                DeletePlane.Dispose();
+                EigenPML.Dispose();
+                VisualPML.Dispose();
+                Medium.Dispose();
+                viscolor.Dispose();
+            }
+
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
-            public static Pach_TD_Numeric_Control Instance
+            public static PachTDNumericControl Instance
             {
                 get;
                 private set;
@@ -481,8 +537,8 @@ namespace Pachyderm_Acoustic
 
             #region Visualization
 
-            private Pach_Graphics.colorscale scale;
-            private Pach_Graphics.colorscale scatterscale;
+            private Pach_Graphics.Colorscale scale;
+            private Pach_Graphics.Colorscale scatterscale;
             public delegate void Populator(double Dist);
             public Numeric.TimeDomain.Acoustic_Compact_FDTD_RC FDTD;
             WaveConduit P;
@@ -493,12 +549,12 @@ namespace Pachyderm_Acoustic
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
-                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius,Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius,Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                 if (Rm == null || !Rm.Complete) return;
 
                 if (P == null) P = new WaveConduit(viscolor.scale, new double[2] { viscolor.Min, viscolor.Max });
-                Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
-                Hare.Geometry.Point[] Rec = RC_PachTools.GetReceivers().ToArray();
+                Hare.Geometry.Point[] Src = RCPachTools.GetSource();
+                Hare.Geometry.Point[] Rec = RCPachTools.GetReceivers().ToArray();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
                 Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
@@ -519,7 +575,7 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RC_PachTools.GetSource(0));
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RCPachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
 
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked.Value? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked.Value);
@@ -552,18 +608,17 @@ namespace Pachyderm_Acoustic
             }
 
             System.Threading.Thread T;
-            private void LoopStart()
+            private async void LoopStart()
             {
                 do
                 {
                     if (Running)
                     {
-                        Advancer.Invoke(() => Forw_proc());
-                        System.Threading.Thread.Sleep(100);
+                        await System.Threading.Tasks.Task.Run(() => Forw_proc());
                     }
                     else
                     {
-                        System.Threading.Thread.CurrentThread.Abort();
+                        break;
                     }
                 }
                 while (true);
@@ -607,7 +662,7 @@ namespace Pachyderm_Acoustic
                     Pts.Add(new List<Rhino.Geometry.Point3d>());
                     for (int j = 0; j < hpts[i].Count; j++)
                     {
-                        Pts[i].Add(RC_PachTools.HPttoRPt(hpts[i][j]));
+                        Pts[i].Add(RCPachTools.HPttoRPt(hpts[i][j]));
                     }
                 }
 
@@ -629,7 +684,7 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
 
                 ////////////////////////
-                if (Folder_Status.Text != "")
+                if (Folder_Status.Text.Length > 0)
                 {
                     int j = (int)Math.Round(t / FDTD.dt);
                     string number;
@@ -655,8 +710,6 @@ namespace Pachyderm_Acoustic
             public event EventHandler Incremented;
 
             bool Running = false;
-
-            Dispatcher Advancer = Dispatcher.CurrentDispatcher;
 
             private void Loop_Click(object sender, EventArgs e)
             {
@@ -761,15 +814,15 @@ namespace Pachyderm_Acoustic
             {
                 EigenFrequencies.Items.Clear();
                 Chosenfreq = 0;
-                Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                 if (!Rm.Complete) return;
 
-                Hare.Geometry.Point[] Src = RC_PachTools.GetSource();
+                Hare.Geometry.Point[] Src = RCPachTools.GetSource();
 
-                List<Hare.Geometry.Point> Rec = RC_PachTools.GetReceivers();
+                List<Hare.Geometry.Point> Rec = RCPachTools.GetReceivers();
                 if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RC_PachTools.GetSource(0));
+                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RCPachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, EigenPML.Checked.Value);
@@ -827,9 +880,9 @@ namespace Pachyderm_Acoustic
                         freq[i] = ((double)i / fdom.Length * samplefrequency);
                     }
 
-                    Populate_EigenFrequencies(mag, freq, "Magnitude");
-                    Populate_EigenFrequencies(real, freq, "Real-Part");
-                    Populate_EigenFrequencies(imag, freq, "Imaginary-Part");
+                    PopulateEigenFrequencies(mag, freq, "Magnitude");
+                    PopulateEigenFrequencies(real, freq, "Real-Part");
+                    PopulateEigenFrequencies(imag, freq, "Imaginary-Part");
                 }
 
 
@@ -919,7 +972,7 @@ namespace Pachyderm_Acoustic
                 Frequency_View.Plot.Add.VerticalLine(Chosenfreq, 3, ScottPlot.Colors.Black);
             }
 
-            public void Populate_EigenFrequencies(double[] mag, double[] freq, string functiontype)
+            public void PopulateEigenFrequencies(double[] mag, double[] freq, string functiontype)
             {
                 MathNet.Numerics.Interpolation.CubicSpline CS = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(freq, mag);
 
@@ -1046,7 +1099,7 @@ namespace Pachyderm_Acoustic
 
                     t += 60 / fs;
 
-                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                     Rm.partition();
                     Empty_Scene Rm_Ctrl = new Empty_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
@@ -1056,7 +1109,7 @@ namespace Pachyderm_Acoustic
 
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     long size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of first model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDS.RuntoCompletion();                    
@@ -1067,7 +1120,7 @@ namespace Pachyderm_Acoustic
 
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of second model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDF.RuntoCompletion();
@@ -1197,7 +1250,7 @@ namespace Pachyderm_Acoustic
                             FFTwriter.Write(fft[j].Real);
                             FFTwriter.Write(fft[j].Imaginary);
                         }
-                        pts.Add(FDTDF.RDD_Location(Mic.X[i] , Mic.Y[i], Mic.Z[i]) + Utilities.RC_PachTools.RPttoHPt(LabCenter));
+                        pts.Add(FDTDF.RDD_Location(Mic.X[i] , Mic.Y[i], Mic.Z[i]) + Utilities.RCPachTools.RPttoHPt(LabCenter));
                         FFTwriter.Close(); FFTwriter.Dispose();
                     }
 
@@ -1217,7 +1270,7 @@ namespace Pachyderm_Acoustic
                 }
                 else if (Analysis_Technique.SelectedIndex == 1)
                 {
-                    Polygon_Scene Rm = RC_PachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                     Empty_Scene Rm_Ctrl = new Empty_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
                     Rm_Ctrl.partition();
@@ -1232,12 +1285,12 @@ namespace Pachyderm_Acoustic
 
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.TransparencyLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.TransparencyLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDS.RuntoCompletion();
 
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RC_PachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
                     int start = (int)Math.Round((2.25 * radius / Rm.Sound_speed(Src[0].H_Origin())) / FDTDS.dt);
@@ -1286,7 +1339,7 @@ namespace Pachyderm_Acoustic
                     List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
                     for (int i = 0; i < Mic.X.Length; i++)
                     {
-                        pts.Add(FDTDS.RDD_Location(Mic.X[i], Mic.Y[i], Mic.Z[i]) - Utilities.RC_PachTools.RPttoHPt(LabCenter));
+                        pts.Add(FDTDS.RDD_Location(Mic.X[i], Mic.Y[i], Mic.Z[i]) - Utilities.RCPachTools.RPttoHPt(LabCenter));
                     }
 
                     Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));

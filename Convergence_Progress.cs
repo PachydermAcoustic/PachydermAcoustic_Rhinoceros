@@ -10,37 +10,33 @@ using System.Threading.Tasks;
 using Eto.Forms;
 using Rhino.UI;
 using ScottPlot;
+using ScottPlot.Extensions;
 using ScottPlot.Plottables;
 
 namespace Pachyderm_Acoustic
 {
-
     namespace UI
     {
         //[GuidAttribute("79B97A26-CEBC-4FA8-8275-9D961ADF1772")]
-        public class Convergence_Progress : Eto.Forms.FloatingForm, Pachyderm_Acoustic.I_Conv_Progress
+        public class ConvergenceProgress : Eto.Forms.FloatingForm, Pachyderm_Acoustic.I_Conv_Progress
         {
-            //private static Convergence_Progress instance = null;
             private Queue<double> history1 = new Queue<double>();
             private Queue<double> history2 = new Queue<double>();
             private List<double> CT = new List<double>();
-            //bool conclude = false;
 
-            private Eto.Forms.DynamicLayout Layout;
             private ScottPlot.Eto.EtoPlot Conv_View;
             private ScottPlot.Eto.EtoPlot IR_View;
-            private Eto.Forms.Button Conclude;
-
-            public Convergence_Progress()
+            private Button Conclude;
+            public ConvergenceProgress()
             {
                 //this.Location = new Eto.Drawing.Point(100, 200);
-                this.Layout = new Eto.Forms.DynamicLayout();
+                DynamicLayout Layout = new Eto.Forms.DynamicLayout();
                 this.Conv_View = new ScottPlot.Eto.EtoPlot();
                 this.IR_View = new ScottPlot.Eto.EtoPlot();
                 this.Conclude = new Eto.Forms.Button();
 
-                this.Conclude.Text = "Conclude_Simulation";
-                this.Conclude.Click += this.Conclude_Click;
+                Conclude.Text = "Conclude_Simulation";
+                Conclude.Click += this.Conclude_Click;
 
                 IR_View.Plot.TitlePanel.Label.Text = "Impulse Response Status";
                 IR_View.Plot.TitlePanel.Label.Font.Size = 12;
@@ -66,31 +62,21 @@ namespace Pachyderm_Acoustic
                 this.Content.Invalidate();
             }
 
-            //public static Convergence_Progress Instance
-            //{
-            //    get
-            //    {
-            //        if (instance == null || instance.)
-            //        {
-            //            instance = new Convergence_Progress();
-            //        }
-            //        return instance;
-            //    }
-            //}
-
-            public void Populate(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr)
+            public async void Populate(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr)
             {
                 //new System.Threading.Thread(() =>
                 //{
                 //Eto.Forms.Application.Instance.Invoke(() =>
                 //{
+                //await Task.Run(() =>
+                //{
                     if (Conv1.Length == 1) Populate(Conv1[0], Conv2, ConvInf, ID, corr);
                     else if (Conv1.Length > 1) Populate(Conv1, Conv2, ConvInf, ID, count);
                     else return;
                     this.Invalidate();
-                    Layout.Invalidate();
-                IR_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
-                Conv_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
+                    IR_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
+                    Conv_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
+                //});
                 //});
                 //}).Start();
             }
@@ -98,9 +84,9 @@ namespace Pachyderm_Acoustic
             //bool intialized = false;
             public bool Populate(double Conv1, double Conv2, double ConvInf, int ID, double corr = 0)
             {
-                if (Conv1 == double.NaN || Conv1 > 20) Conv1 = 20;
-                if (Conv2 == double.NaN || Conv2 > 20) Conv2 = 20;
-                if (ConvInf == double.NaN || ConvInf > 20) ConvInf = 20;
+                if (Conv1.IsInfiniteOrNaN() || Conv1 > 20) Conv1 = 20;
+                if (Conv2.IsInfiniteOrNaN() || Conv2 > 20) Conv2 = 20;
+                if (ConvInf.IsInfiniteOrNaN() || ConvInf > 20) ConvInf = 20;
                 if (this.Visible == false) return false;
 
                 if (corr != 0) IR_View.Plot.TitlePanel.Label.Text = "Impulse Response Status - Schroeder correlation = " + Math.Round(corr, 3);
@@ -298,6 +284,13 @@ namespace Pachyderm_Acoustic
                 Conclude.Text = "Concluding... Results may be inconclusive...";
             }
 
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                Conclude.Dispose();
+                Conv_View.Dispose();
+                IR_View.Dispose();
+            }
 
             //#region IPanel methods
             //public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)

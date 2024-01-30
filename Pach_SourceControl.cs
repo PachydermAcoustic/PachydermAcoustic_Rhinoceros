@@ -46,14 +46,14 @@ namespace Pachyderm_Acoustic
             private Label H8k;
 
             private DynamicLayout PowerTable;
-            private NumericUpDown SWL0;
-            private NumericUpDown SWL1;
-            private NumericUpDown SWL2;
-            private NumericUpDown SWL3;
-            private NumericUpDown SWL4;
-            private NumericUpDown SWL5;
-            private NumericUpDown SWL6;
-            private NumericUpDown SWL7;
+            private NumericStepper SWL0;
+            private NumericStepper SWL1;
+            private NumericStepper SWL2;
+            private NumericStepper SWL3;
+            private NumericStepper SWL4;
+            private NumericStepper SWL5;
+            private NumericStepper SWL6;
+            private NumericStepper SWL7;
             private Label SPL1;
             private Label SPL0;
             private Label SPL2;
@@ -62,16 +62,16 @@ namespace Pachyderm_Acoustic
             private Label SPL5;
             private Label SPL6;
             private Label SPL7;
-            private NumericUpDown Delay_ms;
+            private NumericStepper Delay_ms;
             private Button Maximum;
             private Button Sensitivity;
             private GroupBox SrcDIR;
             private Label Altlbl;
             private Label Azilbl;
-            private NumericUpDown Azi;
-            private NumericUpDown Alt;
+            private NumericStepper Azi;
+            private NumericStepper Alt;
             private Label Rotlbl;
-            private NumericUpDown AxialRot;
+            private NumericStepper AxialRot;
             private Button SrcDetails;
             private Label OCT;
             private Label SPL;
@@ -101,14 +101,14 @@ namespace Pachyderm_Acoustic
                 this.PowerTable.Padding = 8;
                 this.PowerTable.DefaultPadding = 8;
                 this.PowerTable.DefaultSpacing = new Size(4,8);
-                this.SWL0 = new NumericUpDown();
-                this.SWL1 = new NumericUpDown();
-                this.SWL2 = new NumericUpDown();
-                this.SWL3 = new NumericUpDown();
-                this.SWL4 = new NumericUpDown();
-                this.SWL5 = new NumericUpDown();
-                this.SWL6 = new NumericUpDown();
-                this.SWL7 = new NumericUpDown();
+                this.SWL0 = new NumericStepper();
+                this.SWL1 = new NumericStepper();
+                this.SWL2 = new NumericStepper();
+                this.SWL3 = new NumericStepper();
+                this.SWL4 = new NumericStepper();
+                this.SWL5 = new NumericStepper();
+                this.SWL6 = new NumericStepper();
+                this.SWL7 = new NumericStepper();
                 this.SPL0 = new Label();
                 this.SPL1 = new Label();
                 this.SPL2 = new Label();
@@ -117,24 +117,24 @@ namespace Pachyderm_Acoustic
                 this.SPL5 = new Label();
                 this.SPL6 = new Label();
                 this.SPL7 = new Label();
-                SPL0.HorizontalAlign = HorizontalAlign.Center;
-                SPL1.HorizontalAlign = HorizontalAlign.Center;
-                SPL2.HorizontalAlign = HorizontalAlign.Center;
-                SPL3.HorizontalAlign = HorizontalAlign.Center;
-                SPL4.HorizontalAlign = HorizontalAlign.Center;
-                SPL5.HorizontalAlign = HorizontalAlign.Center;
-                SPL6.HorizontalAlign = HorizontalAlign.Center;
-                SPL7.HorizontalAlign = HorizontalAlign.Center;
+                SPL0.TextAlignment = TextAlignment.Center;
+                SPL1.TextAlignment = TextAlignment.Center;
+                SPL2.TextAlignment = TextAlignment.Center;
+                SPL3.TextAlignment = TextAlignment.Center;
+                SPL4.TextAlignment = TextAlignment.Center;
+                SPL5.TextAlignment = TextAlignment.Center;
+                SPL6.TextAlignment = TextAlignment.Center;
+                SPL7.TextAlignment = TextAlignment.Center;
                 this.SrcDIR = new GroupBox();
                 this.Rotlbl = new Label();
                 this.SrcDetails = new Button();
-                this.AxialRot = new NumericUpDown();
+                this.AxialRot = new NumericStepper();
                 this.Altlbl = new Label();
                 this.Azilbl = new Label();
-                this.Azi = new NumericUpDown();
-                this.Alt = new NumericUpDown();
+                this.Azi = new NumericStepper();
+                this.Alt = new NumericStepper();
                 this.label7 = new Label();
-                this.Delay_ms = new NumericUpDown();
+                this.Delay_ms = new NumericStepper();
                 this.Maximum = new Button();
                 this.Sensitivity = new Button();
                 this.SourceType = new ComboBox();
@@ -469,7 +469,7 @@ namespace Pachyderm_Acoustic
                     string[] L;
                     try
                     {
-                        L = CLF_Read.SecureAccess.Read();
+                        L = CLF_Read.SecureAccess.Read(Rhino.UI.RhinoEtoApp.MainWindow);
                         if (L == null)
                         {
                             SourceType.SelectedIndex = 0;
@@ -501,7 +501,7 @@ namespace Pachyderm_Acoustic
 
                             Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
                             Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
-                            SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RC_PachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                            SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
 
                             SrcDetails.Enabled = true;
                             SrcDetails.Visible = true;
@@ -559,7 +559,7 @@ namespace Pachyderm_Acoustic
                             SWLmax[oct] = double.Parse(maxcode[oct]);
                         }
 
-                        B = new Balloon(ballooncodes, Utilities.RC_PachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                        B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
                     }
                     else if (SourceType.SelectedIndex == 4)
                     {
@@ -578,7 +578,7 @@ namespace Pachyderm_Acoustic
                                 SWLmax[oct] = double.Parse(maxcode[oct]);
                             }
 
-                            B = new Balloon(ballooncodes, Utilities.RC_PachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                            B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
                         }
                     }
                     else
@@ -784,9 +784,9 @@ namespace Pachyderm_Acoustic
 
             public override string EnglishPageTitle => "Sound Source Control";
 
-            public override System.Drawing.Icon Icon
+            public override System.Drawing.Icon PageIcon(System.Drawing.Size sizeInPixels)
             {
-                get { return Properties.Resources.PIcon1; }
+                return Properties.Resources.PIcon1;
             }
 
              public override object PageControl
@@ -811,6 +811,8 @@ namespace Pachyderm_Acoustic
                 }
                 return Selected_Objects;
             }
+
+            //public override ObjectType SupportedTypes => Rhino.DocObjects.ObjectType.Point;
 
             public override bool ShouldDisplay(RhinoObject obj)
             {

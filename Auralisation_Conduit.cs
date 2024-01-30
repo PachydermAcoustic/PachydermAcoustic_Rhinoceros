@@ -73,14 +73,14 @@ namespace Pachyderm_Acoustic
             {
                 this.Enabled = true;
                 List<Point3d> PTS = new List<Point3d>();
-                foreach (Hare.Geometry.Point p in pts) PTS.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                foreach (Hare.Geometry.Point p in pts) PTS.Add(Utilities.RCPachTools.HPttoRPt(p));
                 Recs = new PointCloud(PTS);
             }
 
             public void add_Sources(IEnumerable<Hare.Geometry.Point> pts)
             {
                 List<Rhino.Geometry.Point3d> PTS = new List<Point3d>();
-                foreach(Hare.Geometry.Point p in pts) PTS.Add(Utilities.RC_PachTools.HPttoRPt(p));
+                foreach(Hare.Geometry.Point p in pts) PTS.Add(Utilities.RCPachTools.HPttoRPt(p));
                 add_Sources(PTS);
             }
 
@@ -103,7 +103,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < pts.Count<Hare.Geometry.Point>(); i++)
                 {
                     Hare.Geometry.Vector V = new Hare.Geometry.Vector(vec.ElementAt<Vector3d>(i).X, vec.ElementAt<Vector3d>(i).Y, vec.ElementAt<Vector3d>(i).Z);
-                    Speakers.Add(new Line(Utilities.RC_PachTools.HPttoRPt(pts.ElementAt(i)), Utilities.RC_PachTools.HPttoRPt(pts.ElementAt(i) + V)));
+                    Speakers.Add(new Line(Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i)), Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i) + V)));
                 }
             }
 

@@ -25,19 +25,16 @@ using System.Configuration;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Authentication.ExtendedProtection;
-using System.Windows.Threading;
+        
 
 namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-
         [System.Runtime.InteropServices.Guid("E022769F-AAF6-45BA-9EB6-CF0391E0B239")]
-        public class Pach_Splash: Dialog
+        public class PachSplash: Dialog
         {
-            int dialogWidth = 800;
-            int dialogHeight = 600;
-            public int pmode = 0;
+            private int pmode = 0;
 
             Label Attribution = new Eto.Forms.Label();
             Label Copyright = new Eto.Forms.Label();
@@ -48,7 +45,7 @@ namespace Pachyderm_Acoustic
             /// <summary>
             /// Autopopulates the splash screen based on parameters set in the plugin base class.
             /// </summary>
-            public Pach_Splash()
+            public PachSplash()
                 : base()
             {
 
@@ -114,8 +111,6 @@ namespace Pachyderm_Acoustic
                 this.Content = drawable;
             }
 
-            System.Threading.Thread t;
-            Dispatcher closer;
             protected override async void OnShown(EventArgs e)
             {
                 base.OnShown(e);
@@ -123,17 +118,22 @@ namespace Pachyderm_Acoustic
                 System.Threading.Thread.Sleep(2000);
                 pmode++;
                 this.Content.Invalidate(true);
-                //(this.Content as Drawable).Update(Bounds);
 
-                closer = Dispatcher.CurrentDispatcher;
+                System.Threading.Thread.Sleep(2000);
 
-                t = new System.Threading.Thread(new System.Threading.ThreadStart(() => { System.Threading.Thread.Sleep(2000); closer.Invoke(() => { this.Close(); }); }));
-
-                t.Start();
+                await System.Threading.Tasks.Task.Run(this.Close);
+                System.Threading.Thread.Sleep(2000);
             }
 
-
-
+            protected override void Dispose(bool disposing)
+            {
+                base.Dispose(disposing);
+                Attribution.Dispose();
+                Copyright.Dispose();
+                Version_box.Dispose();
+                title_box.Dispose();
+                drawable.Dispose();
+            }
         }
     }
 }
