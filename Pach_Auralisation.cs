@@ -426,7 +426,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
                     ProgressBox VB = new ProgressBox("Creating IR Filters for Deterministic Reflections...");
-                    VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                    VB.Show(Rhino.RhinoDoc.ActiveDoc);
                     for (int i = 0; i < IS_Data.Length; i++) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096, VB);
                     VB.change_title("Creating Impulse Responses...");
                     for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
@@ -440,7 +440,7 @@ namespace Pachyderm_Acoustic
                 double[][] Temp;
                 double[][] Response;
                 ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                VB.Show(Rhino.RhinoDoc.ActiveDoc);
 
                 switch (DistributionType.SelectedValue as string)
                 {
@@ -962,7 +962,7 @@ namespace Pachyderm_Acoustic
                         for (int i = 0; i < Direct_Data.Length; i++)
                         {
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.ShowModal();
+                            VB.Show();
                             double[] Response = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, 44100, i, SelectedSources(), false, true, VB));
                             VB.Close();
                             double tmax = Math.Max(Response.Max(), Math.Abs(Response.Min()));

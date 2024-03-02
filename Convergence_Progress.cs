@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Eto.Forms;
+using MathNet.Numerics;
 using Rhino.UI;
 using ScottPlot;
 using ScottPlot.Extensions;
@@ -25,36 +26,53 @@ namespace Pachyderm_Acoustic
             private List<double> CT = new List<double>();
 
             private ScottPlot.Eto.EtoPlot Conv_View;
-            private ScottPlot.Eto.EtoPlot IR_View;
+            private ScottPlot.Eto.EtoPlot Hist_View;
+            double[] conv1, conv2;
+            double[] dom1, dom2, domh;
+            private Scatter Conv1, Conv2, hist1, hist2;
             private Button Conclude;
             public ConvergenceProgress()
             {
                 //this.Location = new Eto.Drawing.Point(100, 200);
                 DynamicLayout Layout = new Eto.Forms.DynamicLayout();
                 this.Conv_View = new ScottPlot.Eto.EtoPlot();
-                this.IR_View = new ScottPlot.Eto.EtoPlot();
+                this.Hist_View = new ScottPlot.Eto.EtoPlot();
                 this.Conclude = new Eto.Forms.Button();
 
                 Conclude.Text = "Conclude_Simulation";
                 Conclude.Click += this.Conclude_Click;
 
-                IR_View.Plot.TitlePanel.Label.Text = "Impulse Response Status";
-                IR_View.Plot.TitlePanel.Label.Font.Size = 12;
-                IR_View.Plot.XAxis.Label.Text = "Time (s)";
-                IR_View.Plot.XAxis.Label.Font.Size = 12;
-                IR_View.Plot.YAxis.Label.Text = "Ratio of Change";
-                IR_View.Plot.YAxis.Label.Font.Size = 12;
-                IR_View.Size = new Eto.Drawing.Size(350, 250);
-                Conv_View.Plot.TitlePanel.Label.Text = "Convergence History (Last 20 records)";
+                Conv_View.Plot.TitlePanel.Label.Text = "Impulse Response Status";
                 Conv_View.Plot.TitlePanel.Label.Font.Size = 12;
-                Conv_View.Plot.XAxis.Label.Text = "Iteration";
+                Conv_View.Plot.XAxis.Label.Text = "Time (s)";
                 Conv_View.Plot.XAxis.Label.Font.Size = 12;
-                Conv_View.Plot.YAxis.Label.Text = "Maximum Change";
+                Conv_View.Plot.YAxis.Label.Text = "Ratio of Change";
                 Conv_View.Plot.YAxis.Label.Font.Size = 12;
                 Conv_View.Size = new Eto.Drawing.Size(350, 250);
+                dom1 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
+                conv1 = new double[6] { 0,0,0,0,0,0 };
+                dom2 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
+                conv2 = new double[6] { 0, 0, 0, 0, 0, 0 };
+
+                Conv1 = Conv_View.Plot.Add.Scatter(dom1, conv1, ScottPlot.Colors.Blue);
+                Conv2 = Conv_View.Plot.Add.Scatter(dom2, conv2, ScottPlot.Colors.Red);
                 
-                Layout.AddRow(IR_View);
+                Hist_View.Plot.TitlePanel.Label.Text = "Convergence History (Last 20 records)";
+                Hist_View.Plot.TitlePanel.Label.Font.Size = 12;
+                Hist_View.Plot.XAxis.Label.Text = "Iteration";
+                Hist_View.Plot.XAxis.Label.Font.Size = 12;
+                Hist_View.Plot.YAxis.Label.Text = "Maximum Change";
+                Hist_View.Plot.YAxis.Label.Font.Size = 12;
+                Hist_View.Size = new Eto.Drawing.Size(350, 250);
+                domh = new double[20] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 };
+                history1 = new Queue<double>(20);
+                history2 = new Queue<double>(20);
+                for (int i = 0; i < 20; i++) { history1.Enqueue(0); history2.Enqueue(0); }
+
+                hist1 = Hist_View.Plot.Add.Scatter(domh, history1.ToArray(), ScottPlot.Colors.Blue);
+                hist2 = Hist_View.Plot.Add.Scatter(domh, history2.ToArray(), ScottPlot.Colors.Red);
                 Layout.AddRow(Conv_View);
+                Layout.AddRow(Hist_View);
                 Layout.AddRow(Conclude);
                 Layout.DefaultPadding = 8;
                 Layout.DefaultSpacing = new Eto.Drawing.Size(8, 8);
@@ -62,26 +80,21 @@ namespace Pachyderm_Acoustic
                 this.Content.Invalidate();
             }
 
-            public async void Populate(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr)
+            public async void Fill(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr)
             {
-                //new System.Threading.Thread(() =>
-                //{
-                //Eto.Forms.Application.Instance.Invoke(() =>
-                //{
-                //await Task.Run(() =>
-                //{
                     if (Conv1.Length == 1) Populate(Conv1[0], Conv2, ConvInf, ID, corr);
                     else if (Conv1.Length > 1) Populate(Conv1, Conv2, ConvInf, ID, count);
                     else return;
-                    this.Invalidate();
-                    IR_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
-                    Conv_View.Update(new Eto.Drawing.Rectangle(IR_View.Size));
-                //});
-                //});
-                //}).Start();
             }
 
-            //bool intialized = false;
+            public void Populate()
+            {
+                Rhino.RhinoApp.InvokeOnUiThread(new Action(() => { 
+                    Hist_View.Update(new Eto.Drawing.Rectangle(Hist_View.Size)); 
+                    Conv_View.Update(new Eto.Drawing.Rectangle(Conv_View.Size)); 
+                }));
+            }
+
             public bool Populate(double Conv1, double Conv2, double ConvInf, int ID, double corr = 0)
             {
                 if (Conv1.IsInfiniteOrNaN() || Conv1 > 20) Conv1 = 20;
@@ -89,89 +102,88 @@ namespace Pachyderm_Acoustic
                 if (ConvInf.IsInfiniteOrNaN() || ConvInf > 20) ConvInf = 20;
                 if (this.Visible == false) return false;
 
-                if (corr != 0) IR_View.Plot.TitlePanel.Label.Text = "Impulse Response Status - Schroeder correlation = " + Math.Round(corr, 3);
-
-                double[] t = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
-                double[] conv = new double[6] { Conv1, Conv1, Conv2, Conv2, ConvInf, ConvInf };
-                double convmax = conv.Max();
+                if (corr != 0) Conv_View.Plot.TitlePanel.Label.Text = "Impulse Response Status - Schroeder correlation = " + Math.Round(corr, 3);
 
                 if (ID == 0)
                 {
-                    if (history1.Count != 0  && convmax == history1.Last()) return false;
+                    conv1 = new double[6] { Conv1, Conv1, Conv2, Conv2, ConvInf, ConvInf };
+                    double convmax = conv1.Max(); 
+                    if (this.history1.Count != 0 && convmax == this.history1.Last()) return false;
 
-                    IR_View.Plot.Clear();
                     Conv_View.Plot.Clear();
-                    //////if (!initialized)
-                    //////{
-                    history1.Enqueue(convmax);
-                    if (history1.Count > 20) history1.Dequeue();
-                    IR_View.Plot.Add.Scatter(t.ToList(), conv.ToList(), ScottPlot.Colors.Red);
-                    //IR_View.Plot.YAxis.Max = Math.Max(convmax, 0.3);
-                    if (history1.Count < 20) CT.Add(CT.Count - 10);
-                    Conv_View.Plot.Add.Signal(history1.ToList(), 1, ScottPlot.Colors.Red);
-                    ////}
-                    ////else 
-                    ////{
-                    ////    (IR_View.Plot.PlottableList[1] as Signal).
-                    ////}
-                        //Conv_View.Plot.XAxis.Min = 0;
-                    //Conv_View.Plot.XAxis.Max = CT.Count();
-                    //Conv_View.Plot.YAxis.Max = history1.Max();
+                    Hist_View.Plot.Clear();
+
+                    dom1 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
+                    double[] Conv_template = new double[6] { 0.02, 0.02, 0.02, 0.02, 0.2, 0.2 };
+
+                    Conv_View.Plot.Add.Scatter(dom1.ToList(), Conv_template.ToList(), ScottPlot.Colors.Gray);
+
+
+                    this.history1.Enqueue(convmax);
+                    if (this.history1.Count > 20) this.history1.Dequeue();
+                    ScottPlot.DataSources.ScatterSourceXsYs history1 = new ScottPlot.DataSources.ScatterSourceXsYs(this.domh, this.history1.ToArray());
+                    this.hist1 = Hist_View.Plot.Add.Scatter(domh, this.history1.ToArray(), ScottPlot.Colors.Red);
+
+                    Conv_View.Plot.Add.Scatter(dom1.ToList(), conv1.ToList(), ScottPlot.Colors.Red);
+                    if (this.history1.Count < 20) CT.Add(CT.Count - 10);
                 }
                 if (ID > 0)
                 {
-                    if (history1.Count != 0 && convmax == history2.Last()) return false;
-                    history2.Enqueue(convmax);
-                    if (history2.Count > 20) history2.Dequeue();
-                    IR_View.Plot.Add.Scatter(t.ToList(), conv.ToList(), ScottPlot.Colors.Blue);
-                    //IR_View.Plot.XAxis.Max = Math.Max(IR_View.Plot.XAxis.Max, 1);
-                    //IR_View.Plot.YAxis.Max = Math.Max(IR_View.Plot.YAxis.Max, Math.Max(convmax, 0.3));
-                    //Conv_View.Plot.YAxis.Max = Math.Max(Conv_View.Plot.YAxis.Max, history2.Max());
-                    Conv_View.Plot.Add.Signal(history2.ToList(), 1, ScottPlot.Colors.Blue);
+                    dom2 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
+                    conv2 = new double[6] { Conv1, Conv1, Conv2, Conv2, ConvInf, ConvInf };
+                    double convmax = conv2.Max();
+                    if (history1.Count != 0 && convmax == this.history2.Last()) return false;
+                    
+                    Hist_View.Plot.Add.Scatter(dom2.ToList(), conv2.ToList(), ScottPlot.Colors.Blue);
+                    this.history2.Enqueue(convmax);
+                    if (this.history2.Count > 20) this.history2.Dequeue();
+                    ScottPlot.DataSources.ScatterSourceXsYs history2 = new ScottPlot.DataSources.ScatterSourceXsYs(this.domh, this.history2.ToArray());
+                    this.hist2 = Hist_View.Plot.Add.Scatter(domh, this.history2.ToArray(), ScottPlot.Colors.Blue);
                 }
 
                 ScottPlot.Color Conv_Color = Colors.Gray;
-                switch (conv_count)
-                {
-                    case 1:
-                        Conv_Color = Colors.Red;
-                        break;
-                    case 2:
-                        Conv_Color = Colors.OrangeRed;
-                        break;
-                    case 3:
-                        Conv_Color = Colors.Orange;
-                        break;
-                    case 4:
-                        Conv_Color = Colors.Yellow;
-                        break;
-                    case 5:
-                        Conv_Color = Colors.YellowGreen;
-                        break;
-                    case 6:
-                        Conv_Color = Colors.Green;
-                        break;
-                    case 7:
-                        Conv_Color = Colors.ForestGreen;
-                        break;
-                    case 8:
-                        Conv_Color = Colors.DarkSeaGreen;
-                        break;
-                    case 9:
-                        Conv_Color = Colors.Blue;
-                        break;
-                    case 10:
-                        Conv_Color = Colors.DarkBlue;
-                        break;
-                    default:
-                        break;
-                }
+                //switch (conv_count)
+                //{
+                //    case 1:
+                //        Conv_Color = Colors.Red;
+                //        break;
+                //    case 2:
+                //        Conv_Color = Colors.OrangeRed;
+                //        break;
+                //    case 3:
+                //        Conv_Color = Colors.Orange;
+                //        break;
+                //    case 4:
+                //        Conv_Color = Colors.Yellow;
+                //        break;
+                //    case 5:
+                //        Conv_Color = Colors.YellowGreen;
+                //        break;
+                //    case 6:
+                //        Conv_Color = Colors.Green;
+                //        break;
+                //    case 7:
+                //        Conv_Color = Colors.ForestGreen;
+                //        break;
+                //    case 8:
+                //        Conv_Color = Colors.DarkSeaGreen;
+                //        break;
+                //    case 9:
+                //        Conv_Color = Colors.Blue;
+                //        break;
+                //    case 10:
+                //        Conv_Color = Colors.DarkBlue;
+                //        break;
+                //    default:
+                //        break;
+                //}
 
-                Conv_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.2, 0.2 }, Conv_Color);
-                Conv_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.02, 0.02 }, Conv_Color);
-                IR_View.Plot.Add.Scatter(t, new double[6] { 0.02, 0.02, 0.02, 0.02, 0.1, 0.1 }, Conv_Color);
-                Conv_View.Plot.AutoScale();
-                IR_View.Plot.AutoScale();
+                Hist_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.2, 0.2 }, Colors.Gray);
+                Hist_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.02, 0.02 }, Colors.Gray);
+                Conv_View.Plot.YAxis.Min = 0;
+                Hist_View.Plot.YAxis.Min = 0;
+                Conv_View.Plot.YAxis.Max = Math.Max(Math.Max(conv1.Max(), conv2.Max()), 0.3);
+                Hist_View.Plot.YAxis.Max = Math.Max(Math.Max(history1.Max(), history2.Max()), 0.3);
                 return false;
             }
 
@@ -188,11 +200,11 @@ namespace Pachyderm_Acoustic
                     conv_count = count;
                     history1.Enqueue(Convergence);
                     if (history1.Count > 20) history1.Dequeue();
-                    IR_View.Plot.Clear();
+                    Hist_View.Plot.Clear();
                     Conv_View.Plot.Clear();
-                    IR_View.Plot.Add.Scatter(t, IR_p, Colors.Red);
-                    IR_View.Plot.XAxis.Max = t.Last();
-                    IR_View.Plot.YAxis.Max = Math.Max(IR_p.Max(), 0.3);
+                    Hist_View.Plot.Add.Scatter(t, IR_p, Colors.Red);
+                    Hist_View.Plot.XAxis.Max = t.Last();
+                    Hist_View.Plot.YAxis.Max = Math.Max(IR_p.Max(), 0.3);
                     if (history1.Count < 20) CT.Add(CT.Count - 10);
                     Conv_View.Plot.Add.Scatter(CT.ToArray(), history1.ToArray(), Colors.Red);
                     //IR_View.ZoomOutAll(IR_View.Plot);
@@ -205,14 +217,14 @@ namespace Pachyderm_Acoustic
                     conv_count = Math.Min(conv_count, count);
                     history2.Enqueue(Convergence);
                     if (history2.Count > 20) history2.Dequeue();
-                    IR_View.Plot.Add.Scatter(t, IR_p, Colors.Blue);
-                    IR_View.Plot.XAxis.Max = Math.Max(IR_View.Plot.XAxis.Max, t.Last());
-                    IR_View.Plot.YAxis.Max = Math.Max(IR_View.Plot.YAxis.Max, Math.Max(IR_p.Max(), 0.3));
+                    Hist_View.Plot.Add.Scatter(t, IR_p, Colors.Blue);
+                    Hist_View.Plot.XAxis.Max = Math.Max(Hist_View.Plot.XAxis.Max, t.Last());
+                    Hist_View.Plot.YAxis.Max = Math.Max(Hist_View.Plot.YAxis.Max, Math.Max(IR_p.Max(), 0.3));
                     Conv_View.Plot.YAxis.Max = Math.Max(Conv_View.Plot.YAxis.Max, history2.Max());
                     Conv_View.Plot.Add.Scatter(CT.ToArray(), history2.ToArray(), Colors.Blue);
                 }
-                IR_View.Plot.XAxis.Label.Text = "Time (ms)";
-                IR_View.Plot.YAxis.Label.Text = "Magnitude";
+                Hist_View.Plot.XAxis.Label.Text = "Time (ms)";
+                Hist_View.Plot.YAxis.Label.Text = "Magnitude";
 
                 //if (ID == 0)
                 //{
@@ -264,7 +276,7 @@ namespace Pachyderm_Acoustic
                         break;
                 }
 
-                IR_View.Plot.Add.Scatter(new double[2] { -10000, 10000 }, new double[2] { 0.1, 0.1 }, Conv_Color);
+                Hist_View.Plot.Add.Scatter(new double[2] { -10000, 10000 }, new double[2] { 0.1, 0.1 }, Conv_Color);
                 Conv_View.Plot.Add.Scatter(new double[2] { -5, 25 }, new double[2] { 0.1, 0.1 }, Conv_Color);
 
                 //if (conclude)
@@ -289,29 +301,8 @@ namespace Pachyderm_Acoustic
                 base.Dispose(disposing);
                 Conclude.Dispose();
                 Conv_View.Dispose();
-                IR_View.Dispose();
-            }
-
-            //#region IPanel methods
-            //public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
-            //{
-            //    // Called when the panel tab is made visible, in Mac Rhino this will happen
-            //    // for a document panel when a new document becomes active, the previous
-            //    // documents panel will get hidden and the new current panel will get shown.
-            //}
-
-            //public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
-            //{
-            //    // Called when the panel tab is hidden, in Mac Rhino this will happen
-            //    // for a document panel when a new document becomes active, the previous
-            //    // documents panel will get hidden and the new current panel will get shown.
-            //}
-
-            //public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
-            //{
-            //    // Called when the document or panel container is closed/destroyed
-            //}
-            //#endregion IPanel methods
-        }
-    }
-}
+                Hist_View.Dispose();
+            }   
+        }   
+    }       
+}    

@@ -121,8 +121,7 @@ namespace Pachyderm_Acoustic
 
                 System.Threading.Thread.Sleep(2000);
 
-                await System.Threading.Tasks.Task.Run(this.Close);
-                System.Threading.Thread.Sleep(2000);
+                this.Close();
             }
 
             protected override void Dispose(bool disposing)

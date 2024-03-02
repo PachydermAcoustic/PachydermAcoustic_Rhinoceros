@@ -396,7 +396,7 @@ namespace Pachyderm_Acoustic
                         break;
                     }
                 }
-                while (true);//objectId != null);
+                while (true);
             }
 
             /// <summary>

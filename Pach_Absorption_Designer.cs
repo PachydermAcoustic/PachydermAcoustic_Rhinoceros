@@ -30,6 +30,7 @@ using Rhino.UI.Controls;
 using System.Security.Cryptography;
 using System.Linq;
 using ScottPlot;
+using System.Runtime.CompilerServices;
 
 namespace Pachyderm_Acoustic
 {
@@ -797,20 +798,22 @@ namespace Pachyderm_Acoustic
 
             System.Threading.Thread T;
 
-            private void Calc_Zr_Click(object sender, EventArgs e)
+            private async void Calc_Zr_Click(object sender, EventArgs e)
             {
+                Calc_Zr.Enabled = false;
                 if (T != null && T.ThreadState == System.Threading.ThreadState.Running) return;
                 VisualizationBox B = new VisualizationBox(-90, 90, -15, 15);
                 B.Show();
-                T = new System.Threading.Thread(() => { Zr = new Environment.Smart_Material.Finite_Field_Impedance((double)XDim.Value, (double)YDim.Value, 10000, 343, 1.2, B); });
+                double xd = (double)XDim.Value;
+                double yd = (double)YDim.Value;
+                T = new System.Threading.Thread(() => { Zr = new Environment.Smart_Material.Finite_Field_Impedance(xd, yd, 10000, 343, 1.2, B); });
                 T.Start();
                 do
                 {
-                    System.Threading.Thread.Sleep(1000);
-                    //System.Threading.Thread.SpinWait(2);
+                    await System.Threading.Tasks.Task.Delay(50);
                     B.Populate();
-                    
-                } while (T.ThreadState == System.Threading.ThreadState.Running);
+                } while (T.ThreadState != System.Threading.ThreadState.Stopped);
+                Calc_Zr.Enabled = true;
             }
 
             private void Averaging_SelectedIndexChanged(object sender, EventArgs e)

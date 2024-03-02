@@ -131,23 +131,23 @@ namespace Pachyderm_Acoustic
             Label label3 = new Label();
             label3.Text = "Grid Domain";
             this.VGDOMAIN.Value = 20;
-            this.VGDOMAIN.MouseUp += this.VGSettingsChanged;
+            this.VGDOMAIN.MouseLeave += this.VGSettingsChanged;
 
             Label label2 = new Label();
             label2.Enabled = false;
             label2.Text = "Depth";
             this.OCT_DEPTH.Enabled = false;
             this.OCT_DEPTH.Value = 3;
-            this.OCT_DEPTH.MouseUp += this.OctreeSettingsChanged;
+            this.OCT_DEPTH.MouseLeave += this.OctreeSettingsChanged;
 
             this.VGSP_CHECK.Checked = true;
             this.VGSP_CHECK.Text = "Voxel Grid";
-            this.VGSP_CHECK.MouseUp += this.SpatialSettingsChanged;
+            this.VGSP_CHECK.MouseLeave += this.SpatialSettingsChanged;
 
             this.OCT_CHECK.Enabled = false;
             this.OCT_CHECK.TabIndex = 2;
             this.OCT_CHECK.Text = "Octree";
-            this.OCT_CHECK.MouseUp += this.SpatialSettingsChanged;
+            this.OCT_CHECK.MouseLeave += this.SpatialSettingsChanged;
 
             SPL.AddRow(VGSP_CHECK);
             SPL.AddRow(label3, VGDOMAIN);
@@ -167,7 +167,7 @@ namespace Pachyderm_Acoustic
             Material_Path.Content = ML;
 
             this.Save_Results.Text = "Automatically Save Results";
-            this.Save_Results.MouseUp += SaveSettingsChanged;
+            this.Save_Results.MouseLeave += SaveSettingsChanged;
 
             this.FilterCtrls.Controls.Append(this.Filt_MinPhase);
             this.FilterCtrls.Controls.Append(this.Filt_LinearPhase);

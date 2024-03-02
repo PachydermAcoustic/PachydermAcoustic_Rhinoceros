@@ -50,15 +50,18 @@ namespace Pachyderm_Acoustic
             Graph.Plot.YAxis.Label.Text = ydom;//new AxisLabel(ydom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
             ScottPlot.DataSources.ScatterSourceXsYs sd1 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx.ToList(), arrayy.ToList());
             this.sd1 = Graph.Plot.Add.Scatter(sd1, ScottPlot.Colors.Red);
+            this.sd1.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
             ScottPlot.DataSources.ScatterSourceXsYs sd2 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx2.ToList(), arrayy2.ToList());
             this.sd2 = Graph.Plot.Add.Scatter(sd2, ScottPlot.Colors.Orange);
+            this.sd2.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
             ScottPlot.DataSources.ScatterSourceXsYs sd3 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx3.ToList(), arrayy3.ToList());
             this.sd3 = Graph.Plot.Add.Scatter(sd3, ScottPlot.Colors.Green);
+            this.sd3.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
             ScottPlot.DataSources.ScatterSourceXsYs sd4 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx4.ToList(), arrayy4.ToList());
             this.sd4 = Graph.Plot.Add.Scatter(sd4, ScottPlot.Colors.Blue);
+            this.sd4.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
 
             this.Title = "Displaying Data";
-            //On_Fill += Populate;
         }
 
         public VisualizationBox(float minx, float maxx, float miny, float maxy)
@@ -69,7 +72,6 @@ namespace Pachyderm_Acoustic
             Graph.Plot.XAxis.Max = maxx;
             Graph.Plot.YAxis.Min = miny;
             Graph.Plot.YAxis.Max = maxy;
-            //On_Fill += Populate;
         }
 
         /// <summary>
@@ -111,34 +113,7 @@ namespace Pachyderm_Acoustic
 
         public void Populate()
         {
-            Graph.Plot.Render();
             Graph.Update(new Eto.Drawing.Rectangle(Graph.Size));
-            //if (this.Visible == false) return;
-            //Graph.Plot.Clear();
-            //Graph.Plot.XAxis.Label.Text = xdom;//new AxisLabel(xdom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
-            //Graph.Plot.YAxis.Label.Text = ydom;//new AxisLabel(ydom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
-            //if (arrayx == null) return;
-            //ScottPlot.DataSources.ScatterSourceXsYs sd1 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx.ToList(), arrayy.ToList());
-            //this.sd1 = Graph.Plot.Add.Scatter(sd1, ScottPlot.Colors.Red);
-            //if (arrayx2 != null)
-            //{
-            //    ScottPlot.DataSources.ScatterSourceXsYs sd2 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx2.ToList(), arrayy2.ToList());
-            //    this.sd2 = Graph.Plot.Add.Scatter(sd2, ScottPlot.Colors.Orange);
-            //}
-            //if (arrayx3 != null)
-            //{
-            //    ScottPlot.DataSources.ScatterSourceXsYs sd3 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx3.ToList(), arrayy3.ToList());
-            //    this.sd3 = Graph.Plot.Add.Scatter(sd3, ScottPlot.Colors.Green);
-            //}
-            //if (arrayx4 != null)
-            //{
-            //    ScottPlot.DataSources.ScatterSourceXsYs sd4 = new ScottPlot.DataSources.ScatterSourceXsYs(arrayx4.ToList(), arrayy4.ToList());
-            //    this.sd4 = Graph.Plot.Add.Scatter(sd4, ScottPlot.Colors.Blue);
-            //}
-            //Graph.Plot.AutoScale();
-            //Progress.Value = Prog_Percent;
-
-            //this.Invalidate();
         }
 
         public void Populate(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, double[] arrayx4, double[] arrayy4, string xdom, string ydom, int WaitDuration, int Prog_Percent)
@@ -161,8 +136,8 @@ namespace Pachyderm_Acoustic
             Progress.Value = Prog_Percent;
 
             this.Invalidate();
-            this.Show();
-            System.Threading.Thread.Sleep(WaitDuration);
+            //this.Show();
+            //System.Threading.Thread.Sleep(WaitDuration);
         }
 
         //public delegate void data_pass(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, double[] arrayx4, double[] arrayy4, string xdom, string ydom, int WaitDuration, int Prog_Percent);
@@ -222,11 +197,6 @@ namespace Pachyderm_Acoustic
                 }
 
             Graph.Plot.Render();
-            Graph.Invalidate();
-            //Graph.Update(new Eto.Drawing.Rectangle(Graph.Size));
-            //}
-
-            //On_Fill(arrayx, arrayy, arrayx2, arrayy2, arrayx3, arrayy3, arrayx4, arrayy4, xdom, ydom, WaitDuration, Prog_Percent);
         }
 
         public void Populate(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, string xdom, string ydom, int WaitDuration, int Prog_Percent)
@@ -256,6 +226,7 @@ namespace Pachyderm_Acoustic
             this.Graph = new ScottPlot.Eto.EtoPlot();
             Graph.Size = new Eto.Drawing.Size(300, 250);
             this.Progress = new ProgressBar();
+            this.Progress.Size = new Eto.Drawing.Size(Size.Width, 100);
 
             DynamicLayout all = new DynamicLayout();
             all.AddRow(Graph);

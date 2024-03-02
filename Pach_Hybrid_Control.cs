@@ -27,6 +27,8 @@ using Eto.Drawing;
 using Eto.Forms;
 using Rhino.UI;
 using static Rhino.UI.Internal.DwgOptions;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Pachyderm_Acoustic
 {
@@ -419,19 +421,6 @@ namespace Pachyderm_Acoustic
                 this.ISOCOMP = new Label();
                 this.ISOCOMP.Text = "ISO-Compliant:";
 
-                SRT1.Text = "62.5 hz:";
-                SRT2.Text = "125 hz:";
-                SRT3.Text = "250 hz:";
-                SRT4.Text = "500 hz:";
-                SRT5.Text = "1000 hz:";
-                SRT6.Text = "2000 hz:";
-                SRT7.Text = "4000 hz:";
-                SRT8.Text = "8000 hz:";
-                PB.AddRow(SRT1, SRT5);
-                PB.AddRow(SRT2, SRT6);
-                PB.AddRow(SRT3, SRT7);
-                PB.AddRow(SRT4, SRT8);
-
                 this.Parameter_Choice = new ComboBox();
                 this.Parameter_Choice.Items.Add("Early Decay Time");
                 this.Parameter_Choice.Items.Add("T-10");
@@ -455,6 +444,21 @@ namespace Pachyderm_Acoustic
                 this.Parameter_Choice.Items.Add("Echo Criterion (Speech, 50%)");
                 this.Parameter_Choice.SelectedValue = "Select Parameter...";
                 this.Parameter_Choice.SelectedValueChanged += this.Parameter_Choice_SelectedIndexChanged;
+
+                SRT1.Text = "62.5 hz:";
+                SRT2.Text = "125 hz:";
+                SRT3.Text = "250 hz:";
+                SRT4.Text = "500 hz:";
+                SRT5.Text = "1000 hz:";
+                SRT6.Text = "2000 hz:";
+                SRT7.Text = "4000 hz:";
+                SRT8.Text = "8000 hz:";
+                PB.AddRow(Parameter_Choice, ISOCOMP);
+                PB.AddRow(SRT1, SRT5);
+                PB.AddRow(SRT2, SRT6);
+                PB.AddRow(SRT3, SRT7);
+                PB.AddRow(SRT4, SRT8);
+
                 ParameterBox.Content = PB;
 
                 DynamicLayout SrcL = new DynamicLayout();
@@ -623,7 +627,7 @@ namespace Pachyderm_Acoustic
             ImageSourceData[] IS_Data = null;
             List<string> SrcTypeList = new List<string>();
 
-            private void Calculate_Click(object sender, System.EventArgs e)
+            private async void Calculate_Click(object sender, System.EventArgs e)
             {
                 string SavePath = null;
                 CutoffTime = (double)this.CO_TIME.Value;
@@ -841,19 +845,22 @@ namespace Pachyderm_Acoustic
                 }
 
                 Receiver = new Receiver_Bank[Source.Length];
-                Pach_RunSim_Command command = Pach_RunSim_Command.Instance;
+                //Pach_RunSim_Command command = Pach_RunSim_Command.Instance;
 
-                if (command == null) { return; }
+                //if (command == null) { return; }
 
                 for (int s = 0; s < Source.Length; s++)
                 {
                     Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), Source[s], PScene, SampleRate, CutoffTime, T, false);
+                    Direct_Sound DS = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
+                    //Rhino.RhinoApp.RunScript("Run_Simulation", false);
+                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
+                    while (!TA.IsCompleted) await Task.Delay(1500);
+                    DS = TA.GetResult() as Direct_Sound;
 
-                    command.Sim = new Direct_Sound(Source[s], Rec, PScene, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
-                    Rhino.RhinoApp.RunScript("Run_Simulation", false);
-                    if (command.CommandResult != Rhino.Commands.Result.Cancel)
+                    if (DS != null)
                     {
-                        Direct_Data[s] = ((Direct_Sound)command.Sim);
+                        Direct_Data[s] = DS;
                         Direct_Data[s].Create_Filter();
                     }
                     else
@@ -861,38 +868,42 @@ namespace Pachyderm_Acoustic
                         CancelCalc();
                         return;
                     } 
-                    command.Reset();
 
                     if (ISBox.Checked.Value)
                     {
-                        command.Sim = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s);
+                        ImageSourceData IS = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s);
+                        TaskAwaiter<Simulation_Type> TISA = RCPachTools.RunSimulation(IS).GetAwaiter();
+                        while (!TISA.IsCompleted) await Task.Delay(1500);
+                        IS = TISA.GetResult() as ImageSourceData;
 
-                        Rhino.RhinoApp.RunScript("Run_Simulation", false);
-                        if (command.CommandResult != Rhino.Commands.Result.Cancel)
+                        if (IS != null)
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for deterinistic reflections...");
-                            VB.ShowModalAsync();
-                            IS_Data[s] = ((ImageSourceData)command.Sim);
+                            VB.Show();
+                            IS_Data[s] = IS;
                             IS_Data[s].Create_Filter(Source[s].SWL(), 4096, VB);
-                            VB.Close();
+                            //VB.Close();
                         }
                         else
                         {
                             CancelCalc();
                             return;
                         }
-                        command.Reset();
                     }
 
                     if (ISBox.Checked.Value && Specular_Trace.Checked.Value)
                     {
-                        command.Sim = new IS_Trace(Source[s], Rec, PScene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)Spec_RayCount.Value, (int)Image_Order.Value, PScene.Sound_speed(0), SampleRate);
-                        Rhino.RhinoApp.RunScript("Run_Simulation", false);
-                        if (command.CommandResult != Rhino.Commands.Result.Cancel)
+                        IS_Trace IST = new IS_Trace(Source[s], Rec, PScene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)Spec_RayCount.Value, (int)Image_Order.Value, PScene.Sound_speed(0), SampleRate);
+                        TaskAwaiter<Simulation_Type> TISTA = RCPachTools.RunSimulation(IST).GetAwaiter();
+
+                        while (!TISTA.IsCompleted) await Task.Delay(1500);
+                        IST = TISTA.GetResult() as IS_Trace;
+
+                        if (IST != null)
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for Deterministic Reflections...");
-                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
-                            IS_Data[s].Lookup_Sequences(((IS_Trace)(command.Sim)).IS_Sequences());
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                            IS_Data[s].Lookup_Sequences(IST.IS_Sequences());
                             IS_Data[s].Create_Filter(Source[s].SWL(), 4096, VB);
                             VB.Close();
                         }
@@ -901,32 +912,32 @@ namespace Pachyderm_Acoustic
                             CancelCalc();
                             return;
                         }
-                        command.Reset();
                     }
                     if (RTBox.Checked.Value)
                     {
                         ConvergenceProgress CP = new ConvergenceProgress();
-                        command.Sim = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                        SplitRayTracer RT = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
                         if (!Spec_Rays.Checked) CP.Show();
+                        TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT).GetAwaiter();
+                        while (!TRTA.IsCompleted) 
+                            await Task.Delay(3000);
+                        RT = TRTA.GetResult() as SplitRayTracer;
 
-                        Rhino.RhinoApp.RunScript("Run_Simulation", false);
-                        if (command.CommandResult != Rhino.Commands.Result.Cancel)
+                        if (RT != null)
                         {
-                            SplitRayTracer RT_Data = (SplitRayTracer)command.Sim;
-                            Receiver[s] = RT_Data.GetReceiver;
+                            Receiver[s] = RT.GetReceiver;
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.ShowModalAsync(Rhino.UI.RhinoEtoApp.MainWindow);//(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
-                            Receiver[s].Create_Filter(VB);
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                            await Task.Run(() => { Receiver[s].Create_Filter(VB); });
                             VB.Close();
-                            Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT_Data._currentRay.Sum(), RT_Data._rayTotal.Sum(), RT_Data._ts.Hours, RT_Data._ts.Minutes, RT_Data._ts.Seconds));
-                            Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT_Data.PercentLost);
+                            Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
+                            Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
                         }
                         else
                         {
                             CancelCalc();
                             return;
                         }
-                        command.Reset();
                     }
                 }
 
@@ -1229,7 +1240,8 @@ namespace Pachyderm_Acoustic
 
             private void Commit_Layer_Acoustics()
             {
-                if (LayerDisplay.SelectedValue.ToString().Length == 0) return;
+                if (LayerDisplay.SelectedIndex < 0) LayerDisplay.SelectedIndex = 0;
+                if ( LayerDisplay.SelectedValue.ToString().Length == 0) return;
                 int layer_index = LayerDisplay.SelectedIndex;
                 double[] Absd = ABSSlider.Value;
                 double[] Sctd = SCATSlider.Value;
@@ -1269,7 +1281,7 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
                     ProgressBox VB = new ProgressBox("Creating IR Filters for Deterministic Reflections...");
-                    VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                    VB.Show(Rhino.RhinoDoc.ActiveDoc);
                     for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096, VB);
                     VB.change_title("Creating Impulse Responses...");
                     for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
@@ -1535,7 +1547,7 @@ namespace Pachyderm_Acoustic
                 {
                     double RhoC = Direct_Data[0].Rho_C[int.Parse(Receiver_Choice.Text)];
                     ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                    VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                    VB.Show(Rhino.RhinoDoc.ActiveDoc);
                     double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, int.Parse(Receiver_Choice.Text), SrcIDs, false, true, VB);
                     VB.Close();
                     ///Need a new PT_Curve method that will apply the correct power to each filter appropriately. This one forces only one power level to be used...)
@@ -2214,7 +2226,7 @@ namespace Pachyderm_Acoustic
                         case "Pressure Time Curve":
                             zero_sample = 4096 / 2;
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true, VB);
                             VB.Close();
                             if (OCT_ID < 8)
@@ -2565,7 +2577,7 @@ namespace Pachyderm_Acoustic
 
                                 double RhoC = Direct_Data[0].Rho_C[int.Parse(Receiver_Choice.Text)];
                                 ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                                VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                                VB.Show(Rhino.RhinoDoc.ActiveDoc);
                                 double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, new List<int>() { s }, false, true, VB);
                                 VB.Close();
                                 for (int oct = 0; oct < 8; oct++)
@@ -2724,86 +2736,90 @@ namespace Pachyderm_Acoustic
             protected override void Dispose(bool disposing)
             {
                 base.Dispose(disposing);
-                Calculate.Dispose();
-                RTBox.Dispose();
-                ISBox.Dispose();
-                Tabs.Dispose();
-                TabImpulse.Dispose();
-                Image_Order.Dispose();
-                RT_Count.Dispose();
-                CO_TIME.Dispose();
-                Spec_RayCount.Dispose();
-                TabAnalysis.Dispose();
-                TabMaterials.Dispose();
-                Material_Lib.Dispose();
-                ReceiverSelection.Dispose();
-                ParameterBox.Dispose();
-                LayerDisplay.Dispose();
-                PathCount.Dispose();
-                Parameter_Choice.Dispose();
-                MediumProps.Dispose();
-                Specular_Trace.Dispose();
-                Receiver_Choice.Dispose();
-                ScatFlat.Dispose();
-                SaveAbsBox.Dispose();
-                Save_Material.Dispose();
-                Material_Name.Dispose();
-                EdgeFreq.Dispose();
-                SourceList.Dispose();
-                ISOCOMP.Dispose();
-                BTM_ED.Dispose();
-                Alt_Choice.Dispose();
-                Azi_Choice.Dispose();
-                IS_Path_Box.Dispose();
-                Graph_Octave.Dispose();
-                Analysis_View.Dispose();
-                Normalize_Graph.Dispose();
-                LockUserScale.Dispose();
-                Graph_Type.Dispose();
-                Source_Aim.Dispose();
-                AimatSrc.Dispose();
-                Abs_Designer.Dispose();
-                SmartMat_Display.Dispose();
-                tabCoef.Dispose();
-                Absorption.Dispose();
-                Scattering.Dispose();
-                Transparency.Dispose();
-                Trans_Flat.Dispose();
+                //Calculate.Dispose();
+                //RTBox.Dispose();
+                //ISBox.Dispose();
 
-                MenuStrip.Dispose();
-                fileToolStripMenuItem.Dispose();
-                saveDataToolStripMenuItem.Dispose();
-                openDataToolStripMenuItem.Dispose();
-                saveParameterResultsToolStripMenuItem.Dispose();
-                savePTBFormatToolStripMenuItem.Dispose();
-                saveEDCToolStripMenuItem.Dispose();
-                savePressureResultsToolStripMenuItem.Dispose();
-                savePressurePTBFormatToolStripMenuItem.Dispose();
+                //Image_Order.Dispose();
+                //RT_Count.Dispose();
+                //CO_TIME.Dispose();
+                //Spec_RayCount.Dispose();
+                //tabTL.Dispose();
+                //tabTC.Dispose();
+                //tabTransControls.Dispose();
+                //tabCoef.Dispose(); 
+                //TabAnalysis.Dispose();
+                //TabMaterials.Dispose();
+                //TabImpulse.Dispose();
+                //Material_Lib.Dispose();
+                //ReceiverSelection.Dispose();
+                //ParameterBox.Dispose();
+                ////LayerDisplay.Dispose();
+                //PathCount.Dispose();
+                //Parameter_Choice.Dispose();
+                //MediumProps.Dispose();
+                //Specular_Trace.Dispose();
+                //Receiver_Choice.Dispose();
+                ////ScatFlat.Dispose();
+                //SaveAbsBox.Dispose();
+                //Save_Material.Dispose();
+                //Material_Name.Dispose();
+                ////EdgeFreq.Dispose();
+                //SourceList.Dispose();
+                //ISOCOMP.Dispose();
+                //BTM_ED.Dispose();
+                //Alt_Choice.Dispose();
+                //Azi_Choice.Dispose();
+                //IS_Path_Box.Dispose();
+                //Graph_Octave.Dispose();
+                //Analysis_View.Dispose();
+                //Normalize_Graph.Dispose();
+                //LockUserScale.Dispose();
+                //Graph_Type.Dispose();
+                //Source_Aim.Dispose();
+                //AimatSrc.Dispose();
+                //Abs_Designer.Dispose();
+                //SmartMat_Display.Dispose();
 
-                Auralisation.Dispose();
-                Delete_Material.Dispose();
 
-                Spec_Rays.Dispose();
-                DetailedConvergence.Dispose();
-                Minimum_Convergence.Dispose();
-                quart_lambda.Dispose();
-                user_quart_lambda.Dispose();
-                PlasterScatter.Dispose();
-                GlassScatter.Dispose();
 
-                tabTransControls.Dispose();
-                tabTC.Dispose();
-                Trans_Check.Dispose();
-                tabTL.Dispose();
+                //MenuStrip.Dispose();
+                //fileToolStripMenuItem.Dispose();
+                //saveDataToolStripMenuItem.Dispose();
+                //openDataToolStripMenuItem.Dispose();
+                //saveParameterResultsToolStripMenuItem.Dispose();
+                //savePTBFormatToolStripMenuItem.Dispose();
+                //saveEDCToolStripMenuItem.Dispose();
+                //savePressureResultsToolStripMenuItem.Dispose();
+                //savePressurePTBFormatToolStripMenuItem.Dispose();
 
-                SaveTLBox.Dispose();
-                DeleteAssembly.Dispose();
-                SaveAssembly.Dispose();
-                IsolationAssemblies.Dispose();
-                TL_Check.Dispose();
-                Isolation_Lib.Dispose();
-                labelVar.Dispose();
-        }
+                //Auralisation.Dispose();
+                //Delete_Material.Dispose();
+
+                //Spec_Rays.Dispose();
+                //DetailedConvergence.Dispose();
+                //Minimum_Convergence.Dispose();
+                //quart_lambda.Dispose();
+                //user_quart_lambda.Dispose();
+                //PlasterScatter.Dispose();
+                //GlassScatter.Dispose();
+
+                //Trans_Check.Dispose();
+
+                //SaveTLBox.Dispose();
+                //DeleteAssembly.Dispose();
+                //SaveAssembly.Dispose();
+                //IsolationAssemblies.Dispose();
+                //TL_Check.Dispose();
+                //Isolation_Lib.Dispose();
+                //labelVar.Dispose();
+
+                ////Absorption.Dispose();
+                ////Scattering.Dispose();
+                ////Transparency.Dispose();
+                ////Trans_Flat.Dispose();
+                //Tabs.Dispose();
+            }
 
         #region IO Methods
         private void Write_File()
@@ -3048,7 +3064,7 @@ namespace Pachyderm_Acoustic
                         for (int r = 0; r < Recs.Length; r++)
                         {
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             double[] PTC = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, new System.Collections.Generic.List<int>(1) { s }, false, true, VB);
                             VB.Close();
                             for (int oct = 0; oct < 8; oct++)
@@ -3183,7 +3199,7 @@ namespace Pachyderm_Acoustic
                     {
                         ReceiverLine += r.ToString() + ";";
                         ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                        VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                        VB.Show(Rhino.RhinoDoc.ActiveDoc);
                         double[] PTC = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, new System.Collections.Generic.List<int>(1) { s }, false, true, VB);
                         VB.Close();
                         for (int oct = 0; oct < 8; oct++)

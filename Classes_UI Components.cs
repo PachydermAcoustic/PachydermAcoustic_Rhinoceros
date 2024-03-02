@@ -11,6 +11,7 @@ namespace Pachyderm_Acoustic
 {
     namespace UI
     {
+
         public class SourceListBox : Scrollable
         {
             private ContextMenu Sources;
@@ -63,7 +64,7 @@ namespace Pachyderm_Acoustic
 
             private void update_proxy(object sender, EventArgs e)
             {
-                Update(sender, e);
+                if (Update != null) Update(sender, e);
             }
 
             public void Populate(Direct_Sound[] Direct = null, ImageSourceData[] ISdata = null, Receiver_Bank[] Receiver = null)
@@ -134,7 +135,6 @@ namespace Pachyderm_Acoustic
             {
                 List<int> SrcID = SelectedSources();
 
-
                 if (SrcID.Count < 1) return;
                 Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Rec[SrcID[0]].SWL);
                 mod.ShowModal();
@@ -153,14 +153,14 @@ namespace Pachyderm_Acoustic
                             if (factor == null) factor = Rec[i].PowerModFactor(mod.Power);
                             Rec[i].Set_Power(factor);
                             Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Creating Filter...");
-                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             Rec[i].Create_Filter(VB);
                             VB.Close();
                         }
                         if(IS != null)
                         {
                             Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
-                            VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc ,Rhino.UI.RhinoEtoApp.MainWindow);
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             IS[i].Set_Power(factor);
                             IS[i].Create_Filter(mod.Power, 4096, VB);
                             VB.Close();

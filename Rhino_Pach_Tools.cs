@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Pachyderm_Acoustic.Environment;
+using Rhino.Commands;
 using Rhino.Geometry;
 
 namespace Pachyderm_Acoustic
@@ -12,21 +14,70 @@ namespace Pachyderm_Acoustic
     {
         public class RCPachTools: PachTools
         {
-            /// <summary>
-            /// Shorthand tool used to run a simulation.
-            /// </summary>
-            /// <param name="Sim">the simulation to run...</param>
-            /// <returns>the completed simulation...</returns>
-            public static Simulation_Type RunSimulation(Simulation_Type Sim)
-            {
-                UI.PachydermAc_PlugIn plugin = UI.PachydermAc_PlugIn.Instance;
-                UI.Pach_RunSim_Command command = UI.Pach_RunSim_Command.Instance;
-                if (command == null) { return null; }
-                command.Reset();
-                command.Sim = Sim;
-                Rhino.RhinoApp.RunScript("Run_Simulation", false);
-                return command.Sim;
+            ///// <summary>
+            ///// Shorthand tool used to run a simulation.
+            ///// </summary>
+            ///// <param name="Sim">the simulation to run...</param>
+            ///// <returns>the completed simulation...</returns>
+            //public static Simulation_Type RunSimulation(Simulation_Type Sim)
+            //{
+            //    UI.PachydermAc_PlugIn plugin = UI.PachydermAc_PlugIn.Instance;
+            //    UI.Pach_RunSim_Command command = UI.Pach_RunSim_Command.Instance;
+            //    if (command == null) { return null; }
+            //    command.Reset();
+            //    command.Sim = Sim;
+            //    Rhino.RhinoApp.RunScript("Run_Simulation", false);
+            //    return command.Sim;
+            //}
+
+            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim)
+            { 
+                //System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
+                //P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+
+                if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
+                {
+                    Eto.Forms.MessageBox.Show("At this point in development, Pachyderm supports documents in meters only. Please set the document units to meters, and run the calculation again.\n(A quick way to get to the document units control is to type 'units' into the command prompt.)");
+                    return null;
+                }
+
+                Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = false;
+
+                if (Sim != null)
+                {
+                    Sim.Begin();
+                    Rhino.RhinoApp.SetCommandPrompt(string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
+                    do
+                    {
+                        //if (CancelCalc)
+                        //{
+                        //    //Sim.Abort_Calculation();
+                        //    CommandResult = Result.Cancel;
+                        //    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
+                        //    return CommandResult;
+                        //}
+                        await Task.Delay(3000);
+                        Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                    } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
+
+                    Sim.Combine_ThreadLocal_Results();
+                    do
+                    {
+                        System.Threading.Thread.Sleep(3000);
+                        if (Sim.ThreadState() != System.Threading.ThreadState.Running)
+                        {
+                            break;
+                        }
+                        Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                    } while (true);
+                }
+
+                Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
+                Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
+                //P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                return Sim;
             }
+
 
             /// <summary>
             /// Tool used for debug of voxel grids and bounding boxes.

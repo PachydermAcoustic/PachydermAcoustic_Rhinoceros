@@ -599,7 +599,7 @@ namespace Pachyderm_Acoustic
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {
-                PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
+                PachydermAc_PlugIn p = PachydermAc_PlugIn.Instance;
                 string SavePath = null;
 
                 if (PachydermAc_PlugIn.SaveResults)
@@ -617,8 +617,6 @@ namespace Pachyderm_Acoustic
                 SourceList.Clear();
                 Map = null;
                 System.Threading.Thread.Sleep(500);
-                PachydermAc_PlugIn p = PachydermAc_PlugIn.Instance;
-                Pach_RunSim_Command command = Pach_RunSim_Command.Instance;
                 
                 if (!p.Source(out Source) || Rec_Srfs == null)
                 {
@@ -627,7 +625,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 Hare.Geometry.Point[] SPT;
-                plugin.SourceOrigin(out SPT);
+                p.SourceOrigin(out SPT);
                 Calculate.Enabled = false;
                 List<Hare.Geometry.Point> P = new List<Hare.Geometry.Point>();
                 P.AddRange(SPT);
@@ -678,49 +676,44 @@ namespace Pachyderm_Acoustic
                         }
                     }
 
-                    command.Sim = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8]{0,1,2,3,4,5,6,7}, this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
-                    Rhino.RhinoApp.RunScript("Run_Simulation", false);
+                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8]{0,1,2,3,4,5,6,7}, this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
+                    DS = RCPachTools.RunSimulation(DS).GetAwaiter().GetResult() as Direct_Sound;
 
                     Direct_Sound Direct_Data;
-                    if (command.CommandResult != Rhino.Commands.Result.Cancel)
+                    if (DS != null)
                     {
-                        Direct_Data = ((Direct_Sound)command.Sim);
+                        Direct_Data = DS;
                     }
                     else
                     {
                         Array.Resize(ref Source, s_id);
                         Array.Resize(ref Map, s_id);
-                        command.Reset();
                         Calculate.Enabled = true;
                         break;
                     }
-                    command.Reset();
 
                     ConvergenceProgress CP = new ConvergenceProgress();
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    command.Sim = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
-                    if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in (command.Sim as SplitRayTracer).Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Populate;
-                    Rhino.RhinoApp.RunScript("Run_Simulation", false);
+                    if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
+                    RT = RCPachTools.RunSimulation(RT).GetAwaiter().GetResult() as SplitRayTracer;
 
+                    Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
+                    Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
 
-                    Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", (command.Sim as SplitRayTracer)._currentRay.Sum(), (command.Sim as SplitRayTracer)._rayTotal.Sum(), (command.Sim as SplitRayTracer)._ts.Hours, (command.Sim as SplitRayTracer)._ts.Minutes, (command.Sim as SplitRayTracer)._ts.Seconds));
-                    Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", (command.Sim as SplitRayTracer).PercentLost);
-
-                    if (command.CommandResult == Rhino.Commands.Result.Success)
+                    if (RT != null)
                     {
-                        Map[s_id] = (PachMapReceiver)((SplitRayTracer)command.Sim).GetReceiver;
+                        Map[s_id] = (PachMapReceiver)RT.GetReceiver;
                     }
                     else
                     {
                         Array.Resize(ref Source, s_id);
                         Array.Resize(ref Map, s_id);
-                        command.Reset();
                         Calculate.Enabled = true;
                         break;
                     }
-                    command.Reset();
                     Map[s_id].AddDirect(Direct_Data, Source[s_id]);
                 }
 
@@ -1519,7 +1512,7 @@ namespace Pachyderm_Acoustic
                     {
                         Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
                         ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                        VB.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, Rhino.UI.RhinoEtoApp.MainWindow);
+                        VB.Show(Rhino.RhinoDoc.ActiveDoc);
                         for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
                         VB.Close();
                     }

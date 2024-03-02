@@ -2,10 +2,11 @@
 using Eto.Forms;
 using Eto.Drawing;
 using System.ComponentModel;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
-    public class ProgressBox : Eto.Forms.Dialog, Pach_Graphics.IProgressFeedback
+    public class ProgressBox : Eto.Forms.FloatingForm, Pach_Graphics.IProgressFeedback
     {
         string msg = "";
         int Prog_Percent = 0;
@@ -27,14 +28,12 @@ namespace Pachyderm_Acoustic
             _updateTimer.Start();
         }
 
-        private void UpdateUI(object sender, EventArgs e)
+        private async void UpdateUI(object sender, EventArgs e)
         {
             // Update UI elements here
-            Application.Instance.Invoke(() =>
-            {
-                Progress.Value = Prog_Percent;
-                this.Title = msg;
-            });
+            Progress.Value = Prog_Percent;
+            this.Title = msg;
+            this.Invalidate();
         }
 
         /// <summary>
