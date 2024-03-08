@@ -1277,12 +1277,12 @@ namespace Pachyderm_Acoustic
 
             public override bool shoot(Ray R, out double u, out double v, out int Srf_ID, out Hare.Geometry.Point X_PT, out double t)
             {
-                S_Origin = Utilities.RCPachTools.HPttoRPt(R.origin);
+                S_Origin = new Rhino.Geometry.Point3d(R.x, R.y, R.z);
                 Srf_ID = 0;
 
                 while (true)
                 {
-                    Point3d[] P = Rhino.Geometry.Intersect.Intersection.RayShoot(new Ray3d(S_Origin, new Vector3d(R.direction.x, R.direction.y, R.direction.z)), BrepList, 1);
+                    Point3d[] P = Rhino.Geometry.Intersect.Intersection.RayShoot(new Ray3d(S_Origin, new Vector3d(R.dx, R.dy, R.dz)), BrepList, 1);
 
                     if (P == null) { X_PT = default(Hare.Geometry.Point); u = 0; v = 0; t = 0; return false; }
 
@@ -1331,7 +1331,7 @@ namespace Pachyderm_Acoustic
             public override bool shoot(Ray R, out double u, out double v, out int Srf_ID, out List<Hare.Geometry.Point> X_PT, out List<double> t, out List<int> Code)
             {
                 List<Point3d> X;
-                if (shoot(new Point3d(R.origin.x, R.origin.y, R.origin.z), new Vector3d(R.direction.x, R.direction.y, R.direction.z), R.Ray_ID, out u, out v, out Srf_ID, out X, out t, out Code))
+                if (shoot(new Point3d(R.x, R.y, R.z), new Vector3d(R.dx, R.dy, R.dz), R.Ray_ID, out u, out v, out Srf_ID, out X, out t, out Code))
                 {
                     X_PT = new List<Hare.Geometry.Point> { new Hare.Geometry.Point(X[0].X, X[0].Y, X[0].Z) };
                     return true;

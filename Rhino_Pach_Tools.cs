@@ -651,7 +651,7 @@ namespace Pachyderm_Acoustic
 
             public static Vector3d HPttoRPt(Hare.Geometry.Vector Point)
             {
-                return new Vector3d(Point.x, Point.y, Point.z);
+                return new Vector3d(Point.dx, Point.dy, Point.dz);
             }
 
             /// <summary>

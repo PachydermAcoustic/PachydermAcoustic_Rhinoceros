@@ -397,7 +397,7 @@ namespace Pachyderm_Acoustic
                         Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
                         TempDir.Normalize();
                         pts.Add(Recs[0] + (TempDir) * -.343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
-                        Dirs.Add(new Vector3d(TempDir.x, TempDir.y, TempDir.z));
+                        Dirs.Add(new Vector3d(TempDir.dx, TempDir.dy, TempDir.dz));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
                     AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
@@ -541,8 +541,8 @@ namespace Pachyderm_Acoustic
                         Response = new double[Channel_View.Items.Count][];
                         for (int i = 0; i < Channel_View.Items.Count; i++)
                         {
-                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.z) / Math.PI;
-                            double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.y, (Channel_View.Items[i] as channel).V.x) / Math.PI;
+                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.dz) / Math.PI;
+                            double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.dy, (Channel_View.Items[i] as channel).V.dx) / Math.PI;
                             if (alt > 90) alt -= 180;
                             if (alt < -90) alt += 180;
                             if (azi > 360) azi -= 360;
@@ -842,7 +842,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
                 double azi, alt;
 
-                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
+                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin, Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
 
                 Alt_Choice.Value = alt;
                 Azi_Choice.Value = azi;
@@ -1060,7 +1060,7 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < Channel_View.Items.Count; i++)
                     {
                         channel c = (channel)Channel_View.Items[i];
-                        string Entry = c._index.ToString() + ':' + c.V.x.ToString() + ':' + c.V.y.ToString() + ':' + c.V.z.ToString() + ":" + c.Type.GetHashCode() + ":" + c.delay.ToString();
+                        string Entry = c._index.ToString() + ':' + c.V.dx.ToString() + ':' + c.V.dy.ToString() + ':' + c.V.dz.ToString() + ":" + c.Type.GetHashCode() + ":" + c.delay.ToString();
                         SW.WriteLine(Entry);
                     }
                     SW.Close();
@@ -1171,7 +1171,7 @@ namespace Pachyderm_Acoustic
                         case (channel_type.Right | channel_type.hrtf):
                             return string.Format("{0}: Right Ear", _index);
                         case channel_type.Custom:
-                            return string.Format("{0}: Dir-({1},{2},{3}), Delay {4} ms.", _index, Math.Round(V.x,2), Math.Round(V.y,2), Math.Round(V.z,2), Math.Round(delay));
+                            return string.Format("{0}: Dir-({1},{2},{3}), Delay {4} ms.", _index, Math.Round(V.dx,2), Math.Round(V.dy,2), Math.Round(V.dz,2), Math.Round(delay));
                         default:
                             return "Whoops... Doesn't conform";
                     }

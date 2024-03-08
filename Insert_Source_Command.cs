@@ -781,7 +781,7 @@ namespace Pachyderm_Acoustic
                                     double Theta = (m_Balloons[index].CurrentAlt + 270) * System.Math.PI / 180;
                                     double Phi = (m_Balloons[index].CurrentAzi - 90) * System.Math.PI / 180;
                                     Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
-                                    e.Display.DrawLine(pt, new Rhino.Geometry.Point3d(Direction.x * 1000, Direction.y * 1000, Direction.z * 1000) + pt, Color.Red, 1);
+                                    e.Display.DrawLine(pt, new Rhino.Geometry.Point3d(Direction.dx * 1000, Direction.dy * 1000, Direction.dz * 1000) + pt, Color.Red, 1);
                                 }
                                 else
                                 {

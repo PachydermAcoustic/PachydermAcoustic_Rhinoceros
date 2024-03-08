@@ -280,7 +280,7 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
                 for (int i = 0; i < Source.Length; i++)
                 {
-                    L.Add(Source[i].Origin());
+                    L.Add(Source[i].Origin);
                 }
                 for (int j = 0; j < Source.Length; j++)
                 {
@@ -512,7 +512,7 @@ namespace Pachyderm_Acoustic
                     List<int> code = new List<int> { 0 };
                     List<Hare.Geometry.Point> Start;
                     //List<int> IDs = new List<int>();
-                    Ray.Add(RCPachTools.HPttoRPt(R.origin));
+                    Ray.Add(new Rhino.Geometry.Point3d(R.x, R.y, R.z));
                     List<double> P = new List<double> { R.Intensity };
                     do
                     {
@@ -528,7 +528,9 @@ namespace Pachyderm_Acoustic
                                 SumLength += leg[i];
                             }
 
-                            R.origin = Start[Start.Count - 1];
+                            R.x = Start[Start.Count - 1].x;
+                            R.y = Start[Start.Count - 1].y;
+                            R.z = Start[Start.Count - 1].z;
                             R.Surf_ID = ChosenIndex;
                             bool trans = (Rnd.NextDouble() < Room.TransmissionValue[ChosenIndex][5]);
 
@@ -537,7 +539,7 @@ namespace Pachyderm_Acoustic
 
                             if (trans)
                             {
-                                R.direction *= -1;
+                                R.Reverse();
                                 R.Intensity *= Room.TransmissionValue[ChosenIndex][5];
                             }
                             else
@@ -554,7 +556,7 @@ namespace Pachyderm_Acoustic
                     }
                     while (SumLength < CutoffLength);
 
-                    if (SumLength > CutoffLength) Ray.Add(RCPachTools.HPttoRPt(R.origin));
+                    if (SumLength > CutoffLength) Ray.Add(new Rhino.Geometry.Point3d(R.x, R.y, R.z));
                     RayList.Add(Ray);
                     Power.Add(P);
                 }

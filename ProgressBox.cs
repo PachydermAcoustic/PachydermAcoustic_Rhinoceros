@@ -3,6 +3,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace Pachyderm_Acoustic
 {
@@ -11,7 +12,7 @@ namespace Pachyderm_Acoustic
         string msg = "";
         int Prog_Percent = 0;
         private ProgressBar Progress;
-        private readonly UITimer _updateTimer;
+        private readonly Timer _updateTimer;
 
         public ProgressBox(string text)
         {
@@ -23,7 +24,7 @@ namespace Pachyderm_Acoustic
             this.Content = L; 
             this.Title = text;
 
-            _updateTimer = new UITimer { Interval = 1000 }; // 1 second interval
+            _updateTimer = new Timer (1000); // 1 second interval
             _updateTimer.Elapsed += UpdateUI;
             _updateTimer.Start();
         }
@@ -31,9 +32,12 @@ namespace Pachyderm_Acoustic
         private async void UpdateUI(object sender, EventArgs e)
         {
             // Update UI elements here
-            Progress.Value = Prog_Percent;
-            this.Title = msg;
-            this.Invalidate();
+            Eto.Forms.Application.Instance.Invoke(() =>
+            {
+                Progress.Value = Prog_Percent;
+                this.Title = msg;
+                this.Invalidate();
+            });
         }
 
         /// <summary>

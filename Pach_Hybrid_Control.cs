@@ -533,7 +533,7 @@ namespace Pachyderm_Acoustic
                 this.Graph_Type.Items.Add("Fore-Aft ETC");
                 this.Graph_Type.Items.Add("Fore-Aft PTC");
                 this.Graph_Type.SelectedIndex = 0;
-                this.Graph_Type.SelectedIndexChanged += this.Update_Graph;
+                this.Graph_Type.TextChanged += this.Update_Graph;
                 this.Graph_Octave = new ComboBox();
                 this.Graph_Octave.Items.Add("62.5 Hz.");
                 this.Graph_Octave.Items.Add("125 Hz.");
@@ -2384,7 +2384,7 @@ namespace Pachyderm_Acoustic
 
                     Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
-                    if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
+                    if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.dx, V.dy, V.dz));
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch (Exception x)
@@ -2416,7 +2416,7 @@ namespace Pachyderm_Acoustic
                 if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
                 double azi, alt;
 
-                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin(), Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
+                PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin, Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
 
                 Alt_Choice.Value = alt;
                 Azi_Choice.Value = azi;
@@ -2427,7 +2427,7 @@ namespace Pachyderm_Acoustic
                 if (Source != null)
                 {
                     Src = new Hare.Geometry.Point[Source.Length];
-                    for (int i = 0; i < Source.Length; i++) Src[i] = Source[i].H_Origin();
+                    for (int i = 0; i < Source.Length; i++) Src[i] = Source[i].Origin;
                     Rec = Recs;
                 }
                 else return;
@@ -2498,8 +2498,11 @@ namespace Pachyderm_Acoustic
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
-                OF.CurrentFilter = ".pac1";
-                OF.Filters.Add("Pachyderm Ray Data file (*.pac1)|*.pac1|" + "All Files|");
+                OF.CurrentFilter = new Eto.Forms.FileDialogFilter("Pachyderm Ray Data file (.pac1)",".pac1");
+                OF.Filters.Add(new FileDialogFilter("Pachyderm Ray Data file (.pac1)", ".pac1"));
+                OF.Filters.Add(new FileDialogFilter("All", ".*"));
+                    ///.Add(new Eto.Forms.FileFilter("Pachyderm Ray Data file (.pac1)", "pac1|"));
+                    ///OF.Filters.Add(new Eto.Forms.FileFilter("All", ".*"));
                 if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 { 
                     Read_File(OF.FileName);
@@ -3139,7 +3142,7 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
                             double azi, alt;
-                            PachTools.World_Angles(Direct_Data[s].Src.Origin(), Recs[r], true, out alt, out azi);
+                            PachTools.World_Angles(Direct_Data[s].Src.Origin, Recs[r], true, out alt, out azi);
                             double[][] Lateral_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
                             ParamValues[s, r, oct, 6] = AcousticalMath.Lateral_Fraction(ETC, Lateral_ETC, SampleRate, Direct_Data[s].Min_Time(r), false);
                         }
@@ -3214,7 +3217,7 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
                             double azi, alt;
-                            PachTools.World_Angles(Direct_Data[s].Src.Origin(), Recs[r], true, out alt, out azi);
+                            PachTools.World_Angles(Direct_Data[s].Src.Origin, Recs[r], true, out alt, out azi);
                             double[][] Lateral_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);
                             ParamValues[s, r, oct, 6] = AcousticalMath.Lateral_Fraction(ETC, Lateral_ETC, SampleRate, Direct_Data[s].Min_Time(r), false);
                         }

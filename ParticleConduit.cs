@@ -52,9 +52,9 @@ namespace Pachyderm_Acoustic
             {
                 min = Utilities.RCPachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
-                nx = (int)System.Math.Ceiling(range.x);
-                ny = (int)System.Math.Ceiling(range.y);
-                nz = (int)System.Math.Ceiling(range.z);
+                nx = (int)System.Math.Ceiling(range.dx);
+                ny = (int)System.Math.Ceiling(range.dy);
+                nz = (int)System.Math.Ceiling(range.dz);
                 ptgrid = new List<int>[nx, ny, nz];
                 for (int x = 0; x < nx; x++)
                     for (int y = 0; y < ny; y++)
@@ -62,9 +62,9 @@ namespace Pachyderm_Acoustic
                         {
                             ptgrid[x, y, z] = new List<int>();
                         }
-                dx = range.x / nx;
-                dy = range.y / ny;
-                dz = range.z / nz;
+                dx = range.dx / nx;
+                dy = range.dy / ny;
+                dz = range.dz / nz;
                 C = C_in;
                 V_Bounds = V_Bounds_in;
             }
@@ -73,9 +73,9 @@ namespace Pachyderm_Acoustic
             {
                 min = Utilities.RCPachTools.HPttoRPt(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
-                nx = (int)System.Math.Ceiling(range.x);
-                ny = (int)System.Math.Ceiling(range.y);
-                nz = (int)System.Math.Ceiling(range.z);
+                nx = (int)System.Math.Ceiling(range.dx);
+                ny = (int)System.Math.Ceiling(range.dy);
+                nz = (int)System.Math.Ceiling(range.dz);
                 ptgrid = new List<int>[nx, ny, nz];
                 for(int x = 0; x < nx; x++)
                     for (int y = 0; y < ny; y++)
@@ -83,9 +83,9 @@ namespace Pachyderm_Acoustic
                         {
                             ptgrid[x, y, z] = new List<int>();
                         }
-                dx = range.x / nx;
-                dy = range.y / ny;
-                dz = range.z / nz;
+                dx = range.dx / nx;
+                dy = range.dy / ny;
+                dz = range.dz / nz;
                 C = C_in;
                 V_Bounds = V_Bounds_in;
                 PR = PR_in;

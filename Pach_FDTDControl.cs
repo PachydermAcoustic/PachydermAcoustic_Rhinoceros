@@ -1293,7 +1293,7 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 4, radius * 4, radius * 1.2 + (double)Sample_Depth.Value);
                     FDTDF.RuntoCompletion();
 
-                    int start = (int)Math.Round((2.25 * radius / Rm.Sound_speed(Src[0].H_Origin())) / FDTDS.dt);
+                    int start = (int)Math.Round((2.25 * radius / Rm.Sound_speed(Src[0].Origin)) / FDTDS.dt);
 
                     samplefrequency = FDTDS.SampleFrequency;
 
@@ -1339,7 +1339,8 @@ namespace Pachyderm_Acoustic
                     List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
                     for (int i = 0; i < Mic.X.Length; i++)
                     {
-                        pts.Add(FDTDS.RDD_Location(Mic.X[i], Mic.Y[i], Mic.Z[i]) - Utilities.RCPachTools.RPttoHPt(LabCenter));
+                        Hare.Geometry.Vector pt = FDTDS.RDD_Location(Mic.X[i], Mic.Y[i], Mic.Z[i]) - Utilities.RCPachTools.RPttoHPt(LabCenter);
+                        pts.Add(new Hare.Geometry.Point(pt.dx, pt.dy, pt.dz));
                     }
 
                     Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
