@@ -24,6 +24,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using Eto.Forms;
 using Rhino.UI;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -607,14 +608,14 @@ namespace Pachyderm_Acoustic
                 return AcousticalMath.SoundSpeed(Medium.Temp_Celsius);
             }
 
-            System.Threading.Thread T;
             private async void LoopStart()
             {
                 do
                 {
                     if (Running)
-                    {
-                        await System.Threading.Tasks.Task.Run(() => Forw_proc());
+                    {    
+                        await Task.Run(() => Forw_proc());
+                        await Task.Delay(100);
                     }
                     else
                     {
@@ -642,33 +643,37 @@ namespace Pachyderm_Acoustic
 
                 List<List<Hare.Geometry.Point>> hpts = new List<List<Hare.Geometry.Point>>();
 
-                FDTD.Pressure_Points(ref hpts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, viscolor.Min / 20), false, false, true);
-                List<List<Rhino.Geometry.Point3d>> Pts = new List<List<Rhino.Geometry.Point3d>>();
-
-                Rhino.Geometry.Mesh C = new Rhino.Geometry.Mesh();
-
-                FDTD.Sem_custom_mesh.WaitOne();
-                if (FDTD.m_templateC != null)
+                Eto.Forms.Application.Instance.Invoke(() =>
                 {
-                    C = FDTD.m_templateC;
-                    int ct = Pressure.Count;
-                    Pressure.Add(new List<double>());
-                    for (int i = 0; i < C.Faces.Count; i++) Pressure[ct].Add(FDTD.m_referenceC[i].P);
-                }
-                FDTD.Sem_custom_mesh.Release();
+                    FDTD.Pressure_Points(ref hpts, ref Pressure, X.ToArray(), Y.ToArray(), Z.ToArray(), 0.00002 * Math.Pow(10, viscolor.Min / 20), false, false, true);
+                    List<List<Rhino.Geometry.Point3d>> Pts = new List<List<Rhino.Geometry.Point3d>>();
 
-                for (int i = 0; i < hpts.Count; i++)
-                {
-                    Pts.Add(new List<Rhino.Geometry.Point3d>());
-                    for (int j = 0; j < hpts[i].Count; j++)
+                    Rhino.Geometry.Mesh C = new Rhino.Geometry.Mesh();
+
+                    FDTD.Sem_custom_mesh.WaitOne();
+                    if (FDTD.m_templateC != null)
                     {
-                        Pts[i].Add(RCPachTools.HPttoRPt(hpts[i][j]));
+                        C = FDTD.m_templateC;
+                        int ct = Pressure.Count;
+                        Pressure.Add(new List<double>());
+                        for (int i = 0; i < C.Faces.Count; i++) Pressure[ct].Add(FDTD.m_referenceC[i].P);
                     }
-                }
+                    FDTD.Sem_custom_mesh.Release();
 
-                P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), C, FDTD.dx, Pressure, M);
 
-                Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                    for (int i = 0; i < hpts.Count; i++)
+                    {
+                        Pts.Add(new List<Rhino.Geometry.Point3d>());
+                        for (int j = 0; j < hpts[i].Count; j++)
+                        {
+                            Pts[i].Add(RCPachTools.HPttoRPt(hpts[i][j]));
+                        }
+                    }
+
+                    P.Populate(X.ToArray(), Y.ToArray(), Z.ToArray(), C, FDTD.dx, Pressure, M);
+
+                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                });
             }
 
             private void Forw_proc()
@@ -679,8 +684,10 @@ namespace Pachyderm_Acoustic
 
                 Show_Field();
 
-                Time_Preview.Text = Math.Round(t, 3).ToString();
-
+                Eto.Forms.Application.Instance.Invoke(() => 
+                {
+                    Time_Preview.Text = Math.Round(t, 3).ToString();
+                
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
 
                 ////////////////////////
@@ -697,7 +704,8 @@ namespace Pachyderm_Acoustic
 
                     Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
                 }
-                /////////////////////////
+                    /////////////////////////
+                });
 
                 OnIncrement(EventArgs.Empty);
             }
@@ -718,9 +726,7 @@ namespace Pachyderm_Acoustic
                     Running = true;
                     Time_Preview.Enabled = false;
                     PlayContinuous.Text = "Pause";
-                    System.Threading.ParameterizedThreadStart St = new System.Threading.ParameterizedThreadStart(delegate { LoopStart(); });
-                    T = new System.Threading.Thread(St);
-                    T.Start();
+                    LoopStart();
                 }
                 else
                 {
@@ -833,6 +839,7 @@ namespace Pachyderm_Acoustic
                 Mic.reset();
                 
                 result_signals = Mic.Recordings()[0];
+                
                 //System.Numerics.Complex[] source_response = SD.Frequency_Response(result_signals[0].Length);
 
                 //double f_limit = 0.8 * fs / samplefrequency * result_signals[0].Length;
@@ -841,7 +848,7 @@ namespace Pachyderm_Acoustic
 
                 //for (int c = 0; c < result_signals.Length; c++)
                 //{
-                //    System.Numerics.Complex[] result_response = Audio.Pach_SP.FFT_General(result_signals[c],0);
+                //    System.Numerics.Complex[] result_response = Audio.Pach_SP.FFT_pacGeneral(result_signals[c],0);
                 //    Array.Resize(ref result_response, result_response.Length / 2);
                 //    for (int s = 0; s < result_response.Length; s++)
                 //    {
@@ -857,9 +864,9 @@ namespace Pachyderm_Acoustic
                 Find_EigenFrequencies();
 
                 Receiver_Choice.Items.Clear();
-                for (int i = 0; i < result_signals.Length; i++) Receiver_Choice.Items.Add(i.ToString());
                 Time = new double[result_signals[0].Length];
                 for (int i = 0; i < Time.Length; i++) Time[i] = (double)i / samplefrequency;
+                for (int i = 0; i < result_signals.Length; i++) Receiver_Choice.Items.Add(i.ToString());
                 Receiver_Choice.SelectedIndex = 0;
             }
 

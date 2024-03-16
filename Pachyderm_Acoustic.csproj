@@ -58,8 +58,7 @@
       <HintPath>..\CLF_Read_v2.n7\CLF_Read\bin\Release\net7.0\CLF_Read.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Eto, Version=2.7.0.0, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Eto">
       <HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\Eto.dll</HintPath>
       <Private>False</Private>
     </Reference>
@@ -121,9 +120,6 @@
     <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta1" />
     <!--<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.4" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />-->
-    <PackageReference Include="SkiaSharp" Version="2.88.6" />
-    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="2.88.6" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.6" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />

@@ -27,6 +27,7 @@ using Rhino.UI;
 using Eto.Drawing;
 using Eto.Forms;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace Pachyderm_Acoustic
 {
@@ -231,14 +232,13 @@ namespace Pachyderm_Acoustic
                 if (PreviewDisplay != null) PreviewDisplay.SetColorScale(colorcontrol.Scale, new double[2] { (double)colorcontrol.Min, (double)colorcontrol.Max });
             }
 
-            private void onPreview_Click(object sender, EventArgs e)
+            private async void onPreview_Click(object sender, EventArgs e)
             {
                 if (T != null && T.ThreadState == System.Threading.ThreadState.Running)
                 {
                     Time_Preview.Enabled = true;
                     Loop.Text = "Loop";
                     stop = true;
-                    System.Threading.Thread.Sleep(1000);
                 }
 
                 Loop.Enabled = false;
@@ -271,11 +271,6 @@ namespace Pachyderm_Acoustic
 
                 plugin.Source(out Source);
 
-                //if ()
-                //{
-                //    for (int i = 0; i < Source.Length; i++) Source[i] = new GeodesicMeshSource(plugin.GetSourceSWL(i), Source[i].Origin(), (int)RT_Count.Value, i);
-                //}
-
                 ParticleRays[] RTParticles = new ParticleRays[Source.Length];
                 List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
                 for (int i = 0; i < Source.Length; i++)
@@ -303,13 +298,8 @@ namespace Pachyderm_Acoustic
                 ForwButton.Enabled = true;
                 BackButton.Enabled = true;
                 Loop.Enabled = true;
-                Loop.Text = "Stop";
                 stop = false;
-                T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
-                T.Start();
-                //Advancer.Invoke(() => LoopStart((int)(this.Frame_Rate.Value * Seconds.Value)));    
-
-                //LoopStart((int)(this.Frame_Rate.Value * Seconds.Value));
+                Loop_Click(null, null);
             }
 
             WaveConduit PreviewDisplay = null;
@@ -317,12 +307,15 @@ namespace Pachyderm_Acoustic
             int j = 0;
             int max = 0;
             bool stop = false;
-            private async void LoopStart()
+            private async Task LoopStart()
             {
                 do
                 {
                     await Task.Run(() => Forw_proc());
                     if (stop) break;
+                    int t = 0;
+                    Eto.Forms.Application.Instance.Invoke(() => { t = (int)(1000 / this.Frame_Rate.Value); });
+                    await Task.Delay(t);
                 }
                 while (true);
             }
@@ -349,12 +342,12 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
-            private void Forw_Click(object sender, System.EventArgs e)
+            private async void Forw_Click(object sender, System.EventArgs e)
             {
                 Forw_proc();
             }
 
-            private void Forw_proc()
+            private async Task Forw_proc()
             {
                 j++;
                 if (j >= max)
@@ -362,30 +355,36 @@ namespace Pachyderm_Acoustic
                     j = 0;
                     return;
                 }
-                if (this.VisualizationSelect.SelectedIndex == 1)
-                {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
-                }
-                else
-                {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), VisualizationSelect.SelectedIndex == 0);
-                }
-                ////////////////////////
-                if (Folder_Status.Text.Length > 0)
-                {
-                    string number;
-                    if (j < 100)
-                    {
-                        if (j < 10) number = "00" + j.ToString();
-                        else number = "0" + j.ToString();
-                    }
-                    else number = j.ToString();
 
-                    Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
-                }
-                /////////////////////////
-                Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
-                Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                await Eto.Forms.Application.Instance.InvokeAsync(() =>
+                {
+                    if (this.VisualizationSelect.SelectedIndex == 1)
+                    {
+                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                    }
+                    else
+                    {
+                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), VisualizationSelect.SelectedIndex == 0);
+                    }
+
+                    /////////////////////////
+                    if (Folder_Status.Text.Length > 0)
+                    {
+                        string number;
+                        if (j < 100)
+                        {
+                            if (j < 10) number = "00" + j.ToString();
+                            else number = "0" + j.ToString();
+                        }
+                        else number = j.ToString();
+
+                        Rhino.RhinoApp.RunScript("-ViewCaptureToFile " + Folder_Status.Text + "\\"[0] + "frame" + number + ".jpg Width=1280 Height=720 DrawGrid=No Enter", true);
+                    }
+                    /////////////////////////
+                    Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
+                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                });
+                return;
             }
 
 
@@ -396,8 +395,7 @@ namespace Pachyderm_Acoustic
                     stop = false;
                     Time_Preview.Enabled = false;
                     Loop.Text = "Pause";
-                    T = new System.Threading.Thread(new System.Threading.ThreadStart(() => LoopStart()));
-                    T.Start();
+                    Task.Run(LoopStart);
                 }
                 else
                 {
@@ -441,7 +439,7 @@ namespace Pachyderm_Acoustic
                 AirTemp.Dispose();
                 Air_Temp.Dispose();
                 RT_Count.Dispose();
-                Forw.Dispose();
+                //Forw.Dispose();
                 Time_Preview.Dispose();
                 Preview.Dispose();
                 colorcontrol.Dispose();
@@ -552,9 +550,11 @@ namespace Pachyderm_Acoustic
                         else
                         {
                             break;
+                            BroadRayPool.Instance.release();
                         }
                     }
                     while (SumLength < CutoffLength);
+                    BroadRayPool.Instance.release();
 
                     if (SumLength > CutoffLength) Ray.Add(new Rhino.Geometry.Point3d(R.x, R.y, R.z));
                     RayList.Add(Ray);

@@ -1190,6 +1190,8 @@ namespace Pachyderm_Acoustic
                     Analysis_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
                     Analysis_View.Plot.YAxis.Label.Font.Size = 12;
 
+                    if (Map == null) return;
+
                     List<int> SrcIDs = SourceList.SelectedSources();
 
                     double[] Filter;
@@ -1385,9 +1387,6 @@ namespace Pachyderm_Acoustic
                     t_lo = t = 0;
                     t_hi = t + (double)Integration_select.Value;
                 }
-
-                //this.Invoke((MethodInvoker)delegate { oct = PachTools.OctaveStr2Int(Octave.Text); });
-                //this.Invoke((MethodInvoker)delegate { Update_T(); });
 
                 double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, oct, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
                 Eto.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);

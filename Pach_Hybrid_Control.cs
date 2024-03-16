@@ -26,7 +26,6 @@ using System.Linq;
 using Eto.Drawing;
 using Eto.Forms;
 using Rhino.UI;
-using static Rhino.UI.Internal.DwgOptions;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 
@@ -501,6 +500,7 @@ namespace Pachyderm_Acoustic
                 Anamid.AddRow(AimatSrc, Source_Aim, labelAlt, Alt_Choice);
 
                 Label labelAzi = new Label();
+                labelAzi.Text = "Azimuth";
                 labelAzi.Text = "Azimuth";
                 this.Azi_Choice = new NumericStepper();
                 this.Azi_Choice.DecimalPlaces = 2;

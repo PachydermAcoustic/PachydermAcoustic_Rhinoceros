@@ -498,9 +498,9 @@ namespace Pachyderm_Acoustic
 
                 scale = new Pach_Graphics.HSV_colorscale(300, Math.Max(Width / 5, 50), 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
 
-                System.Drawing.ImageConverter converter = new System.Drawing.ImageConverter();
-                byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
-                Param_Scale.Image = new Eto.Drawing.Bitmap(bb);
+                //System.Drawing.ImageConverter converter = new System.Drawing.ImageConverter();
+                //byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
+                Param_Scale.Image = Scale.PIC;
 
                 StackLayout ControlCluster = new StackLayout();
                 ControlCluster.Spacing = 12;
@@ -597,9 +597,9 @@ namespace Pachyderm_Acoustic
 
                 scale = new Pach_Graphics.HSV_colorscale(300, Math.Max(Width / 5, 50), 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
 
-                System.Drawing.ImageConverter converter = new System.Drawing.ImageConverter();
-                byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
-                Param_Scale.Image = new Eto.Drawing.Bitmap(bb);
+                //System.Drawing.ImageConverter converter = new System.Drawing.ImageConverter();
+                //byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
+                Param_Scale.Image = Scale.PIC;
 
                 StackLayout ControlCluster = new StackLayout();
                 ControlCluster.Spacing = 12;
