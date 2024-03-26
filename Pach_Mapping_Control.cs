@@ -27,6 +27,8 @@ using System.Runtime.InteropServices;
 using Rhino.Display;
 using System.Linq;
 using Rhino.UI;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -377,6 +379,7 @@ namespace Pachyderm_Acoustic
 
                 color_control = new Color_Output_Control(true, "Parameter Selection", Parameter_Selection);
                 color_control.Update += Parameter_Selection_SelectedIndexChanged;
+                color_control.On_Output_Changed += Parameter_Selection_SelectedIndexChanged;
                 OL.AddRow(color_control);
 
                 DynamicLayout Output_Times = new DynamicLayout();
@@ -597,7 +600,7 @@ namespace Pachyderm_Acoustic
             PachMapReceiver[] Map;
             WaveConduit WC;
 
-            private void Calculate_Click(object sender, System.EventArgs e)
+            private async void Calculate_Click(object sender, System.EventArgs e)
             {
                 PachydermAc_PlugIn p = PachydermAc_PlugIn.Instance;
                 string SavePath = null;
@@ -617,7 +620,7 @@ namespace Pachyderm_Acoustic
                 SourceList.Clear();
                 Map = null;
                 System.Threading.Thread.Sleep(500);
-                
+
                 if (!p.Source(out Source) || Rec_Srfs == null)
                 {
                     Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
@@ -640,16 +643,16 @@ namespace Pachyderm_Acoustic
 
                 PScene.partition(P);
                 Scene Flex_Scene;
-                if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0) 
+                if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0)
                 {
                     RhCommon_Scene NScene = Utilities.RCPachTools.GetNURBSScene(Env_Control.RelHumidity, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
                     if (!NScene.Complete) return;
                     NScene.partition(P, PachydermAc_PlugIn.VGDomain);
                     Flex_Scene = NScene;
-                } 
+                }
                 else
                 {
-                    Flex_Scene = PScene;    
+                    Flex_Scene = PScene;
                 }
 
                 Map = new PachMapReceiver[Source.Length];
@@ -676,8 +679,10 @@ namespace Pachyderm_Acoustic
                         }
                     }
 
-                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8]{0,1,2,3,4,5,6,7}, this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
-                    DS = RCPachTools.RunSimulation(DS).GetAwaiter().GetResult() as Direct_Sound;
+                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8] { 0, 1, 2, 3, 4, 5, 6, 7 }, this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
+                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
+                    while (!TA.IsCompleted) await Task.Delay(1500);
+                    DS = TA.GetResult() as Direct_Sound;
 
                     Direct_Sound Direct_Data;
                     if (DS != null)
@@ -695,10 +700,12 @@ namespace Pachyderm_Acoustic
                     ConvergenceProgress CP = new ConvergenceProgress();
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] {0, 7}, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
-                    RT = RCPachTools.RunSimulation(RT).GetAwaiter().GetResult() as SplitRayTracer;
+                    TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();
+                    while (!RTA.IsCompleted) await Task.Delay(1500);
+                    RT = RTA.GetResult() as SplitRayTracer;
 
                     Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
                     Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
@@ -1121,48 +1128,50 @@ namespace Pachyderm_Acoustic
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)
             {
-                if (sender == color_control) return;
-                switch (Parameter_Selection.SelectedKey)
+                if (!(sender is NumericStepper))
                 {
-                    case "Sound Pressure Level":
-                        color_control.setscale(Current_SPLMin, Current_SPLMax);
-                        break;
-                    case "Sound Pressure Level (A-weighted)":
-                        color_control.setscale(Current_SPLAMin, Current_SPLAMax);
-                        break;
-                    case "Early Decay Time (T-15)":
-                        color_control.setscale(Current_EDTMin, Current_EDTMax);
-                        break;
-                    case "Reverberation Time (T-15)":
-                        color_control.setscale(Current_RTMin, Current_RTMax);
-                        break;
-                    case "Reverberation Time (T-30)":
-                        color_control.setscale(Current_RTMin, Current_RTMax);
-                        break;
-                    case "Speech Transmission Index - 2003":
-                        color_control.setscale(Current_STI1Min, Current_STI1Max);
-                        break;
-                    case "Speech Transmission Index - Male":
-                        color_control.setscale(Current_STI2Min, Current_STI2Max);
-                        break;
-                    case "Speech Transmission Index - Female":
-                        color_control.setscale(Current_STI3Min, Current_STI3Max);
-                        break;
-                    case "Clarity (C-80)":
-                        color_control.setscale(Current_CMin, Current_CMax);
-                        break;
-                    case "Definition (D-50)":
-                        color_control.setscale(Current_DMin, Current_DMax);
-                        break;
-                    case "Strength/Loudness (G)":
-                        color_control.setscale(Current_GMin, Current_GMax);
-                        break;
-                    case "Percent who perceive echoes (EK)":
-                        color_control.setscale(Current_EMin, Current_EMax);
-                        break;
-                    default:
-                        Rhino.RhinoApp.WriteLine("Whoops... Parameter selection invalid...");
-                        break;
+                    switch (Parameter_Selection.SelectedKey)
+                    {
+                        case "Sound Pressure Level":
+                            color_control.setscale(Current_SPLMin, Current_SPLMax);
+                            break;
+                        case "Sound Pressure Level (A-weighted)":
+                            color_control.setscale(Current_SPLAMin, Current_SPLAMax);
+                            break;
+                        case "Early Decay Time (T-15)":
+                            color_control.setscale(Current_EDTMin, Current_EDTMax);
+                            break;
+                        case "Reverberation Time (T-15)":
+                            color_control.setscale(Current_RTMin, Current_RTMax);
+                            break;
+                        case "Reverberation Time (T-30)":
+                            color_control.setscale(Current_RTMin, Current_RTMax);
+                            break;
+                        case "Speech Transmission Index - 2003":
+                            color_control.setscale(Current_STI1Min, Current_STI1Max);
+                            break;
+                        case "Speech Transmission Index - Male":
+                            color_control.setscale(Current_STI2Min, Current_STI2Max);
+                            break;
+                        case "Speech Transmission Index - Female":
+                            color_control.setscale(Current_STI3Min, Current_STI3Max);
+                            break;
+                        case "Clarity (C-80)":
+                            color_control.setscale(Current_CMin, Current_CMax);
+                            break;
+                        case "Definition (D-50)":
+                            color_control.setscale(Current_DMin, Current_DMax);
+                            break;
+                        case "Strength/Loudness (G)":
+                            color_control.setscale(Current_GMin, Current_GMax);
+                            break;
+                        case "Percent who perceive echoes (EK)":
+                            color_control.setscale(Current_EMin, Current_EMax);
+                            break;
+                        default:
+                            Rhino.RhinoApp.WriteLine("Whoops... Parameter selection invalid...");
+                            break;
+                    }
                 }
 
                 Commit_Param_Bounds();

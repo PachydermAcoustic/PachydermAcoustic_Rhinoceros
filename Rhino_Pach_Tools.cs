@@ -30,10 +30,10 @@ namespace Pachyderm_Acoustic
             //    return command.Sim;
             //}
 
-            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim)
+            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim, bool needfeedback = true)
             { 
-                //System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
-                //P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+                System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
+                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
 
                 if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
                 {
@@ -56,8 +56,12 @@ namespace Pachyderm_Acoustic
                         //    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
                         //    return CommandResult;
                         //}
-                        await Task.Delay(3000);
-                        Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                        if (!needfeedback) System.Threading.Thread.Sleep(3000);
+                        else
+                        {
+                            await Task.Delay(3000);
+                            Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                        }
                     } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
 
                     Sim.Combine_ThreadLocal_Results();
@@ -68,13 +72,13 @@ namespace Pachyderm_Acoustic
                         {
                             break;
                         }
-                        Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                        if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
                     } while (true);
                 }
 
                 Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
                 Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
-                //P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
                 return Sim;
             }
 

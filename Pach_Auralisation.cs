@@ -28,6 +28,7 @@ using Eto.Forms;
 using Eto.Drawing;
 using Rhino.UI;
 using System.CodeDom;
+using ScottPlot.Plottables;
 
 namespace Pachyderm_Acoustic
 {
@@ -439,10 +440,11 @@ namespace Pachyderm_Acoustic
             {
                 double[][] Temp;
                 double[][] Response;
-                ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                ProgressBox VB = null;
+                //ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                //VB.Show(Rhino.RhinoDoc.ActiveDoc);
 
-                switch (DistributionType.SelectedValue as string)
+                switch (DistributionType.SelectedValue.ToString())
                 {
                     case "Monaural":
                         Response = new double[1][];
@@ -551,6 +553,9 @@ namespace Pachyderm_Acoustic
                         }
                         break;
                 }
+
+                //VB.Close();
+
                 return Response;
             }
 
@@ -600,11 +605,12 @@ namespace Pachyderm_Acoustic
                             Array.Resize(ref filter, filter.Length - 12288);
                             //String.Format("Channel {0}", i)
                             Analysis_View.Plot.Add.Scatter(time, AcousticalMath.SPL_Pressure_Signal(filter), C[i % 10]);
+                            (Analysis_View.Plot.PlottableList[i] as Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
                         }
                         else
                         {
                             Analysis_View.Plot.Add.Scatter(time, AcousticalMath.SPL_Pressure_Signal(Response[i]), C[i % 10]);
-                        //String.Format("Channel {0}", i),
+                            (Analysis_View.Plot.PlottableList[i] as Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
                         }
                     }
                     Analysis_View.Plot.XAxis.Max = time[time.Length - 1];
@@ -1226,7 +1232,7 @@ namespace Pachyderm_Acoustic
                 Signal_Status.Dispose();
                 OpenSignal.Dispose();
                 Receiver_Choice.Dispose();
-                Tabs.Dispose();
+                //Tabs.Dispose();
                 Data_Source.Dispose();
                 SourceList.Dispose();
                 DistributionType.Dispose();

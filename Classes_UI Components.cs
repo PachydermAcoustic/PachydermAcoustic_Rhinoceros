@@ -6,6 +6,7 @@ using System.Linq;
 using Eto.Drawing;
 using Eto.Forms;
 using Rhino.UI;
+using System.Runtime.CompilerServices;
 
 namespace Pachyderm_Acoustic
 {
@@ -18,6 +19,7 @@ namespace Pachyderm_Acoustic
             private ButtonMenuItem DelayMod;
             private ButtonMenuItem PowerMod;
             private List<string> Srcs;
+            private List<string> SrcTypes;
             Pachyderm_Acoustic.Direct_Sound[] DS = null;
             Pachyderm_Acoustic.ImageSourceData[] IS = null;
             Pachyderm_Acoustic.Environment.Receiver_Bank[] Rec;
@@ -62,12 +64,16 @@ namespace Pachyderm_Acoustic
             //    this.Content = SrcLayout;
             //}
 
+            private void update_proxy(object sender, MouseEventArgs e)
+            {
+                if (Update != null) Update(sender, e);
+            }
             private void update_proxy(object sender, EventArgs e)
             {
                 if (Update != null) Update(sender, e);
             }
 
-            public void Populate(Direct_Sound[] Direct = null, ImageSourceData[] ISdata = null, Receiver_Bank[] Receiver = null)
+            public void Populate(Direct_Sound[] Direct, ImageSourceData[] ISdata = null, Receiver_Bank[] Receiver = null)
             {
                 if (Direct == null && Receiver == null) { throw new Exception("Misuse of Source list component - must have eithe direct sound or a raytracing receiver."); }
                 DS = Direct;
@@ -77,18 +83,22 @@ namespace Pachyderm_Acoustic
                 DynamicLayout SrcLayout = new DynamicLayout();
                 int ct = (Direct != null) ? Direct.Length : Receiver.Length;
                 Delay = new double[ct];
-
+                SrcTypes = new List<string>();
                 for (int i = 0; i < ct; i++)
                 {
                     string type = (Direct != null) ? Direct[i].type : Receiver[i].SrcType;
                     Delay[i] = (Direct != null) ? Direct[i].Delay_ms : Receiver[i].delay_ms;
 
                     CheckBox src = new CheckBox();
-                    src.MouseUp += update_proxy;
+                    src.CheckedChanged += update_proxy;
                     src.Text = String.Format("S{0}-", i) + type;
                     SrcBoxes.Add(src);
+                    SrcTypes.Add(type);
                     SrcLayout.AddRow(src);
                 }
+
+                SrcBoxes[0].Checked = true;
+
                 this.Content = SrcLayout;
             }
 
@@ -136,7 +146,7 @@ namespace Pachyderm_Acoustic
                 List<int> SrcID = SelectedSources();
 
                 if (SrcID.Count < 1) return;
-                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Rec[SrcID[0]].SWL);
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(DS[SrcID[0]].SWL);
                 mod.ShowModal();
                 if (mod.accept)
                 {
@@ -177,6 +187,20 @@ namespace Pachyderm_Acoustic
                 this.Invalidate();
             }
 
+            public string[] SourceTypes
+            {
+                get
+                {
+                    List<int> srcs = SelectedSources();
+                    string[] types = new string[srcs.Count];
+                    for(int i = 0; i < srcs.Count; i++) 
+                    {
+                        types[i] = SrcTypes[i];
+                    }
+                    return types;
+                }
+            }
+            
             public int Count
             { get { return SrcBoxes.Count; } }
         }
@@ -194,6 +218,7 @@ namespace Pachyderm_Acoustic
 
             public PathListBox()
             {
+                Height = 75;
                 PathOperations = new ContextMenu();
                 CheckAll = new ButtonMenuItem();
                 UncheckAll = new ButtonMenuItem();
@@ -241,6 +266,7 @@ namespace Pachyderm_Acoustic
                 foreach (Deterministic_Reflection s in IS_Paths)
                 {
                     CheckBox path = new CheckBox();
+                    path.CheckedChanged += update_proxy;
                     path.Text = s.ToString();
                     PathBoxes.Add(path);
                     SrcLayout.AddRow(path);
@@ -642,7 +668,7 @@ namespace Pachyderm_Acoustic
                 this.Param3_4.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
                 this.Param1_2.Text = (Param_Max.Value - (Param_Max.Value - Param_Min.Value) / 2).ToString() + "---";
                 this.Param1_4.Text = (Param_Min.Value + (Param_Max.Value - Param_Min.Value) / 4).ToString() + "---";
-                Update(this, EventArgs.Empty);
+                Update(sender, EventArgs.Empty);
             }
 
             public Pach_Graphics.Colorscale scale;
@@ -676,7 +702,7 @@ namespace Pachyderm_Acoustic
                         Param_Scale.Image = scale.PIC;
                         break;
                 }
-                On_Output_Changed(this, EventArgs.Empty);
+                On_Output_Changed(sender, EventArgs.Empty);
                 Update(sender, e);
                 //On_Output_Changed(this, EventArgs.Empty);
             }

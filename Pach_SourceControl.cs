@@ -406,7 +406,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Objects.Count != 0)
                 {
-                    if (!SWL0.HasFocus && !SWL1.HasFocus && !SWL2.HasFocus && !SWL3.HasFocus && !SWL4.HasFocus && !SWL5.HasFocus && !SWL6.HasFocus && !SWL7.HasFocus && !SourceType.HasFocus) return;
+                    //if (!SWL0.HasFocus && !SWL1.HasFocus && !SWL2.HasFocus && !SWL3.HasFocus && !SWL4.HasFocus && !SWL5.HasFocus && !SWL6.HasFocus && !SWL7.HasFocus && !SourceType.HasFocus) return;
                     foreach (RhinoObject OBJ in Objects)
                     {
                         OBJ.Geometry.SetUserString("SourceType", SourceType.SelectedIndex.ToString());
@@ -545,7 +545,6 @@ namespace Pachyderm_Acoustic
                 {
                     Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
 
-                    double[] SWLnom = new double[8];
                     if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
                     {
                         CODES = Balloon.Read_Generic(OF.FileName);
@@ -561,30 +560,31 @@ namespace Pachyderm_Acoustic
 
                         B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
                     }
-                    else if (SourceType.SelectedIndex == 4)
+                }
+                else if (SourceType.SelectedIndex == 4)
+                {
+                    //BRAS format CSV intake:
+                    OF = new Eto.Forms.OpenFileDialog();
+                    if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
                     {
-                        //BRAS format CSV intake:
-                        OF = new Eto.Forms.OpenFileDialog();
-                        if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
+                        CODES = Balloon.Read_Generic(OF.FileName);
+
+                        string[] nomcode = CODES[8].Split(';');
+                        string[] maxcode = CODES[9].Split(';');
+                        for (int oct = 0; oct < 8; oct++)
                         {
-                            CODES = Balloon.Read_Generic(OF.FileName);
-
-                            string[] nomcode = CODES[8].Split(';');
-                            string[] maxcode = CODES[9].Split(';');
-                            for (int oct = 0; oct < 8; oct++)
-                            {
-                                ballooncodes[oct] = CODES[oct];
-                                SWLnom[oct] = double.Parse(nomcode[oct]);
-                                SWLmax[oct] = double.Parse(maxcode[oct]);
-                            }
-
-                            B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                            ballooncodes[oct] = CODES[oct];
+                            SWLnom[oct] = double.Parse(nomcode[oct]);
+                            SWLmax[oct] = double.Parse(maxcode[oct]);
                         }
+
+                        B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
                     }
-                    else
-                    {
-                        return;
-                    }
+                }
+                else
+                {
+                    return;
+                }
 
                     if (Objects.Count != 0)
                     {
@@ -632,7 +632,7 @@ namespace Pachyderm_Acoustic
                             Commit();
                         }
                     }
-                }
+                
                 Load_Doc(Objects);
             }
 
