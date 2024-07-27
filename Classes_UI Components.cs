@@ -12,7 +12,6 @@ namespace Pachyderm_Acoustic
 {
     namespace UI
     {
-
         public class SourceListBox : Scrollable
         {
             private ContextMenu Sources;
@@ -378,9 +377,9 @@ namespace Pachyderm_Acoustic
                 this.Text = "Environmental Factors";
 
                 this.Atten_Method = new DropDown();
-                this.Atten_Method.Items.Add("ISO 9613-1 (Outdoor Attenuation)");
-                this.Atten_Method.Items.Add("Evans & Bazley (Indoor Attenuation)");
-                this.Atten_Method.Items.Add("Common values (Vorlaender)");
+                this.Atten_Method.Items.Add("ISO 9613-1");
+                this.Atten_Method.Items.Add("Evans & Bazley");
+                this.Atten_Method.Items.Add("Vorlaender");
                 this.Atten_Method.SelectedIndex = 0;
 
                 this.PaLbl = new Label();

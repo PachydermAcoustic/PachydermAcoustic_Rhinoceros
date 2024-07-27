@@ -65,6 +65,7 @@ namespace Pachyderm_Acoustic
                 Copyright.TextAlignment = TextAlignment.Center;
                 Version_box.Font = new Font("Microsoft Sans Serif", 8F);
                 Version_box.TextAlignment = TextAlignment.Center;
+                Version_box.Text = String.Format("Version: {0}", p.Version);
                 title_box.Font = new Font("Microsoft Sans Serif", 12F);
                 title_box.Text = "Pachyderm Acoustic Simulation:\r\nFoundational Simulation in Acoustics";
                 title_box.TextAlignment = TextAlignment.Center;
@@ -103,8 +104,11 @@ namespace Pachyderm_Acoustic
                 MainLayoutPanel.Padding = new Padding(450, 50, 0, 200);
                 MainLayoutPanel.Spacing = new Size(0, 10);
                 MainLayoutPanel.Rows.Add(new TableRow(null, new TableCell(title_box)));
+                MainLayoutPanel.Rows.Add(null);
                 MainLayoutPanel.Rows.Add(new TableRow(null, new TableCell(Version_box)));
+                MainLayoutPanel.Rows.Add(null);
                 MainLayoutPanel.Rows.Add(new TableRow(new TableCell(), new TableCell(Copyright)));
+                MainLayoutPanel.Rows.Add(null);
                 MainLayoutPanel.Rows.Add(new TableRow(new TableCell(), new TableCell(Attribution)));
 
                 drawable.Content = MainLayoutPanel;

@@ -476,7 +476,7 @@ namespace Pachyderm_Acoustic
                 scatcolorlayout.Dispose();
                 Freq_Feedback.Dispose();
                 Forw.Dispose();
-                TabsPrime.Dispose();
+                //TabsPrime.Dispose();
                 EigenTab.Dispose();
                 ScatTab.Dispose();
                 EdgeFreq.Dispose();
@@ -527,6 +527,7 @@ namespace Pachyderm_Acoustic
                 VisualPML.Dispose();
                 Medium.Dispose();
                 viscolor.Dispose();
+                c.Enabled = false;
             }
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
@@ -546,7 +547,7 @@ namespace Pachyderm_Acoustic
             SphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
             List<List<double>> Pressure;
-            CellConduit c = new CellConduit();
+            CellConduit c = CellConduit.Instance;
 
             private void Calculate_Click(object sender, System.EventArgs e)
             {

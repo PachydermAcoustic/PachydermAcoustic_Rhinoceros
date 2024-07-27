@@ -142,11 +142,12 @@ namespace Pachyderm_Acoustic
                 this.Crossover.Value = 160;
                 Hznbelow.Text = "Hz. and below.";
                 this.Hybrid_Select.Text = "Hybrid";
+                this.Hybrid_Select.Checked = true;
                 this.Hybrid_Select.CheckedChanged += this.Tab_Selecting;
                 this.Mapping_Select.Text = "Mapping";
                 this.Mapping_Select.CheckedChanged += this.Tab_Selecting;
                 DL2.AddRow(Hybrid_Select);
-                DL2.AddRow(Mapping_Select);
+                //DL2.AddRow(Mapping_Select);
                 DynamicLayout inter = new DynamicLayout(this);
                 inter.DefaultSpacing = new Size(8, 8);
                 inter.AddRow(Supplement_Numerical);
@@ -171,7 +172,7 @@ namespace Pachyderm_Acoustic
                 this.DistributionType.Items.Add("Second Order Ambisonics(FuMa+SN3D)");
                 this.DistributionType.Items.Add("Third Order Ambisonics(ACN+SN3D)");
                 this.DistributionType.Items.Add("Third Order Ambisonics(FuMa+SN3D)");
-                this.DistributionType.Items.Add("Surround Array (select file...)");
+                this.DistributionType.Items.Add("Surround Array via VBAP...");
                 this.DistributionType.SelectedIndex = 1;
                 this.DistributionType.SelectedValueChanged += this.DistributionType_SelectedIndexChanged;
 
@@ -365,6 +366,7 @@ namespace Pachyderm_Acoustic
             Hare.Geometry.Point[] Recs;
             int SampleRate;
             double CutoffTime;
+            HRTF hrtf;
 
             private void Draw_Feedback()
             {
@@ -397,8 +399,8 @@ namespace Pachyderm_Acoustic
                     {
                         Hare.Geometry.Vector TempDir = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(((channel)Channel_View.Items[i]).V, 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true);//new Hare.Geometry.Vector(Speaker_Directions[i].X, Speaker_Directions[i].Y, Speaker_Directions[i].Z)
                         TempDir.Normalize();
-                        pts.Add(Recs[0] + (TempDir) * -.343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
-                        Dirs.Add(new Vector3d(TempDir.dx, TempDir.dy, TempDir.dz));
+                        pts.Add(Recs[0] + (TempDir) * .343 * Math.Max(5, ((channel)Channel_View.Items[i]).delay));
+                        Dirs.Add(new Vector3d(-TempDir.dx, -TempDir.dy, -TempDir.dz));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
                     AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
@@ -416,13 +418,13 @@ namespace Pachyderm_Acoustic
                 {
                     AuralisationConduit.Instance.Enabled = false;
                 }
-                Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();
+
+                if (Rhino.RhinoDoc.ActiveDoc.IsAvailable) Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();
             }
 
             public void Set_Phase_Regime(bool Linear_Phase)
             {
                 if (Direct_Data == null) return;
-
                 if ((Linear_Phase != true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase != false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System) || Direct_Data[0].F == null)
                 {
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
@@ -440,20 +442,26 @@ namespace Pachyderm_Acoustic
             {
                 double[][] Temp;
                 double[][] Response;
-                ProgressBox VB = null;
-                //ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                //VB.Show(Rhino.RhinoDoc.ActiveDoc);
 
                 switch (DistributionType.SelectedValue.ToString())
                 {
                     case "Monaural":
                         Response = new double[1][];
-                        Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB));
+                        Response[0] = (IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true));
+                        break;
+                    case "Binaural (select file...)":
+                        Response = new double[2][];
+                        Response = IR_Construction.Aurfilter_HRTF(Direct_Data, IS_Data, Receiver, hrtf, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
+                        if (Graph_Octave.SelectedIndex != 8)
+                        {
+                            Response[0] = Pach_SP.FIR_Bandpass(Response[0], Graph_Octave.SelectedIndex, Sample_Frequency, 0);
+                            Response[1] = Pach_SP.FIR_Bandpass(Response[1], Graph_Octave.SelectedIndex, Sample_Frequency, 0);
+                        }
                         break;
                     case "First Order Ambisonics (ACN+SN3D)":
                         Response = new double[4][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -461,7 +469,7 @@ namespace Pachyderm_Acoustic
                     case "First Order Ambisonics (FuMa+SN3D)":
                         Response = new double[4][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -469,7 +477,7 @@ namespace Pachyderm_Acoustic
                     case "Second Order Ambisonics(ACN+SN3D)":
                         Response = new double[9][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -483,7 +491,7 @@ namespace Pachyderm_Acoustic
                     case "Second Order Ambisonics(FuMa+SN3D)":
                         Response = new double[9][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -497,7 +505,7 @@ namespace Pachyderm_Acoustic
                     case "Third Order Ambisonics(ACN+SN3D)":
                         Response = new double[16][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -520,7 +528,7 @@ namespace Pachyderm_Acoustic
                     case "Third Order Ambisonics(FuMa+SN3D)":
                         Response = new double[16][];
                         Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
-                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true, VB);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
                         Response[1] = Temp[0];
                         Response[2] = Temp[1];
                         Response[3] = Temp[2];
@@ -543,24 +551,24 @@ namespace Pachyderm_Acoustic
                         Response = new double[Channel_View.Items.Count][];
                         for (int i = 0; i < Channel_View.Items.Count; i++)
                         {
-                            double alt = -(double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.dz) / Math.PI;
+                            double alt = (double)Alt_Choice.Value + 180 * Math.Asin((Channel_View.Items[i] as channel).V.dz) / Math.PI;
                             double azi = (double)Azi_Choice.Value + 180 * Math.Atan2((Channel_View.Items[i] as channel).V.dy, (Channel_View.Items[i] as channel).V.dx) / Math.PI;
                             if (alt > 90) alt -= 180;
                             if (alt < -90) alt += 180;
                             if (azi > 360) azi -= 360;
                             if (azi < 0) azi += 360;
-                            Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Graph_Octave.SelectedIndex, Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true, VB);
+                            Response[i] = IR_Construction.AurFilter_Directional(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Graph_Octave.SelectedIndex, Receiver_Choice.SelectedIndex, SelectedSources(), false, alt, azi, true, true);
                         }
                         break;
                 }
-
-                //VB.Close();
 
                 return Response;
             }
 
             private void Update_Graph(object sender, EventArgs e)
             {
+                ScottPlot.AxisLimits AL = Analysis_View.Plot.GetAxisLimits();
+
                 Analysis_View.Plot.Clear();
                 
                 int REC_ID = 0;
@@ -618,6 +626,8 @@ namespace Pachyderm_Acoustic
                     Analysis_View.Plot.YAxis.Max = DirectMagnitude;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
                     Analysis_View.Plot.YAxis.Min = DirectMagnitude - 100;
 
+                    if (sender != this.Render_Settings) Analysis_View.Plot.SetAxisLimits(AL);
+
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                 }
                 catch { return; }
@@ -625,8 +635,31 @@ namespace Pachyderm_Acoustic
                 Draw_Feedback();
             }
 
+            public HRTF ReadSofaHRTF()
+            {
+                GetWave.Filters.Clear();
+                GetWave.Filters.Add(" HRTF - SOFA convention (*.sofa) |*.sofa");
+                if (GetWave.ShowDialog(this) == DialogResult.Ok)
+                {
+                    try
+                    {
+                        Channel_View.Items.Clear();
+                        return new HRTF(GetWave.FileName);
+                        Channel_View.Items.Add(new channel(0, new Hare.Geometry.Vector(0, 0, 0), channel.channel_type.hrtf, 0));
+
+                    }
+                    catch (Exception x)
+                    {
+                        Rhino.RhinoApp.CommandLineOut.Write(x.StackTrace);
+                        return null;
+                    }
+                }
+                return null;
+            }
+
             public void ReadArray()
             {
+                GetWave.Filters.Clear();
                 GetWave.Filters.Add(" Array Description Text File (*.txt) |*.txt");
                 if (GetWave.ShowDialog(this) == DialogResult.Ok)
                 {
@@ -663,7 +696,7 @@ namespace Pachyderm_Acoustic
                 {
                     Signal_Status.Text = GetWave.FileName;
                     RenderBtn.Enabled = true;
-                    int[][] signal = Audio.Pach_SP.Wave.ReadtoInt(Signal_Status.Text, false, out SampleRate);
+                    int[][] signal = Audio.Pach_SP.Wave.ReadtoInt(Signal_Status.Text, false, out SampleRate, true);
                     DryChannel.MinValue = 1;
                     DryChannel.MaxValue = signal.Length;
                 }
@@ -678,7 +711,23 @@ namespace Pachyderm_Acoustic
 
             private void OpenWaveFile(out int Sample_Freq, out double[] SignalETC)
             {
-                SignalETC = Audio.Pach_SP.Wave.ReadtoDouble(Signal_Status.Text, true, out Sample_Freq)[0];
+                try 
+                {
+                    SignalETC = Audio.Pach_SP.Wave.ReadtoDouble(Signal_Status.Text, true, out Sample_Freq)[0];
+                }
+                catch (Exception x)
+                {
+                    Eto.Forms.DialogResult DR = Eto.Forms.MessageBox.Show(x.Message, Eto.Forms.MessageBoxButtons.YesNo);
+                    if (DR == Eto.Forms.DialogResult.No)
+                    { 
+                        SignalETC = new double[1] { 0 }; 
+                        Sample_Freq = 44100;
+                    }
+                    else 
+                    {
+                        SignalETC = Audio.Pach_SP.Wave.ReadtoDouble(Signal_Status.Text, true, out Sample_Freq, true)[0];
+                    }
+                }
             }
 
             private void Clear_Render()
@@ -868,8 +917,7 @@ namespace Pachyderm_Acoustic
                         Channel_View.Items.Add(channel.Right(1));
                         break;
                     case "Binaural (select file...)":
-                        Eto.Forms.MessageBox.Show("Not yet implemented... If you would like to see this area completed, please help. Get in touch with me to suggest an HRTF standard, and possibly help implement. --Arthur");
-                        DistributionType.SelectedIndex = 1;
+                        hrtf = ReadSofaHRTF();
                         break;
                     case "A-Format (type I-A)":
                         Channel_View.Items.Add(channel.FLU(0));
@@ -884,9 +932,8 @@ namespace Pachyderm_Acoustic
                         Channel_View.Items.Add(channel.BRD(3));
                         break;
                     case "B-Format":
-                        
                         break;
-                    case "Surround Array (select file...)":
+                    case "Surround Array via VBAP...":
                         enable_CEdit();
                         ReadArray();
                         break;
@@ -959,7 +1006,7 @@ namespace Pachyderm_Acoustic
                             //    SourceList.Add(String.Format("S{0}-", i) + Direct_Data[i].Src.Type());
                                 Source_Aim.Items.Add(String.Format("S{0}-", i) + Direct_Data[i].Src.Type());
                             }
-                            SourceList.Populate(null, null, Receiver);
+                            SourceList.Populate(Direct_Data, null, Receiver);
                             SourceList.Set_Src_Checked(0, true);
                             Source_Aim.SelectedIndex = 0;
                         }
@@ -1109,12 +1156,12 @@ namespace Pachyderm_Acoustic
 
                 public static channel Left(int index)
                 {
-                    return new channel(index, new Hare.Geometry.Vector(-1 / Math.Sqrt(2), 1 / Math.Sqrt(2), 0), channel_type.Left, 0);
+                    return new channel(index, new Hare.Geometry.Vector(1 / Math.Sqrt(2), 1 / Math.Sqrt(2), 0), channel_type.Left, 0);
                 }
 
                 public static channel Right(int index)
                 {
-                    return new channel(index, new Hare.Geometry.Vector(-1 / Math.Sqrt(2), -1 / Math.Sqrt(2), 0), channel_type.Right, 0);
+                    return new channel(index, new Hare.Geometry.Vector(1 / Math.Sqrt(2), -1 / Math.Sqrt(2), 0), channel_type.Right, 0);
                 }
 
                 public static channel FLU(int index)
@@ -1178,6 +1225,8 @@ namespace Pachyderm_Acoustic
                             return string.Format("{0}: Right Ear", _index);
                         case channel_type.Custom:
                             return string.Format("{0}: Dir-({1},{2},{3}), Delay {4} ms.", _index, Math.Round(V.dx,2), Math.Round(V.dy,2), Math.Round(V.dz,2), Math.Round(delay));
+                        case channel_type.hrtf:
+                            return "0 & 1: Binaural HRTF - 2 channels";
                         default:
                             return "Whoops... Doesn't conform";
                     }
@@ -1205,6 +1254,11 @@ namespace Pachyderm_Acoustic
                 Update_Graph(sender, e);
             }
 
+            /// <summary>
+            /// Defunct, until .Net Core includes better support for audio...
+            /// </summary>
+            /// <param name="sender"></param>
+            /// <param name="e"></param>
             private void PlayAuralization_CheckedChanged(object sender, EventArgs e)
             {
                 //if (PlayAuralization.Checked.Value) Player.Play();

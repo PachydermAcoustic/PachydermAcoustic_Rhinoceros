@@ -239,7 +239,7 @@ namespace Pachyderm_Acoustic
                             //This is necessary in order to avoid numerical errors...
                             double K0 = Math.Abs(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(0));
                             double K1 = Math.Abs(BL.Faces[r].CurvatureAt(0.1, 0.1).Kappa(1));
-                            if (Math.Max(K0, K1) > 1E-3)
+                            if (Math.Max(K0, K1) > 1E-2)
                             { isCurved_Construct.Add(true); }
                             else { isCurved_Construct.Add(false); }
                         }

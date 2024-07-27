@@ -43,7 +43,6 @@ namespace Pachyderm_Acoustic
             {
                 new SourceConduit();
                 new ReceiverConduit();
-                new CellConduit();
                 Pach_Props = Pach_Properties_Panel.Instance;
                 Audio.Pach_SP.Initialize_FFTW();
                 //System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
@@ -127,7 +126,7 @@ namespace Pachyderm_Acoustic
                 pages.Add(m_Doc_Page);
             }
 
-            public int ProcessorSpec => m_Doc_Page.Get_Processor_Spec();
+            public int TaskPriority => m_Doc_Page.Get_TaskPriority();
 
             public int Geometry_Spec => m_Doc_Page.Get_Geometry_Spec();
 
@@ -215,15 +214,15 @@ namespace Pachyderm_Acoustic
                                 break;
                             case "1":
                                 S[id] = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
-                                break;
+                                                              break;
                             case "2":
                             case "3":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
                                 string[] B;
-                                if (Bands != "" && Bands != null)
-                                    B = Bands.Split(';');
-                                else
-                                    B = new string[2] { "0", "7" };
+                                //if (Bands != "" && Bands != null)
+                                //    B = Bands.Split(';');
+                                //else
+                                B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
                                 S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
                                 break;

@@ -26,6 +26,9 @@
     <WarningLevel>0</WarningLevel>
     <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
+  <PropertyGroup>
+    <EnableSourceControlManagerQueries>true</EnableSourceControlManagerQueries>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <RegisterForComInterop>false</RegisterForComInterop>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -54,10 +57,6 @@
     <None Remove="packages\**" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="CLF_Read">
-      <HintPath>..\CLF_Read_v2.n7\CLF_Read\bin\Release\net7.0\CLF_Read.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Eto">
       <HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\Eto.dll</HintPath>
       <Private>False</Private>
@@ -111,10 +110,19 @@
     <Content Include="Resources\Source.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Hare\Hare.csproj" />
-    <ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj" />
-    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj" />
-    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj" />
+    <ProjectReference Include="..\CLF_Read_v2.n7\CLF_Read\CLF_Read.csproj" />
+    <ProjectReference Include="..\Hare\Hare.csproj">
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj">
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj">
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj">
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta1" />

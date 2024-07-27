@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Pachyderm_Acoustic.Environment;
+using Pachyderm_Acoustic.UI;
 using Rhino.Commands;
 using Rhino.Geometry;
 
@@ -31,9 +32,32 @@ namespace Pachyderm_Acoustic
             //}
 
             public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim, bool needfeedback = true)
-            { 
+            {
                 System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
-                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+
+                switch (PachydermAc_PlugIn.Instance.TaskPriority)
+                {
+                    case 0:
+                        {
+                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+                            break;
+                        }
+                    case 1:
+                        {
+                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal; 
+                            break;
+                        }
+                    case 2:
+                        {
+                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                            break;
+                        }
+                    default:
+                        {
+                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                            break;
+                        }
+                }
 
                 if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
                 {

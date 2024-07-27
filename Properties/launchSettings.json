@@ -3,12 +3,12 @@
     "Pachderm_.Net7_RH8": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
-      "nativeDebugging": true
+      "nativeDebugging": false
     },
     "Pachyderm_Net48_RH7": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\Rhino 7\\System\\Rhino.exe",
-      "nativeDebugging": true
+      "nativeDebugging": false
     }
   }
 }

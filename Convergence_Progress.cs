@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Eto.Forms;
 using MathNet.Numerics;
@@ -31,8 +32,11 @@ namespace Pachyderm_Acoustic
             double[] dom1, dom2, domh;
             private Scatter Conv1, Conv2, hist1, hist2;
             private Button Conclude;
-            public ConvergenceProgress()
+            public CancellationTokenSource canceled;
+
+            public ConvergenceProgress(CancellationTokenSource CTS)
             {
+                canceled = CTS;
                 //this.Location = new Eto.Drawing.Point(100, 200);
                 DynamicLayout Layout = new Eto.Forms.DynamicLayout();
                 this.Conv_View = new ScottPlot.Eto.EtoPlot();
@@ -293,6 +297,7 @@ namespace Pachyderm_Acoustic
             private void Conclude_Click(object sender, EventArgs e)
             {
                 if (Conclusion != null) Conclusion(this, EventArgs.Empty);
+                canceled.Cancel();
                 Conclude.Text = "Concluding... Results may be inconclusive...";
             }
 
@@ -303,6 +308,15 @@ namespace Pachyderm_Acoustic
                 Conv_View.Dispose();
                 Hist_View.Dispose();
             }   
+
+            public CancellationToken CancellationToken
+            { 
+                get { return canceled.Token; }
+            }
+            public CancellationTokenSource Canceler
+            {
+                get { return canceled; }
+            }
         }   
     }       
 }    

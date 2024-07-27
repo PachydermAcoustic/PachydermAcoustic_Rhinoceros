@@ -10,7 +10,7 @@
 //'Pachyderm-Acoustic is distributed in the hope that it will be useful, 
 //'but WITHOUT ANY WARRANTY; without even the implied warranty of 
 //'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-//'GNU General Public License for more details. 
+//'GNU General Public License for more    details. 
 //' 
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
@@ -408,6 +408,7 @@ namespace Pachyderm_Acoustic
                 this.ZeroAtDirect.Text = "Direct Sound";
                 ZeroAtDirect.Checked = true;
                 this.ZeroAtSource.MouseUp += ZeroAtChanged;
+                this.ZeroAtDirect.MouseUp += ZeroAtChanged;
 
                 Output_Times.AddRow(IntervalControl, groupBox_ZeroTime);
                 OL.AddRow(Output_Times);
@@ -694,10 +695,10 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref Source, s_id);
                         Array.Resize(ref Map, s_id);
                         Calculate.Enabled = true;
-                        break;
+                        return;
                     }
 
-                    ConvergenceProgress CP = new ConvergenceProgress();
+                    ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource());
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
                     SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
@@ -1504,26 +1505,25 @@ namespace Pachyderm_Acoustic
 
             private void Coherent_CheckedChanged(object sender, EventArgs e)
             {
-                if (Coherent.Checked)
+                if (sender == Coherent)
                 {
                     Incoherent.Checked = false;
+                    if (Map != null && !Map[0].HasFilter())
+                    {
+                        DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
+                        if (DR == DialogResult.Yes)
+                        {
+                            Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
+                            ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                            for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
+                            VB.Close();
+                        }
+                    }
                 }
-                else
+                else if (sender == Incoherent)
                 {
                     Coherent.Checked = false;
-                }
-
-                if (Coherent.Checked && Map != null && !Map[0].HasFilter())
-                {
-                    DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
-                    if (DR == DialogResult.Yes)
-                    {
-                        Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
-                        ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                        VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                        for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
-                        VB.Close();
-                    }
                 }
             }
 
@@ -1642,8 +1642,8 @@ namespace Pachyderm_Acoustic
                 openDataToolStripMenuItem.Dispose();
 
                 tabsPrime.Dispose();
-                tabCalculation.Dispose();
-                TabAnalysis.Dispose();
+                //tabCalculation.Dispose();
+                //TabAnalysis.Dispose();
                 TabOutputModes.Dispose();
 
                 RecDispLbl.Dispose();

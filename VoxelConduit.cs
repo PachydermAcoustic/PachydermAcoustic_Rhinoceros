@@ -20,6 +20,7 @@ using Rhino.Geometry;
 using Rhino.Display;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.Numeric.TimeDomain;
+using Rhino.Render.CustomRenderMeshes;
 
 namespace Pachyderm_Acoustic
 {
@@ -37,18 +38,25 @@ namespace Pachyderm_Acoustic
             public bool hemianechoic = false;
             public double radius = 0;
             public double depth = 0;
+            static CellConduit instance = null;
 
-            public CellConduit()
+            private CellConduit()
             {
                 DisplayMesh = new List<Mesh>();
                 DirMesh = new List<Mesh[]>();
-                Instance = this;
+                instance = this;
             }
 
             public static CellConduit Instance
             {
-                get;
-                private set;
+                get
+                {
+                    if (instance == null)
+                    {
+                        instance = new CellConduit();
+                    }
+                    return instance;
+                }
             }
 
             protected override void PostDrawObjects(DrawEventArgs e)

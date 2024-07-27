@@ -102,8 +102,8 @@ namespace Pachyderm_Acoustic
                 Speakers = new List<Line>();
                 for (int i = 0; i < pts.Count<Hare.Geometry.Point>(); i++)
                 {
-                    Hare.Geometry.Vector V = new Hare.Geometry.Vector(vec.ElementAt<Vector3d>(i).X, vec.ElementAt<Vector3d>(i).Y, vec.ElementAt<Vector3d>(i).Z);
-                    Speakers.Add(new Line(Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i)), Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i) + V)));
+                    Hare.Geometry.Vector V = new Hare.Geometry.Vector(-vec.ElementAt<Vector3d>(i).X, -vec.ElementAt<Vector3d>(i).Y, -vec.ElementAt<Vector3d>(i).Z);
+                    Speakers.Add(new Line(Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i)), Utilities.RCPachTools.HPttoRPt(pts.ElementAt(i) - V)));
                 }
             }
 

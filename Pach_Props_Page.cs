@@ -37,9 +37,9 @@ namespace Pachyderm_Acoustic
                 return base.OnApply();
             }
 
-            public int Get_Processor_Spec()
+            public int Get_TaskPriority()
             {
-                return Pach_Properties.Instance.ProcessorCount();
+                return Pach_Properties.Instance.TaskPriority();
             }
 
             public int Get_Geometry_Spec()

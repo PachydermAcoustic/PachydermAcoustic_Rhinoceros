@@ -483,33 +483,87 @@ namespace Pachyderm_Acoustic
 
                     if (Objects.Count != 0)
                     {
+                        string Sens = "";
+                        string Max = "";
+
                         for (int i = 0; i < Objects.Count; i++)
                         {
+
                             Objects[i].Geometry.SetUserString("Model", L[0]);
                             Objects[i].Geometry.SetUserString("FileType", L[1]);
-                            Objects[i].Geometry.SetUserString("Sensitivity", L[2]);
-                            Objects[i].Geometry.SetUserString("SWLMax", L[3]);
-                            Objects[i].Geometry.SetUserString("Balloon63", L[4]);
-                            Objects[i].Geometry.SetUserString("Balloon125", L[5]);
-                            Objects[i].Geometry.SetUserString("Balloon250", L[6]);
-                            Objects[i].Geometry.SetUserString("Balloon500", L[7]);
-                            Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
-                            Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
-                            Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
-                            Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
-                            Objects[i].Geometry.SetUserString("Bands", L[12]);
+
+                            if (L.Length == 13)
+                            {
+                                Sens = L[2];
+                                Max = L[3];
+
+                                Objects[i].Geometry.SetUserString("Sensitivity", L[2]);
+                                Objects[i].Geometry.SetUserString("SWLMax", L[3]);
+
+                                Objects[i].Geometry.SetUserString("Balloon63", L[4]);
+                                Objects[i].Geometry.SetUserString("Balloon125", L[5]);
+                                Objects[i].Geometry.SetUserString("Balloon250", L[6]);
+                                Objects[i].Geometry.SetUserString("Balloon500", L[7]);
+                                Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
+                                Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
+                                Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
+                                Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
+                                Objects[i].Geometry.SetUserString("Bands", L[12]);
+
+                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                            }
+                            else
+                            {
+
+                                string[] SP = L[2].Split(';');
+                                string[] MP = L[3].Split(';');
+
+                                string[] balloon = new string[8];
+
+                                for (int oct = 0; oct < 8; oct++)
+                                {
+                                    balloon[oct] = "";
+                                    int idx = (oct * 3) + 4;
+
+                                    Sens += (10 * (Math.Log10(Math.Pow(10, double.Parse(SP[idx - 4]) / 10) + Math.Pow(10, double.Parse(SP[idx - 3]) / 10) + Math.Pow(10, double.Parse(SP[idx - 2]) / 10)))).ToString() + ";";
+                                    Max += (10 * (Math.Log10(Math.Pow(10, double.Parse(MP[idx - 4]) / 10) + Math.Pow(10, double.Parse(MP[idx - 3]) / 10) + Math.Pow(10, double.Parse(MP[idx - 2]) / 10)))).ToString() + ";";
+
+                                    string[] balloon0 = L[idx].Split(';') ;
+                                    string[] balloon1 = L[idx + 1].Split(';');
+                                    string[] balloon2 = L[idx + 2].Split(';');
+                                    for (int r = 0; r < balloon0.Length - 1; r++)
+                                    {
+                                        balloon[oct] += (10 * (Math.Log10(Math.Pow(10, double.Parse(balloon0[r]) / 10) + Math.Pow(10, double.Parse(balloon1[r]) / 10) + Math.Pow(10, double.Parse(balloon2[r]) / 10)))).ToString() + ";";
+                                    }
+                                    Objects[i].Geometry.SetUserString("Balloon" + Math.Ceiling(62.5 * Math.Pow(2,oct)).ToString(), balloon[oct]);
+                                }
+
+                                Objects[i].Geometry.SetUserString("Sensitivity", Sens);
+                                Objects[i].Geometry.SetUserString("SWLMax", Max);
+
+                                //Objects[i].Geometry.SetUserString("Balloon63", L[4]);
+                                //Objects[i].Geometry.SetUserString("Balloon125", L[5]);
+                                //Objects[i].Geometry.SetUserString("Balloon250", L[6]);
+                                //Objects[i].Geometry.SetUserString("Balloon500", L[7]);
+                                //Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
+                                //Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
+                                //Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
+                                //Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
+                                Objects[i].Geometry.SetUserString("Bands", L[28]);
+
+                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                            }
 
                             Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
                             Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
-                            SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
-
+                            
                             SrcDetails.Enabled = true;
                             SrcDetails.Visible = true;
                             SrcDIR.Enabled = true;
                             SrcDIR.Visible = true;
 
-                            string[] strSens = L[2].Split(';');
-                            string[] strMSwl = L[3].Split(';');
+                            string[] strSens = Sens.Split(';');
+                            string[] strMSwl = Max.Split(';');
                             float[] SenSwl = new float[8];
                             float[] MSwl = new float[8];
 
@@ -586,7 +640,7 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                    if (Objects.Count != 0)
+                    if (Objects.Count != 0 && SourceType.SelectedIndex != 2)
                     {
                         for (int i = 0; i < Objects.Count; i++)
                         {

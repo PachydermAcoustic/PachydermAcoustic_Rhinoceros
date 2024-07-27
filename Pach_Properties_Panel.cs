@@ -28,11 +28,11 @@ namespace Pachyderm_Acoustic
     {
         string SettingsPath;
 
-        private RadioButton PR_Single;
-        private RadioButton PR_MULTI_ALL;
-        private RadioButton PR_MULTI_EXP;
+        private RadioButton TskHigh;
+        private RadioButton TskAbove;
+        private RadioButton TskNormal;
         private GroupBox Processing_Select;
-        private NumericStepper Thread_Spec;
+        //private NumericStepper Thread_Spec;
         private GroupBox Geometry_Select;
         private RadioButton GEO_NURBS;
         private RadioButton GEO_MESH;
@@ -66,11 +66,11 @@ namespace Pachyderm_Acoustic
 
         private Pach_Properties_Panel()
         {
-            this.PR_Single = new RadioButton();
-            this.PR_MULTI_ALL = new RadioButton();
-            this.PR_MULTI_EXP = new RadioButton();
+            this.TskHigh = new RadioButton();
+            this.TskAbove = new RadioButton();
+            this.TskNormal = new RadioButton();
             this.Processing_Select = new GroupBox();
-            this.Thread_Spec = new NumericStepper();
+            //this.Thread_Spec = new NumericStepper();
             this.Geometry_Select = new GroupBox();
             this.GEO_MR_MESH = new RadioButton();
             this.GEO_NURBS = new RadioButton();
@@ -88,23 +88,23 @@ namespace Pachyderm_Acoustic
             this.Filt_MinPhase = new RadioButton();
             this.Filt_LinearPhase = new RadioButton();
 
-            this.Processing_Select.Text = "Processing";
-            this.PR_Single.Text = "Single Processor";
-            this.PR_Single.MouseUp += this.ProcessorSettingsChanged;
-            this.PR_MULTI_ALL.Text = "Multi-Processor (All Cores)";
-            this.PR_MULTI_ALL.MouseUp += this.ProcessorSettingsChanged;
-            this.PR_MULTI_EXP.Text = "Mutli-Processor (Explicit)";
-            this.PR_MULTI_EXP.MouseUp += this.ProcessorSettingsChanged;
+            this.Processing_Select.Text = "Simulation Task Priority";
+            this.TskHigh.Text = "High";
+            this.TskHigh.MouseUp += this.PrioritySettingsChanged;
+            this.TskAbove.Text = "Above Normal";
+            this.TskAbove.MouseUp += this.PrioritySettingsChanged;
+            this.TskNormal.Text = "Normal";
+            this.TskNormal.MouseUp += this.PrioritySettingsChanged;
 
-            Label label1 = new Label();
-            label1.Text = "ThreadCount";
-            this.Thread_Spec.ValueChanged += this.ThreadSettingsChanged;
+            //Label label1 = new Label();
+            //label1.Text = "ThreadCount";
+            //this.Thread_Spec.ValueChanged += this.ThreadSettingsChanged;
             DynamicLayout PL = new DynamicLayout();
             PL.Spacing = new Eto.Drawing.Size(8, 8);
-            PL.AddRow(PR_Single);
-            PL.AddRow(PR_MULTI_ALL);
-            PL.AddRow(PR_MULTI_EXP);
-            PL.AddRow(label1, Thread_Spec);
+            PL.AddRow(TskHigh);
+            PL.AddRow(TskAbove);
+            PL.AddRow(TskNormal);
+            //PL.AddRow(label1, Thread_Spec);
             Processing_Select.Content = PL;
 
             this.Geometry_Select.Text = "Geometry System";
@@ -197,8 +197,8 @@ namespace Pachyderm_Acoustic
             PropLayout.AddSpace();
             this.Content = PropLayout;
 
-            Thread_Spec.MaxValue = System.Environment.ProcessorCount;
-            Thread_Spec.Value = System.Environment.ProcessorCount;
+            //Thread_Spec.MaxValue = System.Environment.ProcessorCount;
+            //Thread_Spec.Value = System.Environment.ProcessorCount;
 
             SettingsPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData) + "\\Pachyderm";
             if (!System.IO.Directory.Exists(SettingsPath)) System.IO.Directory.CreateDirectory(SettingsPath);
@@ -223,21 +223,21 @@ namespace Pachyderm_Acoustic
             }
 
             //3. Processing
-            switch (pachset.Processor_Choice)
+            switch (pachset.TaskPriority())
             {
+                case 0:
+                    TskHigh.Checked = true;
+                    break;
                 case 1:
-                    PR_Single.Checked = true;
+                    TskAbove.Checked = true;
                     break;
                 case 2:
-                    PR_MULTI_ALL.Checked = true;
-                    break;
-                case 3:
-                    PR_MULTI_EXP.Checked = true;
+                    TskNormal.Checked = true;
                     break;
             }
 
             //4. ThreadCount(int)
-            Thread_Spec.Value = pachset.ThreadCount;
+            //Thread_Spec.Value = pachset.ThreadCount;
 
             //5. Spatial Partition Selection (int)
             switch (pachset.Spatial_Optimization)
@@ -280,33 +280,33 @@ namespace Pachyderm_Acoustic
             Pach_Properties.Instance.Lib_Path = Library_Path.Text;
         }
 
-        private void ProcessorSettingsChanged(object sender, EventArgs e)
+        private void PrioritySettingsChanged(object sender, EventArgs e)
         {
             Pach_Properties pachset = Pach_Properties.Instance;
 
-            if (sender == PR_Single)
+            if (sender == TskHigh)
             {
-                PR_MULTI_ALL.Checked = false;
-                PR_MULTI_EXP.Checked = false;
-                pachset.Processor_Choice = 1;
+                TskAbove.Checked = false;
+                TskNormal.Checked = false;
+                pachset.Priority_Choice = 0;
             }
-            else if (sender == PR_MULTI_ALL)
+            else if (sender == TskAbove)
             {
-                PR_Single.Checked = false;
-                PR_MULTI_EXP.Checked = false;
-                pachset.Processor_Choice = 2;
+                TskHigh.Checked = false;
+                TskNormal.Checked = false;
+                pachset.Priority_Choice = 1;
             }
-            else if (sender == PR_MULTI_EXP)
+            else if (sender == TskNormal)
             {
-                PR_MULTI_ALL.Checked = false;
-                PR_Single.Checked = false;
-                pachset.Processor_Choice = 3;
+                TskAbove.Checked = false;
+                TskHigh.Checked = false;
+                pachset.Priority_Choice = 2;
             }
         }
 
         private void ThreadSettingsChanged(object sender, EventArgs e)
         {
-            Pach_Properties.Instance.ThreadCount = (int)Thread_Spec.Value;
+            Pach_Properties.Instance.ThreadCount = System.Environment.ProcessorCount;//(int)Thread_Spec.Value;
         }
 
         private void GeometrySettingsChanged(object sender, EventArgs e)

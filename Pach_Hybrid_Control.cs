@@ -28,6 +28,7 @@ using Eto.Forms;
 using Rhino.UI;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Pachyderm_Acoustic
 {
@@ -271,6 +272,12 @@ namespace Pachyderm_Acoustic
                 Scrollable Absscroll = new Scrollable();
                 Absscroll.Content = ABSSlider;
                 AL.AddRow(Absscroll);
+                this.SmartMat_Display = new ScottPlot.Eto.EtoPlot();
+                this.SmartMat_Display.Size = new Size(0, 300);
+                this.SmartMat_Display.TabIndex = 45;
+                this.SmartMat_Display.Plot.Title("Absorption By Angle");
+                this.SmartMat_Display.Visible = false;
+                AL.AddRow(SmartMat_Display);
                 AL.AddSpace();
                 Absorption.Content = AL;
 
@@ -309,12 +316,6 @@ namespace Pachyderm_Acoustic
                 SCATSlider.MouseLeave += Acoustics_Coef_Update;
                 SL.AddRow(labelScat);
                 SL.AddRow(SCATSlider);
-                this.SmartMat_Display = new ScottPlot.Eto.EtoPlot();
-                this.SmartMat_Display.Size = new Size(732, 966);
-                this.SmartMat_Display.TabIndex = 45;
-                this.SmartMat_Display.Plot.Title("Absorption By Angle");
-                this.SmartMat_Display.Visible = false;
-                SL.AddRow(SmartMat_Display);
                 SL.AddSpace();
                 Scattering.Content = SL;
 
@@ -635,8 +636,8 @@ namespace Pachyderm_Acoustic
                 if (PachydermAc_PlugIn.SaveResults)
                 {
                     Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                    sf.CurrentFilter = ".pac1";
-                    sf.Filters.Add("Pachyderm Ray Data file (*.pac1)|*.pac1|" + "All Files|");
+                    sf.Filters.Add(new FileFilter("Pachyderm Ray Data file (.pac1)", ".pac1"));
+                    sf.CurrentFilterIndex = 0;
                     if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                     {
                         SavePath = sf.FileName;
@@ -911,13 +912,26 @@ namespace Pachyderm_Acoustic
                     }
                     if (RTBox.Checked.Value)
                     {
-                        ConvergenceProgress CP = new ConvergenceProgress();
+                        CancellationTokenSource CTS = new CancellationTokenSource();
+                        CancellationToken CT = CTS.Token;
+                        ConvergenceProgress CP = new ConvergenceProgress(CTS);
                         SplitRayTracer RT = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
                         if (!Spec_Rays.Checked) CP.Show();
+
+                        EventHandler usercancel = (source, args) =>
+                                                {
+                                                    Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User... Results may be inconclusive...");
+                                                    CTS.Cancel();
+                                                };
+                        Rhino.RhinoApp.EscapeKeyPressed += usercancel;
+
+
                         TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT).GetAwaiter();
                         while (!TRTA.IsCompleted) 
                             await Task.Delay(3000);
                         RT = TRTA.GetResult() as SplitRayTracer;
+
+                        Rhino.RhinoApp.EscapeKeyPressed -= usercancel;
 
                         if (RT != null)
                         {
@@ -1191,9 +1205,9 @@ namespace Pachyderm_Acoustic
                     Material_Name.Text = Material_Lib.SelectedValue.ToString();
                     Material Mat = Materials.Abs_byKey(Selection);
                     double[] mat = new double[Mat.Values.Length];
-                    for (int i = 0; i < Mat.Values.Length; i++) mat[i] = Mat.Values[i] * 100;
+                    //for (int i = 0; i < Mat.Values.Length; i++) mat[i] = Mat.Values[i];
 
-                    ABSSlider.Value = mat;
+                    ABSSlider.Value = Mat.Values;
                     Commit_Layer_Acoustics();
 
                     Material_Mode(true);
@@ -1230,6 +1244,8 @@ namespace Pachyderm_Acoustic
                 SmartMat_Display.Plot.Clear();
 
                 Material_Mode(false);
+
+                Retrieve_Layer_Acoustics(null, null);
             }
 
             private void Commit_Layer_Acoustics()
@@ -1344,6 +1360,8 @@ namespace Pachyderm_Acoustic
                     SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[5], ScottPlot.Colors.BlueViolet);
                     SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[6], ScottPlot.Colors.Violet);
                     SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[7], ScottPlot.Colors.Plum);
+                    SmartMat_Display.Plot.Render();
+                    SmartMat_Display.Plot.AutoScale();
                 }
                 else if (M == "Buildup_Finite")
                 {
@@ -1465,29 +1483,32 @@ namespace Pachyderm_Acoustic
             {
                 if (Tabs.SelectedPage.Text == "Analysis")
                 {
-                    int r = Receiver_Choice.SelectedIndex;
-                    Receiver_Choice.Items.Clear();
 
                     if (Direct_Data != null && Direct_Data[0] != null)
                     {
+                        int r = Receiver_Choice.SelectedIndex;
+                        Receiver_Choice.Items.Clear();
+
                         for (int i = 0; i < Direct_Data[0].Rec_Origin.Count(); i++)
                         {
                             Receiver_Choice.Items.Add(i.ToString());
                         }
+                        Receiver_Choice.SelectedIndex = Math.Max(0, r);
                     }
+
                     if (IS_Data != null && IS_Data.Length > 0)
                     {
                         IS_Path_Box_MouseUp(sender, null);
                     }
+
                     if (Direct_Data != null && Direct_Data.Length > 0 && Direct_Data[0] != null) Update_Graph(null, new System.EventArgs());
-                    Receiver_Choice.SelectedIndex = r;
                 }
                 else if (Tabs.SelectedPage.Text == "Processing")
                 {
                     Update_Graph(null, new System.EventArgs());
                 }
             }
-
+ 
             private void Parameter_Choice_SelectedIndexChanged(object sender, System.EventArgs e)
             {
                 Update_Parameters();
@@ -2220,10 +2241,7 @@ namespace Pachyderm_Acoustic
                             break;
                         case "Pressure Time Curve":
                             zero_sample = 4096 / 2;
-                            ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true, VB);
-                            VB.Close();
+                            Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
                             if (OCT_ID < 8)
                             {
                                 Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, OCT_ID, SampleRate, 0);
@@ -2501,11 +2519,9 @@ namespace Pachyderm_Acoustic
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
-                OF.CurrentFilter = new Eto.Forms.FileDialogFilter("Pachyderm Ray Data file (.pac1)",".pac1");
                 OF.Filters.Add(new FileDialogFilter("Pachyderm Ray Data file (.pac1)", ".pac1"));
                 OF.Filters.Add(new FileDialogFilter("All", ".*"));
-                    ///.Add(new Eto.Forms.FileFilter("Pachyderm Ray Data file (.pac1)", "pac1|"));
-                    ///OF.Filters.Add(new Eto.Forms.FileFilter("All", ".*"));
+                OF.CurrentFilterIndex = 0;
                 if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 { 
                     Read_File(OF.FileName);
@@ -2518,7 +2534,7 @@ namespace Pachyderm_Acoustic
                 OpenAnalysis();
                 Update_Parameters();
                 Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
-                Update_Graph(null, System.EventArgs.Empty);
+                if (Receiver_Choice.SelectedIndex >= 0 && Receiver_Choice.Items.Count >= 0) Update_Graph(null, System.EventArgs.Empty);
             }
 
             private void SaveIntensityResultsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2560,8 +2576,8 @@ namespace Pachyderm_Acoustic
                 //double[,,,] ParamValues = new double[SourceList.Items.Count, Recs.Length, 8, paramtype.Length];
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = ".txt";
-                sf.Filters.Add("Text File (*.txt)|*.txt|" + "All Files|");
+                sf.Filters.Add(new FileFilter("Text File (*.txt)", ".txt"));
+                sf.CurrentFilterIndex = 0;
 
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
@@ -2837,8 +2853,9 @@ namespace Pachyderm_Acoustic
                 }
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = "Pachyderm Ray Data file (*.pac1)|*.pac1";
-                //sf.Filters.Add("Pachyderm Ray Data file (*.pac1)|*.pac1|");
+                sf.Filters.Add( new FileFilter("Pachyderm Ray Data file (*.pac1)", ".pac1"));
+                sf.CurrentFilterIndex = 0;
+
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
                     System.IO.BinaryWriter sw = new System.IO.BinaryWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
@@ -2899,15 +2916,16 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private bool Read_File(string path)
+            private async void Read_File(string path)
             {
-                if (FileIO.Read_Pac1(ref Direct_Data, ref IS_Data, ref Receiver, path))
+                ProgressBox VB = new ProgressBox("Calculating Pressure/Filter Responses");
+                VB.Show();
+                if (FileIO.Read_Pac1(path, ref Direct_Data, ref IS_Data, ref Receiver, VB))
                 {
                     SourceList.Clear();
                     LockUserScale.Checked = false;
                     Update_Graph(null, new System.EventArgs());
-                    LockUserScale.Checked = true;
-                    Receiver_Choice.SelectedIndex= 0;
+                    Receiver_Choice.SelectedIndex = 0;
                     OpenAnalysis();
                     cleanup();
 
@@ -2915,6 +2933,7 @@ namespace Pachyderm_Acoustic
                     Recs = new Hare.Geometry.Point[Receiver[0].Count];
                     CutoffTime = Direct_Data[0].Cutoff_Time;
 
+                    for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].Origin;
                     SourceList.Populate(Direct_Data);
 
                     for (int DDCT = 0; DDCT < Direct_Data.Length; DDCT++)
@@ -2922,18 +2941,25 @@ namespace Pachyderm_Acoustic
                         Source[DDCT] = Direct_Data[DDCT].Src;
                     }
 
-                    this.IS_Path_Box.Populate(IS_Data, SourceList.SelectedSources(), 0);
+                    if (IS_Data != null && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
+                    {
+                        this.IS_Path_Box.Populate(IS_Data, SourceList.SelectedSources(), 0);
+                    }
 
                     SampleRate = (int)Direct_Data[0].SampleRate;
+                    //Task t = new Task(() => { foreach (Receiver_Bank R in Receiver) R.Create_Filter(VB); });
+                    //t.Start();
+                    
+                    //while (! t.IsCompleted) await Task.Delay(1000);
 
-                    for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].Origin;
-                    return true;
+                    //return true;
                 }
                 else
                 {
                     Eto.Forms.MessageBox.Show("File Read Failed...", "Results file was corrupt or incomplete. We apologize for this inconvenience. Please report this to the software author. It will be much appreciated.");
-                    return false;
+                    //return false;
                 }
+                //VB.Close();
             }
 
             public void Plot_Results_Intensity()
@@ -2941,8 +2967,8 @@ namespace Pachyderm_Acoustic
                 if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.SelectedValue.ToString() != "Sabine RT" && Parameter_Choice.SelectedValue.ToString() != "Eyring RT") { return; }
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = ".txt";
-                sf.Filters.Add("Text File (*.txt)|*.txt|" + "All Files|");
+                sf.Filters.Add(new FileFilter("Text File (*.txt)", ".txt"));
+                sf.CurrentFilterIndex = 0;
 
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
@@ -3031,8 +3057,8 @@ namespace Pachyderm_Acoustic
                 if (Direct_Data == null && IS_Data == null && Receiver == null && Parameter_Choice.SelectedValue.ToString() != "Sabine RT" && Parameter_Choice.SelectedValue.ToString() != "Eyring RT") { return; }
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = ".txt";
-                sf.Filters.Add("Text File (*.txt)|*.txt|" + "All Files|");
+                sf.Filters.Add(new FileFilter("Text File (*.txt)", ".txt"));
+                sf.CurrentFilterIndex = 0;
 
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
@@ -3154,8 +3180,8 @@ namespace Pachyderm_Acoustic
                 }
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = ".txt";
-                sf.Filters.Add("Text File (*.txt)|*.txt|" + "All Files|");
+                sf.Filters.Add(new FileFilter("Text File (*.txt)", ".txt"));
+                sf.CurrentFilterIndex = 0;
 
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
@@ -3229,8 +3255,8 @@ namespace Pachyderm_Acoustic
                 }
 
                 Eto.Forms.SaveFileDialog sf = new Eto.Forms.SaveFileDialog();
-                sf.CurrentFilter = ".txt";
-                sf.Filters.Add("Text File (*.txt)|*.txt|" + "All Files|");
+                sf.Filters.Add(new FileFilter("Text file for use with Excel(*.txt)", ".txt"));
+                sf.CurrentFilterIndex = 0;
 
                 if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
