@@ -52,7 +52,7 @@ namespace Pachyderm_Acoustic
                 this.label9 = new Eto.Forms.Label();
                 this.label19 = new Eto.Forms.Label();
                 this.Tortuosity = new Eto.Forms.NumericStepper();
-                this.Averaging = new Eto.Forms.ComboBox();
+                //this.Averaging = new Eto.Forms.ComboBox();
                 this.Smart_Mat = new Eto.Forms.Button();
             this.label16 = new Eto.Forms.Label();
             this.YoungsModulus = new Eto.Forms.NumericStepper();
@@ -226,8 +226,8 @@ namespace Pachyderm_Acoustic
                 this.Zf_Incorp_Method.Items.Add("R = [(Za + Zf) - 1] / [(Za + Zf) + 1]");
                 this.Zf_Incorp_Method.SelectedIndexChanged += this.Zf_Incorp_Method_SelectedIndexChanged;
                 Inf_Sample.Checked = true;
-                Inf_Sample.MouseUp += this.Inf_Sample_CheckedChanged;
-                Fin_Sample.MouseUp += this.Fin_Sample_CheckedChanged;
+                Inf_Sample.CheckedChanged += this.Inf_Sample_CheckedChanged;
+                Fin_Sample.CheckedChanged += this.Fin_Sample_CheckedChanged;
                 ZF.AddRow(Inf_Sample, label3, XDim, label20, Zf_Incorp_Method);
 
                 this.Inf_Sample.Text = "Infinite Sample";
@@ -412,10 +412,10 @@ namespace Pachyderm_Acoustic
 
                 DynamicLayout CtrlX = new DynamicLayout();
                 CtrlX.DefaultSpacing = new Eto.Drawing.Size(8, 8);
-                this.Averaging.Items.Add("Paris [sin(the)cos(the)]");
-                this.Averaging.Items.Add("0 to 78 only");
-                this.Averaging.Items.Add("0 t0 90 Flat");
-                this.Averaging.SelectedIndexChanged += this.Averaging_SelectedIndexChanged;
+                //this.Averaging.Items.Add("Paris [sin(the)cos(the)]");
+                //this.Averaging.Items.Add("0 to 78 only");
+                //this.Averaging.Items.Add("0 t0 90 Flat");
+                //this.Averaging.SelectedIndexChanged += this.Averaging_SelectedIndexChanged;
                 this.Smart_Mat.Text = "Create Smart Material";
                 this.Smart_Mat.Click += this.Smart_Mat_Click;
                 this.Use_RI.Text = "Random Incidence";
@@ -423,7 +423,7 @@ namespace Pachyderm_Acoustic
                 Cancel.Text = "Cancel";
                 Cancel.Click += this.Cancel_Click;
                 CtrlX.AddSpace();
-                CtrlX.AddRow(Averaging, Smart_Mat, Use_RI, Cancel);
+                CtrlX.AddRow( Smart_Mat, Use_RI, Cancel);
 
                 CtrlRight.AddRow(Ctrl12);
                 CtrlRight.AddRow(Ctrl3);
@@ -470,7 +470,7 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.NumericStepper Tortuosity;
             private Eto.Forms.Label label18;
             private Eto.Forms.NumericStepper SoundSpeed;
-            private Eto.Forms.ComboBox Averaging;
+            //private Eto.Forms.ComboBox Averaging;
             private Eto.Forms.Label label21;
             private Eto.Forms.Label label22;
             private Eto.Forms.RadioButton Air_Term;

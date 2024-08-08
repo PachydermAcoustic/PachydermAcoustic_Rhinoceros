@@ -207,7 +207,6 @@ namespace Pachyderm_Acoustic
 
             Pach_Properties pachset = Pach_Properties.Instance;
 
-
             //2. Geometry System(int)
             switch (pachset.Geometry_System)
             {
@@ -255,6 +254,22 @@ namespace Pachyderm_Acoustic
             OCT_DEPTH.Value = pachset.Oct_Depth;
             //8. Material Library Path
             Library_Path.Text = pachset.Lib_Path;
+
+            if (!File.Exists(Path.Combine(Library_Path.Text, "Pach_Materials_Library.txt"))) Library_Path.Text = SettingsPath;
+            if (!File.Exists(Path.Combine(Library_Path.Text, "Pach_Materials_Library.txt")))
+            {
+                string sourceFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.Load("Pachyderm_Acoustic").Location), "misc", "Pach_Materials_Library.txt");
+                string destinationFilePath = Path.Combine(Path.GetDirectoryName(SettingsPath), "Pach_Materials_Library.txt");
+                File.Copy(sourceFilePath, destinationFilePath);
+            }
+
+            if (!File.Exists(Path.Combine(Library_Path.Text, "Pach_Isolation_Library.txt")))
+            {
+                string sourceFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.Load("Pachyderm_Acoustic").Location), "misc", "Pach_Isolation_Library.txt");
+                string destinationFilePath = Path.Combine(Path.GetDirectoryName(SettingsPath), "Pach_Isolation_Library.txt");
+                File.Copy(sourceFilePath, destinationFilePath);
+            }
+
             //9. Save Results after simulation?
             Save_Results.Checked = pachset.SaveResults;
             //10. Save Filter Method

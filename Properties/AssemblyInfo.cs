@@ -16,11 +16,11 @@ using System.Runtime.InteropServices;
 [assembly: PlugInDescription(DescriptionType.UpdateUrl, "http://www.orase.org/resources/")]
 [assembly: PlugInDescription(DescriptionType.WebSite, "http://www.orase.org")]
 
-[assembly: AssemblyTitle("Pachyderm_Acoustic.Properties")]
+[assembly: AssemblyTitle("Pachyderm_Acoustic_Simulation")]
 [assembly: AssemblyDescription("Foundational Algorithms in Acoustic Simulation for Rhinoceros")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Open Research in Acoustical Science and Educaton, Inc.")]
-[assembly: AssemblyProduct("Pachyderm_Acoustic.Properties")]
+[assembly: AssemblyProduct("Pachyderm_Acoustic_Simulation")]
 [assembly: AssemblyCopyright("Copyright © Open Research in Acoustical Science and Education 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

@@ -29,6 +29,7 @@ using Rhino.UI;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Pachyderm_Acoustic
 {
@@ -53,6 +54,7 @@ namespace Pachyderm_Acoustic
                 DynamicLayout File = new DynamicLayout();
                 File.AddRow(MenuStrip, null);
                 this.MenuStrip.Items.Add(this.fileToolStripMenuItem);
+                this.MenuStrip.Items.Add(new UI.HelpMenu());
                 fileToolStripMenuItem.Menu = new ContextMenu();
                 this.fileToolStripMenuItem.Menu.Items.Add(openDataToolStripMenuItem);
                 this.fileToolStripMenuItem.Menu.Items.Add(this.saveDataToolStripMenuItem);
@@ -63,6 +65,7 @@ namespace Pachyderm_Acoustic
                 this.fileToolStripMenuItem.Menu.Items.Add(this.saveEDCToolStripMenuItem);
 
                 this.fileToolStripMenuItem.Text = "File";
+
                 // 
                 // openDataToolStripMenuItem
                 // 
@@ -1349,7 +1352,7 @@ namespace Pachyderm_Acoustic
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343, 2);
+                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                     SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
@@ -1370,7 +1373,7 @@ namespace Pachyderm_Acoustic
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343, 2);
+                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                     SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
@@ -3377,6 +3380,8 @@ namespace Pachyderm_Acoustic
 
             private SegmentedButton MenuStrip;
             private MenuSegmentedItem fileToolStripMenuItem;
+            private ButtonMenuItem AboutToolStripMenuItem;
+            private ButtonMenuItem LearnToolStripMenuItem;
             private ButtonMenuItem saveDataToolStripMenuItem;
             private ButtonMenuItem openDataToolStripMenuItem;
             private ButtonMenuItem saveParameterResultsToolStripMenuItem;
@@ -3384,6 +3389,7 @@ namespace Pachyderm_Acoustic
             private ButtonMenuItem saveEDCToolStripMenuItem;
             private ButtonMenuItem savePressureResultsToolStripMenuItem;
             private ButtonMenuItem savePressurePTBFormatToolStripMenuItem;
+            private ButtonMenuItem DonateToolStripMenuItem;
 
             private Button Auralisation;
             private Button Delete_Material;

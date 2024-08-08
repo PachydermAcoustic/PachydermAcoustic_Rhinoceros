@@ -230,6 +230,7 @@ namespace Pachyderm_Acoustic
                 this.fileToolStripMenuItem.Menu.Items.Add(this.openDataToolStripMenuItem);
                 this.fileToolStripMenuItem.Menu.Items.Add(this.saveDataToolStripMenuItem);
                 FileMenu.Items.Add(fileToolStripMenuItem);
+                FileMenu.Items.Add(new HelpMenu());
                 DynamicLayout File = new DynamicLayout();
                 File.AddRow(FileMenu, null);
                 PrimaryLayout.AddRow(File);

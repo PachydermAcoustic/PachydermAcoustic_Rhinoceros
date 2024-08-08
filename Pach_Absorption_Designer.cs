@@ -59,7 +59,7 @@ namespace Pachyderm_Acoustic
             {
                 InitializeComponent();
                 this.Chart_Contents.SelectedIndex = 0;
-                this.Averaging.SelectedIndex = 0;
+                //this.Averaging.SelectedIndex = 0;
                 this.Zf_Incorp_Method.SelectedIndex = 0;
             }
 
@@ -221,8 +221,8 @@ namespace Pachyderm_Acoustic
 
                     if (Layers_.Count == 0) return;
 
-                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343, Averaging.SelectedIndex);
-                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
+                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343);
+                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343, Zr, 0.1);
 
                     double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
 
@@ -277,6 +277,7 @@ namespace Pachyderm_Acoustic
                     if (Direction_choice.SelectedIndex == 0)
                     {
                         //for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
+                        if (sm.RI_Averages != null) Alpha_Normal.Plot.Add.Scatter(logfreq, sm.RI_Averages, ScottPlot.Colors.Maroon);
                         Alpha_Normal.Plot.Add.Scatter(logfreq, sm.NI_Coef, ScottPlot.Colors.Blue);//
                         (Alpha_Normal.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
 
@@ -311,8 +312,8 @@ namespace Pachyderm_Acoustic
 
                     if (Layers.Count == 0) return;
 
-                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Averaging.SelectedIndex);
-                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Zr, 0.1, Averaging.SelectedIndex, Zf_Incorp_Method.SelectedIndex);
+                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343);
+                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Zr, 0.1);
 
                     double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
 

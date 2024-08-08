@@ -24,6 +24,7 @@ using System.Threading;
 using Eto.Forms;
 using Pachyderm_Acoustic.Properties;
 using Rhino.UI;
+using Rhino.Runtime;
 
 namespace Pachyderm_Acoustic
 {
@@ -41,6 +42,7 @@ namespace Pachyderm_Acoustic
 
             public PachydermAc_PlugIn()
             {
+                HostUtils.SendDebugToCommandLine = true;
                 new SourceConduit();
                 new ReceiverConduit();
                 Pach_Props = Pach_Properties_Panel.Instance;
@@ -48,21 +50,6 @@ namespace Pachyderm_Acoustic
                 //System.AppDomain.CurrentDomain.AssemblyResolve += GetAssemblies;
                 Instance = this;
             }
-
-
-
-            //public System.Reflection.Assembly GetAssemblies(object source, ResolveEventArgs e)
-            //{
-            //    return null;
-            //}
-
-            //public Guid InstanceID
-            //{
-            //    get
-            //    {
-            //        return Instance_ID;
-            //    }
-            //}
 
             ///<summary>Gets the only instance of the PachydermAcoustic plug-in.</summary>
             public static PachydermAc_PlugIn Instance
@@ -251,14 +238,6 @@ namespace Pachyderm_Acoustic
                     else if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Curve)
                     {
                         string SWL = Origin.Geometry.GetUserString("SWL");
-                        
-                        //string Ph = Origin.Geometry.GetUserString("Phase");
-                        //double[] phase = new double[8];
-                        //if (Ph != "")
-                        //{
-                        //    string[] phstr = Ph.Split(";"[0]);
-                        //    for (int o = 0; o < 8; o++) phase[o] = double.Parse(phstr[o]);
-                        //}
 
                         Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1d / 4d);
                         if (pts == null || pts.Length == 0) pts = new Point3d[1] { (Origin.Geometry as Curve).PointAtNormalizedLength(0.5) };
@@ -266,7 +245,6 @@ namespace Pachyderm_Acoustic
 
                         for (int i = 0; i < pts.Length; i++)
                         {
-                            //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(pts[i]);
                             Samples[i] = Utilities.RCPachTools.RPttoHPt(pts[i]);
                         }
                         S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false);

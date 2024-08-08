@@ -23,9 +23,6 @@ using System;
 using System.ComponentModel;
 using System.Configuration;
 using System.Runtime.CompilerServices;
-using System.Security;
-using System.Security.Authentication.ExtendedProtection;
-        
 
 namespace Pachyderm_Acoustic
 {
@@ -35,7 +32,7 @@ namespace Pachyderm_Acoustic
         public class PachSplash: Dialog
         {
             private int pmode = 0;
-
+            Label Mission = new Eto.Forms.Label();
             Label Attribution = new Eto.Forms.Label();
             Label Copyright = new Eto.Forms.Label();
             Label Version_box = new Eto.Forms.Label();
@@ -48,7 +45,6 @@ namespace Pachyderm_Acoustic
             public PachSplash()
                 : base()
             {
-
                 this.ID = "Pach_splash";
                 PachydermAc_PlugIn p = PachydermAc_PlugIn.Instance;
                 this.WindowStyle = WindowStyle.None;
@@ -56,6 +52,10 @@ namespace Pachyderm_Acoustic
 
                 //Application info 
                 TableLayout MainLayoutPanel = new Eto.Forms.TableLayout();
+                Mission.Font = new Font("Microsoft Sans Serif", 8F);
+                Mission.Size = new Size(430, 150);
+                Mission.Text = "A world with clear, articulate and aesthetically rich soundscapes is a world where understanding abounds, and  is accessible to all.";
+                Mission.TextAlignment = TextAlignment.Center;
                 Attribution.Font = new Font("Microsoft Sans Serif", 8F);
                 Attribution.Size = new Size(430, 150);
                 Attribution.Text = "A community project serving foundational \r\nalgorithms for practical application in \r\nthe development of the built environment \r\nand the global soundscape.";
@@ -81,6 +81,7 @@ namespace Pachyderm_Acoustic
                         title_box.TextColor = Color.FromArgb(255, 255, 255);
                         Copyright.TextColor = Color.FromArgb(255, 255, 255);
                         Attribution.TextColor = Color.FromArgb(255, 255, 255);
+                        Mission.TextColor = Color.FromArgb(255, 255, 255);
                         bitmap = global::Pachyderm_Acoustic.Properties.Resources.Logo1Splash2;
                     }
                     else
@@ -90,6 +91,7 @@ namespace Pachyderm_Acoustic
                         title_box.TextColor = Color.FromArgb(0, 0, 0);
                         Copyright.TextColor = Color.FromArgb(0, 0, 0);
                         Attribution.TextColor = Color.FromArgb(0, 0, 0);
+                        Mission.TextColor = Color.FromArgb(0, 0, 0);
                         bitmap = global::Pachyderm_Acoustic.Properties.Resources.LogoOSplash;
                     }
 
@@ -101,7 +103,7 @@ namespace Pachyderm_Acoustic
 
                 MainLayoutPanel = new TableLayout();
                 MainLayoutPanel.BackgroundColor = Colors.Transparent;
-                MainLayoutPanel.Padding = new Padding(450, 50, 0, 200);
+                MainLayoutPanel.Padding = new Padding(450, 50, 0, 0);
                 MainLayoutPanel.Spacing = new Size(0, 10);
                 MainLayoutPanel.Rows.Add(new TableRow(null, new TableCell(title_box)));
                 MainLayoutPanel.Rows.Add(null);
@@ -110,7 +112,10 @@ namespace Pachyderm_Acoustic
                 MainLayoutPanel.Rows.Add(new TableRow(new TableCell(), new TableCell(Copyright)));
                 MainLayoutPanel.Rows.Add(null);
                 MainLayoutPanel.Rows.Add(new TableRow(new TableCell(), new TableCell(Attribution)));
-
+                MainLayoutPanel.Rows.Add(null);
+                MainLayoutPanel.Rows.Add(null);
+                MainLayoutPanel.Rows.Add(new TableRow(new TableCell(), new TableCell(Mission)));
+                MainLayoutPanel.Rows.Add(null);
                 drawable.Content = MainLayoutPanel;
                 this.Content = drawable;
             }

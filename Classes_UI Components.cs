@@ -7,6 +7,8 @@ using Eto.Drawing;
 using Eto.Forms;
 using Rhino.UI;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Pachyderm_Acoustic
 {
@@ -906,6 +908,157 @@ namespace Pachyderm_Acoustic
                 foreach (Oct_Slider slider in sliders)
                 {
                     slider.resize(width);
+                }
+            }
+        }
+
+
+        public class HelpMenu : MenuSegmentedItem
+        {
+            
+            public HelpMenu()
+            {
+                ButtonMenuItem AboutPToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem AboutOToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem LearnToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem ContributeToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem DonateToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem ContactToolStripMenuItem = new ButtonMenuItem();
+
+                this.Menu = new ContextMenu();
+
+                Menu.Items.Add(AboutPToolStripMenuItem);
+                Menu.Items.Add(AboutOToolStripMenuItem);
+                Menu.Items.Add(LearnToolStripMenuItem);
+                Menu.Items.Add(ContributeToolStripMenuItem);
+                Menu.Items.Add(DonateToolStripMenuItem);
+                Menu.Items.Add(ContactToolStripMenuItem);
+                this.Text = "Help";
+
+                //
+                // about pachyderm
+                //
+                AboutPToolStripMenuItem.Text = "About Pachyderm...";
+                AboutPToolStripMenuItem.Click += this.AboutToolStripMenuItem_Click;
+                //
+                // about orase
+                //
+                AboutOToolStripMenuItem.Text = "About ORASE...";
+                AboutOToolStripMenuItem.Click += this.AboutOToolStripMenuItem_Click;
+                //
+                // Learn pachyderm
+                //
+                LearnToolStripMenuItem.Text = "Learn Pachyderm...";
+                LearnToolStripMenuItem.Click += this.LearnToolStripMenuItem_Click;
+                //
+                // ContributeToolStripMenuItem
+                //
+                ContributeToolStripMenuItem.Text = "Contribute...";
+                ContributeToolStripMenuItem.Click += this.ContributeToolStripMenuItem_Click;
+                //
+                // DonateToolStripMenuItem
+                //
+                DonateToolStripMenuItem.Text = "Donate...";
+                DonateToolStripMenuItem.Click += this.DonateToolStripMenuItem_Click;
+                //
+                // ContactToolStripMenuItem
+                //
+                ContactToolStripMenuItem.Text = "Contact...";
+                ContactToolStripMenuItem.Click += this.ContactToolStripMenuItem_Click;
+                }
+
+                private void AboutToolStripMenuItem_Click(object sneder, EventArgs e)
+                {
+                    PachSplash PS = new PachSplash();
+                    PS.ShowModal();
+                }
+
+            private void AboutOToolStripMenuItem_Click(object sneder, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    System.Diagnostics.Process.Start("https://www.orase.org/");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://www.orase.org/",
+                        UseShellExecute = true
+                    });
+                }
+            }
+                private void LearnToolStripMenuItem_Click(object sender, EventArgs e)
+                {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    System.Diagnostics.Process.Start("https://www.orase.org/resources");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://www.orase.org/resources",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void ContributeToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    System.Diagnostics.Process.Start("https://github.com/PachydermAcoustic");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://github.com/PachydermAcoustic",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void DonateToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    System.Diagnostics.Process.Start("https://www.orase.org/donate-1");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://www.orase.org/donate-1",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void ContactToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    Process.Start("mailto:info@orase.org");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "mailto:info@orase.org",
+                        UseShellExecute = true
+                    });
                 }
             }
         }

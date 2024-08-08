@@ -286,8 +286,8 @@ namespace Pachyderm_Acoustic
                 Label label11 = new Label();
                 label11.Text = "Depth of Sample (meters)";
                 Sample_Depth.Width = 200;
-                this.Sample_Depth.DecimalPlaces = 1;
-                this.Sample_Depth.Value = 5;
+                this.Sample_Depth.DecimalPlaces = 2;
+                this.Sample_Depth.Value = 0;
                 this.Sample_Depth.ValueChanged += this.LabGuideParametersChanged;
                 SCtrls.AddRow(label11, null, Sample_Depth);
 
@@ -295,7 +295,7 @@ namespace Pachyderm_Acoustic
                 label7.Text = "Measurement Radius (meters)";
                 ScatteringRadius.Width = 200;
                 this.ScatteringRadius.DecimalPlaces = 1;
-                this.ScatteringRadius.Value = 5;
+                this.ScatteringRadius.Value = 1;
                 this.ScatteringRadius.ValueChanged += this.LabGuideParametersChanged;
                 SCtrls.AddRow(label7, null, ScatteringRadius);
 
@@ -437,11 +437,9 @@ namespace Pachyderm_Acoustic
                 this.AddPlane.Click += this.AddPlane_Click;
                 this.DeletePlane.Text = "Delete Plane";
                 this.DeletePlane.Click += this.DeletePlane_Click;
-                //this.Magnitude.Text = "Magnitude";
                 DynamicLayout buttons = new DynamicLayout();
                 buttons.AddRow(AddPlane, DeletePlane);
                 Planes.AddRow(buttons);
-                //Planes.AddRow(Magnitude);
                 Planes.Spacing = new Eto.Drawing.Size(8, 8);
                 viscolor = new Color_Output_Control(Planes);
                 viscolor.Update += Param_Max_ValueChanged;
@@ -965,16 +963,10 @@ namespace Pachyderm_Acoustic
                 Frequency_View.Plot.PlottableList.Add(Sreal);
                 Frequency_View.Plot.PlottableList.Add(Simag);
                 Frequency_View.Plot.AutoScale();
-
-
-
                 Frequency_View.Plot.XAxis.Max = freq[freq.Length / 2 - 1] / 5;
-                
                 Frequency_View.Plot.XAxis.Min = 0;
-
                 Frequency_View.Plot.YAxis.Max = max * 1.2;
                 Frequency_View.Plot.YAxis.Min = 0;
-
                 Frequency_View.Invalidate();
 
                 Frequency_View.Plot.Add.VerticalLine(Chosenfreq, 3, ScottPlot.Colors.Black);
@@ -1060,6 +1052,8 @@ namespace Pachyderm_Acoustic
             }
 
             double[] Scattering;
+            double[] ScatteringX;
+            double[] ScatteringY;
             Numeric.TimeDomain.Microphone_Compact MicS;
             //List<System.Numerics.Complex[]> FFTs;
             double d_f = 2;
@@ -1116,13 +1110,14 @@ namespace Pachyderm_Acoustic
                     if (!Rm.Complete && Rm_Ctrl.Complete) return;
 
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
+
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
                     long size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of first model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDS.RuntoCompletion();                    
                     Mic.reset();
-                    double[][] result_control = Mic.Recordings()[0];
+                    double[][] result_control = new double[Mic.X.Length][];
                     samplefrequency = FDTDS.SampleFrequency;
                     double dx = FDTDS.dx, dy = FDTDS.dy, dz = FDTDS.dz;
 
@@ -1133,11 +1128,18 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.WriteLine("At end of second model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDF.RuntoCompletion();
                     Micf.reset();
-                    result_signals = Micf.Recordings()[0];
+                    double[][] result_signals = new double[Mic.X.Length][];
 
-                    omit = SD.Z[0];// + 60;
+                    omit = SD.Z[0];
 
-                    //TODO: Micf and Mic signals do not match in length - Let's make sure that the points really all match up, how they match up, and then let's prevent an array screw up.
+                    for (int i = 0; i < result_control.Length; i++)
+                    {
+                        result_control[i] = Mic.Recordings(i, omit + Mic.Z[i]);
+                        result_signals[i] = Micf.Recordings(i, omit + Micf.Z[i]);
+                    }
+
+
+                    //Micf and Mic signals do not match in length - Let's make sure that the points really all match up, how they match up, and then let's prevent an array screw up.
                     int len = Math.Min(result_signals.Length, result_control.Length);
 
                     //Calculate Scattering Coefficients
@@ -1149,8 +1151,10 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     }
 
-                    Freq_Trackbar1.MaxValue = (int)(samplefrequency / 2);
-                    Freq_Trackbar2.MaxValue = (int)(samplefrequency / 2);
+                    Freq_Trackbar1.MaxValue = (int)(len / 60);
+                    Freq_Trackbar2.MaxValue = (int)(len / 60);
+                    Freq_Trackbar1.Value = (int)(Freq_Trackbar1.MaxValue* 0.4);
+                    Freq_Trackbar2.Value = (int)(Freq_Trackbar2.MaxValue * 0.8);
 
                     System.Numerics.Complex[][] FCtrl = new System.Numerics.Complex[len][];
                     System.Numerics.Complex[][] FExp = new System.Numerics.Complex[len][];
@@ -1162,9 +1166,8 @@ namespace Pachyderm_Acoustic
                     }
 
                     Scattering = new double[FCtrl[0].Length];
-                    //FF2 = new System.Numerics.Complex[FS[0].Length][];
-                    //FS2 = new System.Numerics.Complex[FS[0].Length][];
-                    //FSFF = new System.Numerics.Complex[FS[0].Length][];
+                    ScatteringX = new double[FCtrl[0].Length];
+                    ScatteringY = new double[FCtrl[0].Length];
                     FE2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
                     FC2 = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
                     FSFF = new System.IO.MemoryMappedFiles.MemoryMappedFile[len];
@@ -1172,6 +1175,12 @@ namespace Pachyderm_Acoustic
                     System.Numerics.Complex[] sumFC2 = new System.Numerics.Complex[(int)(samplefrequency / 2)];
                     System.Numerics.Complex[] sumFE2 = new System.Numerics.Complex[(int)(samplefrequency / 2)];
                     System.Numerics.Complex[] sumFSFF = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFC2X = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFE2X = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFSFFX = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFC2Y = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFE2Y = new System.Numerics.Complex[(int)(samplefrequency / 2)];
+                    System.Numerics.Complex[] sumFSFFY = new System.Numerics.Complex[(int)(samplefrequency / 2)];
 
                     for (int i = 0; i < len; i++)
                     {
@@ -1181,9 +1190,6 @@ namespace Pachyderm_Acoustic
                         System.IO.BinaryWriter fs2writer = new System.IO.BinaryWriter(FC2[i].CreateViewStream());
                         System.IO.BinaryWriter ff2writer = new System.IO.BinaryWriter(FE2[i].CreateViewStream());
                         System.IO.BinaryWriter fsffwriter = new System.IO.BinaryWriter(FSFF[i].CreateViewStream());
-                        //FF2[i] = new System.Numerics.Complex[FS.Length];
-                        //FS2[i] = new System.Numerics.Complex[FS.Length];
-                        //FSFF[i] = new System.Numerics.Complex[FS.Length];
 
                         for (int j = 0; j < (int)(samplefrequency / 2); j++)
                         {
@@ -1198,15 +1204,22 @@ namespace Pachyderm_Acoustic
                             fsffwriter.Write(fsff.Real);
                             fsffwriter.Write(fsff.Imaginary);
 
-                            sumFC2[j] += fc2;// * Math.Sin(i%10 * Math.PI / 18);
-                            sumFE2[j] += fe2;// * Math.Sin(i % 10 * Math.PI / 18);
-                            sumFSFF[j] += fsff * Math.Sin(i % 10 * Math.PI / 18);
-                            //FS2[i][j] = System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
-                            //FF2[i][j] = System.Numerics.Complex.Pow(FF[j][i].Magnitude, 2);
-                            //FSFF[i][j] = FS[j][i] * System.Numerics.Complex.Conjugate(FF[j][i]);
-                            //sumFS2 += FS2[i][j];
-                            //sumFF2 += FF2[i][j];
-                            //sumFSFF += FSFF[i][j];
+                            sumFC2[j] += fc2;
+                            sumFE2[j] += fe2;
+                            sumFSFF[j] += fsff;
+
+                            if (Math.Abs(Mic.grid_template[i].y) < 0.1) 
+                            {
+                                sumFC2X[j] += fc2;
+                                sumFE2X[j] += fe2;
+                                sumFSFFX[j] += fsff;
+                            }
+                            if (Math.Abs(Mic.grid_template[i].x) < 0.1)
+                            {
+                                sumFC2Y[j] += fc2;
+                                sumFE2Y[j] += fe2;
+                                sumFSFFY[j] += fsff;
+                            }
                         }
                         fs2writer.Close();
                         ff2writer.Close();
@@ -1214,23 +1227,15 @@ namespace Pachyderm_Acoustic
                         fs2writer.Dispose();
                         ff2writer.Dispose();
                         fsffwriter.Dispose();
-
-                        //System.Numerics.Complex sumReflected = sumFSFF / sumFE2;
-                        //System.Numerics.Complex Ratio = sumFE2 / sumFC2;
-                        //Scattering[i] = 1 - System.Numerics.Complex.Abs(sumReflected * sumReflected * Ratio);
-                        
                     }
 
                     double denom = 0;
-                    for(int i = 0; i < 9; i++)
-                    {
-                        denom += Math.Sin(i % 10 * Math.PI / 18) / 9;
-                    }
 
                     for (int j = 0; j < (int)(samplefrequency / 2); j++)
                     {
                         Scattering[j] = 1 - Math.Pow(sumFSFF[j].Magnitude, 2) / ((sumFC2[j] * sumFE2[j]).Real);
-                        Scattering[j] /= denom;
+                        ScatteringX[j] = 1 - Math.Pow(sumFSFFX[j].Magnitude, 2) / ((sumFC2X[j] * sumFE2X[j]).Real);
+                        ScatteringY[j] = 1 - Math.Pow(sumFSFFY[j].Magnitude, 2) / ((sumFC2Y[j] * sumFE2Y[j]).Real);
                     }
 
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
@@ -1240,8 +1245,6 @@ namespace Pachyderm_Acoustic
                     List<Hare.Geometry.Point> pts = new List<Hare.Geometry.Point>();
 
                     FFTs = new System.IO.MemoryMappedFiles.MemoryMappedFile[Mic.X.Length];
-                    //System.Numerics.Complex.Pow(FS[j][i].Magnitude, 2);
-                    //fftwriter.Write(fs2.Real);
 
                     for (int i = 0; i < Mic.X.Length; i++)
                     {
@@ -1265,7 +1268,7 @@ namespace Pachyderm_Acoustic
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of balloon points, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
 
-                    Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), Math.Sqrt(dx * dx + dy * dy + dz * dz));
+                    Sphere_Plot SPS = new Sphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));
                     if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     else SP.plot = SPS;
 
@@ -1351,7 +1354,7 @@ namespace Pachyderm_Acoustic
                         pts.Add(new Hare.Geometry.Point(pt.dx, pt.dy, pt.dz));
                     }
 
-                    Sphere_Plot SPS = new Sphere_Plot(pts, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
+                    Sphere_Plot SPS = new Sphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));//, 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
                     if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     MicS = Mic;
                 }
@@ -1373,8 +1376,8 @@ namespace Pachyderm_Acoustic
                 double max = Scattering.Max();
 
                 ScatteringGraph.Plot.Clear();
-                ScatteringGraph.Plot.XAxis.Max = samplefrequency / 2;
-                ScatteringGraph.Plot.XAxis.Min = 0;
+                ScatteringGraph.Plot.XAxis.Max = samplefrequency / 10;
+                ScatteringGraph.Plot.XAxis.Min = 12;
  
                 ScatteringGraph.Plot.YAxis.Max = 1.0;
                 if (max > 1) ScatteringGraph.Plot.YAxis.Max = max;
@@ -1382,6 +1385,10 @@ namespace Pachyderm_Acoustic
                 ScatteringGraph.Plot.YAxis.Min = 0;
 
                 ScatteringGraph.Plot.Add.Signal(Scattering, samplefrequency / (Scattering.Length * 2), ScottPlot.Colors.Red);
+                ScatteringGraph.Plot.Add.Signal(ScatteringX, samplefrequency / (Scattering.Length * 2), ScottPlot.Colors.Blue);
+                ScatteringGraph.Plot.Add.Signal(ScatteringY, samplefrequency / (Scattering.Length * 2), ScottPlot.Colors.Green);
+
+                ScatteringGraph.Plot.Legend.IsVisible = true;
 
                 System.Numerics.Complex[] SWC = new System.Numerics.Complex[FFTs.Length];
                 double[] SW = new double[FFTs.Length];
@@ -1400,7 +1407,7 @@ namespace Pachyderm_Acoustic
                             fftreader.Read(R, 0, 8);
                             fftreader.Read(I, 0, 8);
                             System.Numerics.Complex X = new System.Numerics.Complex(System.BitConverter.ToDouble(R, 0), System.BitConverter.ToDouble(I, 0));
-                            SWC[i] += X * X;// FFTs[i][f] * FFTs[i][f];
+                            SWC[i] += X * X;
                         }
                         fftreader.Dispose();
                         SW[i] = Pachyderm_Acoustic.Utilities.AcousticalMath.SPL_Intensity(SWC[i].Magnitude / (F[1] - F[0]));
@@ -1456,6 +1463,7 @@ namespace Pachyderm_Acoustic
                 }
                 SP.Enabled = true;
                 SP.Data_in(SW.ToArray(), new double[2] { scatcolorlayout.Min, scatcolorlayout.Max }, (double)ScatteringRadius.Value);
+                ScatteringGraph.Invalidate();
             }
 
             private void Update_LabGuides()

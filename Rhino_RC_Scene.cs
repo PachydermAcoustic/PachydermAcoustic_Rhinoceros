@@ -71,7 +71,7 @@ namespace Pachyderm_Acoustic
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
                         foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Mat_Layer.Add(new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                        Mat_Layer.Add(new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
 
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
@@ -86,7 +86,7 @@ namespace Pachyderm_Acoustic
                         string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                         List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
                         foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Environment.Smart_Material sm = new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2);
+                        Environment.Smart_Material sm = new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0));
                         Mat_Layer.Add(sm);
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
@@ -982,7 +982,7 @@ namespace Pachyderm_Acoustic
                                 List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                                 string[] Buildup = layer.GetUserString("Buildup").Split(new char[]{';'}, StringSplitOptions.RemoveEmptyEntries);
                                 foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                                AbsorptionData.Add(new Smart_Material(false ,Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                                AbsorptionData.Add(new Smart_Material(false ,Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
                             }
                             if (!string.IsNullOrEmpty(AcousticsData))
                             {
@@ -1082,7 +1082,7 @@ namespace Pachyderm_Acoustic
                             List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                             string[] Buildup = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                            AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), 2));
+                            AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
                         }
                         if (!string.IsNullOrEmpty(AcousticsData))
                         {
