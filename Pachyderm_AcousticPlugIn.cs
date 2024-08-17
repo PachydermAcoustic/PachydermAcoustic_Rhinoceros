@@ -85,13 +85,19 @@ namespace Pachyderm_Acoustic
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Mapping_Control), "Pachyderm Mapping Method", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_MapCustom), "Pachyderm Custom Maps", Properties.Resources.PIcon1);
                 Rhino.UI.Panels.RegisterPanel(this, typeof(UI.PachVisualControl), "Pachyderm Particle Animation", Properties.Resources.PIcon1);
-                Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Auralisation), "Pachyderm Auralisation", Properties.Resources.PIcon1);
+                //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Pach_Auralisation), "Pachyderm Auralisation", Properties.Resources.PIcon1);
                 //Rhino.UI.Panels.RegisterPanel(this, typeof(UI.Convergence_Progress), "Convergence Progress", Properties.Resources.PIcon1);
 
                 Rhino.RhinoApp.Initialized += (sender, e) =>
                 {
-                    PachSplash splash = new PachSplash();
-                    splash.ShowModal();// SemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                    PachSplash splash = new PachSplash(0);
+                    PachSplash splash2 = new PachSplash(1);
+                    splash2.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                    //System.Threading.Thread.Sleep(3000);
+                    //splash.Close();
+                    splash.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, RhinoEtoApp.MainWindow);
+                    //await System.Threading.Tasks.Task.Delay(5000);
+                    //System.Threading.Thread.Sleep(3000);
                 };
 
                 return LoadReturnCode.Success;

@@ -23,6 +23,7 @@ using System;
 using System.ComponentModel;
 using System.Configuration;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -42,7 +43,7 @@ namespace Pachyderm_Acoustic
             /// <summary>
             /// Autopopulates the splash screen based on parameters set in the plugin base class.
             /// </summary>
-            public PachSplash()
+            public PachSplash(int pmode)
                 : base()
             {
                 this.ID = "Pach_splash";
@@ -73,7 +74,6 @@ namespace Pachyderm_Acoustic
                 drawable.Paint += (sender, e) =>
                 {
                     System.Drawing.Bitmap bitmap;
-
                     if (pmode == 0)
                     {
                         this.BackgroundColor = Color.FromArgb(0, 0, 0);
@@ -119,17 +119,18 @@ namespace Pachyderm_Acoustic
                 drawable.Content = MainLayoutPanel;
                 this.Content = drawable;
             }
+            protected override async void OnLoad(EventArgs e)
+            {
+                base.OnLoad(e);
+                this.BringToFront();
+                //await Task.Delay(6000);
+            }
 
             protected override async void OnShown(EventArgs e)
             {
+                System.Threading.Thread.Sleep(2000);
                 base.OnShown(e);
                 this.BringToFront();
-                System.Threading.Thread.Sleep(2000);
-                pmode++;
-                this.Content.Invalidate(true);
-
-                System.Threading.Thread.Sleep(2000);
-
                 this.Close();
             }
 

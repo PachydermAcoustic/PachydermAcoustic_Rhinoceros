@@ -136,28 +136,7 @@ namespace Pachyderm_Acoustic
             }
         }
 
-        [System.Runtime.InteropServices.Guid("aa55b183-cfd1-476e-9ef1-2ab96ea053db")]
-        public class Pach_Auralisation_Control_Command : Command
-        {
-            ///<returns>The command name as it appears on the Rhino command line</returns> 
-            public override string EnglishName
-            {
-                get
-                {
-                    return "PachyDerm_Auralisation";
-                }
-            }
-
-            ///<summary> This gets called when when the user runs this command.</summary> 
-            protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
-            {
-                Rhino.UI.Panels.OpenPanel(new System.Guid("12db68c3-c995-43c6-860a-6bd106b94a4c"));
-                return Result.Success;
-            }
-        }
-
         [System.Runtime.InteropServices.Guid("BA18CA6C-C32E-4532-8525-505C6E1148B4")]
-
         public class Pach_SpeakerBuilder_Command : Command
         {
             ///<returns>The command name as it appears on the Rhino command line</returns> 

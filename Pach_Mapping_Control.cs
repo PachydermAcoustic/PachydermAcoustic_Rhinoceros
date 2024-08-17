@@ -106,7 +106,7 @@ namespace Pachyderm_Acoustic
             private DropDown Graph_Type;
             private NumericStepper Receiver_Selection;
             private Label RecLbl;
-            private Button Auralisation;
+            //private Button Auralisation;
 
             private TabPage tabTflip;
             private NumericStepper Integration_select;
@@ -179,7 +179,7 @@ namespace Pachyderm_Acoustic
                 this.LockUserScale = new CheckBox();
                 this.Graph_Octave = new DropDown();
                 this.Graph_Type = new DropDown();
-                this.Auralisation = new Button();
+                //this.Auralisation = new Button();
                 this.Receiver_Selection = new NumericStepper();
                 this.RecLbl = new Label();
                 this.tabTflip = new TabPage();
@@ -497,8 +497,8 @@ namespace Pachyderm_Acoustic
                 Analysis_View.Size = new Size(-1, 300);
                 IRL.Add(display);
 
-                this.Auralisation.Text = "Go To Auralizations";
-                IRL.AddRow(Auralisation);
+                //this.Auralisation.Text = "Go To Auralizations";
+                //IRL.AddRow(Auralisation);
 
                 tabIRs.Content = IRL;
                 this.tabIRs.Padding = new Padding(8, 8, 8, 8);
@@ -1473,7 +1473,7 @@ namespace Pachyderm_Acoustic
                 Step_Forward();
             }
 
-            public bool Auralisation_Ready()
+            public bool Simulations_Ready()
             {
                 if (Map != null) return true;
                 return false;
@@ -1706,7 +1706,7 @@ namespace Pachyderm_Acoustic
                 Graph_Type.Dispose();
                 Receiver_Selection.Dispose();
                 RecLbl.Dispose();
-                Auralisation.Dispose();
+                //Auralisation.Dispose();
 
                 tabTflip.Dispose();
                 Integration_select.Dispose();

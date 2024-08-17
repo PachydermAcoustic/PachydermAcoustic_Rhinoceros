@@ -45,26 +45,6 @@ namespace Pachyderm_Acoustic
                 Clear();
             }
 
-            //public void Populate(Pachyderm_Acoustic.Environment.Source[] Sourceobjs, Pachyderm_Acoustic.Environment.Receiver_Bank[] SimResults)
-            //{
-            //    DS = null;
-            //    IS = null;
-            //    Rec = SimResults;
-            //    SrcBoxes.Clear();
-            //    DynamicLayout SrcLayout = new DynamicLayout();
-            //    Delay = new double[Sourceobjs.Length];
-
-            //    foreach (Source s in Sourceobjs)
-            //    {
-            //        CheckBox src = new CheckBox();
-            //        src.Text = String.Format("S{0}-", s.Source_ID()) + s.Type();
-            //        src.MouseUp += update_proxy;
-            //        SrcBoxes.Add(src);
-            //        SrcLayout.AddRow(src);
-            //    }
-            //    this.Content = SrcLayout;
-            //}
-
             private void update_proxy(object sender, MouseEventArgs e)
             {
                 if (Update != null) Update(sender, e);
@@ -129,7 +109,7 @@ namespace Pachyderm_Acoustic
             {
                 //Interface for time selection...
                 List<int> SrcID = SelectedSources();
-
+                if (Rec == null || Rec[SrcID[0]] == null) return;
                 double t = Rec[SrcID[0]].delay_ms;
                 Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
 
@@ -250,10 +230,7 @@ namespace Pachyderm_Acoustic
 
                 foreach (int s in source)
                 {
-                    for (int i = 0; i < SimResults.Length; i++)
-                    {
-                        IS_Paths.AddRange(SimResults[i].Paths[receiver]);
-                    }
+                    IS_Paths.AddRange(SimResults[s].Paths[receiver]);
                 }
 
                 Populate();
@@ -912,7 +889,6 @@ namespace Pachyderm_Acoustic
             }
         }
 
-
         public class HelpMenu : MenuSegmentedItem
         {
             
@@ -921,6 +897,10 @@ namespace Pachyderm_Acoustic
                 ButtonMenuItem AboutPToolStripMenuItem = new ButtonMenuItem();
                 ButtonMenuItem AboutOToolStripMenuItem = new ButtonMenuItem();
                 ButtonMenuItem LearnToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem SOFAToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem AnechoicToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem CLFToolStripMenuItem = new ButtonMenuItem();
+                ButtonMenuItem AskToolStripMenuItem = new ButtonMenuItem();
                 ButtonMenuItem ContributeToolStripMenuItem = new ButtonMenuItem();
                 ButtonMenuItem DonateToolStripMenuItem = new ButtonMenuItem();
                 ButtonMenuItem ContactToolStripMenuItem = new ButtonMenuItem();
@@ -930,6 +910,10 @@ namespace Pachyderm_Acoustic
                 Menu.Items.Add(AboutPToolStripMenuItem);
                 Menu.Items.Add(AboutOToolStripMenuItem);
                 Menu.Items.Add(LearnToolStripMenuItem);
+                Menu.Items.Add(AnechoicToolStripMenuItem);
+                Menu.Items.Add(CLFToolStripMenuItem);
+                Menu.Items.Add(SOFAToolStripMenuItem);
+                Menu.Items.Add(AskToolStripMenuItem);
                 Menu.Items.Add(ContributeToolStripMenuItem);
                 Menu.Items.Add(DonateToolStripMenuItem);
                 Menu.Items.Add(ContactToolStripMenuItem);
@@ -951,6 +935,26 @@ namespace Pachyderm_Acoustic
                 LearnToolStripMenuItem.Text = "Learn Pachyderm...";
                 LearnToolStripMenuItem.Click += this.LearnToolStripMenuItem_Click;
                 //
+                // AnechoicToolStripMenuItem
+                //
+                AnechoicToolStripMenuItem.Text = "Find Anechoic Audio...";
+                AnechoicToolStripMenuItem.Click += this.AnechoicToolStripMenuItem_Click;
+                //
+                // CLFToolStripMenuItem
+                //
+                CLFToolStripMenuItem.Text = "Find CLF Files...";
+                CLFToolStripMenuItem.Click += this.CLFToolStripMenuItem_Click;
+                //
+                // SOFAToolStripMenuItem
+                //
+                SOFAToolStripMenuItem.Text = "Find HRTF Files...";
+                SOFAToolStripMenuItem.Click += this.SOFAToolStripMenuItem_Click;
+                //
+                // AskToolStripMenuItem
+                //
+                AskToolStripMenuItem.Text = "Ask...";
+                AskToolStripMenuItem.Click += this.AskToolStripMenuItem_Click;
+                //
                 // ContributeToolStripMenuItem
                 //
                 ContributeToolStripMenuItem.Text = "Contribute...";
@@ -969,7 +973,7 @@ namespace Pachyderm_Acoustic
 
                 private void AboutToolStripMenuItem_Click(object sneder, EventArgs e)
                 {
-                    PachSplash PS = new PachSplash();
+                    PachSplash PS = new PachSplash(0);
                     PS.ShowModal();
                 }
 
@@ -1008,6 +1012,26 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            private void AskToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                Eto.Forms.MessageBox.Show(Rhino.UI.RhinoEtoApp.MainWindow, "Need to ask a question or report a bug? Feel free, but remember to be respectful at all times. Sending you to Serengeti now. Make sure to add '@Arthur' in your new topic's message body, in order to ensure that the developer will see your message.", "Need to ask...?");
+
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    System.Diagnostics.Process.Start("https://discourse.mcneel.com/");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://discourse.mcneel.com/",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
             private void ContributeToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 string frameworkDescription = RuntimeInformation.FrameworkDescription;
@@ -1039,6 +1063,60 @@ namespace Pachyderm_Acoustic
                     System.Diagnostics.Process.Start(new ProcessStartInfo
                     {
                         FileName = "https://www.orase.org/donate-1",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void AnechoicToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    Process.Start("https://www.orase.org/anechoic-audio");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://www.orase.org/anechoic-audio",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void CLFToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    Process.Start("http://www.clfgroup.org/clfdocuments.htm");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "http://www.clfgroup.org/clfdocuments.htm",
+                        UseShellExecute = true
+                    });
+                }
+            }
+
+            private void SOFAToolStripMenuItem_Click(object sender, EventArgs e)
+            {
+                string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                if (frameworkDescription.Contains(".NET Framework"))
+                {
+                    Process.Start("https://www.sofaconventions.org/mediawiki/index.php/Files");
+                }
+                else if (frameworkDescription.Contains(".NET"))
+                {
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "https://www.sofaconventions.org/mediawiki/index.php/Files",
                         UseShellExecute = true
                     });
                 }
