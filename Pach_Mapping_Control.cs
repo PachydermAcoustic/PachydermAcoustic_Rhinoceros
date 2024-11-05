@@ -880,7 +880,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n.Length > 0)
+                            if (n != null && n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -908,7 +908,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n.Length > 0)
+                            if (n != null && n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -936,7 +936,7 @@ namespace Pachyderm_Acoustic
                             double[] Noise = new double[8];
                             string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
 
-                            if (n.Length > 0)
+                            if (n != null && n.Length > 0)
                             {
                                 string[] ns = n.Split(","[0]);
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
@@ -947,6 +947,7 @@ namespace Pachyderm_Acoustic
                                 Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
                                 n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                                 string[] ns = n.Split(","[0]);
+                                Noise = new double[8];
                                 for (int oct = 0; oct < 8; oct++) Noise[oct] = double.Parse(ns[oct]);
                                 this.Enabled = true;
                             }
@@ -1007,6 +1008,7 @@ namespace Pachyderm_Acoustic
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_EchoCritPercent_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources());
+                            if (Values == null) return;
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EMin, Current_EMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -1093,10 +1095,11 @@ namespace Pachyderm_Acoustic
 
             private void SaveDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
-                Eto.Forms.OpenFileDialog of = new Eto.Forms.OpenFileDialog();
-                of.CurrentFilter = ".pachm";
-                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm|" + "All Files|");
-                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Ok)
+                Eto.Forms.SaveFileDialog of = new Eto.Forms.SaveFileDialog();
+                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm");
+                of.Filters.Add("All Files|");
+                of.CurrentFilterIndex = 0;
+                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
                     if (Map != null)
                     {
@@ -1108,9 +1111,11 @@ namespace Pachyderm_Acoustic
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 Eto.Forms.OpenFileDialog of = new Eto.Forms.OpenFileDialog();
-                of.CurrentFilter = ".pachm";
-                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm|" + "All Files|");
-                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Ok)
+                of.Filters.Add("Pachyderm Mapping Data File (*.pachm)|*.pachm");
+                of.Filters.Add("All Files|");
+                of.CurrentFilterIndex = 0;
+
+                if (of.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
                 {
                     PachMapReceiver[] RT_IN = new PachMapReceiver[0];
                     if (!Utilities.FileIO.Read_pachm(of.FileName,ref RT_IN)) return;
@@ -1672,7 +1677,7 @@ namespace Pachyderm_Acoustic
                 Calculate.Dispose();
                 Env_Control.Dispose();
 
-                tabOutput.Dispose();
+                //tabOutput.Dispose();
                 SourceList.Dispose();
                 Plot_Values.Dispose();
                 groupBox_Time.Dispose();
@@ -1696,7 +1701,7 @@ namespace Pachyderm_Acoustic
                 STlbl.Dispose();
                 Calculate_Map.Dispose();
 
-                tabIRs.Dispose();
+                //tabIRs.Dispose();
                 Octave.Dispose();
                 OctLbl.Dispose();
                 Analysis_View.Dispose();
@@ -1708,7 +1713,7 @@ namespace Pachyderm_Acoustic
                 RecLbl.Dispose();
                 //Auralisation.Dispose();
 
-                tabTflip.Dispose();
+                //tabTflip.Dispose();
                 Integration_select.Dispose();
                 IntDmnLbl.Dispose();
                 Step_Select.Dispose();

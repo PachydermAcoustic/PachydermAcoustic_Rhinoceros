@@ -619,6 +619,10 @@ namespace Pachyderm_Acoustic
                 {
                     //BRAS format CSV intake:
                     OF = new Eto.Forms.OpenFileDialog();
+                    OF.Filters.Add("Source Directivity File (*.csv)|*.csv|");
+                    OF.Filters.Add("All Files|");
+                    OF.CurrentFilterIndex = 0;
+
                     if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
                     {
                         CODES = Balloon.Read_Generic(OF.FileName);

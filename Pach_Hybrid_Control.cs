@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Diagnostics;
+using MathNet.Numerics.Optimization;
 
 namespace Pachyderm_Acoustic
 {
@@ -575,7 +576,10 @@ namespace Pachyderm_Acoustic
                 this.Normalize_Graph.Checked = true;
                 this.Normalize_Graph.Text = "Normalize To Direct";
                 this.Normalize_Graph.CheckedChanged += this.Normalize_Graph_CheckedChanged;
-                AnaGctrl.AddRow(LockUserScale, Normalize_Graph);
+                Button Add_reference = new Button();
+                Add_reference.Text = "Add In-Situ Reference";
+                Add_reference.Click += this.Add_reference_Click;
+                AnaGctrl.AddRow(LockUserScale, Normalize_Graph, Add_reference);
                 SimRev.AddRow(AnaGctrl);
                 this.Analysis_View = new ScottPlot.Eto.EtoPlot();
                 this.Analysis_View.Size = new Size(-1, 250);
@@ -771,6 +775,35 @@ namespace Pachyderm_Acoustic
                 Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
             }
 
+            double[][] Ref_Schroeder = null;
+            private void Add_reference_Click(object sender, EventArgs e)
+            {
+                Eto.Forms.OpenFileDialog ofd = new Eto.Forms.OpenFileDialog();
+                ofd.Filters.Add(new FileFilter("Wave Files", ".wav"));
+                ofd.CurrentFilterIndex = 0;
+                if (ofd.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == DialogResult.Ok)
+                {
+                    int fs;
+                    double[][] ir = Audio.Pach_SP.Wave.ReadtoDouble(ofd.FileName, true, out fs);
+                    if (ir[0].Length / fs > 45) return;
+                    if (fs != 44100) ir[0] = Audio.Pach_SP.Resample(ir[0], fs, 44100, 0, true);
+
+                    Ref_Schroeder = new double[9][];
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        double[] BP = Audio.Pach_SP.FIR_Bandpass(ir[0], oct, fs, 0);
+                        for (int i = 0; i < BP.Length; i++) BP[i] = BP[i] * BP[i];
+                        Ref_Schroeder[oct] = AcousticalMath.Schroeder_Integral(BP, (int)(44100 * CutoffTime / 1000));
+                        for (int i = 0; i < Ref_Schroeder[oct].Length; i++) Ref_Schroeder[oct][i] = 10 * Math.Log10(Ref_Schroeder[oct][i] + 1E-10);
+                    }
+                    double[] BP_ = new double[ir[0].Length];
+                    for (int i = 0; i < BP_.Length; i++) BP_[i] = ir[0][i] * ir[0][i];
+                    Ref_Schroeder[8] = AcousticalMath.Schroeder_Integral(BP_, (int)(44100 * CutoffTime / 1000));
+                    for (int i = 0; i < Ref_Schroeder[8].Length; i++) Ref_Schroeder[8][i] = 10 * Math.Log10(Ref_Schroeder[8][i] + 1E-10);
+                    Update_Graph(null, null);
+                }
+            }
+            
             private void Load_Library_Event(object sender, Rhino.DocObjects.Tables.LayerTableEventArgs e)
             {
                 Load_Library();
@@ -1124,12 +1157,10 @@ namespace Pachyderm_Acoustic
                                                 };
                         Rhino.RhinoApp.EscapeKeyPressed += usercancel;
 
-
                         TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT).GetAwaiter();
                         while (!TRTA.IsCompleted) 
                             await Task.Delay(3000);
                         RT = TRTA.GetResult() as SplitRayTracer;
-
                         Rhino.RhinoApp.EscapeKeyPressed -= usercancel;
 
                         if (RT != null)
@@ -2426,6 +2457,14 @@ namespace Pachyderm_Acoustic
                         Analysis_View.Plot.XAxis.Label.Text = "Time (seconds)";
                         Analysis_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
 
+                        if (Ref_Schroeder != null)
+                        {
+                            int length = (int)(CutoffTime * 44100 / 1000);
+                            double[] Ref = new double[length];
+                            Array.Copy(Ref_Schroeder[OCT_ID], 0, Ref, 0, length);
+                            Analysis_View.Plot.Add.Signal(Ref, 1.0/44100.0, ScottPlot.Colors.Gray);
+                        }
+
                         List<int> SrcIDs = SourceList.SelectedSources();
 
                         double[] Filter;
@@ -3210,7 +3249,8 @@ namespace Pachyderm_Acoustic
             public Pachyderm_Acoustic.Audio.HRTF ReadSofaHRTF()
             {
                 GetWave.Filters.Clear();
-                GetWave.Filters.Add(" HRTF - SOFA convention (*.sofa) |*.sofa");
+                GetWave.Filters.Add("HRTF - SOFA convention (*.sofa) |*.sofa");
+                GetWave.CurrentFilterIndex = 0;
                 if (GetWave.ShowDialog(this) == DialogResult.Ok)
                 {
                     try
@@ -3732,7 +3772,7 @@ namespace Pachyderm_Acoustic
                         sw.Write(Recs[q].x);
                         sw.Write(Recs[q].y);
                         sw.Write(Recs[q].z);
-                        sw.Write(Receiver[0].Rec_List[q].Rho_C);
+                        sw.Write(Direct_Data[0].Rho_C[q]);
                     }
 
                     for (int s = 0; s < SRC.Length; s++)
@@ -3749,7 +3789,7 @@ namespace Pachyderm_Acoustic
                             IS_Data[s].Write_Data(ref sw);
                         }
 
-                        if (Receiver != null)
+                        if (Receiver.Length > s && Receiver[s] != null)
                         {
                             //9. Write Ray Traced Sound Data
                             Receiver[s].Write_Data(ref sw);

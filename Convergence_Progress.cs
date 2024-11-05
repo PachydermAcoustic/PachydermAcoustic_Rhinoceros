@@ -28,6 +28,8 @@ namespace Pachyderm_Acoustic
 
             private ScottPlot.Eto.EtoPlot Conv_View;
             private ScottPlot.Eto.EtoPlot Hist_View;
+            private ScottPlot.Eto.EtoPlot IR1_View;
+            private ScottPlot.Eto.EtoPlot IR2_View; 
             double[] conv1, conv2;
             double[] dom1, dom2, domh;
             private Scatter Conv1, Conv2, hist1, hist2;
@@ -41,6 +43,8 @@ namespace Pachyderm_Acoustic
                 DynamicLayout Layout = new Eto.Forms.DynamicLayout();
                 this.Conv_View = new ScottPlot.Eto.EtoPlot();
                 this.Hist_View = new ScottPlot.Eto.EtoPlot();
+                this.IR1_View = new ScottPlot.Eto.EtoPlot();
+                this.IR2_View = new ScottPlot.Eto.EtoPlot();
                 this.Conclude = new Eto.Forms.Button();
 
                 Conclude.Text = "Conclude_Simulation";
@@ -53,7 +57,20 @@ namespace Pachyderm_Acoustic
                 Conv_View.Plot.YAxis.Label.Text = "Ratio of Change";
                 Conv_View.Plot.YAxis.Label.Font.Size = 12;
                 Conv_View.Size = new Eto.Drawing.Size(350, 250);
-                dom1 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
+                IR1_View.Plot.TitlePanel.Label.Text = "Farthest Clear Receiver";
+                IR1_View.Plot.TitlePanel.Label.Font.Size = 12;
+                IR1_View.Plot.XAxis.Label.Text = "Time (s)";
+                IR1_View.Plot.XAxis.Label.Font.Size = 12;
+                IR1_View.Plot.YAxis.Label.Text = "Sound Pressure Level";
+                IR1_View.Plot.YAxis.Label.Font.Size = 12;
+                IR1_View.Size = new Eto.Drawing.Size(350, 250);
+                IR2_View.Plot.TitlePanel.Label.Text = "Farthest Obstructed Receiver";
+                IR2_View.Plot.TitlePanel.Label.Font.Size = 12;
+                IR2_View.Plot.XAxis.Label.Text = "Time (s)";
+                IR2_View.Plot.XAxis.Label.Font.Size = 12;
+                IR2_View.Plot.YAxis.Label.Text = "Sound Pressure Level";
+                IR2_View.Plot.YAxis.Label.Font.Size = 12;
+                IR2_View.Size = new Eto.Drawing.Size(350, 250); dom1 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
                 conv1 = new double[6] { 0,0,0,0,0,0 };
                 dom2 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
                 conv2 = new double[6] { 0, 0, 0, 0, 0, 0 };
@@ -75,20 +92,69 @@ namespace Pachyderm_Acoustic
 
                 hist1 = Hist_View.Plot.Add.Scatter(domh, history1.ToArray(), ScottPlot.Colors.Blue);
                 hist2 = Hist_View.Plot.Add.Scatter(domh, history2.ToArray(), ScottPlot.Colors.Red);
-                Layout.AddRow(Conv_View);
-                Layout.AddRow(Hist_View);
+
+                DynamicLayout tbl1 = new DynamicLayout();
+                DynamicLayout tbl2 = new DynamicLayout();
+                tbl1.AddRow(Conv_View, IR1_View);
+                tbl2.AddRow(Hist_View, IR2_View);
+                Layout.AddRow(tbl1);
+                Layout.AddRow(tbl2);
                 Layout.AddRow(Conclude);
                 Layout.DefaultPadding = 8;
                 Layout.DefaultSpacing = new Eto.Drawing.Size(8, 8);
                 this.Content = Layout;
                 this.Content.Invalidate();
             }
+            //double min = 0, min2 = 0;
 
-            public async void Fill(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr)
+            public async void Fill(double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr, Queue<double[]> IR_Clear = null, Queue<double[]> IR_Obstructed = null)
             {
-                    if (Conv1.Length == 1) Populate(Conv1[0], Conv2, ConvInf, ID, corr);
-                    else if (Conv1.Length > 1) Populate(Conv1, Conv2, ConvInf, ID, count);
-                    else return;
+                if (IR_Clear == null || IR_Clear.Count == 0) IR1_View.Enabled = false;
+                else 
+                {
+                    IR1_View.Enabled = true;
+                    IR1_View.Plot.Clear();
+                    if(IR_Clear.Count > 4) IR1_View.Plot.Add.Signal(IR_Clear.ElementAtOrDefault(4), 1.0 / 44100.0, ScottPlot.Colors.DimGray);
+                    if (IR_Clear.Count > 3) IR1_View.Plot.Add.Signal(IR_Clear.ElementAtOrDefault(3), 1.0 / 44100.0, ScottPlot.Colors.LightGray);
+                    if (IR_Clear.Count > 2) IR1_View.Plot.Add.Signal(IR_Clear.ElementAtOrDefault(2), 1.0 / 44100.0, ScottPlot.Colors.Gray);
+                    if (IR_Clear.Count > 1) IR1_View.Plot.Add.Signal(IR_Clear.ElementAtOrDefault(1), 1.0 / 44100.0, ScottPlot.Colors.DarkGray);
+                    if (IR_Clear.Count > 0)
+                    {
+                        double[] IR = IR_Clear.ElementAtOrDefault(0);
+                        //min = Math.Min(min, IR.Min());
+                        IR1_View.Plot.Add.Signal(IR, 1.0 / 44100.0, ScottPlot.Colors.Blue);
+                        IR1_View.Plot.YAxis.Max = 0;
+                        IR1_View.Plot.YAxis.Min = -70;
+                        IR1_View.Plot.XAxis.Max = 0;
+                        IR1_View.Plot.XAxis.Min = IR.Length / 44100;
+                    }
+                    IR1_View.Invalidate();
+                }
+                if (IR_Obstructed == null || IR_Obstructed.Count == 0) IR2_View.Enabled = false;
+                else
+                {
+                    IR2_View.Enabled = true;
+                    IR2_View.Plot.Clear();
+                    if (IR_Obstructed.Count > 4) IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(4), 1.0 / 44100.0, ScottPlot.Colors.DimGray);
+                    if (IR_Obstructed.Count > 3) IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(3), 1.0 / 44100.0, ScottPlot.Colors.LightGray);
+                    if (IR_Obstructed.Count > 2) IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(2), 1.0 / 44100.0, ScottPlot.Colors.Gray);
+                    if (IR_Obstructed.Count > 1) IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(1), 1.0 / 44100.0, ScottPlot.Colors.DarkGray);
+                    if (IR_Obstructed.Count > 0)
+                    {
+                        double[] IR = IR_Obstructed.ElementAtOrDefault(0);
+                        //min2 = Math.Min(min, IR.Min());
+                        IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(0), 1.0 / 44100.0, ScottPlot.Colors.Blue);
+                        IR2_View.Plot.YAxis.Max = 0;
+                        IR2_View.Plot.YAxis.Min = -70;
+                        IR2_View.Plot.XAxis.Max = 0;
+                        IR2_View.Plot.XAxis.Min = IR.Length / 44100;
+                    }
+                    IR2_View.Invalidate();
+                }
+
+                if (Conv1.Length == 1) Populate(Conv1[0], Conv2, ConvInf, ID, corr);
+                else if (Conv1.Length > 1) Populate(Conv1, Conv2, ConvInf, ID, count);
+                else return;
             }
 
             public void Populate()

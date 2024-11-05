@@ -20,6 +20,8 @@ using Rhino.Geometry;
 using Rhino.Display;
 using System.Collections.Generic;
 using Pachyderm_Acoustic.Environment;
+using System.Net.Security;
+using System.Security.Principal;
 
 namespace Pachyderm_Acoustic
 {
@@ -440,5 +442,37 @@ namespace Pachyderm_Acoustic
                 V_Bounds = Values;
             }
         }  
+    }
+
+    public class EigenConduit : DisplayConduit
+    {
+        PointCloud receivers;
+
+        public EigenConduit()
+        {
+            this.Enabled = true;
+            receivers = new PointCloud();
+        }
+
+        protected override void PostDrawObjects(DrawEventArgs e)
+        {
+            try
+            {
+                lock (Rhino.RhinoDoc.ActiveDoc.Views.ActiveView)
+                {
+                    e.Display.DrawPointCloud(receivers, 4, System.Drawing.Color.DarkRed);
+                }
+            }
+            catch { return; }
+        }
+
+        public void Populate(List<Hare.Geometry.Point> rec)
+        {
+            receivers.ClearPointValues();
+            for (int i = 0; i < rec.Count; i++)
+            {
+                receivers.Add(Utilities.RCPachTools.HPttoRPt(rec[i]));
+            }
+        }
     }
 }

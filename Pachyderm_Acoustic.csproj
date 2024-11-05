@@ -42,8 +42,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>General_Public_License.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <AssemblyVersion>2.6.0.1</AssemblyVersion>
-    <FileVersion>2.6.0.1</FileVersion>
+    <AssemblyVersion>2.6.0.4</AssemblyVersion>
+    <FileVersion>2.6.0.4</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutputPath>bin\x64\Debug\</OutputPath>
@@ -127,7 +127,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MathNet.Numerics" Version="6.0.0-beta1" />
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <!--<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.4" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />-->
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />

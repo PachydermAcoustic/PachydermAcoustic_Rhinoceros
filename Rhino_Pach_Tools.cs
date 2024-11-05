@@ -106,7 +106,6 @@ namespace Pachyderm_Acoustic
                 return Sim;
             }
 
-
             /// <summary>
             /// Tool used for debug of voxel grids and bounding boxes.
             /// </summary>

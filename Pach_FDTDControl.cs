@@ -25,6 +25,7 @@ using System.Linq;
 using Eto.Forms;
 using Rhino.UI;
 using System.Threading.Tasks;
+using Hare.Geometry;
 
 namespace Pachyderm_Acoustic
 {
@@ -480,10 +481,10 @@ namespace Pachyderm_Acoustic
                 EdgeFreq.Dispose();
                 Preview.Dispose();
                 TimeContainer.Dispose();
-                Time_Preview.Dispose();
+                //Time_Preview.Dispose();
                 PlayContinuous.Dispose();
                 ForwVis.Dispose();
-                Color_Selection.Dispose();
+                //Color_Selection.Dispose();
                 Pos_Select.Dispose();
                 AxisSelect.Dispose();
                 Map_Planes.Dispose();
@@ -501,7 +502,7 @@ namespace Pachyderm_Acoustic
                 EigenFrequencies.Dispose();
                 Folder_Status.Dispose();
                 SetFolder.Dispose();
-                VisTab.Dispose();
+                //VisTab.Dispose();
                 CalculateScattering.Dispose();
                 ScatExport.Dispose();
                 ScatteringGraph.Dispose();
@@ -814,9 +815,11 @@ namespace Pachyderm_Acoustic
 
             #region Simulation
             double samplefrequency;
+            EigenConduit Eigen_View;
 
             private void CalculateSim_Click(object sender, EventArgs e)
             {
+                Eigen_View = new EigenConduit();
                 EigenFrequencies.Items.Clear();
                 Chosenfreq = 0;
                 Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
@@ -860,7 +863,7 @@ namespace Pachyderm_Acoustic
                 //Find Eigenfrequencies
                 if (EigenFrequencies.Items.Count > 0) return;
                 EigenFrequencies.Items.Clear();
-                Find_EigenFrequencies();
+                Find_EigenFrequencies(Rec);
 
                 Receiver_Choice.Items.Clear();
                 Time = new double[result_signals[0].Length];
@@ -869,7 +872,7 @@ namespace Pachyderm_Acoustic
                 Receiver_Choice.SelectedIndex = 0;
             }
 
-            private void Find_EigenFrequencies()
+            private void Find_EigenFrequencies(List<Hare.Geometry.Point> Rec)
             {
                 for (int c = 0; c < result_signals.Length; c++)
                 {
@@ -886,11 +889,10 @@ namespace Pachyderm_Acoustic
                         freq[i] = ((double)i / fdom.Length * samplefrequency);
                     }
 
-                    PopulateEigenFrequencies(mag, freq, "Magnitude");
-                    PopulateEigenFrequencies(real, freq, "Real-Part");
-                    PopulateEigenFrequencies(imag, freq, "Imaginary-Part");
+                    PopulateEigenFrequencies(Rec[c], mag, freq, "Magnitude");
+                    PopulateEigenFrequencies(Rec[c], real, freq, "Real-Part");
+                    PopulateEigenFrequencies(Rec[c], imag, freq, "Imaginary-Part");
                 }
-
 
                 IListItem[] l = new IListItem[EigenFrequencies.Items.Count];
                 EigenFrequencies.Items.CopyTo(l, 0);
@@ -910,9 +912,11 @@ namespace Pachyderm_Acoustic
 
             double[] Time;
             double[][] result_signals;
+            SortedDictionary<string, List<Point>> Eigen_Record;
 
             private void Update_Graph(object sender, EventArgs e)
             {
+                Eigen_Record = new SortedDictionary<string, List<Point>>();
                 double max = 0;
                 if (Receiver_Choice.Items.Count < 1) return;
                 double[] SPL = Utilities.AcousticalMath.SPL_Pressure_Signal(result_signals[Receiver_Choice.SelectedIndex]);
@@ -972,7 +976,8 @@ namespace Pachyderm_Acoustic
                 Frequency_View.Plot.Add.VerticalLine(Chosenfreq, 3, ScottPlot.Colors.Black);
             }
 
-            public void PopulateEigenFrequencies(double[] mag, double[] freq, string functiontype)
+
+            public void PopulateEigenFrequencies(Hare.Geometry.Point rec, double[] mag, double[] freq, string functiontype)
             {
                 MathNet.Numerics.Interpolation.CubicSpline CS = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(freq, mag);
 
@@ -996,7 +1001,17 @@ namespace Pachyderm_Acoustic
                                 if (eigen < 100) s = "00";
                                 else if (eigen < 1000) s = "0";
                                 s = s + string.Format("{0} hz. {1}", eigen, functiontype);
-                                EigenFrequencies.Items.Add(s);
+
+                                List<Point> entries;
+                                if (Eigen_Record.TryGetValue(s, out entries))
+                                {
+                                    entries.Add(rec);
+                                }
+                                else
+                                {
+                                    Eigen_Record.Add(s, new List<Point> { rec });
+                                    EigenFrequencies.Items.Add(s);
+                                }
                             }
                         }
                     }
@@ -1035,8 +1050,13 @@ namespace Pachyderm_Acoustic
             private void EigenFrequencies_SelectedIndexChanged(object sender, EventArgs e)
             {
                 if (EigenFrequencies.Items.Count < 1) return;
-                Chosenfreq = double.Parse((EigenFrequencies.Items[EigenFrequencies.SelectedIndex].ToString()).Split(" "[0])[0]);
+                string s = EigenFrequencies.Items[EigenFrequencies.SelectedIndex].ToString();
+                Chosenfreq = double.Parse(s.Split(" "[0])[0]);
                 Update_Graph(sender, e);
+
+                List<Point> pts;
+                if (Eigen_Record.TryGetValue(s, out pts)) Eigen_View.Populate(pts);
+                
                 Frequency_Selection.Value = Chosenfreq;
                 Freq_Max.Value = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
                 VisualPML.Checked = EigenPML.Checked;

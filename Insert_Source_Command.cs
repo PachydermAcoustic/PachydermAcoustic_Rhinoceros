@@ -580,6 +580,7 @@ namespace Pachyderm_Acoustic
             private void ClearConduit(object sender, EventArgs e)
             {
                 m_id_list.Clear();
+                m_Balloons.Clear();
                 this.Enabled = false;
                 // we don't want to watch for events any more 
                 SetupEventHandlers(false);
@@ -643,7 +644,9 @@ namespace Pachyderm_Acoustic
                     {
                         if ((e.TheObject.Attributes.ObjectId == m_id))
                         {
-                            m_id_list.Remove(m_id);
+                            int index = m_id_list.IndexOf(m_id);
+                            m_id_list.RemoveAt(index);
+                            m_Balloons.RemoveAt(index);
                             if (m_id_list.Count < 1)
                             {
                                 this.Enabled = false;
@@ -723,7 +726,6 @@ namespace Pachyderm_Acoustic
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
-                            //ft = rhino_object.Geometry.GetUserString("FileType");
                             Balloon L = new Balloon(strballoon, Utilities.RCPachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
