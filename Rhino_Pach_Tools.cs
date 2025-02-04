@@ -760,7 +760,8 @@ namespace Pachyderm_Acoustic
                 {
                     Plane P = Plane.WorldXY;
                     P.Origin = HPttoRPt(RecList[0].Rec_List[i].Origin);
-                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(((int)Math.Round(Values[i], decimals)).ToString(), P, RecList[0].Rec_List[0].Radius, "Arial", true, false);
+                    string t = (Math.Round(Values[i], decimals)).ToString();
+                    Rhino.RhinoDoc.ActiveDoc.Objects.AddText(t, P, RecList[0].Rec_List[0].Radius, "Arial", true, false);
                 }
             }
         }

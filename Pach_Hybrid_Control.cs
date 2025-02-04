@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2024, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -31,6 +31,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Diagnostics;
 using MathNet.Numerics.Optimization;
+using Rhino.UI.Controls.ThumbnailUI;
 
 namespace Pachyderm_Acoustic
 {
@@ -64,7 +65,6 @@ namespace Pachyderm_Acoustic
                 this.fileToolStripMenuItem.Menu.Items.Add(this.savePTBFormatToolStripMenuItem);
                 this.fileToolStripMenuItem.Menu.Items.Add(this.savePressurePTBFormatToolStripMenuItem);
                 this.fileToolStripMenuItem.Menu.Items.Add(this.saveEDCToolStripMenuItem);
-
                 this.fileToolStripMenuItem.Text = "File";
 
                 // 
@@ -306,6 +306,7 @@ namespace Pachyderm_Acoustic
                 DynamicLayout VC = new DynamicLayout();
                 VC.DefaultSpacing = new Size(8, 8);
                 this.user_quart_lambda = new Slider();
+                this.user_quart_lambda.MaxValue = 1000;
                 this.user_quart_lambda.TickFrequency = 10;
                 this.user_quart_lambda.Value = 25;
                 this.user_quart_lambda.ValueChanged += this.Variegaton_Scroll;
@@ -403,8 +404,6 @@ namespace Pachyderm_Acoustic
                 this.Tabs.Pages.Add(this.TabMaterials);
 
                 TabMaterials.Content = Mat_LO;
-
-                //this.label37.Text = "Flatten All";
 
                 // 
                 // TabPage3
@@ -584,6 +583,48 @@ namespace Pachyderm_Acoustic
                 this.Analysis_View = new ScottPlot.Eto.EtoPlot();
                 this.Analysis_View.Size = new Size(-1, 250);
                 SimRev.AddRow(Analysis_View);
+                this.IR_Parts_Analysis = new GroupBox();
+                DynamicLayout Parts = new DynamicLayout();
+                Specular_Part = new CheckBox();
+                Specular_Part.CheckedChanged += Update_Graph;
+                Specular_Part.Text = "Show Specular Reflections";
+                Diffuse_Part = new CheckBox();
+                Diffuse_Part.CheckedChanged += Update_Graph;
+                Diffuse_Part.Text = "Show Diffuse Reflections";
+                Specular_postdiffuse_Part = new CheckBox();
+                Specular_postdiffuse_Part.CheckedChanged += Update_Graph;
+                Specular_postdiffuse_Part.Text = "Show Specular Reflections After Diffusion";
+                Parts.AddRow(Specular_Part);
+                Parts.AddRow(Diffuse_Part);
+                Parts.AddRow(Specular_postdiffuse_Part);
+                IR_Parts_Analysis.Text = "IR Reflection Analysis (omni only)";
+                IR_Parts_Analysis.Content = Parts;
+                SimRev.AddRow(IR_Parts_Analysis);
+                IR_Parts_Analysis.Visible = false;
+                Receiver_Rose = new GroupBox();
+                Show_Rec_Rose = new CheckBox();
+                Show_Rec_Rose.CheckedChanged += Update_Rose;
+                Show_Rec_Rose.Text = "Show Receiver Rose";
+                Show_Rec_Rose.Checked = false;
+                Receiver_Rose.Text = "Receiver Rose Time Window";
+                RR_tstart = new NumericStepper();
+                RR_tstart.DecimalPlaces = 0;
+                RR_tstart.MaxValue = 1000;
+                RR_tstart.ValueChanged += Update_Rose;
+                RR_Width = new NumericStepper();
+                RR_Width.DecimalPlaces = 0;
+                RR_Width.MaxValue = 1000;
+                RR_Width.Value = 50;
+                RR_Width.ValueChanged += Update_Rose;
+                DynamicLayout RR = new DynamicLayout();
+                Label RRstart = new Label();
+                Label RRend = new Label();
+                RRstart.Text = "Window Start (ms)";
+                RRend.Text = "Window breadth (ms)";
+                RR.AddRow(Show_Rec_Rose, RRstart, RR_tstart);
+                RR.AddRow(null, RRend, RR_Width);
+                Receiver_Rose.Content = RR;
+                SimRev.AddRow(Receiver_Rose);
                 Simreview.Content = SimRev;
 
                 this.Normalization_Choice = new NumericStepper();
@@ -735,7 +776,6 @@ namespace Pachyderm_Acoustic
                 DynamicLayout FE = new DynamicLayout();
                 FE.DefaultSpacing = new Size(8, 8);
                 FE.AddRow(FSLO, Export_Filter);
-                //Aur_Layout.AddRow(FE);
 
                 this.RenderBtn.Enabled = false;
                 this.RenderBtn.Text = "Render Auralization";
@@ -858,8 +898,10 @@ namespace Pachyderm_Acoustic
 
             private async void Calculate_Click(object sender, System.EventArgs e)
             {
+                IR_Parts_Analysis.Visible = false;
                 string SavePath = null;
                 CutoffTime = (double)this.CO_TIME.Value;
+                RR_tstart.MaxValue = CO_TIME.Value;
 
                 if (PachydermAc_PlugIn.SaveResults)
                 {
@@ -1052,7 +1094,7 @@ namespace Pachyderm_Acoustic
                         CancelCalc();
                         return;
                     }
-                    NScene.partition(P, PachydermAc_PlugIn.VGDomain);
+                    NScene.partition(P, Pach_Properties.Instance.Spatial_Depth, Pach_Properties.Instance.Max_Polys_Per_Node);
                     Flex_Scene = NScene;
                 }
                 else
@@ -1178,6 +1220,7 @@ namespace Pachyderm_Acoustic
                             CancelCalc();
                             return;
                         }
+                        IR_Parts_Analysis.Visible = true;
                     }
                 }
 
@@ -2413,6 +2456,41 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            ReceiverSphereConduit SC;
+
+            public void Update_Rose(object sender, EventArgs e)
+            {
+                if (!Show_Rec_Rose.Checked.Value) return;
+                if (Receiver_Choice.SelectedIndex < 0) return;
+
+                List<int> srcIDs = SelectedSources();
+                List<Direct_Sound> DS = null;
+                List<ImageSourceData> IS = null;
+                List<Receiver_Bank> R = null;
+
+                if (Direct_Data != null) 
+                {
+                    DS = new List<Direct_Sound>();
+                    foreach (int src in srcIDs) DS.Add(Direct_Data[src]);
+                }
+                if (IS_Data != null && IS_Data.Length > 0)
+                {
+                    IS = new List<ImageSourceData>();
+                    foreach (int src in srcIDs) IS.Add(IS_Data[src]);
+                }
+                if (Receiver != null && Receiver.Length > 0 && Receiver[0] != null)
+                {
+                    R = new List<Receiver_Bank>();
+                    foreach (int src in srcIDs) R.Add(Receiver[src]);
+                }
+
+                if (SC == null) SC = new ReceiverSphereConduit();
+                Sphere_Plot s = new Sphere_Plot(DS[0].Rec_Origin.ElementAt(ReceiverSelection.SelectedIndex));
+                SC.Data_in(s.Output(s.SPL_From_IR(Receiver_Choice.SelectedIndex, this.Graph_Octave.SelectedIndex, (int)(RR_tstart.Value * 44.100), (int)((RR_tstart.Value + RR_Width.Value) * 44.100), DS.ToArray(), IS.ToArray(), Receiver.ToArray())), DS[0].Rec_Origin.ElementAt(ReceiverSelection.SelectedIndex));
+                SC.Enabled = true;
+                Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+            }
+
             private void IS_Path_Box_MouseUp(object sender, EventArgs e)
             {
                 List<int> Srcs = SourceList.SelectedSources();
@@ -2449,7 +2527,7 @@ namespace Pachyderm_Acoustic
                     int REC_ID = 0;
                     try
                     {
-                        if (Receiver_Choice.Text == "No Results Calculated...") return;
+                        if (Receiver_Choice.SelectedIndex < 0) return;
                         REC_ID = Receiver_Choice.SelectedIndex;
 
                         int OCT_ID = PachTools.OctaveStr2Int(Graph_Octave.Text);
@@ -2602,6 +2680,35 @@ namespace Pachyderm_Acoustic
                         Analysis_View.Plot.Add.Signal(Schroeder, 1.0 / 44100.0, ScottPlot.Colors.Red);
                         Analysis_View.Plot.Add.Signal(Filter, 1.0 / 44100.0, ScottPlot.Colors.Blue);
 
+                        double[][] analysis_signal = new double[3][];
+                        analysis_signal[0] = new double[time.Length];
+                        analysis_signal[1] = new double[time.Length];
+                        analysis_signal[2] = new double[time.Length];
+
+                        if (Specular_Part.Checked == true || Diffuse_Part.Checked == true || Specular_postdiffuse_Part.Checked == true)
+                        {
+                            if (Receiver[0].Rec_List[0].Reflection_Analysis_Data != null && OCT_ID != 8)
+                            {
+                                foreach (int i in SrcIDs)
+                                {
+                                    for (int j = 0; j < Receiver[i].Rec_List[REC_ID].Reflection_Analysis_Data[0][0].Length; j++)
+                                    {
+                                        for (int t = 0; t < 3; t++) analysis_signal[t][j] = Receiver[i].Rec_List[REC_ID].Reflection_Analysis_Data[t][OCT_ID][j];
+                                    }
+                                }
+
+                                double min = Filter.Min();
+
+                                for (int t = 0; t < 3; t++)
+                                {
+                                    analysis_signal[t] = AcousticalMath.SPL_Intensity_Signal(analysis_signal[t]);
+                                    for (int i = 0; i < analysis_signal[t].Length; i++) analysis_signal[t][i] += min;
+                                }
+                                if (Specular_postdiffuse_Part.Checked == true) Analysis_View.Plot.Add.Signal(analysis_signal[2], 1.0 / 44100.0, ScottPlot.Colors.MediumPurple);
+                                if (Diffuse_Part.Checked == true) Analysis_View.Plot.Add.Signal(analysis_signal[1], 1.0 / 44100.0, ScottPlot.Colors.Crimson);
+                                if (Specular_Part.Checked == true) Analysis_View.Plot.Add.Signal(analysis_signal[0], 1.0 / 44100.0, ScottPlot.Colors.DarkBlue);
+                            }
+                        }
                         if (Paths.Count > 0)
                         {
                             ScottPlot.Plottables.Scatter IScurve = Analysis_View.Plot.Add.Scatter(S_time, S_Power, ScottPlot.Colors.Red);
@@ -2653,6 +2760,7 @@ namespace Pachyderm_Acoustic
                     }
 
                     Analysis_View.Invalidate();
+                    Update_Rose(null, null);
                     Update_Parameters();
                 }
                 else
@@ -2838,6 +2946,8 @@ namespace Pachyderm_Acoustic
 
             private void OpenDataToolStripMenuItem_Click(object sender, EventArgs e)
             {
+                IR_Parts_Analysis.Visible = false;
+
                 Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
                 OF.Filters.Add(new FileDialogFilter("Pachyderm Ray Data file (.pac1)", ".pac1"));
                 OF.Filters.Add(new FileDialogFilter("All", ".*"));
@@ -2857,6 +2967,15 @@ namespace Pachyderm_Acoustic
                 Update_Parameters();
                 Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
                 if (Receiver_Choice.SelectedIndex >= 0 && Receiver_Choice.Items.Count >= 0) Update_Graph(null, System.EventArgs.Empty);
+                List<int> srcs = SelectedSources();
+                double dtime = double.PositiveInfinity;
+
+                for (int i = 0; i < srcs.Count; i++)
+                {
+                    if (Direct_Data[srcs[i]].Delay_ms < dtime) dtime = (int)Direct_Data[srcs[i]].Delay_ms;
+                }
+
+                RR_tstart.Value = Math.Floor(dtime);
             }
 
             private void SaveIntensityResultsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -3113,8 +3232,8 @@ namespace Pachyderm_Acoustic
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
                     AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
+                    Update_Rose(null, null);
                 }
-
                 if (Rhino.RhinoDoc.ActiveDoc.IsAvailable) Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();
             }
 
@@ -3436,7 +3555,7 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    SaveWave.Filters.Add("Wave Audio (*.wavex) |*.wavex");
+                    SaveWave.Filters.Add("Extended Wave Audio (*.wavex) |*.wavex");
                 }
 
                 int SamplesPerSec = 44100;
@@ -3913,8 +4032,8 @@ namespace Pachyderm_Acoustic
                                 D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
                                 TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
                                 double[] L_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
-                                LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
-                                LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
+                                LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 100;
+                                LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 100;
                             }
                         }
                     }
@@ -4396,7 +4515,6 @@ namespace Pachyderm_Acoustic
 
             TabControl analysis_tabs;
 
-            //private Button Auralisation;
             private Button Delete_Material;
             private Label labelExp;
             private RadioButton Spec_Rays;
@@ -4424,6 +4542,10 @@ namespace Pachyderm_Acoustic
             private CheckBox TL_Check;
             internal ListBox Isolation_Lib;
             private Label labelEXP2;
+            private GroupBox IR_Parts_Analysis;
+            private CheckBox Specular_Part;
+            private CheckBox Diffuse_Part;
+            private CheckBox Specular_postdiffuse_Part;
 
             //Auralization controls
             private ListBox Channel_View;
@@ -4443,6 +4565,11 @@ namespace Pachyderm_Acoustic
             private CheckBox PlayAuralization;
             internal Button RenderBtn;
             internal DropDown DistributionType;
+
+            internal GroupBox Receiver_Rose;
+            internal CheckBox Show_Rec_Rose;
+            internal NumericStepper RR_tstart;
+            internal NumericStepper RR_Width;
 
             AuralisationConduit A;
 

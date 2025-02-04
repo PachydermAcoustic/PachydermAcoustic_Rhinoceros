@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2024, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -543,7 +543,7 @@ namespace Pachyderm_Acoustic
             public delegate void Populator(double Dist);
             public Numeric.TimeDomain.Acoustic_Compact_FDTD_RC FDTD;
             WaveConduit P;
-            SphereConduit SP;
+            HemisphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
             List<List<double>> Pressure;
             CellConduit c = CellConduit.Instance;
@@ -828,7 +828,7 @@ namespace Pachyderm_Acoustic
                 Hare.Geometry.Point[] Src = RCPachTools.GetSource();
 
                 List<Hare.Geometry.Point> Rec = RCPachTools.GetReceivers();
-                if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
+                if (Src.Length < 1 || Rm == null || Rec.Count < 1) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
 
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, 1000, 1, RCPachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
@@ -841,26 +841,7 @@ namespace Pachyderm_Acoustic
                 Mic.reset();
                 
                 result_signals = Mic.Recordings()[0];
-                
-                //System.Numerics.Complex[] source_response = SD.Frequency_Response(result_signals[0].Length);
 
-                //double f_limit = 0.8 * fs / samplefrequency * result_signals[0].Length;
-                //double f_top = 1.3 * f_limit;
-                //double dpi = Utilities.Numerics.PiX2 / (f_top - f_limit);
-
-                //for (int c = 0; c < result_signals.Length; c++)
-                //{
-                //    System.Numerics.Complex[] result_response = Audio.Pach_SP.FFT_pacGeneral(result_signals[c],0);
-                //    Array.Resize(ref result_response, result_response.Length / 2);
-                //    for (int s = 0; s < result_response.Length; s++)
-                //    {
-                //        System.Numerics.Complex mod = source_response[s].Magnitude;
-                //        if (s > f_limit) mod /= System.Numerics.Complex.Pow(source_response[s], (.5 * Math.Tanh((s-f_limit) * dpi) + 0.5));
-                //        result_response[s] /= mod.Magnitude;
-                //    }
-                //    result_signals[c] = Audio.Pach_SP.IFFT_Real_General(Audio.Pach_SP.Mirror_Spectrum(result_response), 0);
-                //}
-                //Find Eigenfrequencies
                 if (EigenFrequencies.Items.Count > 0) return;
                 EigenFrequencies.Items.Clear();
                 Find_EigenFrequencies(Rec);
@@ -874,6 +855,8 @@ namespace Pachyderm_Acoustic
 
             private void Find_EigenFrequencies(List<Hare.Geometry.Point> Rec)
             {
+                Eigen_Record = new SortedDictionary<string, List<Point>>();
+
                 for (int c = 0; c < result_signals.Length; c++)
                 {
                     System.Numerics.Complex[] fdom = Audio.Pach_SP.FFT_General(result_signals[c], 0);
@@ -1288,8 +1271,8 @@ namespace Pachyderm_Acoustic
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of balloon points, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
 
-                    Sphere_Plot SPS = new Sphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));
-                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
+                    Hemisphere_Plot SPS = new Hemisphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));
+                    if (SP == null) SP = new HemisphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     else SP.plot = SPS;
 
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
@@ -1374,8 +1357,8 @@ namespace Pachyderm_Acoustic
                         pts.Add(new Hare.Geometry.Point(pt.dx, pt.dy, pt.dz));
                     }
 
-                    Sphere_Plot SPS = new Sphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));//, 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
-                    if (SP == null) SP = new SphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
+                    Hemisphere_Plot SPS = new Hemisphere_Plot(new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z));//, 5 * Math.Sqrt(FDTDS.dx * FDTDS.dx + FDTDS.dy * FDTDS.dy + FDTDS.dz * FDTDS.dz));
+                    if (SP == null) SP = new HemisphereConduit(SPS, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z), scatterscale, new double[2] { scatcolorlayout.Min, scatcolorlayout.Max });
                     MicS = Mic;
                 }
                 Update_Scattering_Graph(null, null);

@@ -17,6 +17,7 @@
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
 using Eto.Forms;
+using Pachyderm_Acoustic.Environment;
 using ScottPlot.AxisPanels;
 using System;
 using System.IO;
@@ -32,16 +33,16 @@ namespace Pachyderm_Acoustic
         private RadioButton TskAbove;
         private RadioButton TskNormal;
         private GroupBox Processing_Select;
-        //private NumericStepper Thread_Spec;
         private GroupBox Geometry_Select;
         private RadioButton GEO_NURBS;
         private RadioButton GEO_MESH;
         private RadioButton GEO_MR_MESH;
         private GroupBox GeoSys;
-        private NumericStepper OCT_DEPTH;
         private RadioButton VGSP_CHECK;
         private RadioButton OCT_CHECK;
-        private NumericStepper VGDOMAIN;
+        private RadioButton KD_CHECK;
+        private NumericStepper SP_DEPTH;
+        private NumericStepper TgtPolys;
         private GroupBox Material_Path;
         private MaskedTextBox Library_Path;
         private Button Browse_Material;
@@ -70,16 +71,16 @@ namespace Pachyderm_Acoustic
             this.TskAbove = new RadioButton();
             this.TskNormal = new RadioButton();
             this.Processing_Select = new GroupBox();
-            //this.Thread_Spec = new NumericStepper();
             this.Geometry_Select = new GroupBox();
             this.GEO_MR_MESH = new RadioButton();
             this.GEO_NURBS = new RadioButton();
             this.GEO_MESH = new RadioButton();
             this.GeoSys = new GroupBox();
-            this.VGDOMAIN = new NumericStepper();
-            this.OCT_DEPTH = new NumericStepper();
+            this.SP_DEPTH = new NumericStepper();
+            this.TgtPolys = new NumericStepper();
             this.VGSP_CHECK = new RadioButton();
             this.OCT_CHECK = new RadioButton();
+            this.KD_CHECK = new RadioButton();
             this.Material_Path = new GroupBox();
             this.Browse_Material = new Button();
             this.Library_Path = new MaskedTextBox();
@@ -96,15 +97,11 @@ namespace Pachyderm_Acoustic
             this.TskNormal.Text = "Normal";
             this.TskNormal.MouseUp += this.PrioritySettingsChanged;
 
-            //Label label1 = new Label();
-            //label1.Text = "ThreadCount";
-            //this.Thread_Spec.ValueChanged += this.ThreadSettingsChanged;
             DynamicLayout PL = new DynamicLayout();
             PL.Spacing = new Eto.Drawing.Size(8, 8);
             PL.AddRow(TskHigh);
             PL.AddRow(TskAbove);
             PL.AddRow(TskNormal);
-            //PL.AddRow(label1, Thread_Spec);
             Processing_Select.Content = PL;
 
             this.Geometry_Select.Text = "Geometry System";
@@ -115,7 +112,7 @@ namespace Pachyderm_Acoustic
             this.GEO_NURBS.Text = "Use NURBS";
             this.GEO_NURBS.MouseUp += this.GeometrySettingsChanged;
 
-            this.GEO_MESH.Checked = true;
+            //this.GEO_MESH.Checked = true;
             this.GEO_MESH.Text = "Use Meshes";
             this.GEO_MESH.MouseUp += this.GeometrySettingsChanged;
             DynamicLayout GL = new DynamicLayout();
@@ -129,30 +126,28 @@ namespace Pachyderm_Acoustic
             SPL.Spacing = new Eto.Drawing.Size(8, 8);
             this.GeoSys.Text = "Spatial Partition";
             Label label3 = new Label();
-            label3.Text = "Grid Domain";
-            this.VGDOMAIN.Value = 20;
-            this.VGDOMAIN.MouseLeave += this.VGSettingsChanged;
+            label3.Text = "Depth of Tree";
+            this.SP_DEPTH.Value = 7;
+            this.SP_DEPTH.ValueChanged += this.SPDepthSettingsChanged;
+            Label label4 = new Label();
+            label4.Text = "Target No. of Polygons";
+            this.TgtPolys.Value = 5;
+            this.TgtPolys.ValueChanged += this.SPDepthSettingsChanged;
 
-            Label label2 = new Label();
-            label2.Enabled = false;
-            label2.Text = "Depth";
-            this.OCT_DEPTH.Enabled = false;
-            this.OCT_DEPTH.Value = 3;
-            this.OCT_DEPTH.MouseLeave += this.OctreeSettingsChanged;
+            this.VGSP_CHECK.Text = "Adaptive Voxel Grid";
+            this.VGSP_CHECK.MouseUp += this.SpatialSettingsChanged;
 
-            this.VGSP_CHECK.Checked = true;
-            this.VGSP_CHECK.Text = "Voxel Grid";
-            this.VGSP_CHECK.MouseLeave += this.SpatialSettingsChanged;
-
-            this.OCT_CHECK.Enabled = false;
-            this.OCT_CHECK.TabIndex = 2;
             this.OCT_CHECK.Text = "Octree";
-            this.OCT_CHECK.MouseLeave += this.SpatialSettingsChanged;
+            this.OCT_CHECK.MouseUp += this.SpatialSettingsChanged;
+
+            this.KD_CHECK.Text = "KD-tree";
+            this.KD_CHECK.MouseUp += this.SpatialSettingsChanged;
 
             SPL.AddRow(VGSP_CHECK);
-            SPL.AddRow(label3, VGDOMAIN);
             SPL.AddRow(OCT_CHECK);
-            SPL.AddRow(label2, OCT_DEPTH);
+            SPL.AddRow(KD_CHECK);
+            SPL.AddRow(label3, SP_DEPTH);
+            SPL.AddRow(label4, TgtPolys);
             GeoSys.Content = SPL;
 
             this.Material_Path.Text = "Material Libary Path";
@@ -167,7 +162,7 @@ namespace Pachyderm_Acoustic
             Material_Path.Content = ML;
 
             this.Save_Results.Text = "Automatically Save Results";
-            this.Save_Results.MouseLeave += SaveSettingsChanged;
+            this.Save_Results.CheckedChanged += SaveSettingsChanged;
 
             this.FilterCtrls.Controls.Append(this.Filt_MinPhase);
             this.FilterCtrls.Controls.Append(this.Filt_LinearPhase);
@@ -236,7 +231,7 @@ namespace Pachyderm_Acoustic
             }
 
             //4. ThreadCount(int)
-            //Thread_Spec.Value = pachset.ThreadCount;
+            ///Deprecated
 
             //5. Spatial Partition Selection (int)
             switch (pachset.Spatial_Optimization)
@@ -247,11 +242,14 @@ namespace Pachyderm_Acoustic
                 case 2:
                     OCT_CHECK.Checked = true;
                     break;
+                case 3:
+                    KD_CHECK.Checked = true;
+                    break;
             }
             //6. Voxel Grid Domain(int)
-            VGDOMAIN.Value = pachset.VoxelGrid_Domain;
+            SP_DEPTH.Value = pachset.Spatial_Depth;
             //7. Octree Depth(int)
-            OCT_DEPTH.Value = pachset.Oct_Depth;
+            TgtPolys.Value = pachset.Max_Polys_Per_Node;
             //8. Material Library Path
             Library_Path.Text = pachset.Lib_Path;
 
@@ -355,12 +353,23 @@ namespace Pachyderm_Acoustic
             if (sender == VGSP_CHECK) 
             {
                 OCT_CHECK.Checked = false;
+                KD_CHECK.Checked = false;
+                //VGSP_CHECK.Checked = true;
                 pachset.Spatial_Optimization = 1; 
             }
             else if (sender == OCT_CHECK) 
             {
                 VGSP_CHECK.Checked = false;
+                KD_CHECK.Checked = false;
+                //OCT_CHECK.Checked = true;
                 pachset.Spatial_Optimization = 2;
+            }
+            else if (sender == KD_CHECK)
+            {
+                VGSP_CHECK.Checked = false;
+                OCT_CHECK.Checked = false;
+                //KD_CHECK.Checked = true;
+                pachset.Spatial_Optimization = 3;
             }
         }
 
@@ -380,14 +389,14 @@ namespace Pachyderm_Acoustic
             }
         }
 
-        private void VGSettingsChanged(object sender, EventArgs e)
+        private void SPDepthSettingsChanged(object sender, EventArgs e)
         {
-            Pach_Properties.Instance.VoxelGrid_Domain = (int)VGDOMAIN.Value;
+            Pach_Properties.Instance.Spatial_Depth = (int)SP_DEPTH.Value;
         }
 
-        private void OctreeSettingsChanged(object sender, EventArgs e)
+        private void PolyCountSettingsChanged(object sender, EventArgs e)
         {
-            Pach_Properties.Instance.ThreadCount = (int)OCT_DEPTH.Value;
+            Pach_Properties.Instance.Max_Polys_Per_Node = (int)TgtPolys.Value;
         }
 
         private void SaveSettingsChanged(object sender, EventArgs e)

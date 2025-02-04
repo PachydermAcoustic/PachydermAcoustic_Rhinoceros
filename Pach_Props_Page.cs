@@ -54,12 +54,12 @@ namespace Pachyderm_Acoustic
 
             public int Get_Oct_Depth()
             {
-                return Pach_Properties.Instance.Oct_Depth;
+                return Pach_Properties.Instance.Max_Polys_Per_Node;
             }
 
             public static string MatLibPath => Pach_Properties.Instance.Lib_Path;
 
-            public static int VGDomain => Pach_Properties.Instance.VoxelGrid_Domain;
+            public static int VGDomain => Pach_Properties.Instance.Spatial_Depth;
 
             public static bool SaveResults()
             {

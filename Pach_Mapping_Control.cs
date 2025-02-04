@@ -2,7 +2,7 @@
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2024, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Arthur van der Harten 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -649,7 +649,7 @@ namespace Pachyderm_Acoustic
                 {
                     RhCommon_Scene NScene = Utilities.RCPachTools.GetNURBSScene(Env_Control.RelHumidity, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
                     if (!NScene.Complete) return;
-                    NScene.partition(P, PachydermAc_PlugIn.VGDomain);
+                    NScene.partition(P, Pach_Properties.Instance.Spatial_Depth, Pach_Properties.Instance.Max_Polys_Per_Node);
                     Flex_Scene = NScene;
                 }
                 else

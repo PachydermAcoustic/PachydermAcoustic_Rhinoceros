@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Open Research in Acoustical Science and Educaton, Inc.")]
 [assembly: AssemblyProduct("Pachyderm_Acoustic_Simulation")]
-[assembly: AssemblyCopyright("Copyright © Open Research in Acoustical Science and Education 2024")]
+[assembly: AssemblyCopyright("Copyright © Open Research in Acoustical Science and Education 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -44,5 +44,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("2.6.0.4")]
-[assembly: AssemblyFileVersion("2.6.0.4")]
+[assembly: AssemblyVersion("2.6.0.9")]
+[assembly: AssemblyFileVersion("2.6.0.9")]

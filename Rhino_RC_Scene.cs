@@ -76,7 +76,7 @@ namespace Pachyderm_Acoustic
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
                         ///Other properties are still coefficient based...
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
+                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
                         Trans_Layer.Add(Trans);
                     }
                     else if (abstype == "Buildup_Finite")
@@ -91,7 +91,7 @@ namespace Pachyderm_Acoustic
                         double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
                         ///Other properties are still coefficient based...
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
+                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
                         Trans_Layer.Add(Trans);
                     }
                     else
@@ -124,7 +124,7 @@ namespace Pachyderm_Acoustic
                             }
                         }
                         Mat_Layer.Add(new Environment.Basic_Material(Abs));
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat, SplitRatio));
+                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
                         Trans_Layer.Add(Trans);
                     }
                 }
@@ -141,7 +141,7 @@ namespace Pachyderm_Acoustic
                             double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
                             Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
                             Mat_Obj.Add(new Basic_Material(ABS));
-                            Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
+                            Scat_Obj.Add(new Lambert_Scattering(SCAT));
                             Trans_Obj.Add(TRANS);
                         }
                         else
@@ -161,7 +161,7 @@ namespace Pachyderm_Acoustic
                                 double[] ABS = new double[8], SCAT = new double[8], TRANS = new double[8];
                                 Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(ObjectList[q].Geometry.GetUserString("Acoustics"), ref ABS, ref SCAT, ref TRANS);
                                 Mat_Obj.Add(new Basic_Material(ABS));
-                                Scat_Obj.Add(new Lambert_Scattering(SCAT, SplitRatio));
+                                Scat_Obj.Add(new Lambert_Scattering(SCAT));
                                 Trans_Obj.Add(TRANS);
                             }
                             else
@@ -1012,7 +1012,7 @@ namespace Pachyderm_Acoustic
                         Area = new double[BrepList.Count];
                         for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
 
-                        ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
+                        ScatteringData.Add(new Lambert_Scattering(Scat));
                         TransmissionData.Add(Transparency);
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
@@ -1107,7 +1107,7 @@ namespace Pachyderm_Acoustic
                             Transmission[oct] = Transparency[oct];
                         }
 
-                        ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
+                        ScatteringData.Add(new Lambert_Scattering(Scat));
                         TransmissionData.Add(Transmission);
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
@@ -1436,7 +1436,7 @@ namespace Pachyderm_Acoustic
                 partition(new List<Point3d>());
             }
 
-            public override void partition(int SP_Param)
+            public override void partition(int SP_Param, int Max_Polys)
             {
                 Partitioned = true;
                 partition(new List<Point3d>(), SP_Param);
@@ -1448,10 +1448,10 @@ namespace Pachyderm_Acoustic
                 partition(new List<Point3d>(P), SP_PARAM);
             }
 
-            public override void partition(Hare.Geometry.Point[] P, int SP_PARAM)
+            public override void partition(Hare.Geometry.Point[] P, int SP_PARAM, int Max_Polys)
             {
                 Partitioned = true;
-                partition(new List<Hare.Geometry.Point>(P), SP_PARAM);
+                partition(new List<Hare.Geometry.Point>(P), SP_PARAM, Max_Polys);
             }
 
             public void partition(List<Point3d> P, int SP_PARAM)
@@ -1460,7 +1460,7 @@ namespace Pachyderm_Acoustic
                 Voxels = new VoxelGridRC(this, P, SP_PARAM);
             }
 
-            public override void partition(List<Hare.Geometry.Point> P, int SP_PARAM)
+            public override void partition(List<Hare.Geometry.Point> P, int SP_PARAM, int Max_Polys)
             {
                 Partitioned = true;
                 List<Point3d> PTS = new List<Point3d>();

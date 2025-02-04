@@ -42,8 +42,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>General_Public_License.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <AssemblyVersion>2.6.0.4</AssemblyVersion>
-    <FileVersion>2.6.0.4</FileVersion>
+    <AssemblyVersion>2.6.0.9</AssemblyVersion>
+    <FileVersion>2.6.0.9</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutputPath>bin\x64\Debug\</OutputPath>
