@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2025, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -17,6 +17,8 @@
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
 using Rhino.Commands;
+using Rhino.Geometry;
+using System.Collections.Generic;
 
 namespace Pachyderm_Acoustic
 {
@@ -171,10 +173,10 @@ namespace Pachyderm_Acoustic
             ///<summary> This gets called when when the user runs this command.</summary> 
             protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
             {
-                double[] freq = new double[]{62.5, 125, 250, 500, 1000, 2000, 4000, 8000};
+                double[] freq = new double[] { 62.5, 125, 250, 500, 1000, 2000, 4000, 8000 };
                 double[] noise = new double[8];
                 string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
-                
+
                 if (n != "" && n != null)
                 {
                     string[] ns = n.Split(","[0]);
@@ -188,10 +190,10 @@ namespace Pachyderm_Acoustic
                 {
                     try
                     {
-                        
+
                         Rhino.Input.RhinoGet.GetNumber(string.Format("Specify background noise sound pressure level at {0} Hertz.", freq[i]), true, ref noise[i]);
                     }
-                    catch 
+                    catch
                     {
                         return Result.Nothing;
                     }
@@ -220,6 +222,161 @@ namespace Pachyderm_Acoustic
             {
                 Pach_Absorption_Designer PAD = new Pach_Absorption_Designer();
                 PAD.ShowModal();
+                return Result.Success;
+            }
+        }
+
+
+        [System.Runtime.InteropServices.Guid("5A7D94B2-D83C-4E8A-9C8F-E2F67384C01B")]
+        public class Pach_EmbodiedCarbon_Command : Command
+        {
+            ///<returns>The command name as it appears on the Rhino command line</returns> 
+            public override string EnglishName
+            {
+                get
+                {
+                    return "Pach_Calculate_EmbodiedCarbon";
+                }
+            }
+
+            ///<summary> This gets called when the user runs this command.</summary> 
+            protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
+            {
+                // Dictionary to store layer embodied carbon values (kg CO2e/m²)
+                Dictionary<string, double> layerCarbonValues = new Dictionary<string, double>();
+
+                // Get all layers and their embodied carbon values
+                for (int i = 0; i < doc.Layers.Count; i++)
+                {
+                    Rhino.DocObjects.Layer layer = doc.Layers[i];
+                    string carbonText = layer.GetUserString("Carbon");
+
+                    if (!string.IsNullOrEmpty(carbonText))
+                    {
+                        // Try to parse the carbon value
+                        if (double.TryParse(carbonText, out double carbonValue))
+                        {
+                            if (layer.HasName == false) continue;
+                            layerCarbonValues.Add(layer.FullPath, carbonValue);
+                            Rhino.RhinoApp.WriteLine($"Layer: {layer.FullPath}, Embodied Carbon: {carbonValue} kg CO2e/m²");
+                        }
+                        else
+                        {
+                            Rhino.RhinoApp.WriteLine($"Warning: Layer {layer.FullPath} has invalid embodied carbon value: {carbonText}");
+                        }
+                    }
+                }
+
+                if (layerCarbonValues.Count == 0)
+                {
+                    Rhino.RhinoApp.WriteLine("No layers found with embodied carbon values.");
+                    Rhino.RhinoApp.WriteLine("Please add 'EmbodiedCarbon' user text to layers with numerical values (kg CO2e/m²).");
+                    return Result.Nothing;
+                }
+
+                // Get all objects in the model
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.DeletedObjects = false;
+                settings.HiddenObjects = false;
+                settings.LockedObjects = true;
+                settings.NormalObjects = true;
+                settings.VisibleFilter = true;
+
+                // We'll look at Breps, Surfaces and Extrusions
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep |
+                                           Rhino.DocObjects.ObjectType.Surface |
+                                           Rhino.DocObjects.ObjectType.Extrusion;
+
+                // Variables to track results
+                double totalArea = 0;
+                double totalEmbodiedCarbon = 0;
+                Dictionary<string, double> layerAreas = new Dictionary<string, double>();
+                Dictionary<string, double> layerCarbon = new Dictionary<string, double>();
+
+                // Process each object
+                foreach (Rhino.DocObjects.RhinoObject obj in doc.Objects.GetObjectList(settings))
+                {
+                    // Get the layer path
+                    string layerPath = doc.Layers[obj.Attributes.LayerIndex].FullPath;
+
+                    // Check if this layer has a carbon value
+                    if (!layerCarbonValues.TryGetValue(layerPath, out double carbonPerSqM))
+                        continue;
+
+                    // Calculate the area based on object type
+                    double objectArea = 0;
+
+                    if (obj.ObjectType == Rhino.DocObjects.ObjectType.Brep)
+                    {
+                        Brep brep = obj.Geometry as Brep;
+                        if (brep != null)
+                        {
+                            AreaMassProperties props = AreaMassProperties.Compute(brep);
+                            if (props != null)
+                                objectArea = props.Area;
+                        }
+                    }
+                    else if (obj.ObjectType == Rhino.DocObjects.ObjectType.Surface)
+                    {
+                        Surface srf = obj.Geometry as Surface;
+                        if (srf != null)
+                        {
+                            AreaMassProperties props = AreaMassProperties.Compute(srf);
+                            if (props != null)
+                                objectArea = props.Area;
+                        }
+                    }
+                    else if (obj.ObjectType == Rhino.DocObjects.ObjectType.Extrusion)
+                    {
+                        Extrusion extr = obj.Geometry as Extrusion;
+                        if (extr != null)
+                        {
+                            Brep brep = extr.ToBrep();
+                            AreaMassProperties props = AreaMassProperties.Compute(brep);
+                            if (props != null)
+                                objectArea = props.Area;
+                        }
+                    }
+
+                    // Calculate embodied carbon for this object
+                    double objectCarbon = objectArea * carbonPerSqM;
+
+                    // Update totals
+                    totalArea += objectArea;
+                    totalEmbodiedCarbon += objectCarbon;
+
+                    // Update layer-specific totals
+                    if (!layerAreas.ContainsKey(layerPath))
+                    {
+                        layerAreas[layerPath] = 0;
+                        layerCarbon[layerPath] = 0;
+                    }
+
+                    layerAreas[layerPath] += objectArea;
+                    layerCarbon[layerPath] += objectCarbon;
+                }
+
+                // Display results
+                Rhino.RhinoApp.WriteLine("\n--- Embodied Carbon Analysis Results ---");
+                Rhino.RhinoApp.WriteLine($"Total surface area: {totalArea:F2} m²");
+                Rhino.RhinoApp.WriteLine($"Total embodied carbon: {totalEmbodiedCarbon:F2} kg CO2e");
+
+                Rhino.RhinoApp.WriteLine("\n--- Breakdown by Layer ---");
+                foreach (string layer in layerCarbon.Keys)
+                {
+                    Rhino.RhinoApp.WriteLine($"Layer: {layer}");
+                    Rhino.RhinoApp.WriteLine($"  Area: {layerAreas[layer]:F2} m²");
+                    Rhino.RhinoApp.WriteLine($"  Embodied Carbon: {layerCarbon[layer]:F2} kg CO2e");
+                    Rhino.RhinoApp.WriteLine($"  Carbon Intensity: {layerCarbonValues[layer]:F2} kg CO2e/m²");
+                    Rhino.RhinoApp.WriteLine("");
+                }
+
+                // Create a formatted summary text
+                string summaryText = $"Total Embodied Carbon: {totalEmbodiedCarbon:F2} kg CO2e";
+
+                // Add summary text to the document
+                Rhino.RhinoDoc.ActiveDoc.Strings.SetString("EmbodiedCarbonSummary", summaryText);
+
                 return Result.Success;
             }
         }

@@ -29,15 +29,39 @@ namespace Pachyderm_Acoustic
             _updateTimer.Start();
         }
 
+        //private async void UpdateUI(object sender, EventArgs e)
+        //{
+        //    // Update UI elements here
+        //    Eto.Forms.Application.Instance.AsyncInvoke(() =>
+        //    {
+        //        Progress.Value = Prog_Percent;
+        //        this.Title = msg;
+        //        this.Invalidate();
+        //    });
+        //}
+
+        private int _lastReportedPercent = -1;
+        private string _lastReportedMsg = "";
+        private DateTime _lastUpdate = DateTime.MinValue;
+
         private async void UpdateUI(object sender, EventArgs e)
         {
-            // Update UI elements here
-            Eto.Forms.Application.Instance.Invoke(() =>
+            // Only update if value changed or enough time has passed
+            if (Prog_Percent != _lastReportedPercent ||
+                msg != _lastReportedMsg ||
+                (DateTime.Now - _lastUpdate).TotalMilliseconds > 250)
             {
-                Progress.Value = Prog_Percent;
-                this.Title = msg;
-                this.Invalidate();
-            });
+                _lastReportedPercent = Prog_Percent;
+                _lastReportedMsg = msg;
+                _lastUpdate = DateTime.Now;
+
+                Eto.Forms.Application.Instance.AsyncInvoke(() =>
+                {
+                    Progress.Value = Prog_Percent;
+                    this.Title = msg;
+                    this.Invalidate();
+                });
+            }
         }
 
         /// <summary>

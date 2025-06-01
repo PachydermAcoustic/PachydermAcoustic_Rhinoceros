@@ -1,8 +1,8 @@
-//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2025, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -32,6 +32,8 @@ using System.Threading;
 using System.Diagnostics;
 using MathNet.Numerics.Optimization;
 using Rhino.UI.Controls.ThumbnailUI;
+using static HDF.PInvoke.H5Z;
+using ScottPlot.Plottables;
 
 namespace Pachyderm_Acoustic
 {
@@ -240,6 +242,7 @@ namespace Pachyderm_Acoustic
                 Mat_Lbl.Text = "Material Library:";
                 this.Material_Lib.SelectedIndexChanged += this.Material_Lib_SelectedIndexChanged;
                 RM.AddRow(Mat_Lbl);
+                matscroll.Width = 200;
                 matscroll.Height = 100;
                 RM.AddRow(matscroll);
                 this.SaveAbsBox = new GroupBox();
@@ -277,6 +280,13 @@ namespace Pachyderm_Acoustic
                 Absscroll.Content = ABSSlider;
                 AL.AddRow(Absscroll);
                 this.SmartMat_Display = new ScottPlot.Eto.EtoPlot();
+
+                polarPlot = this.SmartMat_Display.Plot.Add.PolarAxis(1);
+                polarPlot.Circles.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                polarPlot.Spokes.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                polarPlot.Rotation = ScottPlot.Angle.FromDegrees(90);
+                //(SmartMat_Display.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
+
                 this.SmartMat_Display.Size = new Size(0, 300);
                 this.SmartMat_Display.TabIndex = 45;
                 this.SmartMat_Display.Plot.Title("Absorption By Angle");
@@ -310,9 +320,11 @@ namespace Pachyderm_Acoustic
                 this.user_quart_lambda.TickFrequency = 10;
                 this.user_quart_lambda.Value = 25;
                 this.user_quart_lambda.ValueChanged += this.Variegaton_Scroll;
+                this.user_quart_lambda.Width = 300;
+                VC.SizeChanged += delegate { this.user_quart_lambda.Width = this.Width - 75; };
                 this.quart_lambda = new Label();
                 this.quart_lambda.Text = "25 mm.";
-                VC.AddRow(user_quart_lambda, quart_lambda);
+                VC.AddRow(user_quart_lambda, null, quart_lambda);
                 SL.AddRow(VC);
 
                 Label labelScat = new Label();
@@ -636,7 +648,7 @@ namespace Pachyderm_Acoustic
                 this.OpenSignal = new Button();
                 this.Export_Filter = new Button();
                 this.Sample_Freq_Selection = new DropDown();
-                this.PlayAuralization = new CheckBox();
+                //this.PlayAuralization = new CheckBox();
 
                 this.Save_Channels = new Button();
                 this.Remove_Channel = new Button();
@@ -781,12 +793,13 @@ namespace Pachyderm_Acoustic
                 this.RenderBtn.Text = "Render Auralization";
                 this.RenderBtn.Click += this.RenderBtn_Click;
 
-                this.PlayAuralization.Text = "Play Rendering";
-                this.PlayAuralization.Width = 100;
-                this.PlayAuralization.CheckedChanged += this.PlayAuralization_CheckedChanged;
+                //this.PlayAuralization.Text = "Play Rendering";
+                //this.PlayAuralization.Width = 100;
+                //this.PlayAuralization.CheckedChanged += this.PlayAuralization_CheckedChanged;
                 //DynamicLayout RP = new DynamicLayout();
                 //RP.DefaultSpacing = new Size(8, 8);
-                FE.AddRow(PlayAuralization, RenderBtn);
+                //FE.AddRow(PlayAuralization, RenderBtn);
+                FE.AddRow(null ,RenderBtn);
                 //Aur_Layout.Add(RP);
                 Aur_Layout.AddRow(FE);
                 //DynamicScrollable Aur_scroll = new DynamicScrollable();
@@ -971,6 +984,7 @@ namespace Pachyderm_Acoustic
                             }
                             else
                             {
+
                                 DialogResult DR = MessageBox.Show("You have started a simulation with image source enabled in a model with curves. This version of Pachyderm uses an experimental method for deterministic curved reflections. Proceed with caution. If you would not like to participate in testing of this experimental feature, you can run your simulation with Image Source disabled for a more reliable result. Would you like to continue to run this simulation?", "Temporary Alert", MessageBoxButtons.YesNo);
                                 if (DR == DialogResult.Yes)
                                 {
@@ -984,6 +998,16 @@ namespace Pachyderm_Acoustic
                                 }
                             }
                         }
+                    }
+                }
+
+                if (this.BTM_ED.Checked.Value)
+                {
+                    if ((int)Image_Order.Value > 1)
+                    {
+                        Eto.Forms.MessageBox.Show("You have started a simulation with higher order image source, and enabled edge diffraction. This version of Pachyderm does not have the capability of finding second order or higher edge reflections. Even when it is possible, it will be prohibitively expensive in terms of data and processor time. This simulation will be canceled, but you can proceed with an image source order of 1, or by turning image source off altogether. As always, scrutinize the results carefully, and email ORASE (info@orase.org) with any questions or concerns.", "Temporary Alert");
+                        CancelCalc();
+                        return;
                     }
                 }
                 ///
@@ -1242,6 +1266,19 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoApp.CommandPrompt = "Command:";
 
                 Populate_Sources();
+
+                ///Set a recommended minimum auralization ceiling...
+                List<int> srcs = new List<int>();
+                double max = 0;
+                for(int i = 0; i < Source.Length; i++) srcs.Add(i);
+                for (int r = 0; r < Recs.Length; r++)
+                {
+                    double[] Filter = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, srcs, false, true);
+                    for(int i = 0; i < Filter.Length; i++) if (Filter[i] > max) max = Math.Abs(Filter[i]);
+                }
+                double mspl = 20 * Math.Log10(max * (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (15 / 20)))) - 144;
+
+                Normalization_Choice.Value = Math.Max(0, -mspl);
             }
 
             private void CancelCalc()
@@ -1622,17 +1659,27 @@ namespace Pachyderm_Acoustic
 
                     Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
                     double[] AnglesDeg = new double[sm.Angles.Length];
+                    ScottPlot.Color[] colors = new ScottPlot.Color[8] { ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet};
+
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[1], ScottPlot.Colors.Orange);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[2], ScottPlot.Colors.Yellow);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[3], ScottPlot.Colors.Green);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[4], ScottPlot.Colors.Blue);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[5], ScottPlot.Colors.BlueViolet);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[6], ScottPlot.Colors.Violet);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[7], ScottPlot.Colors.Plum);
-                    SmartMat_Display.Plot.Render();
-                    SmartMat_Display.Plot.AutoScale();
+                    polarPlot = this.SmartMat_Display.Plot.Add.PolarAxis(1);
+                    polarPlot.Circles.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                    polarPlot.Spokes.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                    polarPlot.Rotation = ScottPlot.Angle.FromDegrees(90);
+
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        List<ScottPlot.Coordinates> polar = new List<ScottPlot.Coordinates>();
+                        for (int i = 0; i < AnglesDeg.Length; i++)
+                        {
+                            polar.Add(polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
+                        }
+                        SmartMat_Display.Plot.Add.Scatter(polar, colors[oct]);
+                        (SmartMat_Display.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
+                    }
+
+                    SmartMat_Display.Refresh();
+                    SmartMat_Display.Plot.Axes.AutoScale();
                 }
                 else if (M == "Buildup_Finite")
                 {
@@ -1701,7 +1748,9 @@ namespace Pachyderm_Acoustic
             private void Abs_Designer_Click(object sender, EventArgs e)
             {
                 Pach_Absorption_Designer AD = new Pach_Absorption_Designer();
-                AD.ShowModal();
+                AD.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, this);
+                int layer_index = LayerDisplay.SelectedIndex;
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
 
                 switch (AD.Result)
                 {
@@ -1713,10 +1762,8 @@ namespace Pachyderm_Acoustic
                         ABSSlider.Value = abs;
 
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
-                        int layer_index = LayerDisplay.SelectedIndex;
-                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
                         layer.SetUserString("ABSType", "Coefficients");
-
+                        layer.SetUserString("Carbon", AD.Total_Carbon.ToString());
                         Commit_Layer_Acoustics();
                         Material_Mode(true);
                         return;
@@ -1724,6 +1771,7 @@ namespace Pachyderm_Acoustic
                         //Store and Assign Smart Material.
                         Material_Mode(false);
                         Commit_SmartMaterial(AD);
+                        layer.SetUserString("Carbon", AD.Total_Carbon.ToString());
                         //Commit_Layer_Acoustics();
                         return;
                     default:
@@ -2460,8 +2508,11 @@ namespace Pachyderm_Acoustic
 
             public void Update_Rose(object sender, EventArgs e)
             {
-                if (!Show_Rec_Rose.Checked.Value) return;
-                if (Receiver_Choice.SelectedIndex < 0) return;
+                if (!Show_Rec_Rose.Checked.Value || Receiver_Choice.SelectedIndex < 0)
+                {
+                    if (SC != null) SC.Enabled = false;
+                    return;
+                }
 
                 List<int> srcIDs = SelectedSources();
                 List<Direct_Sound> DS = null;
@@ -2486,7 +2537,7 @@ namespace Pachyderm_Acoustic
 
                 if (SC == null) SC = new ReceiverSphereConduit();
                 Sphere_Plot s = new Sphere_Plot(DS[0].Rec_Origin.ElementAt(ReceiverSelection.SelectedIndex));
-                SC.Data_in(s.Output(s.SPL_From_IR(Receiver_Choice.SelectedIndex, this.Graph_Octave.SelectedIndex, (int)(RR_tstart.Value * 44.100), (int)((RR_tstart.Value + RR_Width.Value) * 44.100), DS.ToArray(), IS.ToArray(), Receiver.ToArray())), DS[0].Rec_Origin.ElementAt(ReceiverSelection.SelectedIndex));
+                SC.Data_in(s.Output(s.SPL_From_IR(Receiver_Choice.SelectedIndex, this.Graph_Octave.SelectedIndex, (int)(RR_tstart.Value * 44.100), (int)((RR_tstart.Value + RR_Width.Value) * 44.100), DS.ToArray(), IS.ToArray(), Receiver.ToArray())), DS[0].Rec_Origin.ElementAt(Receiver_Choice.SelectedIndex));
                 SC.Enabled = true;
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
@@ -2532,8 +2583,8 @@ namespace Pachyderm_Acoustic
 
                         int OCT_ID = PachTools.OctaveStr2Int(Graph_Octave.Text);
                         Analysis_View.Plot.Title("Logarithmic Energy Time Curve");
-                        Analysis_View.Plot.XAxis.Label.Text = "Time (seconds)";
-                        Analysis_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
+                        Analysis_View.Plot.XLabel("Time (seconds)", 10);
+                        Analysis_View.Plot.YLabel("Sound Pressure Level (dB)", 10);
 
                         if (Ref_Schroeder != null)
                         {
@@ -2717,34 +2768,29 @@ namespace Pachyderm_Acoustic
 
                         if (!LockUserScale.Checked.Value)
                         {
-                            Analysis_View.Plot.XAxis.Max = time[time.Length - 1];
-                            Analysis_View.Plot.XAxis.Min = time[0];
+                            Analysis_View.Plot.Axes.SetLimitsX(time[0], time[time.Length - 1]);
 
                             if (Normalize_Graph.Checked.Value)
                             {
-                                Analysis_View.Plot.YAxis.Max = 0;
-                                Analysis_View.Plot.YAxis.Min = -100;
+                                Analysis_View.Plot.Axes.SetLimitsY(-100, 0);
                             }
                             else
                             {
-                                Analysis_View.Plot.YAxis.Max = DirectMagnitude + 15;
-                                Analysis_View.Plot.YAxis.Min = 0;
+                                Analysis_View.Plot.Axes.SetLimitsY(0, DirectMagnitude + 15);
                             }
                         }
                         else
                         {
-                            double max = Analysis_View.Plot.YAxis.Max;
-                            double min = Analysis_View.Plot.YAxis.Min;
+                            double max = Analysis_View.Plot.Axes.Left.Max;
+                            double min = Analysis_View.Plot.Axes.Left.Min;
 
                             if (Normalize_Graph.Checked.Value)
                             {
-                                Analysis_View.Plot.YAxis.Max = max;
-                                Analysis_View.Plot.YAxis.Min = min;
+                                Analysis_View.Plot.Axes.SetLimitsY(min, max);
                             }
                             else
                             {
-                                Analysis_View.Plot.YAxis.Max = max;
-                                Analysis_View.Plot.YAxis.Min = min;
+                                Analysis_View.Plot.Axes.SetLimitsY(min, max);
                             }
                         }
 
@@ -2765,8 +2811,6 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
-                    ScottPlot.AxisLimits AL = Auralization_View.Plot.GetAxisLimits();
-
                     Auralization_View.Plot.Clear();
 
                     int REC_ID = 0;
@@ -2776,8 +2820,8 @@ namespace Pachyderm_Acoustic
 
                         int OCT_ID = Graph_Aur_Octave.SelectedIndex;
                         Auralization_View.Plot.Title("Logarithmic Energy Time Curve");
-                        Auralization_View.Plot.XAxis.Label.Text = "Time (seconds)";
-                        Auralization_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
+                        Auralization_View.Plot.XLabel("Time (seconds)", 10);
+                        Auralization_View.Plot.YLabel("Sound Pressure Level (dB)", 10);
 
                         List<int> SrcIDs = SourceList.SelectedSources();
 
@@ -2819,12 +2863,41 @@ namespace Pachyderm_Acoustic
                                 (Auralization_View.Plot.PlottableList[i] as ScottPlot.Plottables.Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
                             }
                         }
-                        Auralization_View.Plot.XAxis.Max = time[time.Length - 1];
-                        Auralization_View.Plot.XAxis.Min = time[0];
-                        Auralization_View.Plot.YAxis.Max = DirectMagnitude;//(OCT_ID == 8)? 3E-6 * Math.Pow(10, DirectMagnitude/20) * 1.1 : 
-                        Auralization_View.Plot.YAxis.Min = DirectMagnitude - 100;
+                        Auralization_View.Plot.Axes.SetLimits(time[0], time[time.Length - 1], DirectMagnitude - 100, DirectMagnitude);
 
-                        if (analysis_tabs.SelectedIndex == 1) Auralization_View.Plot.SetAxisLimits(AL);
+                        //if (analysis_tabs.SelectedIndex == 1) Auralization_View.Plot.SetAxisLimits(AL);
+                        //if (!LockUserScale.Checked.Value)
+                        //{
+                        //    Analysis_View.Plot.XAxis.Max = time[time.Length - 1];
+                        //    Analysis_View.Plot.XAxis.Min = time[0];
+
+                        //    if (Normalize_Graph.Checked.Value)
+                        //    {
+                        //        Analysis_View.Plot.YAxis.Max = 0;
+                        //        Analysis_View.Plot.YAxis.Min = -100;
+                        //    }
+                        //    else
+                        //    {
+                        //        Analysis_View.Plot.YAxis.Max = DirectMagnitude + 15;
+                        //        Analysis_View.Plot.YAxis.Min = 0;
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    double max = Analysis_View.Plot.YAxis.Max;
+                        //    double min = Analysis_View.Plot.YAxis.Min;
+
+                        //    if (Normalize_Graph.Checked.Value)
+                        //    {
+                        //        Analysis_View.Plot.YAxis.Max = max;
+                        //        Analysis_View.Plot.YAxis.Min = min;
+                        //    }
+                        //    else
+                        //    {
+                        //        Analysis_View.Plot.YAxis.Max = max;
+                        //        Analysis_View.Plot.YAxis.Min = min;
+                        //    }
+                        //}
 
                         Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                     }
@@ -3250,6 +3323,7 @@ namespace Pachyderm_Acoustic
                         break;
                     case "Binaural (select file...)":
                         Response = new double[2][];
+                        if (hrtf == null) break;
                         Response = IR_Construction.Aurfilter_HRTF(Direct_Data, IS_Data, Receiver, hrtf, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
                         if (Graph_Octave.SelectedIndex != 8)
                         {
@@ -3502,7 +3576,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Render_Response.Length; i++)
                 {
                     NewSignal[i] = Pachyderm_Acoustic.Audio.Pach_SP.FFT_Convolution(SignalBuffer, Render_Response[i], 0);
-                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value + 15) / 20));
+                    for (int j = 0; j < NewSignal[i].Length; j++) NewSignal[i][j] *= (float)(Math.Pow(10, 94 / 20) / Math.Pow(10, ((double)Normalization_Choice.Value) / 20));
                 }
 
                 List<int> srcs = SourceList.SelectedSources();
@@ -3533,7 +3607,7 @@ namespace Pachyderm_Acoustic
                         return;
                     }
 
-                    Audio.Pach_SP.Wave.Write(NewSignal, SamplesPerSec, SaveWave.FileName);
+                    if (!Audio.Pach_SP.Wave.Write(NewSignal, SamplesPerSec, SaveWave.FileName)) MessageBox.Show("Your output file has clipped. Adjust the Gain (Max dB) of the auralization.");
 
                     //if (PlayAuralization.Checked.Value)
                     //{
@@ -3973,6 +4047,18 @@ namespace Pachyderm_Acoustic
                     //return false;
                 }
                 //VB.Close();
+
+                ///Set a recommended minimum auralization ceiling...
+                List<int> s = new List<int>();
+                double max = 0;
+                for (int i = 0; i < Source.Length; i++) s.Add(i);
+                for (int r = 0; r < Recs.Length; r++)
+                {
+                    double[] Filter = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, s, false, true);
+                    for (int i = 0; i < Filter.Length; i++) if (Filter[i] > max) max = Math.Abs(Filter[i]);
+                }
+
+                Normalization_Choice.Value = Math.Max(0, 20 * Math.Log10(max * (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (15 / 20)))) - 144);
             }
 
             public void Plot_Results_Intensity()
@@ -4441,7 +4527,7 @@ namespace Pachyderm_Acoustic
             }
             #endregion IPanel methods
 
-
+            internal PolarAxis polarPlot;
             internal Button Calculate;
             internal CheckBox RTBox;
             internal CheckBox ISBox;
@@ -4562,7 +4648,7 @@ namespace Pachyderm_Acoustic
             internal Button Export_Filter;
             private DropDown Sample_Freq_Selection;
             internal NumericStepper Normalization_Choice;
-            private CheckBox PlayAuralization;
+            //private CheckBox PlayAuralization;
             internal Button RenderBtn;
             internal DropDown DistributionType;
 

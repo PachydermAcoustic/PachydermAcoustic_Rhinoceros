@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2025, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -17,7 +17,7 @@
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
 using System;
-using Rhino.Geometry;
+using Rhino.Geometry;   
 using System.Collections.Generic;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Visualization;
@@ -28,6 +28,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using MathNet.Numerics.Statistics.Mcmc;
 
 namespace Pachyderm_Acoustic
 {
@@ -40,7 +41,7 @@ namespace Pachyderm_Acoustic
 
             internal Button Loop;
             internal Button Forw;
-            internal Button Rev;
+            internal Button StartOver;
             internal Button BackButton;
             internal Label FrRate_Label;
             internal DropDown VisualizationSelect;
@@ -60,6 +61,7 @@ namespace Pachyderm_Acoustic
             internal Color_Output_Control colorcontrol;
             internal Label SelectOutput;
             internal TextBox Folder_Status;
+            internal Button Clear_Folder;
             internal Button OpenFolder;
 
             internal GroupBox SimSetBox;
@@ -69,7 +71,7 @@ namespace Pachyderm_Acoustic
             public PachVisualControl()
             {
                 this.Forw = new Button();
-                this.Rev = new Button();
+                this.StartOver = new Button();
                 this.TimeBox = new GroupBox();
                 this.Time_Preview = new Label();
                 this.Preview = new Button();
@@ -89,6 +91,7 @@ namespace Pachyderm_Acoustic
                 this.RT_Count = new NumericStepper();
                 this.SelectOutput = new Label();
                 this.Folder_Status = new TextBox();
+                this.Clear_Folder = new Button();
                 this.OpenFolder = new Button();
                 this.ForwButton = new Button();
                 this.VisLabel = new Label();
@@ -160,6 +163,10 @@ namespace Pachyderm_Acoustic
                 this.Loop.Text = "Loop";
                 this.Preview.Click += this.onPreview_Click;
                 this.Loop.Click += this.Loop_Click;
+                
+                this.StartOver.Text = "|<";
+                this.StartOver.Click += this.ToStart_Click;
+                this.StartOver.Width = this.Width / 8;
                 this.BackButton.Text = "<<";
                 this.BackButton.Width = this.Width / 8;
                 this.BackButton.Click += this.Rev_Click;
@@ -174,7 +181,8 @@ namespace Pachyderm_Acoustic
                 this.TimeBox.Text = "Current Time (ms)";
                 DynamicLayout timecontrol = new DynamicLayout();
                 timecontrol.DefaultSpacing = new Size(8, 8);
-                timecontrol.AddRow(null, Time_Preview, null);
+                timecontrol.SizeChanged += delegate {BackButton.Width = timecontrol.Width / 8; Loop.Width = timecontrol.Width * 5/8; ForwButton.Width = timecontrol.Width / 8; };
+                timecontrol.AddRow(StartOver, Time_Preview, null);
                 timecontrol.AddRow(BackButton, Loop, ForwButton);
                 DynamicLayout DL = new DynamicLayout();
                 DL.AddRow(timecontrol);
@@ -189,9 +197,14 @@ namespace Pachyderm_Acoustic
                 DynamicLayout output = new DynamicLayout();
                 output.DefaultSpacing = new Size(8, 8);
                 this.Folder_Status.ReadOnly = true;
+                StackLayout Folder_Ctrl = new StackLayout();
                 this.OpenFolder.Text = "Open...";
                 this.OpenFolder.Click += this.OpenFolder_Click;
-                output.AddRow(OpenFolder, Folder_Status);
+                this.Clear_Folder.Text = "Clear";
+                this.Clear_Folder.Click += delegate { Folder_Status.Text = ""; };
+                Folder_Ctrl.Items.Add(OpenFolder);
+                Folder_Ctrl.Items.Add(Clear_Folder);
+                output.AddRow(Folder_Ctrl, Folder_Status);
                 OutputFolder.Content = output;
 
                 //Final Control Assembly
@@ -201,10 +214,10 @@ namespace Pachyderm_Acoustic
                 layout.AddRow(colorcontrol);
                 layout.AddRow(OutputFolder);
                 layout.DefaultSpacing = new Size(0, 20);
-                this.Content = layout;
 
-                //this.SizeChanged += update;
-
+                Scrollable OverallScroll = new Scrollable();
+                OverallScroll.Content = layout;
+                this.Content = OverallScroll;
             }
 
             private double CutOffLength()
@@ -320,6 +333,12 @@ namespace Pachyderm_Acoustic
                 while (true);
             }
 
+            private void ToStart_Click(object sender, System.EventArgs e)
+            {
+                j = 0;
+                Forw_proc();
+            }
+
             private void Rev_Click(object sender, System.EventArgs e)
             {
                 Rev_proc();
@@ -431,7 +450,7 @@ namespace Pachyderm_Acoustic
                 ForwButton.Dispose();
                 Loop.Dispose();
                 Forw.Dispose();
-                Rev.Dispose();
+                StartOver.Dispose();
                 VisualizationSelect.Dispose();
                 Frame_Rate.Dispose();
                 Seconds.Dispose();
@@ -502,6 +521,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.SetCommandPrompt(string.Format("Finding Ray {0} of {1}", q+1, RayCount));
                     double SumLength = 0;
                     Pachyderm_Acoustic.Environment.OctaveRay R = Source.Directions(0, ref Rnd).SplitRay(4);
+                    R.Intensity /= RayCount;
                     double u = 0;
                     double v = 0;
                     int ChosenIndex = 0;

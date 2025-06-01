@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2023, Arthur van der Harten 
+//'Copyright (c) 2008-2023, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
 using Hare.Geometry;
+using System.Data.Odbc;
 
 namespace Pachyderm_Acoustic
 {
@@ -27,6 +28,8 @@ namespace Pachyderm_Acoustic
     {
         public class RhCommon_PolygonScene : Polygon_Scene
         {
+            List<Brep> BrepList = new List<Brep>();
+
             public RhCommon_PolygonScene(List<Rhino.DocObjects.RhinoObject> ObjectList, bool register_edges, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool AcousticFailsafes)
                 : this(ObjectList, null, null, register_edges, Temp, hr, Pa, Air_Choice, EdgeCorrection, AcousticFailsafes)
             {
@@ -43,7 +46,7 @@ namespace Pachyderm_Acoustic
 
                 List<int> Brep_ids = new List<int>();
 
-                List<Brep> BrepList = new List<Brep>();
+                //List<Brep> BrepList = new List<Brep>();
                 List<Material> ABS_Construct = new List<Material>();
                 List<Scattering> SCT_Construct = new List<Scattering>();
                 List<double[]> TRN_Construct = new List<double[]>();
@@ -111,7 +114,7 @@ namespace Pachyderm_Acoustic
                         Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(spec, ref Abs, ref Scat, ref Trans);
                         //New code for transmission loss incorporation...
                         string trans = Layer.GetUserString("Transmission");
-                        Trans = (trans == "" || trans == null ) ? ( Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
+                        Trans = (trans == "" || trans == null) ? (Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
 
                         //TODO: Test that this works.
                         if (Layer.GetUserString("Transmission") == "True")
@@ -292,7 +295,7 @@ namespace Pachyderm_Acoustic
                             List<Vector[]> temp_Frames = new List<Vector[]>();
 
                             for (int u = 0; u < meshes[t].Faces.Count; u++)
-                            {   
+                            {
                                 Hare.Geometry.Point[] P;
                                 Hare.Geometry.Point Centroid;
 
@@ -300,13 +303,13 @@ namespace Pachyderm_Acoustic
                                 {
                                     P = new Hare.Geometry.Point[4];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
-                                    P[3] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[3] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     if (isDegenerate(ref P)) continue;
 
                                     Centroid = (P.Length == 4) ? (P[0] + P[1] + P[2] + P[3]) / 4 : (P[0] + P[1] + P[2]) / 3;
@@ -315,11 +318,11 @@ namespace Pachyderm_Acoustic
                                 {
                                     P = new Hare.Geometry.Point[3];
                                     Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
-                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[0] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
-                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[1] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
-                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X,10), Math.Round(FP.Y,10), Math.Round(FP.Z,10));
+                                    P[2] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     Centroid = (P[0] + P[1] + P[2]) / 3;
 
                                     if (isDegenerate(ref P)) continue;
@@ -355,378 +358,393 @@ namespace Pachyderm_Acoustic
 
                 if (register_edges)
                 {
-                    //Collect Edge Curves
-                    Edges = new List<MathNet.Numerics.Interpolation.CubicSpline[]>();
-                    Edge_Tangents = new List<MathNet.Numerics.Interpolation.CubicSpline[]>();
-                    Edge_isSoft = new List<bool>();
-                    EdgeLength = new List<double>();
-                    List<Brep> Naked_Breps = new List<Brep>();
-                    List<Curve> Naked_Edges = new List<Curve>();
-                    List<double> Lengths = new List<double>();
-                    List<double[]> EdgeDomains = new List<double[]>();
-                    List<int> Brep_IDS = new List<int>();
+                    Register_Edges();
+                }
+            }
 
-                    for (int p = 0; p < BrepList.Count; p++)
+            public override void Register_Edges(IEnumerable<Hare.Geometry.Point> S, IEnumerable<Hare.Geometry.Point> R)
+            {
+                if (Edges == null || Edges.Count == 0)
+                {
+                    Register_Edges();
+                }
+
+                base.Register_Edges(S, R);
+            }
+
+            public void Register_Edges()
+            {
+                //Collect Edge Curves
+                Edges = new List<MathNet.Numerics.Interpolation.CubicSpline[]>();
+                Edge_Tangents = new List<MathNet.Numerics.Interpolation.CubicSpline[]>();
+                Edge_isSoft = new List<bool>();
+                EdgeLength = new List<double>();
+                List<Brep> Naked_Breps = new List<Brep>();
+                List<Curve> Naked_Edges = new List<Curve>();
+                List<double> Lengths = new List<double>();
+                List<double[]> EdgeDomains = new List<double[]>();
+                List<int> Brep_IDS = new List<int>();
+
+                for (int p = 0; p < BrepList.Count; p++)
+                {
+                    foreach (BrepEdge be in BrepList[p].Edges)
                     {
-                        foreach (BrepEdge be in BrepList[p].Edges)
+                        int[] EdgeMembers = be.AdjacentFaces();
+                        switch (be.Valence)
                         {
-                            int[] EdgeMembers = be.AdjacentFaces();
-                            switch (be.Valence)
-                            {
-                                case EdgeAdjacency.Interior:
-                                    ///This probably doesn't do any work anymore... Kept for future reference (and because it is harmless to do so...).
-                                    if (be.IsLinear())
+                            case EdgeAdjacency.Interior:
+                                ///This probably doesn't do any work anymore... Kept for future reference (and because it is harmless to do so...).
+                                if (be.IsLinear())
+                                {
+                                    if (be.IsSmoothManifoldEdge()) continue; //ignore this condition...
+                                    if (BrepList[p].Faces[EdgeMembers[0]].IsPlanar() && BrepList[p].Faces[EdgeMembers[1]].IsPlanar())
                                     {
-                                        if (be.IsSmoothManifoldEdge()) continue; //ignore this condition...
-                                        if (BrepList[p].Faces[EdgeMembers[0]].IsPlanar() && BrepList[p].Faces[EdgeMembers[1]].IsPlanar())
-                                        {
-                                            //Curve is straight, and surfaces are planar (Monolithic Edge)
-                                            //Determine if surfaces are coplanar.//////////
-                                            Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
-                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p );
-                                        }
-                                        else
-                                        {
-                                            ///Edge Curved Condition
-                                            Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
-                                            create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p);
-                                        }
+                                        //Curve is straight, and surfaces are planar (Monolithic Edge)
+                                        //Determine if surfaces are coplanar.//////////
+                                        Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
+                                        create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p);
                                     }
-                                    ////Now would do harm. Throw exception instead...
-                                    //throw new Exception("Tried to get edges from breps that have not been split up...");
-                                    break;
-                                case EdgeAdjacency.Naked:
-                                    //Sorted edges allow us to assume a relationship between curves...
-                                    double l = be.GetLength();
-                                    bool register_anyway = true;
-                                    for (int i = 0; i < Naked_Edges.Count; i++)
+                                    else
                                     {
-                                        if (l < Lengths[i])
-                                        {
-                                            Naked_Breps.Insert(i, BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
-                                            Naked_Edges.Insert(i, be);
-                                            EdgeDomains.Insert(i, new double[] { be.Domain[0], be.Domain[1] });
-                                            Lengths.Insert(i, l);
-                                            Brep_IDS.Insert(i, p);
-                                            register_anyway = false;
-                                            break;
-                                        }
+                                        ///Edge Curved Condition
+                                        Brep[] BR = new Brep[2] { BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false), BrepList[p].Faces[EdgeMembers[1]].DuplicateFace(false) };
+                                        create_curved_edge_entry(be, BR, new Material[2] { AbsorptionData[p], AbsorptionData[p] }, p);
                                     }
-                                    if (register_anyway)
+                                }
+                                ////Now would do harm. Throw exception instead...
+                                //throw new Exception("Tried to get edges from breps that have not been split up...");
+                                break;
+                            case EdgeAdjacency.Naked:
+                                //Sorted edges allow us to assume a relationship between curves...
+                                double l = be.GetLength();
+                                bool register_anyway = true;
+                                for (int i = 0; i < Naked_Edges.Count; i++)
+                                {
+                                    if (l < Lengths[i])
                                     {
-                                        Naked_Breps.Add(BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
-                                        Naked_Edges.Add(be);
-                                        EdgeDomains.Add(new double[] { be.Domain[0], be.Domain[1] });
-                                        Lengths.Add(l);
-                                        Brep_IDS.Add(p);
+                                        Naked_Breps.Insert(i, BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
+                                        Naked_Edges.Insert(i, be);
+                                        EdgeDomains.Insert(i, new double[] { be.Domain[0], be.Domain[1] });
+                                        Lengths.Insert(i, l);
+                                        Brep_IDS.Insert(i, p);
+                                        register_anyway = false;
+                                        break;
                                     }
-                                    break;
-                                case EdgeAdjacency.None:
-                                    //Ignore this edge...
-                                    //What kind of edge, is neither Naked, nor Interior, nor Non-Manifold??
-                                    continue;
-                                case EdgeAdjacency.NonManifold:
-                                    //Ignore tnis edge, but alert the user...
-                                    Eto.Forms.MessageBox.Show("Non-Manifold Edges. Could you please send a copy of this model to Pach.Acoustic.Sim@gmail.com? Also - if you know how you built this, please don't do it again...");
-                                    break;
-                            }
+                                }
+                                if (register_anyway)
+                                {
+                                    Naked_Breps.Add(BrepList[p].Faces[EdgeMembers[0]].DuplicateFace(false));
+                                    Naked_Edges.Add(be);
+                                    EdgeDomains.Add(new double[] { be.Domain[0], be.Domain[1] });
+                                    Lengths.Add(l);
+                                    Brep_IDS.Add(p);
+                                }
+                                break;
+                            case EdgeAdjacency.None:
+                                //Ignore this edge...
+                                //What kind of edge, is neither Naked, nor Interior, nor Non-Manifold??
+                                continue;
+                            case EdgeAdjacency.NonManifold:
+                                //Ignore tnis edge, but alert the user...
+                                Eto.Forms.MessageBox.Show("Non-Manifold Edges. Could you please send a copy of this model to Pach.Acoustic.Sim@gmail.com? Also - if you know how you built this, please don't do it again...");
+                                break;
                         }
                     }
+                }
 
-                    ///In descending order by length - first edge will always be the longer one.
-                    Naked_Breps.Reverse();
-                    Naked_Edges.Reverse();
-                    EdgeDomains.Reverse();
-                    Brep_IDS.Reverse();
-                    Lengths.Reverse();
-                    
-                    //Handle Naked Edges... (this is now probably the only work being done by this function... this is where the magic happens...)
-                    double tolerance = 0.001;
-                    List<Curve> Orphaned_Edge = new List<Curve>();
-                    List<Brep> Orphaned_Brep = new List<Brep>();
-                    while (Naked_Edges.Count > 0)
+                ///In descending order by length - first edge will always be the longer one.
+                Naked_Breps.Reverse();
+                Naked_Edges.Reverse();
+                EdgeDomains.Reverse();
+                Brep_IDS.Reverse();
+                Lengths.Reverse();
+
+                //Handle Naked Edges... (this is now probably the only work being done by this function... this is where the magic happens...)
+                double tolerance = 0.001;
+                List<Curve> Orphaned_Edge = new List<Curve>();
+                List<Brep> Orphaned_Brep = new List<Brep>();
+                while (Naked_Edges.Count > 0)
+                {
+                    bool orphaned = true; //Orphaned until proven otherwise...
+
+                    if (Naked_Edges[0] == null)
                     {
-                        bool orphaned = true; //Orphaned until proven otherwise...
+                        Naked_Edges.RemoveAt(0);
+                        Naked_Breps.RemoveAt(0);
+                        EdgeDomains.RemoveAt(0);
+                        Lengths.RemoveAt(0);
+                        Brep_IDS.RemoveAt(0);
+                        continue;
+                    }
 
-                        if(Naked_Edges[0] == null)
+                    List<Curve> ToAdd = new List<Curve>();
+                    List<Brep> ToAddMembers = new List<Brep>();
+                    List<int> ToAddIDS = new List<int>();
+
+                    for (int shortid = 1; shortid < Naked_Edges.Count; shortid++)
+                    {
+                        Brep[] BR = new Brep[2] { Naked_Breps[shortid], Naked_Breps[0] };
+                        int[] B_IDS = new int[2] { Brep_IDS[shortid], Brep_IDS[0] };
+
+                        //Check for Match Case: (simplest edge coincidence)
+                        if (Naked_Edges[0].GetLength() - Naked_Edges[shortid].GetLength() < 0.01)
                         {
-                            Naked_Edges.RemoveAt(0);
-                            Naked_Breps.RemoveAt(0);
-                            EdgeDomains.RemoveAt(0);
-                            Lengths.RemoveAt(0);
-                            Brep_IDS.RemoveAt(0);
-                            continue;
-                        }
-
-                        List<Curve> ToAdd = new List<Curve>();
-                        List<Brep> ToAddMembers = new List<Brep>();
-                        List<int> ToAddIDS = new List<int>();
-
-                        for (int shortid = 1; shortid < Naked_Edges.Count; shortid++)
-                        {
-                            Brep[] BR = new Brep[2] { Naked_Breps[shortid], Naked_Breps[0] };
-                            int[] B_IDS = new int[2] { Brep_IDS[shortid], Brep_IDS[0] };
-
-                            //Check for Match Case: (simplest edge coincidence)
-                            if (Naked_Edges[0].GetLength() - Naked_Edges[shortid].GetLength() < 0.01)
+                            //Curves are effectively the same length... this might be very easy.
+                            if (((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) ||
+                            ((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001))
                             {
-                                //Curves are effectively the same length... this might be very easy.
-                                if (((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) ||
-                                ((Naked_Edges[0].PointAtStart - Naked_Edges[shortid].PointAtEnd).SquareLength < 0.0001) && ((Naked_Edges[0].PointAtEnd - Naked_Edges[shortid].PointAtStart).SquareLength < 0.0001))
-                                {
-                                    //Curves are effectively coincident...
-                                    if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]]}, Brep_IDS[0], Brep_IDS[shortid]);                                                                                                                                                                                                    //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
+                                //Curves are effectively coincident...
+                                if (Naked_Edges[shortid].IsLinear()) create_curved_edge_entry(Naked_Edges[shortid], BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }, Brep_IDS[0], Brep_IDS[shortid]);                                                                                                                                                                                                    //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, Naked_Edges[0]));
 
-                                    Naked_Edges.RemoveAt(shortid);
-                                    Naked_Breps.RemoveAt(shortid);
-                                    EdgeDomains.RemoveAt(shortid);
-                                    Lengths.RemoveAt(shortid);
-                                    Brep_IDS.RemoveAt(shortid);
-                                    Naked_Edges.RemoveAt(0);
-                                    Naked_Breps.RemoveAt(0);
-                                    EdgeDomains.RemoveAt(0);
-                                    Lengths.RemoveAt(0);
-                                    Brep_IDS.RemoveAt(0);
-                                    orphaned = false;
-                                    break;
-                                }
-                            }
-
-                            //Does start or end point fall on longer curve...
-                            double t1;
-                            double dir;
-                            double domstart;
-                            Point3d Start;
-
-                            if (Naked_Edges[0].ClosestPoint(Naked_Edges[shortid].PointAtStart, out t1, tolerance) && Naked_Edges[0].TangentAt(t1).IsParallelTo(Naked_Edges[shortid].TangentAtStart) > 0)
-                            {
-                                //Does start id on short curve intersect?
-                                //if (Edges[shortid].TangentAt(t1).IsParallelTo(Edges[0].TangentAtStart) == 0) continue;
-                                dir = .1;
-                                Start = Naked_Edges[shortid].PointAtStart;
-                                domstart = EdgeDomains[shortid][0];
-                            }
-                            else if (Naked_Edges[0].ClosestPoint(Naked_Edges[shortid].PointAtEnd, out t1, tolerance) && Naked_Edges[0].TangentAt(t1).IsParallelTo(Naked_Edges[shortid].TangentAtEnd) > 0)
-                            {
-                                //Does end point on short curve intersect?
-                                //if (Edges[shortid].TangentAt(t1).IsParallelTo(Edges[0].TangentAtEnd) == 0) continue;
-                                Start = Naked_Edges[shortid].PointAtEnd;
-                                dir = -.1;
-                                domstart = EdgeDomains[shortid][1];
-                            }
-                            else
-                            {
-                                //Does any point on curves intersect?
-                                int g;
-                                Point3d p1, p2;
-                                if (!Naked_Edges[0].ClosestPoints(new Curve[] { Naked_Edges[shortid] }, out p1, out p2, out g, 0.01)) continue;
-                                dir = .1;
-                                Start = Naked_Edges[shortid].PointAtStart;
-                                t1 = Naked_Edges[shortid].Domain.T0;
-                                domstart = EdgeDomains[shortid][0];
-                            }
-
-                            //Iterate across curves, Dog-Man style.
-                            double tsS = t1, tsE = t1;
-
-                            while (true)
-                            {
-                                ////if curves are not merged
-                                //////Go to the next point on the short curve and keep looking, till the short curve is exhausted. 
-                                tsS = tsE;
-                                double tlS;
-
-                                Point3d pt = Naked_Edges[shortid].PointAt(tsS);
-                                if (!Naked_Edges[0].ClosestPoint(pt, out tlS, 0.02))
-                                {
-                                    //They don't match up.
-                                    if (Naked_Edges[0].Domain.IncludesParameter(tsS))
-                                    {
-                                        //We are still on the long curve: Keep checking in case it may match up later...
-                                        tsE += dir;
-                                        continue;
-                                    }
-                                    break;
-                                }
-
-                                double tlE = tlS;
-
-                                if (Math.Abs(Vector3d.Multiply(Naked_Edges[shortid].TangentAt(tsS), Naked_Edges[0].TangentAt(tlS))) < 0.98)
-                                {
-                                    // edges may meet here, but the curves are not even remotely parallel... they might be some kind of corner junction. Go to the next curve.
-                                    tsE += dir;
-                                    continue;
-                                }
-
-                                ////If curves are merged, iterate through points until curves do not merge, or entire section of one or other is exhausted.
-                                tsE += dir;
-                                pt = Naked_Edges[shortid].PointAt(tsE);
-
-                                double tl2, ts2 = t1;
-                                while (Naked_Edges[0].ClosestPoint(pt, out tl2, 0.01))
-                                {
-                                    double d = Naked_Edges[0].PointAt(tl2).DistanceTo(pt);
-                                    if (d > 0.01) break;
-                                    //Curves are merged - increment check and try again.
-                                    tlE = tl2;
-                                    tsE = ts2;
-                                    ts2 += dir;
-                                    pt = Naked_Edges[shortid].PointAt(tsE);
-                                }
-
-                                if (tl2 == 0) break;
-
-                                if (tsS > tsE)
-                                {
-                                    double t = tsE;
-                                    tsE = tsS;
-                                    tsS = t;
-                                }
-
-                                if (tlS > tlE)
-                                {
-                                    double t = tlE;
-                                    tlE = tlS;
-                                    tlS = t;
-                                }
-
-                                Curve newEdge = Naked_Edges[shortid].Trim(new Interval(tsS, tsE));
-
-                                if (newEdge == null || newEdge.GetLength() < 0.01)  continue;
-                                create_curved_edge_entry(newEdge, BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }, Brep_IDS[0], Brep_IDS[shortid]);
-                                //if (newEdge.IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
-                                //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
-
-                                newEdge = Naked_Edges[shortid].Trim(new Interval(tsE, Naked_Edges[shortid].Domain.T1));
-                                if (newEdge != null)
-                                {
-                                    ToAdd.Add(newEdge);
-                                    ToAddMembers.Add(Naked_Breps[shortid]);
-                                    ToAddIDS.Add(Brep_IDS[shortid]);
-                                }
-                                newEdge = Naked_Edges[shortid].Trim(new Interval(Naked_Edges[shortid].Domain.T0, tsS));
-                                if (newEdge != null)
-                                {
-                                    ToAdd.Add(newEdge);
-                                    ToAddMembers.Add(Naked_Breps[shortid]);
-                                    ToAddIDS.Add(Brep_IDS[shortid]);
-                                }
-
-                                newEdge = Naked_Edges[0].Trim(new Interval(tlE, Naked_Edges[0].Domain.T1));
-                                if (newEdge != null)
-                                {
-                                    ToAdd.Add(newEdge);
-                                    ToAddMembers.Add(Naked_Breps[0]);
-                                    ToAddIDS.Add(Brep_IDS[0]);
-                                }
-                                newEdge = Naked_Edges[0].Trim(new Interval(Naked_Edges[0].Domain.T0, tlS));
-                                if (newEdge != null)
-                                {
-                                    ToAdd.Add(newEdge);
-                                    ToAddMembers.Add(Naked_Breps[0]);
-                                    ToAddIDS.Add(Brep_IDS[0]);
-                                }
-
-                                ///////If curves diverge... trim merged extent from one, and record as edge. Cut this portion out of existing curves, and re-enter into sorted curve list.
-                                orphaned = false;
                                 Naked_Edges.RemoveAt(shortid);
                                 Naked_Breps.RemoveAt(shortid);
                                 EdgeDomains.RemoveAt(shortid);
-                                Brep_IDS.RemoveAt(shortid);
                                 Lengths.RemoveAt(shortid);
+                                Brep_IDS.RemoveAt(shortid);
                                 Naked_Edges.RemoveAt(0);
                                 Naked_Breps.RemoveAt(0);
                                 EdgeDomains.RemoveAt(0);
-                                Brep_IDS.RemoveAt(0);
                                 Lengths.RemoveAt(0);
+                                Brep_IDS.RemoveAt(0);
+                                orphaned = false;
+                                break;
+                            }
+                        }
 
-                                for (int k = 0; k < ToAdd.Count; k++)
+                        //Does start or end point fall on longer curve...
+                        double t1;
+                        double dir;
+                        double domstart;
+                        Point3d Start;
+
+                        if (Naked_Edges[0].ClosestPoint(Naked_Edges[shortid].PointAtStart, out t1, tolerance) && Naked_Edges[0].TangentAt(t1).IsParallelTo(Naked_Edges[shortid].TangentAtStart) > 0)
+                        {
+                            //Does start id on short curve intersect?
+                            //if (Edges[shortid].TangentAt(t1).IsParallelTo(Edges[0].TangentAtStart) == 0) continue;
+                            dir = .1;
+                            Start = Naked_Edges[shortid].PointAtStart;
+                            domstart = EdgeDomains[shortid][0];
+                        }
+                        else if (Naked_Edges[0].ClosestPoint(Naked_Edges[shortid].PointAtEnd, out t1, tolerance) && Naked_Edges[0].TangentAt(t1).IsParallelTo(Naked_Edges[shortid].TangentAtEnd) > 0)
+                        {
+                            //Does end point on short curve intersect?
+                            //if (Edges[shortid].TangentAt(t1).IsParallelTo(Edges[0].TangentAtEnd) == 0) continue;
+                            Start = Naked_Edges[shortid].PointAtEnd;
+                            dir = -.1;
+                            domstart = EdgeDomains[shortid][1];
+                        }
+                        else
+                        {
+                            //Does any point on curves intersect?
+                            int g;
+                            Point3d p1, p2;
+                            if (!Naked_Edges[0].ClosestPoints(new Curve[] { Naked_Edges[shortid] }, out p1, out p2, out g, 0.01)) continue;
+                            dir = .1;
+                            Start = Naked_Edges[shortid].PointAtStart;
+                            t1 = Naked_Edges[shortid].Domain.T0;
+                            domstart = EdgeDomains[shortid][0];
+                        }
+
+                        //Iterate across curves, Dog-Man style.
+                        double tsS = t1, tsE = t1;
+
+                        while (true)
+                        {
+                            ////if curves are not merged
+                            //////Go to the next point on the short curve and keep looking, till the short curve is exhausted. 
+                            tsS = tsE;
+                            double tlS;
+
+                            Point3d pt = Naked_Edges[shortid].PointAt(tsS);
+                            if (!Naked_Edges[0].ClosestPoint(pt, out tlS, 0.02))
+                            {
+                                //They don't match up.
+                                if (Naked_Edges[0].Domain.IncludesParameter(tsS))
                                 {
-                                    bool added = false;
-                                    double l = ToAdd[k].GetLength();
-                                    for (int i = 0; i < Naked_Edges.Count; i++)
-                                    {
-                                        if (l > Lengths[i])
-                                        {
-                                            Naked_Breps.Insert(i, ToAddMembers[k]);
-                                            Naked_Edges.Insert(i, ToAdd[k]);
-                                            EdgeDomains.Insert(i, new double[] { ToAdd[k].Domain.T0, ToAdd[k].Domain.T1 });
-                                            Lengths.Insert(i, l);
-                                            Brep_IDS.Insert(i, ToAddIDS[k]);
-                                            added = true;
-                                            break;
-                                        }
-                                    }
-                                    if (added) continue;
-                                    Naked_Breps.Add(ToAddMembers[k]);
-                                    Naked_Edges.Add(ToAdd[k]);
-                                    EdgeDomains.Add(new double[] { ToAdd[k].Domain[0], ToAdd[k].Domain[1] });
-                                    Lengths.Add(l);
-                                    Brep_IDS.Add(ToAddIDS[k]);
+                                    //We are still on the long curve: Keep checking in case it may match up later...
+                                    tsE += dir;
+                                    continue;
                                 }
                                 break;
                             }
-                            if (ToAdd.Count > 0) break;
-                        }
-                        if (orphaned)
-                        {
-                            bool coincident = false;
-                            //Check for intersecting geometry. (T-section)
-                            List<Curve> starting = new List<Curve>();
-                            starting.Add(Naked_Edges[0]);
-                            for (int i = 0; i < BrepList.Count; i++)
+
+                            double tlE = tlS;
+
+                            if (Math.Abs(Vector3d.Multiply(Naked_Edges[shortid].TangentAt(tsS), Naked_Edges[0].TangentAt(tlS))) < 0.98)
                             {
-                                if (Brep_IDS[0] == i) continue;
-                                if (starting.Count == 0)
-                                {
-                                    coincident = true;
-                                    break;
-                                }
-                                Curve[] crv;
-                                Point3d[] pts;
-                                List<Curve> passed = new List<Curve>();
-                                foreach (Curve totest in starting)
-                                {
-                                    Rhino.Geometry.Intersect.Intersection.CurveBrep(totest, BrepList[i], 0.01, out crv, out pts);
-                                    if (crv != null)
-                                    {
-                                        foreach (Curve c in crv)
-                                        {
-                                            if (Lengths[0] > c.GetLength() - 0.02)
-                                            {
-                                                coincident = true;
-                                                break;
-                                            }
-                                            else
-                                            {
-                                                passed.AddRange(Rhino.Geometry.Curve.CreateBooleanDifference(totest, c, 0.1));
-                                            }
-                                        }
-                                    }
-                                }
-                                if (coincident)
-                                {
-                                    starting.Clear();
-                                    break;
-                                }
-                                if(passed.Count > 0) starting = passed;
+                                // edges may meet here, but the curves are not even remotely parallel... they might be some kind of corner junction. Go to the next curve.
+                                tsE += dir;
+                                continue;
                             }
 
-                            //Create thin plate...
-                            foreach (Curve c in starting)
+                            ////If curves are merged, iterate through points until curves do not merge, or entire section of one or other is exhausted.
+                            tsE += dir;
+                            pt = Naked_Edges[shortid].PointAt(tsE);
+
+                            double tl2, ts2 = t1;
+                            while (Naked_Edges[0].ClosestPoint(pt, out tl2, 0.01))
                             {
-                                Brep Converse = Naked_Breps[0].Duplicate() as Brep;
-                                Converse.Surfaces[0].Reverse(0, true);
-                                create_curved_edge_entry(c, new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] }, Brep_IDS[0]);
+                                double d = Naked_Edges[0].PointAt(tl2).DistanceTo(pt);
+                                if (d > 0.01) break;
+                                //Curves are merged - increment check and try again.
+                                tlE = tl2;
+                                tsE = ts2;
+                                ts2 += dir;
+                                pt = Naked_Edges[shortid].PointAt(tsE);
                             }
 
-                            //Remove this edge from Edges
+                            if (tl2 == 0) break;
+
+                            if (tsS > tsE)
+                            {
+                                double t = tsE;
+                                tsE = tsS;
+                                tsS = t;
+                            }
+
+                            if (tlS > tlE)
+                            {
+                                double t = tlE;
+                                tlE = tlS;
+                                tlS = t;
+                            }
+
+                            Curve newEdge = Naked_Edges[shortid].Trim(new Interval(tsS, tsE));
+
+                            if (newEdge == null || newEdge.GetLength() < 0.01) continue;
+                            create_curved_edge_entry(newEdge, BR, new Material[2] { AbsorptionData[B_IDS[0]], AbsorptionData[B_IDS[1]] }, Brep_IDS[0], Brep_IDS[shortid]);
+                            //if (newEdge.IsLinear()) Edge_Nodes.Add(new Edge_Straight(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
+                            //else Edge_Nodes.Add(new Edge_Curved(ref S, ref R, this.Env_Prop, BR, B_IDS, newEdge));
+
+                            newEdge = Naked_Edges[shortid].Trim(new Interval(tsE, Naked_Edges[shortid].Domain.T1));
+                            if (newEdge != null)
+                            {
+                                ToAdd.Add(newEdge);
+                                ToAddMembers.Add(Naked_Breps[shortid]);
+                                ToAddIDS.Add(Brep_IDS[shortid]);
+                            }
+                            newEdge = Naked_Edges[shortid].Trim(new Interval(Naked_Edges[shortid].Domain.T0, tsS));
+                            if (newEdge != null)
+                            {
+                                ToAdd.Add(newEdge);
+                                ToAddMembers.Add(Naked_Breps[shortid]);
+                                ToAddIDS.Add(Brep_IDS[shortid]);
+                            }
+
+                            newEdge = Naked_Edges[0].Trim(new Interval(tlE, Naked_Edges[0].Domain.T1));
+                            if (newEdge != null)
+                            {
+                                ToAdd.Add(newEdge);
+                                ToAddMembers.Add(Naked_Breps[0]);
+                                ToAddIDS.Add(Brep_IDS[0]);
+                            }
+                            newEdge = Naked_Edges[0].Trim(new Interval(Naked_Edges[0].Domain.T0, tlS));
+                            if (newEdge != null)
+                            {
+                                ToAdd.Add(newEdge);
+                                ToAddMembers.Add(Naked_Breps[0]);
+                                ToAddIDS.Add(Brep_IDS[0]);
+                            }
+
+                            ///////If curves diverge... trim merged extent from one, and record as edge. Cut this portion out of existing curves, and re-enter into sorted curve list.
+                            orphaned = false;
+                            Naked_Edges.RemoveAt(shortid);
+                            Naked_Breps.RemoveAt(shortid);
+                            EdgeDomains.RemoveAt(shortid);
+                            Brep_IDS.RemoveAt(shortid);
+                            Lengths.RemoveAt(shortid);
                             Naked_Edges.RemoveAt(0);
                             Naked_Breps.RemoveAt(0);
                             EdgeDomains.RemoveAt(0);
                             Brep_IDS.RemoveAt(0);
                             Lengths.RemoveAt(0);
+
+                            for (int k = 0; k < ToAdd.Count; k++)
+                            {
+                                bool added = false;
+                                double l = ToAdd[k].GetLength();
+                                for (int i = 0; i < Naked_Edges.Count; i++)
+                                {
+                                    if (l > Lengths[i])
+                                    {
+                                        Naked_Breps.Insert(i, ToAddMembers[k]);
+                                        Naked_Edges.Insert(i, ToAdd[k]);
+                                        EdgeDomains.Insert(i, new double[] { ToAdd[k].Domain.T0, ToAdd[k].Domain.T1 });
+                                        Lengths.Insert(i, l);
+                                        Brep_IDS.Insert(i, ToAddIDS[k]);
+                                        added = true;
+                                        break;
+                                    }
+                                }
+                                if (added) continue;
+                                Naked_Breps.Add(ToAddMembers[k]);
+                                Naked_Edges.Add(ToAdd[k]);
+                                EdgeDomains.Add(new double[] { ToAdd[k].Domain[0], ToAdd[k].Domain[1] });
+                                Lengths.Add(l);
+                                Brep_IDS.Add(ToAddIDS[k]);
+                            }
+                            break;
                         }
+                        if (ToAdd.Count > 0) break;
+                    }
+                    if (orphaned)
+                    {
+                        bool coincident = false;
+                        //Check for intersecting geometry. (T-section)
+                        List<Curve> starting = new List<Curve>();
+                        starting.Add(Naked_Edges[0]);
+                        for (int i = 0; i < BrepList.Count; i++)
+                        {
+                            if (Brep_IDS[0] == i) continue;
+                            if (starting.Count == 0)
+                            {
+                                coincident = true;
+                                break;
+                            }
+                            Curve[] crv;
+                            Point3d[] pts;
+                            List<Curve> passed = new List<Curve>();
+                            foreach (Curve totest in starting)
+                            {
+                                Rhino.Geometry.Intersect.Intersection.CurveBrep(totest, BrepList[i], 0.01, out crv, out pts);
+                                if (crv != null)
+                                {
+                                    foreach (Curve c in crv)
+                                    {
+                                        if (Lengths[0] > c.GetLength() - 0.02)
+                                        {
+                                            coincident = true;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            passed.AddRange(Rhino.Geometry.Curve.CreateBooleanDifference(totest, c, 0.1));
+                                        }
+                                    }
+                                }
+                            }
+                            if (coincident)
+                            {
+                                starting.Clear();
+                                break;
+                            }
+                            if (passed.Count > 0) starting = passed;
+                        }
+
+                        //Create thin plate...
+                        foreach (Curve c in starting)
+                        {
+                            Brep Converse = Naked_Breps[0].Duplicate() as Brep;
+                            Converse.Surfaces[0].Reverse(0, true);
+                            create_curved_edge_entry(c, new Brep[] { Naked_Breps[0], Converse }, new Material[2] { AbsorptionData[Brep_IDS[0]], AbsorptionData[Brep_IDS[0]] }, Brep_IDS[0]);
+                        }
+
+                        //Remove this edge from Edges
+                        Naked_Edges.RemoveAt(0);
+                        Naked_Breps.RemoveAt(0);
+                        EdgeDomains.RemoveAt(0);
+                        Brep_IDS.RemoveAt(0);
+                        Lengths.RemoveAt(0);
                     }
                 }
             }
@@ -805,13 +823,14 @@ namespace Pachyderm_Acoustic
                     //double DeltaZ = Env_Props.Sound_Speed(Point3d.Origin) / (4 * fs);
                     Rhino.Geometry.Intersect.Intersection.BrepPlane(B[0], P, 0.001, out Csects1, out Psects);
                     Rhino.Geometry.Intersect.Intersection.BrepPlane(B[1], P, 0.001, out Csects2, out Psects);
+                    ///TODO: return, break, or continue?
+                    length += 0.025;
                     if (Csects1.Length == 0 || Csects2.Length == 0) continue;
 
                     d.Add(length);
                     x.Add(P.Origin.X);
                     y.Add(P.Origin.Y);
                     z.Add(P.Origin.Z);
-                    length += 0.025;
 
                     ///Control Start Point of curve
                     if ((Csects1[0].PointAtStart.X * P.Origin.X + Csects1[0].PointAtStart.Y * P.Origin.Y + Csects1[0].PointAtStart.Z * P.Origin.Z) < 0.00001) Csects1[0].Reverse();
@@ -1140,110 +1159,6 @@ namespace Pachyderm_Acoustic
                     }
                 }
             }
-
-//            public RhCommon_Scene(List<Rhino.Geometry.Brep> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic)
-//                : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
-//            {
-//                Vector3d NormalHolder = new Vector3d();
-//                Plane PlaneHolder = new Plane();
-//                Transform XHolder = new Transform();
-//                Random RND = new Random();
-
-//                for (int q = 0; q < ObjRef.Count; q++)
-//                {
-//                    //ObjectList.Add(new Rhino.DocObjects.ObjRef(ObjRef[q]));
-
-//                    //Rhino.Geometry.Brep BObj;
-//                    //if (ObjRef[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
-//                    //{
-//                    //    BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry;
-//                    //}
-//                    //else
-//                    //{
-//                    //    BObj = ((Rhino.DocObjects.ExtrusionObject)ObjRef[q]).ExtrusionGeometry.ToBrep();
-//                    //}
-
-//                    for (int j = 0; j < ObjRef[q].Faces.Count; j++)
-//                    {
-//                        Brep B_Temp = ObjRef[q].DuplicateSubBrep(new List<int>() { j });
-//                        BrepList.Add(B_Temp);
-//                        string Mode = null;
-//                        double[] Absorption = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-//                        double[,] Scattering = new double[8, 3] {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-////                        double[] Reflection = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-//                        double[] Transparency = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-//                        double[] Transmission = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-//                        Mode = ObjRef[q].GetUserString("Acoustics_User");
-//                        double[] Scat = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-//                        double[] phase = new double[8]{0, 0, 0, 0, 0, 0, 0, 0};
-
-//                        //ReflectionData.Add(Reflection);
-//                        AbsorptionData.Add(new Basic_Material(Absorption, phase));
-//                        ScatteringData.Add(new Lambert_Scattering(Scat, SplitRatio));
-//                        TransmissionData.Add(Transmission);
-//                        //PhaseData.Add(phase);
-
-//                        Transmissive.Add(false);
-//                        PlaneBoolean.Add(ObjRef[q].Faces[j].IsPlanar());
-
-//                        if (PlaneBoolean[PlaneBoolean.Count - 1])
-//                        {
-//                            Vector3d Normal = new Vector3d();
-//                            Point3d Origin = new Point3d();
-//                            //Transform MirrorSingle = new Transform();
-//                            //Plane PlaneSingle = new Plane();
-//                            Origin = ObjRef[q].Faces[j].PointAt(0, 0);
-//                            Normal = ObjRef[q].Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
-//                            Mirror.Add(Transform.Mirror(Origin, Normal));
-//                            Plane.Add(new Plane(Origin, Normal));
-//                            PlanarNormal.Add(Normal);
-//                        }
-//                        else
-//                        {
-//                            PlanarNormal.Add(NormalHolder);
-//                            Plane.Add(PlaneHolder);
-//                            Mirror.Add(XHolder);
-//                        }
-//                    }
-//                }
-//                //SurfaceArray = SurfaceList.ToArray();
-//                Valid = true;
-//            }
-
-            //public override void Standardize_Normals()
-            //{
-            //    base.Standardize_Normals();
-
-            //    Brep[] Polyhedra = Rhino.Geometry.Brep.JoinBreps(this.BrepList, Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance);
-            //    BoundingBox Box = Polyhedra[0].GetBoundingBox(true);
-            //    for (int i = 1; i < Polyhedra.Length; i++)
-            //    {
-            //        Box.Union(Polyhedra[i].GetBoundingBox(true));
-            //    }
-            //    Point3d Src = Box.Center;
-
-            //    foreach (Brep B in BrepList)
-            //    {
-            //        for (int j = 0; j < B.Faces.Count; j++)
-            //        {
-            //            AreaMassProperties A = AreaMassProperties.Compute(B.Faces[0]);
-            //            Vector3d Dir = (A.Centroid - Src);
-            //            Dir.Unitize();
-            //            LineCurve L = new LineCurve(Src, A.Centroid + Dir * double.Epsilon);
-
-            //            Curve[] C;
-            //            Point3d[] IPts;
-
-            //            Rhino.Geometry.Ray3d R = new Ray3d(Src, Dir);
-
-            //            for (int i = 0; i < Polyhedra.Length; i++)
-            //            {
-            //                Rhino.Geometry.Intersect.Intersection.CurveBrep(L, Polyhedra[i], 0.001, out C, out IPts);
-                            
-            //            }
-            //        }
-            //    }
-            //}
 
             public override void Absorb(ref OctaveRay Ray, out double cos_theta, double u, double v)
             {

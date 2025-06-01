@@ -2,7 +2,9 @@ Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros
 PachydermGH
 Hare
 
-Copyright (C) 2008-2025, Arthur van der Harten
+Copyright (C) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit
+
+This software is maintained by Open Reesarch in Acoustical Science and Education, Inc. and is and always will be free and open-source software under the General Public License 3.0 or later.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
@@ -28,7 +30,7 @@ documentation at the following address:
 
 http://sourceforge.net/projects/zedgraph/files/
 
-This program also uses Hare, a library for raytracing released by Arthur van der Harten under the GNU GPL.
+This program also uses Hare, a library for raytracing released   under the GNU GPL.
 
 Finally, A library to read the Common Loudspeaker Format is included, but no source code is included for it. This is in order to protect the fidelity of the Common Loudspeaker Format. The author humbly requests that you respect and refrain from decompiling this library as it is provided with the best of intentions.
 

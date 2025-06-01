@@ -42,8 +42,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>General_Public_License.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <AssemblyVersion>2.6.0.9</AssemblyVersion>
-    <FileVersion>2.6.0.9</FileVersion>
+    <AssemblyVersion>2.6.0.14</AssemblyVersion>
+    <FileVersion>2.6.0.14</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutputPath>bin\x64\Debug\</OutputPath>
@@ -119,17 +119,13 @@
     <ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj">
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj">
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj">
-      <Private>True</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj" />
+    <ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <!--<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.4" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />-->
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.Resources.Extensions" Version="7.0.0" />

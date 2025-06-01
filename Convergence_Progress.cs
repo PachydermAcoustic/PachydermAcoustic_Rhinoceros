@@ -12,7 +12,6 @@ using Eto.Forms;
 using MathNet.Numerics;
 using Rhino.UI;
 using ScottPlot;
-using ScottPlot.Extensions;
 using ScottPlot.Plottables;
 
 namespace Pachyderm_Acoustic
@@ -50,26 +49,17 @@ namespace Pachyderm_Acoustic
                 Conclude.Text = "Conclude_Simulation";
                 Conclude.Click += this.Conclude_Click;
 
-                Conv_View.Plot.TitlePanel.Label.Text = "Impulse Response Status";
-                Conv_View.Plot.TitlePanel.Label.Font.Size = 12;
-                Conv_View.Plot.XAxis.Label.Text = "Time (s)";
-                Conv_View.Plot.XAxis.Label.Font.Size = 12;
-                Conv_View.Plot.YAxis.Label.Text = "Ratio of Change";
-                Conv_View.Plot.YAxis.Label.Font.Size = 12;
+                Conv_View.Plot.Title("Impulse Response Status", 12);
+                Conv_View.Plot.XLabel("Time (s)", 12);
+                Conv_View.Plot.YLabel("Ratio of Change", 12);
                 Conv_View.Size = new Eto.Drawing.Size(350, 250);
-                IR1_View.Plot.TitlePanel.Label.Text = "Farthest Clear Receiver";
-                IR1_View.Plot.TitlePanel.Label.Font.Size = 12;
-                IR1_View.Plot.XAxis.Label.Text = "Time (s)";
-                IR1_View.Plot.XAxis.Label.Font.Size = 12;
-                IR1_View.Plot.YAxis.Label.Text = "Sound Pressure Level";
-                IR1_View.Plot.YAxis.Label.Font.Size = 12;
+                IR1_View.Plot.Title("Farthest Clear Receiver", 12);
+                IR1_View.Plot.XLabel("Time (s)", 12) ;
+                IR1_View.Plot.YLabel("Sound Pressure Level", 12);
                 IR1_View.Size = new Eto.Drawing.Size(350, 250);
-                IR2_View.Plot.TitlePanel.Label.Text = "Farthest Obstructed Receiver";
-                IR2_View.Plot.TitlePanel.Label.Font.Size = 12;
-                IR2_View.Plot.XAxis.Label.Text = "Time (s)";
-                IR2_View.Plot.XAxis.Label.Font.Size = 12;
-                IR2_View.Plot.YAxis.Label.Text = "Sound Pressure Level";
-                IR2_View.Plot.YAxis.Label.Font.Size = 12;
+                IR2_View.Plot.Title("Farthest Obstructed Receiver", 12) ;
+                IR2_View.Plot.XLabel("Time (s)",12);
+                IR2_View.Plot.YLabel("Sound Pressure Level",12);
                 IR2_View.Size = new Eto.Drawing.Size(350, 250); dom1 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
                 conv1 = new double[6] { 0,0,0,0,0,0 };
                 dom2 = new double[6] { 0, 0.05, 0.05, 0.08, 0.08, 3 };
@@ -78,12 +68,9 @@ namespace Pachyderm_Acoustic
                 Conv1 = Conv_View.Plot.Add.Scatter(dom1, conv1, ScottPlot.Colors.Blue);
                 Conv2 = Conv_View.Plot.Add.Scatter(dom2, conv2, ScottPlot.Colors.Red);
                 
-                Hist_View.Plot.TitlePanel.Label.Text = "Convergence History (Last 20 records)";
-                Hist_View.Plot.TitlePanel.Label.Font.Size = 12;
-                Hist_View.Plot.XAxis.Label.Text = "Iteration";
-                Hist_View.Plot.XAxis.Label.Font.Size = 12;
-                Hist_View.Plot.YAxis.Label.Text = "Maximum Change";
-                Hist_View.Plot.YAxis.Label.Font.Size = 12;
+                Hist_View.Plot.Title("Convergence History (Last 20 records)", 12);
+                Hist_View.Plot.XLabel("Iteration", 12);
+                Hist_View.Plot.YLabel("Maximum Change",12);
                 Hist_View.Size = new Eto.Drawing.Size(350, 250);
                 domh = new double[20] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19 };
                 history1 = new Queue<double>(20);
@@ -123,10 +110,7 @@ namespace Pachyderm_Acoustic
                         double[] IR = IR_Clear.ElementAtOrDefault(0);
                         //min = Math.Min(min, IR.Min());
                         IR1_View.Plot.Add.Signal(IR, 1.0 / 44100.0, ScottPlot.Colors.Blue);
-                        IR1_View.Plot.YAxis.Max = 0;
-                        IR1_View.Plot.YAxis.Min = -70;
-                        IR1_View.Plot.XAxis.Max = 0;
-                        IR1_View.Plot.XAxis.Min = IR.Length / 44100;
+                        IR1_View.Plot.Axes.SetLimits(0, IR.Length / 44100, -70, 0);
                     }
                     IR1_View.Invalidate();
                 }
@@ -143,11 +127,8 @@ namespace Pachyderm_Acoustic
                     {
                         double[] IR = IR_Obstructed.ElementAtOrDefault(0);
                         //min2 = Math.Min(min, IR.Min());
-                        IR2_View.Plot.Add.Signal(IR_Obstructed.ElementAtOrDefault(0), 1.0 / 44100.0, ScottPlot.Colors.Blue);
-                        IR2_View.Plot.YAxis.Max = 0;
-                        IR2_View.Plot.YAxis.Min = -70;
-                        IR2_View.Plot.XAxis.Max = 0;
-                        IR2_View.Plot.XAxis.Min = IR.Length / 44100;
+                        IR2_View.Plot.Add.Signal(IR, IR.Length / 44100.0, ScottPlot.Colors.Blue);
+                        IR2_View.Plot.Axes.SetLimits(0, IR.Length / 44100, -70, 0);
                     }
                     IR2_View.Invalidate();
                 }
@@ -167,12 +148,12 @@ namespace Pachyderm_Acoustic
 
             public bool Populate(double Conv1, double Conv2, double ConvInf, int ID, double corr = 0)
             {
-                if (Conv1.IsInfiniteOrNaN() || Conv1 > 20) Conv1 = 20;
-                if (Conv2.IsInfiniteOrNaN() || Conv2 > 20) Conv2 = 20;
-                if (ConvInf.IsInfiniteOrNaN() || ConvInf > 20) ConvInf = 20;
+                if (double.IsInfinity(Conv1) || double.IsNaN(Conv1) || Conv1 > 20) Conv1 = 20;
+                if (double.IsInfinity(Conv2) || double.IsNaN(Conv2) || Conv2 > 20) Conv2 = 20;
+                if (double.IsInfinity(ConvInf) || double.IsNaN(Conv2) || ConvInf > 20) ConvInf = 20;
                 if (this.Visible == false) return false;
 
-                if (corr != 0) Conv_View.Plot.TitlePanel.Label.Text = "Impulse Response Status - Schroeder correlation = " + Math.Round(corr, 3);
+                if (corr != 0) Conv_View.Plot.Title("Impulse Response Status - Schroeder correlation = " + Math.Round(corr, 3),10);
 
                 if (ID == 0)
                 {
@@ -191,7 +172,7 @@ namespace Pachyderm_Acoustic
 
                     this.history1.Enqueue(convmax);
                     if (this.history1.Count > 20) this.history1.Dequeue();
-                    ScottPlot.DataSources.ScatterSourceXsYs history1 = new ScottPlot.DataSources.ScatterSourceXsYs(this.domh, this.history1.ToArray());
+                    ScottPlot.DataSources.ScatterSourceDoubleArray history1 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.domh, this.history1.ToArray());
                     this.hist1 = Hist_View.Plot.Add.Scatter(domh, this.history1.ToArray(), ScottPlot.Colors.Red);
 
                     Conv_View.Plot.Add.Scatter(dom1.ToList(), conv1.ToList(), ScottPlot.Colors.Red);
@@ -207,7 +188,7 @@ namespace Pachyderm_Acoustic
                     Hist_View.Plot.Add.Scatter(dom2.ToList(), conv2.ToList(), ScottPlot.Colors.Blue);
                     this.history2.Enqueue(convmax);
                     if (this.history2.Count > 20) this.history2.Dequeue();
-                    ScottPlot.DataSources.ScatterSourceXsYs history2 = new ScottPlot.DataSources.ScatterSourceXsYs(this.domh, this.history2.ToArray());
+                    ScottPlot.DataSources.ScatterSourceDoubleArray history2 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.domh, this.history2.ToArray());
                     this.hist2 = Hist_View.Plot.Add.Scatter(domh, this.history2.ToArray(), ScottPlot.Colors.Blue);
                 }
 
@@ -250,10 +231,8 @@ namespace Pachyderm_Acoustic
 
                 Hist_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.2, 0.2 }, Colors.Gray);
                 Hist_View.Plot.Add.Scatter(new double[2] { 0, 20 }, new double[2] { 0.02, 0.02 }, Colors.Gray);
-                Conv_View.Plot.YAxis.Min = 0;
-                Hist_View.Plot.YAxis.Min = 0;
-                Conv_View.Plot.YAxis.Max = Math.Max(Math.Max(conv1.Max(), conv2.Max()), 0.3);
-                Hist_View.Plot.YAxis.Max = Math.Max(Math.Max(history1.Max(), history2.Max()), 0.3);
+                Conv_View.Plot.Axes.SetLimitsY(0, Math.Max(Math.Max(conv1.Max(), conv2.Max()), 0.3));
+                Hist_View.Plot.Axes.SetLimitsY(0, Math.Max(Math.Max(history1.Max(), history2.Max()), 0.3));
                 return false;
             }
 
@@ -273,14 +252,13 @@ namespace Pachyderm_Acoustic
                     Hist_View.Plot.Clear();
                     Conv_View.Plot.Clear();
                     Hist_View.Plot.Add.Scatter(t, IR_p, Colors.Red);
-                    Hist_View.Plot.XAxis.Max = t.Last();
-                    Hist_View.Plot.YAxis.Max = Math.Max(IR_p.Max(), 0.3);
+                    Hist_View.Plot.Axes.Bottom.Max = t.Last();
+                    Hist_View.Plot.Axes.Left.Max = Math.Max(IR_p.Max(), 0.3);
                     if (history1.Count < 20) CT.Add(CT.Count - 10);
                     Conv_View.Plot.Add.Scatter(CT.ToArray(), history1.ToArray(), Colors.Red);
                     //IR_View.ZoomOutAll(IR_View.Plot);
-                    Conv_View.Plot.XAxis.Min = -10;
-                    Conv_View.Plot.XAxis.Max = CT.Count() - 10;
-                    Conv_View.Plot.YAxis.Max = history1.Max();
+                    Conv_View.Plot.Axes.SetLimitsX(-10, CT.Count() - 10);
+                    Conv_View.Plot.Axes.Left.Max = history1.Max();
                 }
                 if (ID == 1)
                 {
@@ -288,13 +266,13 @@ namespace Pachyderm_Acoustic
                     history2.Enqueue(Convergence);
                     if (history2.Count > 20) history2.Dequeue();
                     Hist_View.Plot.Add.Scatter(t, IR_p, Colors.Blue);
-                    Hist_View.Plot.XAxis.Max = Math.Max(Hist_View.Plot.XAxis.Max, t.Last());
-                    Hist_View.Plot.YAxis.Max = Math.Max(Hist_View.Plot.YAxis.Max, Math.Max(IR_p.Max(), 0.3));
-                    Conv_View.Plot.YAxis.Max = Math.Max(Conv_View.Plot.YAxis.Max, history2.Max());
+                    Hist_View.Plot.Axes.Bottom.Max = Math.Max(Hist_View.Plot.Axes.Bottom.Max, t.Last());
+                    Hist_View.Plot.Axes.Left.Max = Math.Max(Hist_View.Plot.Axes.Left.Max, Math.Max(IR_p.Max(), 0.3));
+                    Conv_View.Plot.Axes.SetLimitsY(0, Math.Max(Conv_View.Plot.Axes.Left.Max, history2.Max()));
                     Conv_View.Plot.Add.Scatter(CT.ToArray(), history2.ToArray(), Colors.Blue);
                 }
-                Hist_View.Plot.XAxis.Label.Text = "Time (ms)";
-                Hist_View.Plot.YAxis.Label.Text = "Magnitude";
+                Hist_View.Plot.XLabel("Time (ms)",12);
+                Hist_View.Plot.YLabel("Magnitude",12);
 
                 //if (ID == 0)
                 //{

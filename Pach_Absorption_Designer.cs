@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2023, Arthur van der Harten 
+//'Copyright (c) 2008-2023, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -43,6 +43,8 @@ using MathNet.Numerics.Statistics;
 using System.Threading;
 using System.Threading.Tasks;
 using Rhino.FileIO;
+using ScottPlot.Plottables;
+using ScottPlot.TickGenerators;
 
 namespace Pachyderm_Acoustic
 {
@@ -59,7 +61,7 @@ namespace Pachyderm_Acoustic
             public AbsorptionModelResult Result = AbsorptionModelResult.Cancel;
             public double[] RI_Absorption;
             public bool Is_Finite = false;
-
+            EHM_Data_Library EHM = new EHM_Data_Library();
             public enum AbsorptionModelResult
             {
                 Random_Incidence,
@@ -73,6 +75,39 @@ namespace Pachyderm_Acoustic
                 this.Chart_Contents.SelectedIndex = 0;
                 //this.Averaging.SelectedIndex = 0;
                 this.Zf_Incorp_Method.SelectedIndex = 0;
+                for (int i = 0; i < EHM.Names.Count; i++)
+                {
+                    Material_List.Items.Add(EHM.Names[i]);
+                }
+            }
+
+            private void Material_List_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                int id = Material_List.SelectedIndex;
+                if (id < 0) return;
+                else if (id < EHM.ECC_Abs.Count)
+                {
+                    string name = EHM.Names[id];
+                    string category = EHM.Category[id];
+                    string application = EHM.Application[id];
+                    double density_kgm = EHM.Density_kgm[id];
+                    double thickness_m = EHM.Thickness[id];
+                    double flow_resistivity = EHM.Flow_Resistivity[id];
+                    double fr_dev = EHM.FR_Dev[id];
+                    EHM_ECC_Thickness.Text = "   Ref depth: " + EHM.Thickness[id] + " m";
+                    EHM_ECC.Text = "A1-A3 ECC (by area): " + EHM.ECC_Spec[id] + " (kgCO2e/m2)";
+                    EHM_ECC_ABS.Text = "A1-A3 ECC (by volume): " + Math.Round(EHM.ECC_Abs[id], 2) + " (kgCO2e/m3)";
+                    EHM_Flow_Resist.Text = "Flow Resistivity (σ): " + EHM.Flow_Resistivity[id] + " pa*s/m^2";
+                }
+                else 
+                {
+                    //Substrate
+                    id -= EHM.ECC_Abs.Count;
+                    EHM_ECC_Thickness.Text = "   Ref depth: Multiple Layers";
+                    EHM_ECC.Text = "A1-A3 ECC (by area): " + EHM.substrate_ECC[id] + " (kgCO2e/m2)";
+                    EHM_ECC_ABS.Text = "";//"A1-A3 ECC (by volume): " + Math.Round(EHM.substrate_ECC[id], 2) + " (kgCO2e/m3)";
+                    EHM_Flow_Resist.Text = "";//"Flow Resistivity (σ): " + EHM.Flow_Resistivity[id] + " pa*s/m^2";
+                }
             }
 
             private void Resistivity_ValueChanged(object sender, EventArgs e)
@@ -225,7 +260,7 @@ namespace Pachyderm_Acoustic
                     Polar_Absorption.Plot.Clear();
                     Impedance_Graph.Plot.Clear();
 
-                    Alpha_Normal.Plot.YAxis.Label.Text = "Alpha (0 to 1)";
+                    Alpha_Normal.Plot.YLabel("Alpha (0 to 1)", 10);
 
                     if (Fin_Sample.Checked && Zr == null) return;
 
@@ -243,23 +278,48 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
 
                     RI_Absorption = new double[8];
-                    Polar_Absorption.Plot.YAxis.Min = 0;
+                    Polar_Absorption.Plot.Axes.SetLimitsY(0,1);
 
-                    Polar_Absorption.Plot.YAxis.Max = 1;
-
-                    ScottPlot.Color[] colors = new Color[8] { ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet, ScottPlot.Colors.Plum };
+                    ScottPlot.Color[] colors = new Color[8] {ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet };
 
                     for (int oct = 0; oct < 8; oct++)
                     {
-                        //Polar_Absorption.Series[oct].Points.DataBindXY(AnglesDeg, sm.Ang_Coef_Oct[oct]);
-                        Polar_Absorption.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[oct], colors[oct]);
-                        (Polar_Absorption.Plot.PlottableList[oct] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
+                        // Create a new polar plot for each octave
+                        var polarPlot = Polar_Absorption.Plot.Add.PolarAxis(1);
 
+                        polarPlot.Circles.ForEach(x => x.LineColor = Colors.Grey);
+                        polarPlot.Spokes.ForEach(x => x.LineColor = Colors.Grey);
+                        polarPlot.Rotation = Angle.FromDegrees(90);
+                        // Set the properties for the polar plot
+                        List<Coordinates> polar = new List<Coordinates>();
+                        for (int i = 0; i < AnglesDeg.Length; i++)
+                        {
+                            polar.Add( polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
+                        }
+
+                        Polar_Absorption.Plot.Add.ScatterLine(polar, colors[oct]);
+
+                        // Ensure no markers are displayed
+                        (Polar_Absorption.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
+
+                        // Update the Y-axis limits if necessary
                         for (int a = 0; a < sm.Ang_Coef_Oct[oct].Length; a++)
                         {
-                            if (Polar_Absorption.Plot.YAxis.Max < sm.Ang_Coef_Oct[oct][a]) Polar_Absorption.Plot.YAxis.Max = Math.Ceiling(sm.Ang_Coef_Oct[oct][a] * 10) / 10;
+                            if (Polar_Absorption.Plot.Axes.Left.Max < sm.Ang_Coef_Oct[oct][a])
+                                Polar_Absorption.Plot.Axes.Left.Max = Math.Ceiling(sm.Ang_Coef_Oct[oct][a] * 10) / 10;
                         }
                     }
+                    // Make changes to the plot's overall configuration
+                    Polar_Absorption.Plot.Title("Absorption Coefficient by Angle of Incidence", size: 14);
+                    Polar_Absorption.Plot.Layout.Frameless();
+                    Polar_Absorption.Plot.Axes.Margins(0,0,0,0);
+                    Polar_Absorption.Plot.Benchmark.IsVisible = false;
+
+                    // Set axis limits to show the full polar plot
+                    Polar_Absorption.Plot.Axes.SetLimits(-1.5, 1.5, -1.5, 1.5);
+
+                    // Force refresh the plot
+                    Polar_Absorption.Refresh();
 
                     //Z Graph
                     double[] real = new double[sm.Z[18].Length];
@@ -276,15 +336,78 @@ namespace Pachyderm_Acoustic
                     (Impedance_Graph.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                     (Impedance_Graph.Plot.PlottableList[1] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
 
-                    Impedance_Graph.Plot.YAxis.Max = 4000;
-                    Impedance_Graph.Plot.YAxis.Min = -6000;
+                    Impedance_Graph.Plot.Axes.SetLimitsY(-6000, 4000);
+
+                    List<ABS_Layer> layers = Material_Layers();
+                    List<PieSlice> slices = new List<PieSlice>();
+
+                    Dictionary<string, double> materialValues = new Dictionary<string, double>();
+
+                    foreach (ABS_Layer l in layers)
+                    {
+                        string name = l.Material_Name;
+                        double layer_Carbon = l.Embodied_Carbon * l.depth;
+                        if (materialValues.ContainsKey(name))
+                        {
+                            materialValues[name] += layer_Carbon;
+                        }
+                        else
+                        {
+                            materialValues.Add(name, layer_Carbon);
+                        }
+                    }
+
+                    Color[] pie_color = new Color[]
+                    {
+                        ScottPlot.Colors.Red,
+                        ScottPlot.Colors.Orange,
+                        ScottPlot.Colors.Yellow,
+                        ScottPlot.Colors.Green,
+                        ScottPlot.Colors.Blue,
+                        ScottPlot.Colors.BlueViolet,
+                        ScottPlot.Colors.Violet,
+                        ScottPlot.Colors.Plum,
+                        ScottPlot.Colors.Cyan,
+                        ScottPlot.Colors.Magenta,
+                        ScottPlot.Colors.Lime,
+                        ScottPlot.Colors.Pink,
+                        ScottPlot.Colors.Teal,
+                        ScottPlot.Colors.Brown,
+                        ScottPlot.Colors.Gold,
+                        ScottPlot.Colors.Coral,
+                        ScottPlot.Colors.Turquoise,
+                        ScottPlot.Colors.Indigo,
+                        ScottPlot.Colors.Salmon,
+                        ScottPlot.Colors.Khaki
+                    };
+
+                    foreach (var kvp in materialValues)
+                    {
+                        string label = kvp.Key + " :\n" + Math.Round(kvp.Value,1).ToString() + " kgCO2e/m2"; 
+                        double value = kvp.Value;
+                        if (value == 0) continue;
+                        int i = slices.Count % pie_color.Length; // Use modulo to cycle through colors
+                        PieSlice slice = new PieSlice(value, pie_color[i], label);
+                        slice.LabelStyle.Bold = true;
+                        slices.Add(slice);
+                    }
+
+                    EmbodiedCarbon_Pie.Plot.Clear();
+                    EmbodiedCarbon_Pie.Plot.Axes.Frameless();
+                    EmbodiedCarbon_Pie.Plot.Axes.Margins(0, 0, 0, 0);
+                    var pie = EmbodiedCarbon_Pie.Plot.Add.Pie(slices.ToArray());
+                    pie.SliceLabelDistance = 0.75;
+                    pie.ExplodeFraction = .1;
+                    EmbodiedCarbon_Pie.Plot.Axes.SetLimitsX(1,1);
+                    EmbodiedCarbon_Pie.Plot.Legend.IsVisible = true;
+                    EmbodiedCarbon_Pie.Refresh();
 
                     //Alpha Normal graph
                     RI_Absorption = sm.RI_Coef;
 
-                    Alpha_Normal.Plot.YAxis.Max = 1;
-                    if (Fin_Sample.Checked) { foreach (double a in RI_Absorption) if (Alpha_Normal.Plot.YAxis.Max < a) Alpha_Normal.Plot.YAxis.Max = Math.Ceiling(a * 10) / 10; }
-                    foreach (double a in sm.NI_Coef) if (Alpha_Normal.Plot.YAxis.Max < a) Alpha_Normal.Plot.YAxis.Max = Math.Ceiling(a * 10) / 10;
+                    Alpha_Normal.Plot.Axes.Left.Max = 1;
+                    if (Fin_Sample.Checked) { foreach (double a in RI_Absorption) if (Alpha_Normal.Plot.Axes.Left.Max < a) Alpha_Normal.Plot.Axes.Left.Max = Math.Ceiling(a * 10) / 10; }
+                    foreach (double a in sm.NI_Coef) if (Alpha_Normal.Plot.Axes.Left.Max < a) Alpha_Normal.Plot.Axes.Left.Max = Math.Ceiling(a * 10) / 10;
 
                     if (Direction_choice.SelectedIndex == 0)
                     {
@@ -292,7 +415,8 @@ namespace Pachyderm_Acoustic
                         if (sm.RI_Averages != null) Alpha_Normal.Plot.Add.Scatter(logfreq, sm.RI_Averages, ScottPlot.Colors.Maroon);
                         Alpha_Normal.Plot.Add.Scatter(logfreq, sm.NI_Coef, ScottPlot.Colors.Blue);//
                         (Alpha_Normal.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
-
+                        double[] logfreq_third = thirdOctaveBands.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
+                        if (Material_List.SelectedIndex >= 0 && Show_ECC_ABS.Checked == true) Alpha_Normal.Plot.Add.Scatter(logfreq_third, EHM.Abs_Coef[Material_List.SelectedIndex], ScottPlot.Colors.Green);
                     }
                     else
                     {
@@ -316,7 +440,7 @@ namespace Pachyderm_Acoustic
 
                     if (Rigid_Term.Checked) return;
 
-                    Alpha_Normal.Plot.YAxis.Label.Text = "Transmission Loss (dB)";
+                    Alpha_Normal.Plot.YLabel("Transmission Loss (dB)", 10);
 
                     if (Fin_Sample.Checked && Zr == null) return;
 
@@ -349,10 +473,9 @@ namespace Pachyderm_Acoustic
                     (Impedance_Graph.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                     (Impedance_Graph.Plot.PlottableList[1] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
 
-                    Impedance_Graph.Plot.YAxis.Max = 40000;
-                    Impedance_Graph.Plot.YAxis.Min = -60000;
+                    Impedance_Graph.Plot.Axes.SetLimitsX(-60000, 40000);
 
-                    Impedance_Graph.Plot.XAxis.TickGenerator.Ticks = new Tick[12]
+                    Impedance_Graph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[12]
                     {
                             new Tick(1, "16 Hz."),
                             new Tick(2, "31.25 Hz."),
@@ -366,7 +489,7 @@ namespace Pachyderm_Acoustic
                             new Tick(10, "8000 Hz."),
                             new Tick(11, "16000 Hz."),
                             new Tick(12, "32000 Hz.")
-                    };
+                    });
 
                     //T graph...
                     double[] TL = new double[sm.frequency.Length];
@@ -388,8 +511,7 @@ namespace Pachyderm_Acoustic
 
                     double maxTL = 0;
                     double minTL = double.PositiveInfinity;
-                    Polar_Absorption.Plot.YAxis.Min = 0;
-                    Polar_Absorption.Plot.YAxis.Max = 1;
+                    Polar_Absorption.Plot.Axes.SetLimitsY(0,1);
 
                     ScottPlot.Color[] colors = new Color[8] { ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet, ScottPlot.Colors.Plum };
 
@@ -410,7 +532,10 @@ namespace Pachyderm_Acoustic
                         Polar_Absorption.Plot.Add.Scatter(AnglesDeg, TL_ang, colors[oct]);
                         (Polar_Absorption.Plot.PlottableList[oct] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                     }
-                    Polar_Absorption.Plot.YAxis.Max = 1; //Math.Min(1, maxTL);// maxTL;
+
+                    ///Plot Embodied Carbon
+                    
+                    Polar_Absorption.Plot.Axes.Left.Max = 1; //Math.Min(1, maxTL);// maxTL;
                     if (Chart_Contents.SelectedIndex == 0) Polar_Absorption.Plot.Title("Absorption Coefficient by Angle of Incidence");
                     else Polar_Absorption.Plot.Title("Transmission Coefficient by Angle of Incidence");
 
@@ -422,12 +547,12 @@ namespace Pachyderm_Acoustic
                         double TLnow = -10 * Math.Log10(sm.TI_Coef[oct]);
                         ys[oct] = TLnow;
                     }
-                    Alpha_Normal.Plot.YAxis.Max = -10 * Math.Log10(minTL);
-                    if (Chart_Contents.SelectedIndex == 0) Alpha_Normal.Plot.TitlePanel.Label.Text = "Absorption Coefficient";
-                    else Alpha_Normal.Plot.TitlePanel.Label.Text = "Transmission Loss (dB)";
+                    Alpha_Normal.Plot.Axes.SetLimitsY(0, -10 * Math.Log10(minTL));
+                    if (Chart_Contents.SelectedIndex == 0) Alpha_Normal.Plot.Title("Absorption Coefficient");
+                    else Alpha_Normal.Plot.Title("Transmission Loss (dB)");
                 }
 
-                Impedance_Graph.Plot.XAxis.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
+                Impedance_Graph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
                 {
                             //new Tick(1, "16"),
                             //new Tick(2, "31"),
@@ -443,10 +568,8 @@ namespace Pachyderm_Acoustic
                             //new Tick(12, "32k")
                 });
 
-                Alpha_Normal.Plot.XAxis.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
+                Alpha_Normal.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
                  {
-                            //new Tick(1, "16 Hz."),
-                            //new Tick(2, "31.25 Hz."),
                             new Tick(3, "62.5 Hz."),
                             new Tick(4, "125 Hz."),
                             new Tick(5, "250 Hz."),
@@ -455,1027 +578,81 @@ namespace Pachyderm_Acoustic
                             new Tick(8, "2000 Hz."),
                             new Tick(9, "4000 Hz."),
                             new Tick(10, "8000 Hz.")
-                     //new Tick(11, "16000 Hz."),
-                     //new Tick(12, "32000 Hz.")
                  });
+                Alpha_Normal.Plot.Legend.ManualItems.Clear();
                 Alpha_Normal.Plot.Legend.ManualItems.Add(new LegendItem());
                 Alpha_Normal.Plot.Legend.ManualItems.Add(new LegendItem());
-                Alpha_Normal.Plot.Legend.ManualItems[0].LineColor = ScottPlot.Colors.Blue;
-                Alpha_Normal.Plot.Legend.ManualItems[1].LineColor = ScottPlot.Colors.Red;
-                Alpha_Normal.Plot.Legend.ManualItems[1].Marker.Fill.Color = ScottPlot.Colors.Red;
-                Alpha_Normal.Plot.Legend.ManualItems[0].Marker = MarkerStyle.None;
-                Alpha_Normal.Plot.Legend.ManualItems[0].Label = "Angular Absorption Coefficient";
-                Alpha_Normal.Plot.Legend.ManualItems[1].Label = "Random Incidence Absorption Coefficient";
+                Alpha_Normal.Plot.Legend.ManualItems[0].LineStyle = new LineStyle(1, ScottPlot.Colors.Blue, LinePattern.Solid);
+                Alpha_Normal.Plot.Legend.ManualItems[1].LineStyle = new LineStyle(1, ScottPlot.Colors.Red, LinePattern.Solid);
+                Alpha_Normal.Plot.Legend.ManualItems[1].MarkerStyle = new MarkerStyle(MarkerShape.FilledSquare, 3, ScottPlot.Colors.Red);
+                Alpha_Normal.Plot.Legend.ManualItems[0].MarkerStyle = MarkerStyle.None;
+                Alpha_Normal.Plot.Legend.ManualItems[0].LabelText = "Angular Absorption Coefficient";
+                Alpha_Normal.Plot.Legend.ManualItems[1].LabelText = "Random Incidence Absorption Coefficient";
+                Alpha_Normal.Plot.Legend.Alignment = ScottPlot.Alignment.LowerRight;
 
                 Alpha_Normal.Plot.Legend.IsVisible = true;
 
-                Polar_Absorption.Plot.XAxis.Label.Text = "Angle of Incidence (degrees)";
-                Polar_Absorption.Plot.YAxis.Label.Text = "Coefficient";
-                Polar_Absorption.Plot.XAxis.Label.Font.Size = 10;
-                Polar_Absorption.Plot.YAxis.Label.Font.Size = 10;
+                Polar_Absorption.Plot.XLabel("Angle of Incidence (degrees)",10);
+                Polar_Absorption.Plot.YLabel("Coefficient",10);
+                Polar_Absorption.Plot.Legend.ManualItems.Clear();
                 for (int oct = 0; oct < 8; oct++)
                 {
                     Polar_Absorption.Plot.Legend.ManualItems.Add(new LegendItem());
-                    Polar_Absorption.Plot.Legend.ManualItems[oct].Marker.IsVisible = false;
+                    Polar_Absorption.Plot.Legend.ManualItems[oct].MarkerStyle = MarkerStyle.None;
                 }
-                Polar_Absorption.Plot.Legend.ManualItems[0].LineColor = ScottPlot.Colors.Red;
-                Polar_Absorption.Plot.Legend.ManualItems[1].LineColor = ScottPlot.Colors.Orange;
-                Polar_Absorption.Plot.Legend.ManualItems[2].LineColor = ScottPlot.Colors.Yellow;
-                Polar_Absorption.Plot.Legend.ManualItems[3].LineColor = ScottPlot.Colors.Green;
-                Polar_Absorption.Plot.Legend.ManualItems[4].LineColor = ScottPlot.Colors.Blue;
-                Polar_Absorption.Plot.Legend.ManualItems[5].LineColor = ScottPlot.Colors.BlueViolet;
-                Polar_Absorption.Plot.Legend.ManualItems[6].LineColor = ScottPlot.Colors.Violet;
-                Polar_Absorption.Plot.Legend.ManualItems[7].LineColor = ScottPlot.Colors.Plum;
-                Polar_Absorption.Plot.Legend.ManualItems[0].Label = "63 Hz.";
-                Polar_Absorption.Plot.Legend.ManualItems[1].Label = "125 Hz.";
-                Polar_Absorption.Plot.Legend.ManualItems[2].Label = "250 Hz.";
-                Polar_Absorption.Plot.Legend.ManualItems[3].Label = "500 Hz.";
-                Polar_Absorption.Plot.Legend.ManualItems[4].Label = "1 kHz.";
-                Polar_Absorption.Plot.Legend.ManualItems[5].Label = "2 kHz.";
-                Polar_Absorption.Plot.Legend.ManualItems[6].Label = "4 kHz.";
-                Polar_Absorption.Plot.Legend.ManualItems[7].Label = "8 kHz.";
+                Polar_Absorption.Plot.Legend.ManualItems[0].LabelText = "63 Hz.";
+                Polar_Absorption.Plot.Legend.ManualItems[1].LabelText = "125 Hz.";
+                Polar_Absorption.Plot.Legend.ManualItems[2].LabelText = "250 Hz.";
+                Polar_Absorption.Plot.Legend.ManualItems[3].LabelText = "500 Hz.";
+                Polar_Absorption.Plot.Legend.ManualItems[4].LabelText = "1 kHz.";
+                Polar_Absorption.Plot.Legend.ManualItems[5].LabelText = "2 kHz.";
+                Polar_Absorption.Plot.Legend.ManualItems[6].LabelText = "4 kHz.";
+                Polar_Absorption.Plot.Legend.ManualItems[7].LabelText = "8 kHz.";
+                Polar_Absorption.Plot.Legend.ManualItems[0].LineStyle = new LineStyle(1, Colors.DarkRed, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[1].LineStyle = new LineStyle(1, Colors.Red, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[2].LineStyle = new LineStyle(1, Colors.Orange, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[3].LineStyle = new LineStyle(1, Colors.Yellow, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[4].LineStyle = new LineStyle(1, Colors.Green, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[5].LineStyle = new LineStyle(1, Colors.Blue, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[6].LineStyle = new LineStyle(1, Colors.BlueViolet, LinePattern.Solid);
+                Polar_Absorption.Plot.Legend.ManualItems[7].LineStyle = new LineStyle(1, Colors.Violet, LinePattern.Solid);
                 Polar_Absorption.Plot.Legend.IsVisible = true;
                 Polar_Absorption.Plot.Legend.OutlineStyle = LineStyle.None;
-                Polar_Absorption.Plot.Legend.BackgroundFill = new FillStyle();
-                Polar_Absorption.Plot.Legend.BackgroundFill.Color = ScottPlot.Color.FromARGB(0);
+                Polar_Absorption.Plot.Legend.BackgroundColor = ScottPlot.Color.FromARGB(0);
 
                 //Alpha_Normal.Plot.AutoScale();
-                Alpha_Normal.Plot.XAxis.Min = 2.5;
-                Alpha_Normal.Plot.XAxis.Max = 10.5;
-                Alpha_Normal.Plot.YAxis.Min = 0;
-                Alpha_Normal.Plot.YAxis.Max = 1.2;
-                Alpha_Normal.Plot.YAxis.Label.Font.Size = 10;
-                Alpha_Normal.Plot.XAxis.Label.Text = "Frequency (Hz.)";
-                Alpha_Normal.Plot.XAxis.Label.Font.Size = 10;
+                Alpha_Normal.Plot.Axes.SetLimits(2.5, 10.5, 0, 1.2);
+                Alpha_Normal.Plot.XLabel("Frequency (Hz.)",10);
                 Alpha_Normal.Invalidate();
                 //Impedance_Graph.Plot.AutoScale();
-                Impedance_Graph.Plot.XAxis.Min = 2.5;
-                Impedance_Graph.Plot.XAxis.Max = 10.5;
+                Impedance_Graph.Plot.Axes.SetLimitsX(2.5, 10.5);
                 Impedance_Graph.Invalidate();
-                Impedance_Graph.Plot.XAxis.Label.Text = "Frequency (Hz.)";
-                Impedance_Graph.Plot.XAxis.Label.Font.Size = 10;
-                Polar_Absorption.Plot.YAxis.Min = 0;
-                Polar_Absorption.Plot.YAxis.Max = 1;
-                Polar_Absorption.Plot.XAxis.Min = -90;
-                Polar_Absorption.Plot.XAxis.Max = 90;
-
+                Impedance_Graph.Plot.XLabel("Frequency (Hz.)", 10);
                 Polar_Absorption.Invalidate();
-                //Estimate_Recursive_IIR();
+                Alpha_Normal.Plot.Benchmark.IsVisible = false;
+                Fit_IIR();
             }
 
-            //public void Estimate_IIR()
-            //{
-            //    ////Complex[] IR = Audio.Pach_SP.IFFT_General(Audio.Pach_SP.Mirror_Spectrum(sm.Reflection_Coefficient[18]), 0);
-            //    ////for (int i = 0; i < IR.Length; i++) IR[i] = IR[i].Real;
-            //    ////Complex[] R = Audio.Pach_SP.IIR_Design.AutoCorrelation_Coef(IR, (int)IIR_Order.Value);
-
-            //    ////Complex[] a, b;
-            //    ////Audio.Pach_SP.IIR_Design.Yule_Walker(R, out a, out b);
-
-            //    //double[] a, b;
-            //    //Complex[] RefSpectrum = sm.Reflection_Coefficient[18];
-            //    //Audio.Pach_SP.IIR_Design.OptimizeIIR(RefSpectrum, 16000, (int)IIR_Order.Value, out a, out b);
-
-            //    Complex[] reflectionCoefficient = sm.Reflection_Spectrum(16000, 4096, new Hare.Geometry.Vector(0, 0, 1), new Hare.Geometry.Vector(0, 0, 1), 0);
-
-            //    double max = 0;
-            //    foreach (Complex comp in reflectionCoefficient) max = Math.Max(max, comp.Magnitude);
-            //    for (int i = 0; i < reflectionCoefficient.Length; i++) reflectionCoefficient[i] /= max;
-
-            //    // Obtain the impulse response (Inverse FFT)
-            //    double[] impulseResponse = Audio.Pach_SP.IFFT_Real4096(reflectionCoefficient, 0);
-            //    //for (int i = 0; i < impulseResponse.Length; i++) impulseResponse[i] = Math.Min(impulseResponse[i],0.999999999999999);
-
-            //        // Desired order of the IIR filter
-            //        int p = 6;  // Order of the numerator
-            //        int q = 5;  // Order of the denominator
-
-            //    //    // Form the Toeplitz matrix T and vector b
-            //    //    double[,] T = new double[q, q];
-            //    //    for (int i = 0; i < q; i++)
-            //    //    {
-            //    //        for (int j = 0; j < q; j++)
-            //    //        {
-            //    //            T[i, j] = impulseResponse[i + j];
-            //    //        }
-            //    //    }
-
-            //    //    double[] bVec = new double[q];
-            //    //    for (int i = 0; i < q; i++)
-            //    //    {
-            //    //        bVec[i] = -impulseResponse[p + i]; //+1
-            //    //    }
-
-            //    //    // Solve the linear system T * a = b
-            //    //    double[] aCoefficients = SolveLinearSystem(T, bVec);
-
-            //    //    // Form the denominator polynomial a(z)
-            //    //    double[] a = new double[q + 1];
-            //    //    a[0] = 1.0;
-            //    //    for (int i = 1; i <= q; i++)
-            //    //    {
-            //    //        a[i] = aCoefficients[i - 1];
-            //    //    }
-
-            //    //    // Form the numerator polynomial b(z)
-            //    //    double[] c = new double[impulseResponse.Length];
-            //    //    for (int i = 0; i < impulseResponse.Length; i++)
-            //    //    {
-            //    //        c[i] = 0.0;
-            //    //        for (int j = 0; j <= i && j <= q; j++)
-            //    //        {
-            //    //            c[i] += impulseResponse[i - j] * a[j];
-            //    //        }
-            //    //    }
-            //    //    double[] b = new double[p + 1];
-            //    //    Array.Copy(c, b, p + 1);
-
-            //    // Step 1: Fit a rational function to find poles and zeros in s-domain
-            //    //(Complex[] poles, Complex[] zeros) = FitRationalFunction(reflectionCoefficient);
-
-            //    ////Step 1a: normalize...
-            //    //double maxpz = 1;
-            //    //foreach (Complex c in poles) maxpz = Math.Max(maxpz, c.Magnitude);
-            //    //foreach (Complex c in zeros) maxpz = Math.Max(maxpz, c.Magnitude);
-            //    //for (int i = 0; i < poles.Length; i++) poles[i] /= maxpz;
-            //    //for (int i = 0; i < zeros.Length; i++) zeros[i] /= maxpz;
-
-            //    //// Step 2: Apply bilinear transform to poles and zeros
-            //    //Complex[] zPoles = BilinearTransform(poles, 16000);
-            //    //Complex[] zZeros = BilinearTransform(zeros, 16000);
-
-            //    //// Step 3: Formulate the IIR filter coefficients from poles and zeros
-            //    //(double[] b, double[] a) = FormulateIIRFilter(zPoles, zZeros);
-
-            //    (double[]a, double[] b) = Fit(impulseResponse, (int)IIR_Order.Value, (int)IIR_Order.Value);
-
-            //    ///////////////////////////////
-
-            //    Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-            //    //audio.pach_sp.iir_design.spectrumfromiir(a, b, 16000, 4096);
-
-            //    double corr = Audio.Pach_SP.IIR_Design.CrossCorrelation_Coef(reflectionCoefficient, IIR_spec).Real;
-
-            //    Rhino.RhinoApp.WriteLine(string.Format("Correlation: {0}", corr));
-
-            //    //Normalize
-            //    //double ms = 0;
-            //    //foreach (Complex s in IIR_spec) ms = ((ms > s.Magnitude) ? ms : s.Magnitude);
-            //    //double mb = 0;
-            //    //foreach (Complex s in RefSpectrum) mb = ((mb > s.Magnitude) ? mb : s.Magnitude);
-
-            //    //for (int i = 0; i < IIR_spec.Length; i++) IIR_spec[i] *= mb / ms;
-
-            //    MathNet.Numerics.
-            //    Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-
-
-            //    double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
-
-            //    //Alpha_Normal.Series[2].Points.Clear();
-            //    //for (int i = 0; i < alpha.Length; i++) Alpha_Normal.Plot.Add.Scatter((double)(i + 1) * 16000 / alpha.Length, alpha[i]);
-            //    double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
-            //    for (int i = 0; i < alpha.Length; i++) alpha[i] = 1 - alpha[i];
-            //    Alpha_Normal.Plot.Add.Scatter(logfreq, alpha);
-            //}
-
-            private async void Estimate_Recursive_IIR()
+            private void Fit_IIR()
             {
-                double[] frequencies = new double[950];
-                Array.Copy(sm.frequency, frequencies, 950);
-                int fs = 44100;
-                double pgbest = 0, zgbest = 0, pfbest = 0, zfbest = 0;
-                double err_best = 0.2;
-                Complex[] desired_Spectrum = new Complex[(int)(4096 * 10000 / 44100)];
-                Array.Copy(sm.Reflection_Spectrum(fs, 4096, new Hare.Geometry.Vector(0, 0, 1), new Hare.Geometry.Vector(0, 0, 1), 0), desired_Spectrum, 743);
-                double[] desired_alpha = AbsorptionModels.Operations.Absorption_Coef(desired_Spectrum);
+                // Get frequency range and desired reflection spectrum
+                double fs = 44100;
+                double maxfreq = 10000;
+                int samplect = 4096;
 
-                //Iterate over spectrum:
-                Complex[] Zeros = new Complex[0];
-                Complex[] Poles = new Complex[0];
+                double[] frequencies;
 
-                ///////////////////////////////
-                ///Execute the search...
-                Task<filterspec> t = IIR_Branch(Poles, Zeros, err_best, fs, frequencies, desired_alpha);
-                //t.Start();
-                await t;
-                filterspec result = t.Result as filterspec;
-                if (result == null) return;
-                ///////////////////////////////
+                (double[] a, double[] b) = sm.Estimate_IIR_Coefficients(fs, maxfreq, out frequencies, (int)IIR_Order.Value);
 
-                (double[] b, double[] a) = FormulateIIRFilter(result.Poles, result.Zeros);
+                // Recalculate with normalized coefficients
+                Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);
 
-                Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-                //Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.PZ_FreqResponse(Poles, Zeros, 1, frequencies);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-
-                double m = IIR_spec.MaximumMagnitudePhase().Magnitude;
-                if (m > 1)
-                {
-                    for (int j = 0; j < b.Length; j++) b[j] /= m;
-                    //recalculate
-                }
-                else
-                {
-                    double mod = m / desired_Spectrum.MaximumMagnitudePhase().Magnitude;
-                    for (int j = 0; j < b.Length; j++) b[j] /= mod;
-                }
-                IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-
+                // Calculate and plot the absorption coefficients
                 double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
-                double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
-                Alpha_Normal.Plot.Add.Scatter(logfreq, alpha);
+                double[] logfreq = frequencies.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
+                Alpha_Normal.Plot.Add.Scatter(logfreq, alpha, ScottPlot.Colors.Green);
+                (Alpha_Normal.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
             }
-
-            private class filterspec
-            {
-                public double Error;
-                public Complex[] Poles;
-                public Complex[] Zeros;
-            }
-
-            private async Task<filterspec> IIR_Branch(Complex[] Poles, Complex[] Zeros, double error_Current, double fs, double[] frequencies, double[] desired_alpha)
-            {
-                Random rnd = new Random((int)DateTime.Now.Ticks);
-                if (Poles.Length >= 8) return new filterspec() { Poles = Poles, Zeros = Zeros, Error = error_Current };
-                double target = 0.05;
-                SortedList<double, filterspec> next_attempts = new SortedList<double, filterspec>();
-                filterspec finish = null;
-                double pgbest = -1, pfbest = -1, zgbest = -1, zfbest = -1;
-
-                List<Task> srch = new List<Task>();
-                //Parallel.For(0, 10, pftest => 
-                for (double pftest = 0; pftest < 15; pftest += 1.5)
-                {
-                    //srch.Add(Task.Run(() =>
-                    //{
-                        double ptheta = 2 * Math.PI * Math.Pow(12, pftest * 2 / 6) / fs;
-                        for (double zftest = 0; zftest < 15; zftest += 1.5)
-                        {
-                            double ztheta = 8000 - 2 * Math.PI * Math.Pow(12, zftest * 2 / 3) / fs;
-                            for (double pgtest = .9; pgtest > 0; pgtest -= 0.1)
-                            {
-                                for (double zgtest = .9; zgtest > 0; zgtest -= 0.1)
-                                {
-                                    Complex[] Prosp_Poles = new Complex[2];
-                                    Complex[] Prosp_Zeros = new Complex[2];
-                                    Prosp_Poles[0] = new Complex(pgtest * Math.Cos(ptheta), pgtest * Math.Sin(ptheta));
-                                    Prosp_Poles[1] = new Complex(pgtest * Math.Cos(ptheta), -pgtest * Math.Sin(ptheta));
-                                    Prosp_Zeros[0] = new Complex(zgtest * Math.Cos(ztheta), zgtest * Math.Sin(ztheta));
-                                    Prosp_Zeros[1] = new Complex(zgtest * Math.Cos(ztheta), -zgtest * Math.Sin(ztheta));
-                                    Complex[] Test_Poles = new Complex[Poles.Length + 2];
-                                    if (Poles.Length > 0) Array.Copy(Poles.ToArray(), Test_Poles, Poles.Length);
-                                    Array.Copy(Prosp_Poles, 0, Test_Poles, Poles.Length, 2);
-                                    Complex[] Test_Zeros = new Complex[Poles.Length + 2];
-                                    if (Zeros.Length > 0) Array.Copy(Zeros.ToArray(), Test_Zeros, Zeros.Length);
-                                    Array.Copy(Prosp_Zeros, 0, Test_Zeros, Zeros.Length, 2);
-                                    double error = test_spectrum(frequencies, Test_Poles.ToList(), Test_Zeros.ToList(), desired_alpha);
-
-                                    if (error < error_Current)
-                                    {
-                                        if (error < target)
-                                        {
-                                            //target = error;
-                                            finish = new filterspec() { Poles = Test_Poles, Zeros = Test_Zeros, Error = error };
-                                        }
-                                        else next_attempts.Add(error + rnd.NextDouble() / 1000, new filterspec() { Poles = Test_Poles, Zeros = Test_Zeros, Error = error });
-                                    }
-                                }
-                            }
-                        }
-                    }//));
-                //}
-                //Task.WaitAll(srch.ToArray());
-
-                List<System.Threading.Tasks.Task<filterspec>> t = new List<Task<filterspec>>();
-                if (finish == null)
-                {
-                    // Iterate over up to 10 of the best next_attempts list items and create a task for each item   
-                    int limit = Math.Min(1, next_attempts.Count);
-                    for(int i = 0; i < limit; i++)
-                    {
-                        filterspec attempt = next_attempts.ElementAt(i).Value;
-                        t.Add(Task.Run(() => IIR_Branch(attempt.Poles, attempt.Zeros, attempt.Error, fs, frequencies, desired_alpha)));
-                    }
-
-                    // Await all the tasks and get the results
-                    filterspec[] results = await Task.WhenAll(t.ToArray());
-                }
-                for (int i = 0; i < t.Count; i++)
-                {
-                    filterspec current = (t[i] as Task<filterspec>).Result as filterspec;
-                    if (current == null) continue;
-                    double err = current.Error;
-                    if (err < target)
-                    {
-                        target = err;
-                        finish = current;
-                    }
-                }
-                return finish;
-            }
-        
-            //private void Estimate_Iterative_IIR()
-            //{
-            //    double[] frequencies = new double[950];
-            //    Array.Copy(sm.frequency, frequencies, 950);
-            //    int fs = 44100;
-            //    int numPoles = 2;
-            //    int numZeros = 2;
-            //    Random r = new Random((int)DateTime.Now.Ticks);
-            //    double pgbest = 0, zgbest = 0, pfbest = 0, zfbest = 0;
-            //    double err_best = double.PositiveInfinity;
-
-            //    Complex[] desired_Spectrum = new Complex[(int)(4096 * 10000/44100)];
-            //    Array.Copy(sm.Reflection_Spectrum(fs, 4096, new Hare.Geometry.Vector(0, 0, 1), new Hare.Geometry.Vector(0, 0, 1), 0), desired_Spectrum, 743);
-            //    double[] desired_alpha = AbsorptionModels.Operations.Absorption_Coef(desired_Spectrum);
-
-            //    //Iterate over spectrum:
-
-            //    int i = desired_Spectrum.Length - 2;// sm.frequency.Length/6;
-
-            //    List<Complex> Zeros = new List<Complex>();
-            //    List<Complex> Poles = new List<Complex>();
-
-            //    Complex[] Prosp_Poles = new Complex[2];
-            //    Complex[] Prosp_Zeros = new Complex[2];
-
-            //    //int order = 9;
-            //    //int ord = 0;
-
-            //    while ( err_best > 55)
-            //    {
-            //        ///Find Local Maximum or minimum
-            //        //if (Math.Sign(desired_alpha[i - 1] - desired_alpha[i]) != Math.Sign(desired_alpha[i] - desired_alpha[i + 1]))
-            //        //{
-            //        pgbest = -1; pfbest = -1; zgbest = -1; zfbest = -1;
-            //            for (double pftest = 0; pftest < 15; pftest+=1.5)
-            //            {
-            //                double ptheta = 2 * Math.PI * Math.Pow(12, pftest * 2 / 6) / fs;
-            //                for (double zftest = 0; zftest < 15; zftest+=1.5)
-            //                {
-            //                    double ztheta = 8000 - 2 * Math.PI * Math.Pow(12, zftest * 2 / 3) / fs;
-            //                    for (double pgtest = .9; pgtest > 0; pgtest -= 0.2)
-            //                    {
-            //                        for (double zgtest = .9; zgtest > 0; zgtest -= 0.2)
-            //                        {
-            //                            Prosp_Poles[0] = new Complex(pgtest * Math.Cos(ptheta), pgtest * Math.Sin(ptheta));
-            //                            Prosp_Poles[1] = new Complex(pgtest * Math.Cos(ptheta), -pgtest * Math.Sin(ptheta));
-            //                            Prosp_Zeros[0] = new Complex(zgtest * Math.Cos(ztheta), zgtest * Math.Sin(ztheta));
-            //                            Prosp_Zeros[1] = new Complex(zgtest * Math.Cos(ztheta), -zgtest * Math.Sin(ztheta));
-            //                            Complex[] Test_Poles = new Complex[Poles.Count + 2];
-            //                            if (Poles.Count > 0) Array.Copy(Poles.ToArray(), Test_Poles, Poles.Count);
-            //                            Array.Copy(Prosp_Poles, 0, Test_Poles, Poles.Count, 2);
-            //                            Complex[] Test_Zeros = new Complex[Poles.Count + 2];
-            //                            if (Zeros.Count > 0) Array.Copy(Zeros.ToArray(), Test_Zeros, Zeros.Count);
-            //                            Array.Copy(Prosp_Zeros, 0, Test_Zeros, Zeros.Count, 2);
-                                        
-            //                            double error = test_spectrum(frequencies, Test_Poles.ToList(), Test_Zeros.ToList(), desired_alpha);
-            //                            if (error < err_best)
-            //                            {
-            //                                err_best = error;
-            //                                pgbest = pgtest;
-            //                                zgbest = zgtest;
-            //                                pfbest = ptheta;
-            //                                zfbest = ztheta;
-            //                            }
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        if (pgbest == -1) break;
-
-            //        Poles.Add(new Complex(pgbest * Math.Cos(pfbest), pgbest * Math.Sin(pfbest)));
-            //            Poles.Add(new Complex(pgbest * Math.Cos(pfbest), -pgbest * Math.Sin(pfbest)));
-            //            Zeros.Add(new Complex(zgbest * Math.Cos(zfbest), zgbest * Math.Sin(zfbest)));
-            //            Zeros.Add(new Complex(zgbest * Math.Cos(zfbest), -zgbest * Math.Sin(zfbest)));
-            //        //}
-            //    }
-
-            //    (double[] b, double[] a) = FormulateIIRFilter(Poles.ToArray(), Zeros.ToArray());
-            //    Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-            //    //Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.PZ_FreqResponse(Poles, Zeros, 1, frequencies);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-
-            //    double m = IIR_spec.MaximumMagnitudePhase().Magnitude;
-            //    if (m > 1)
-            //    {
-            //        for (int j = 0; j < b.Length; j++) b[j] /= m;
-            //        //recalculate
-            //        IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-            //    }
-            //    else
-            //    {
-            //        double mod = m / desired_Spectrum.MaximumMagnitudePhase().Magnitude;
-            //        for (int j = 0; j < b.Length; j++) b[j] /= mod;
-            //        IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);//AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-            //    }
-
-            //    double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
-            //    double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
-            //    Alpha_Normal.Plot.Add.Scatter(logfreq, alpha);
-            //}
-
-            private double test_spectrum(double[] frequencies, List<Complex> poles, List<Complex> zeros, double[] desired_alpha)
-            { 
-                double[] bs, As;
-                (bs, As) = FormulateIIRFilter(poles.ToArray(), zeros.ToArray());
-
-                Complex[] response = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(bs), new List<double>(As), frequencies, 44100);
-                double m = response.MaximumMagnitudePhase().Magnitude; 
-                if (m > 1)
-                {
-                    for (int j = 0; j < bs.Length; j++) bs[j] /= m;
-                }
-                else
-                {
-                    double mod = m / Math.Sqrt(Math.Abs(desired_alpha.Minimum() - 1));
-                    for (int j = 0; j < bs.Length; j++) bs[j] /= mod;
-                }
-                response = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(bs), new List<double>(As), frequencies, 44100);
-
-                //Complex[] response = Audio.Pach_SP.IIR_Design.PZ_FreqResponse(poles, zeros, 1, frequencies);
-                double[] alpha_r = AbsorptionModels.Operations.Absorption_Coef(response);
-
-                // Calculate the correlation between the desired and actual spectrum
-                double error = 0;
-                for (int i = 0; i < desired_alpha.Length; i++)
-                {
-                    error = Math.Max(Math.Abs((alpha_r[i] - desired_alpha[i])), error);
-                }
-
-                return error;
-            }
-            //public void Estimate_IIR()
-            //{
-            //    // Initial guess for the zeros and poles (random or based on initial analysis)
-            //    //Complex[] initialZeros = Enumerable.Repeat(new Complex(0.5, 0.5), numZeros).ToArray();
-            //    //Complex[] initialPoles = Enumerable.Repeat(new Complex(0.5, -0.5), numPoles).ToArray();
-
-            //    //var initialGuess = initialZeros.Concat(initialPoles).SelectMany(c => new[] { c.Real, c.Imaginary }).ToArray();
-
-            //    double[] frequencies = new double[950];
-            //    Array.Copy(sm.frequency, frequencies, 950);
-            //    int fs = 16000;
-            //    int numPoles = 2;
-            //    int numZeros = 2;
-            
-            //    // Initial guess for the zeros and poles (random or based on initial analysis)
-            //    Random r = new Random((int)DateTime.Now.Ticks);
-
-            //    double[] initialtheta = new double[numPoles/2];
-            //    double[] initialmag = new double[numPoles/2 + numZeros];
-            //    for (int i = 0; i < numPoles/2 + numZeros; i++)
-            //    {
-            //        if (i < numPoles/2) initialtheta[i] = frequencies[(1 + i * frequencies.Length) / (1 + numPoles/2)]/fs;
-            //        initialmag[i] = i < numPoles/2 ? r.NextDouble() : - Math.Abs(r.NextDouble());
-            //    }
-            //    // Convert initial guesses to an array of doubles (real and imaginary parts)
-            //    double[] initialGuessArray = new double[numZeros + numPoles];
-            //    Array.Copy(initialtheta, initialGuessArray, initialtheta.Length);
-            //    Array.Copy(initialmag, 0, initialGuessArray, initialtheta.Length, initialmag.Length);
-
-            //    // Convert to Vector<double>
-            //    MathNet.Numerics.LinearAlgebra.Vector<double> initialGuess = MathNet.Numerics.LinearAlgebra.Vector<double>.Build.DenseOfArray(initialGuessArray);
-
-            //    Complex[] desired_Spectrum = new Complex[950];
-            //    Array.Copy(sm.Reflection_Spectrum(fs, 4096, new Hare.Geometry.Vector(0, 0, 1), new Hare.Geometry.Vector(0, 0, 1), 0), desired_Spectrum, 950);
-            //    double[] desired_alpha = AbsorptionModels.Operations.Absorption_Coef(desired_Spectrum);
-
-            //    // Define the objective function to minimize the error
-            //    Func<MathNet.Numerics.LinearAlgebra.Vector<double>, double> objectiveFunction = coefficients =>
-            //    {
-            //        double[] theta = new double[numPoles/2], mag = new double[numZeros + numPoles/2];
-            //        Complex[] poles = new Complex[numPoles], zeros = new Complex[numZeros];
-            //        for (int i = 0; i < numZeros + numPoles/2; i++)
-            //        {
-            //            mag[i] = (coefficients[i + numPoles/2] % 2) - 1;
-            //            if (i < numPoles / 2)
-            //            {
-            //                theta[i] = Math.PI * coefficients[i];
-            //                poles[2 * i] = new Complex(mag[i] * Math.Cos(theta[i]), mag[i] * Math.Sin(theta[i])) * .95;
-            //                poles[2 * i + 1] = new Complex(mag[i] * Math.Cos(-theta[i]), mag[i] * Math.Sin(-theta[i])) * .95;
-            //            }
-            //            else zeros[i - numPoles / 2] = new Complex(mag[i] , 0);//new Complex(mag[i] * Math.Cos(theta[i]), mag[i] * Math.Sin(theta[i]));
-            //        }
-
-            //        double[] bs, As;
-            //        (bs, As) = FormulateIIRFilter(poles, zeros);
-
-            //        Complex[] response = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(bs), new List<double>(As), frequencies, 16000);
-
-            //        //Complex[]  response = Audio.Pach_SP.IIR_Design.PZ_FreqResponse(poles.ToList(), zeros.ToList(), 1, frequencies);
-            //        //Complex corr = Audio.Pach_SP.IIR_Design.CrossCorrelation_Coef(response, desired_Spectrum);
-
-            //        double[] alpha_r = AbsorptionModels.Operations.Absorption_Coef(response);
-
-            //        // Calculate the correlation between the desired and actual spectrum
-            //        double error = 0;
-            //        for(int i = 0; i < frequencies.Length; i++)
-            //        {
-            //            //Complex z = Complex.Exp(new Complex(0, -2 * Math.PI * f / fs));
-            //            //Complex H_z = EvaluateFilter(zeros, poles, z);
-            //            //error = Math.Max(error, Math.Abs(Math.Log(response[i].Magnitude) - Math.Log(desired_Spectrum[i].Magnitude)));
-            //            //error = Math.Max(error, Math.Abs((response[i].Magnitude - desired_Spectrum[i].Magnitude)));
-            //            //double e = Math.Abs((alpha_r[i] - desired_alpha[i]));
-            //            //if (e > 1) return double.PositiveInfinity;
-            //            error += Math.Abs((alpha_r[i] - desired_alpha[i]));
-            //        }
-
-            //        return error;//1 - corr.Magnitude;
-            //    };
-
-                
-            //    // Perform the optimization using BFGS algorithm
-            //    var solver = new MathNet.Numerics.Optimization.NelderMeadSimplex(1E-10, 1000000);
-            //    var result = solver.FindMinimum(MathNet.Numerics.Optimization.ObjectiveFunction.Value(objectiveFunction), initialGuess);
-
-            //    // Extract the optimized zeros and poles
-            //    Complex[] optimizedPoles = new Complex[numZeros], optimizedZeros = new Complex[numZeros];
-            //    double[] thetaO = new double[numZeros * 2], magO = new double[numZeros * 2];
-            //    for (int i = 0; i < numZeros + numPoles / 2; i++)
-            //    {
-            //        thetaO[i] = Math.PI * result.MinimizingPoint[i];
-            //        //magO[i] = result.MinimizingPoint[i + numZeros + numPoles / 2] % 2 - 1;
-            //        //if (i < numPoles / 2)
-            //        //{
-            //        //    optimizedPoles[2 * i] = new Complex(magO[i] * Math.Cos(thetaO[i]), magO[i] * Math.Sin(thetaO[i]));
-            //        //    optimizedPoles[2 * i + 1] = new Complex(magO[i] * Math.Cos(-thetaO[i]), magO[i] * Math.Sin(-thetaO[i]));
-            //        //}
-            //        //else optimizedZeros[i - numPoles / 2] = new Complex(magO[i] * Math.Cos(thetaO[i]), magO[i] * Math.Sin(thetaO[i]));
-
-            //        magO[i] = (result.MinimizingPoint[i + numPoles / 2] % 2) - 1;
-            //        if (i < numPoles / 2)
-            //        {
-            //            thetaO[i] = 2 * Math.PI * result.MinimizingPoint[i];
-            //            optimizedPoles[2 * i] = new Complex(magO[i] * Math.Cos(thetaO[i]), magO[i] * Math.Sin(thetaO[i]));
-            //            optimizedPoles[2 * i + 1] = new Complex(magO[i] * Math.Cos(-thetaO[i]), magO[i] * Math.Sin(-thetaO[i]));
-            //        }
-            //        else optimizedZeros[i - numPoles / 2] = new Complex(magO[i], 0);//new Complex(mag[i] * Math.Cos(theta[i]), mag[i] * Math.Sin(theta[i]));
-
-            //    }
-            //    //for (int i = 0; i < numZeros * 2; i++)
-            //    //{
-            //    //    thetaO[i] = 2 * Math.PI * result.MinimizingPoint[i];
-            //    //    magO[i] = result.MinimizingPoint[i + numPoles * 2] % 1;
-            //    //    if (i < numZeros) optimizedPoles[i] = new Complex( magO[i] *Math.Cos(thetaO[i]), magO[i] * Math.Sin(thetaO[i]));
-            //    //    else optimizedZeros[i - numZeros] = new Complex(magO[i] * Math.Cos(thetaO[i]), magO[i] * Math.Sin(thetaO[i]));
-            //    //}
-
-            //    (double[] b, double[] a) = FormulateIIRFilter(optimizedPoles, optimizedZeros);
-
-            //    Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), sm.frequency, 16000);
-
-            //    double m = IIR_spec.MaximumMagnitudePhase().Magnitude; if (m > 1) for (int i = 0; i < b.Length; i++) b[i] /= m;
-
-            //    double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
-            //    double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
-            //    Alpha_Normal.Plot.Add.Scatter(logfreq, alpha);
-            //}
-
-            private static Complex EvaluateFilter(Complex[] zeros, Complex[] poles, Complex z)
-            {
-                Complex numerator = zeros.Select(zero => z - zero).Aggregate((product, term) => product * term);
-                Complex denominator = poles.Select(pole => z - pole).Aggregate((product, term) => product * term);
-                return numerator / denominator;
-            }
-            public static (double[], double[]) Fit(double[] impulseResponse, int p, int q)
-            {
-                int N = impulseResponse.Length;
-                //normalized IR:
-                double max = 0;
-                foreach (double i in impulseResponse) max = Math.Max(max, Math.Abs(i));
-                for (int i = 0; i < impulseResponse.Length; i++) impulseResponse[i] /= max;
-
-                // Step 1: Create the Toeplitz matrix T
-                var T = Matrix<double>.Build.Dense(q, q);
-                for (int i = 0; i < q; i++)
-                {
-                    for (int j = 0; j < q; j++)
-                    {
-                        // Ensure that we do not exceed the bounds of the impulseResponse array
-                        if (i + j < N)
-                        {
-                            T[i, j] = impulseResponse[i + j];
-                        }
-                        else
-                        {
-                            T[i, j] = 0; // Fill with zeros if out of bounds
-                        }
-                    }
-                }
-
-                // Step 2: Create vector b (right-hand side)
-                var bVec = MathNet.Numerics.LinearAlgebra.Vector<double>.Build.Dense(q);
-                for (int i = 0; i < q; i++)
-                {
-                    if (p + i < N)
-                    {
-                        bVec[i] = -impulseResponse[p + i];
-                    }
-                    else
-                    {
-                        bVec[i] = 0; // Fill with zeros if out of bounds
-                    }
-                }
-
-                // Step 3: Solve for the denominator coefficients (a)
-                var aVec = T.Solve(bVec);
-
-                // Step 4: Compute the numerator coefficients (b)
-                var b = new double[p + 1];
-                var a = new double[q + 1];
-                a[0] = 1.0; // a0 is typically normalized to 1
-
-                // Copy the solved aVec to the a array, skipping a0
-                for (int i = 1; i <= q; i++)
-                {
-                    a[i] = aVec[i - 1];
-                }
-
-                // Compute the numerator coefficients using the recursive relationship
-                for (int i = 0; i <= p; i++)
-                {
-                    b[i] = impulseResponse[i];
-                    for (int j = 1; j <= Math.Min(i, q); j++)
-                    {
-                        b[i] += a[j] * impulseResponse[i - j];
-                    }
-                }
-
-                return (b, a);
-            }
-        
-            // Step 1: Fit a rational function to determine poles and zeros
-            public static (Complex[] poles, Complex[] zeros) FitRationalFunction(Complex[] H_f)
-            {
-                int maxIterations = 500;
-                int order = 6; // Desired order of the numerator and denominator
-                int N = H_f.Length;
-
-                // Initialize poles with evenly spaced points on the unit circle (for z-domain)
-                Complex[] poles = new Complex[order];
-                for (int i = 0; i < order; i++)
-                {
-                    double theta = 2.0 * Math.PI * i / order;
-                    poles[i] = new Complex(Math.Cos(theta), Math.Sin(theta));
-                }
-
-                Complex[] a, b = new Complex[0];
-
-                // Iterative fitting process
-                for (int iter = 0; iter < maxIterations; iter++)
-                {
-                    // Solve the linear system to find the coefficients for the current poles
-                    (a, b) = SolveForCoefficients(H_f, poles);
-
-                    // Update poles based on current solution
-                    for (int i = 0; i < order; i++)
-                    {
-                        poles[i] = UpdatePole(H_f, poles[i], a, b);
-                    }
-                }
-
-                // Calculate zeros from the resulting coefficients
-                Complex[] zeros = CalculateZeros(b);
-
-                return (poles, zeros);
-            }
-
-            // Step 2: Apply bilinear transform to poles and zeros
-            public static Complex[] BilinearTransform(Complex[] sDomain, double fs)
-            {
-                double T = 1.0 / fs;
-                Complex[] zDomain = new Complex[sDomain.Length];
-                for (int i = 0; i < sDomain.Length; i++)
-                {
-                    zDomain[i] = (2.0 + T * sDomain[i]) / (2.0 - T * sDomain[i]);
-                }
-                return zDomain;
-            }
-
-            // Step 3: Formulate IIR filter from poles and zeros
-            //public static (double[], double[]) FormulateIIRFilter(Complex[] zPoles, Complex[] zZeros)
-            //{
-
-
-
-
-            //    int order = zPoles.Length;
-            //    double[] a = new double[order + 1];
-            //    double[] b = new double[order + 1];
-
-            //    a[0] = 1.0;
-            //    b[0] = 1.0;
-
-            //    for (int i = 1; i <= order; i++)
-            //    {
-            //        a[i] = 0;
-            //        b[i] = 0;
-            //    }
-
-            //    // Multiply factors of (z - pole) for the denominator and (z - zero) for the numerator
-            //    for (int i = 0; i < order; i++)
-            //    {
-            //        for (int j = order; j > 0; j--)
-            //        {
-            //            if (i < zPoles.Length) a[j] = a[j] - zPoles[i].Real * a[j - 1];
-            //            if (i < zZeros.Length) 
-            //                b[j] = b[j] - zZeros[i].Real * b[j - 1];
-            //        }
-            //    }
-
-            //    return (b, a);
-            //}
-
-            //    public (double[] a, double[] b) FormulateIIRFilter(Complex[] sDomainPoles, Complex[] sDomainZeros, double fs)
-            //    {
-            //        // Apply Bilinear Transform
-            //        Complex[] zPoles = sDomainPoles;// BilinearTransform(sDomainPoles, fs);
-            //        Complex[] zZeros = sDomainZeros;// BilinearTransform(sDomainZeros, fs);
-
-            //        // Ensure stability by keeping poles within the unit circle
-            //        //zPoles = EnsureStability(zPoles);
-
-            //        // Convert poles and zeros to polynomial coefficients
-            //        double[] a = PolynomialFromRoots(zPoles);
-            //        double[] b = PolynomialFromRoots(zZeros);
-
-            //        // Normalize the coefficients
-            //        double gain = b[0] / a[0];
-            //        for (int i = 0; i < b.Length; i++)
-            //        {
-            //            b[i] /= gain;
-            //        }
-
-            //        return (a, b);
-            //    }
-
-            //    public static double[] PolynomialFromRoots(Complex[] roots)
-            //    {
-            //        int order = roots.Length;
-            //        double[] coefficients = new double[order + 1];
-            //        coefficients[0] = 1.0;
-
-            //        for (int i = 0; i < order; i++)
-            //        {
-            //            for (int j = i; j >= 0; j--)
-            //            {
-            //                coefficients[j + 1] -= roots[i].Real * coefficients[j];
-            //            }
-            //        }
-
-            //    double leadingCoefficient = 1.0;
-            //    for (int i = 0; i < order; i++)
-            //    {
-            //        leadingCoefficient *= -roots[i].Real;
-            //    }
-
-            //    for (int i = 0; i <= order; i++)
-            //    {
-            //        coefficients[i] *= leadingCoefficient;
-            //    }
-
-            //    return coefficients;
-            //}
-
-            public (double[], double[]) FormulateIIRFilter(Complex[] poles, Complex[] zeros)
-            {
-                // Stabilize poles and zeros
-                poles = poles.Select(p => p.Magnitude > 1 ? 1.0 / Complex.Conjugate(p) : p).ToArray();
-                zeros = zeros.Select(z => z.Magnitude > 1 ? 1.0 / Complex.Conjugate(z) : z).ToArray();
-
-                int order = Math.Max(zeros.Length, poles.Length);
-
-                // Coefficient arrays
-                double[] b = new double[order + 1];
-                double[] a = new double[order + 1];
-
-                // Initialize coefficients for the denominator (a) with 1
-                a[0] = 1.0;
-                for (int i = 1; i <= order; i++)
-                {
-                    a[i] = 0.0;
-                }
-
-                // Calculate the denominator coefficients (a) from poles
-                foreach (var pole in poles)
-                {
-                    for (int i = order; i > 0; i--)
-                    {
-                        a[i] = a[i] - pole.Real * a[i - 1] + pole.Imaginary * a[i - 1];
-                    }
-                    a[0] = a[0] - pole.Real;
-                }
-
-                // Initialize coefficients for the numerator (b) with 1
-                b[0] = 1.0;
-                for (int i = 1; i <= order; i++)
-                {
-                    b[i] = 0.0;
-                }
-
-                // Calculate the numerator coefficients (b) from zeros
-                foreach (var zero in zeros)
-                {
-                    for (int i = order; i > 0; i--)
-                    {
-                        b[i] = b[i] - zero.Real * b[i - 1] + zero.Imaginary * b[i - 1];
-                    }
-                    b[0] = b[0] - zero.Real;
-                }
-
-                //// Normalize the coefficients so that a[0] = 1
-                //double normFactor = a[0];
-                //for (int i = 0; i <= order; i++)
-                //{
-                //    a[i] /= normFactor;
-                //    b[i] /= normFactor;
-                //}
-                return (b, a);
-            }
-
-            public static (Complex[] a, Complex[] b) SolveForCoefficients(Complex[] H_f, Complex[] poles)
-            {
-                int N = H_f.Length;
-                int order = poles.Length;
-
-                // Form the linear system matrix and vector
-                var A = MathNet.Numerics.LinearAlgebra.Matrix<Complex>.Build.Dense(N, order + 1);
-                var bVec = MathNet.Numerics.LinearAlgebra.Vector<Complex>.Build.Dense(N);
-
-                for (int i = 0; i < N; i++)
-                {
-                    bVec[i] = H_f[i];
-                    A[i, 0] = 1.0;
-                    for (int j = 1; j <= order; j++)
-                    {
-                        A[i, j] = Complex.One / (Complex.One - poles[j - 1] * H_f[i]);
-                    }
-                }
-
-                // Solve the least squares problem: A * x = bVec
-                var qr = A.QR();
-                var x = qr.Solve(bVec);
-
-                // Extract the numerator (b) and denominator (a) coefficients from the solution
-                var a = new Complex[order + 1];
-                var b = new Complex[order + 1];
-
-                for (int i = 0; i <= order; i++)
-                {
-                    a[i] = x[i]; // First half of x gives a
-                    b[i] = x[i]; // Second half of x gives b (this depends on how you structure the problem)
-                }
-                return (a, b);
-            }
-
-            public static Complex UpdatePole(Complex[] H_f, Complex pole, Complex[] a, Complex[] b, double learningRate = 0.1)
-            {
-                int N = H_f.Length;
-
-                // Compute the current error
-                double initialError = ComputeError(H_f, pole, a, b);
-
-                // Small step to estimate the gradient (finite difference method)
-                double delta = 1e-6;
-
-                // Perturb the pole slightly in the real direction
-                Complex polePerturbedReal = new Complex(pole.Real + delta, pole.Imaginary);
-                double errorReal = ComputeError(H_f, polePerturbedReal, a, b);
-
-                // Perturb the pole slightly in the imaginary direction
-                Complex polePerturbedImaginary = new Complex(pole.Real, pole.Imaginary + delta);
-                double errorImaginary = ComputeError(H_f, polePerturbedImaginary, a, b);
-
-                // Compute the gradient of the error with respect to the pole
-                double gradientReal = (errorReal - initialError) / delta;
-                double gradientImaginary = (errorImaginary - initialError) / delta;
-
-                // Update the pole position using the gradient
-                double newReal = pole.Real - learningRate * gradientReal;
-                double newImaginary = pole.Imaginary - learningRate * gradientImaginary;
-                Complex updatedPole = new Complex(newReal, newImaginary);
-
-                return updatedPole;
-            }
-
-            private static double ComputeError(Complex[] H_f, Complex pole, Complex[] a, Complex[] b)
-            {
-                int N = H_f.Length;
-                double error = 0.0;
-
-                for (int i = 0; i < N; i++)
-                {
-                    // Compute the modeled response at each frequency point using the current pole
-                    Complex modeledResponse = 0.0;
-                    for (int j = 0; j < a.Length; j++)
-                    {
-                        modeledResponse += b[j] / (Complex.One - pole * H_f[i]);
-                    }
-
-                    // Compute the squared error between the actual and modeled response
-                    Complex diff = H_f[i] - modeledResponse;
-                    error += diff.Magnitude * diff.Magnitude;
-                }
-
-                return error;
-            }
-
-            public static Complex[] CalculateZeros(Complex[] b)
-            {
-                int n = b.Length - 1; // Degree of the polynomial
-                Complex[] roots = new Complex[n];
-
-                // Step 1: Initialize roots with initial guesses (evenly distributed on the unit circle)
-                for (int i = 0; i < n; i++)
-                {
-                    double angle = 2 * Math.PI * i / n;
-                    roots[i] = new Complex(Math.Cos(angle), Math.Sin(angle));
-                }
-
-                // Step 2: Iteratively refine the roots
-                double tolerance = 1e-9; // Convergence tolerance
-                int maxIterations = 1000;
-
-                for (int iter = 0; iter < maxIterations; iter++)
-                {
-                    bool converged = true;
-                    for (int i = 0; i < n; i++)
-                    {
-                        Complex numerator = EvaluatePolynomial(b, roots[i]);
-                        Complex denominator = new Complex(1.0, 0.0);
-                        for (int j = 0; j < n; j++)
-                        {
-                            if (i != j) denominator *= (roots[i] - roots[j]);
-                        }
-                        Complex delta = numerator / denominator;
-                        roots[i] -= delta;
-                        if (delta.Magnitude > tolerance) converged = false;
-                    }
-
-                    if (converged) break;
-                }
-
-                return roots;
-            }
-            private static Complex EvaluatePolynomial(Complex[] b, Complex z)
-            {
-                Complex result = new Complex(0.0, 0.0);
-                for (int i = 0; i < b.Length; i++)
-                {
-                    result += b[i] * Complex.Pow(z, b.Length - 1 - i);
-                }
-                return result;
-            }
-
-            // Function to solve a linear system of equations using Gaussian elimination
-            public static double[] SolveLinearSystem(double[,] T, double[] b)
-                {
-                    int n = b.Length;
-                    double[] x = new double[n];
-                    double[,] A = new double[n, n + 1];
-
-                    // Form the augmented matrix
-                    for (int i = 0; i < n; i++)
-                    {
-                        for (int j = 0; j < n; j++)
-                        {
-                            A[i, j] = T[i, j];
-                        }
-                        A[i, n] = b[i];
-                    }
-
-                    // Perform Gaussian elimination
-                    for (int i = 0; i < n; i++)
-                    {
-                        for (int k = i + 1; k < n; k++)
-                        {
-                            double factor = A[k, i] / A[i, i];
-                            for (int j = i; j < n + 1; j++)
-                            {
-                                A[k, j] -= factor * A[i, j];
-                            }
-                        }
-                    }
-
-                    // Back-substitution
-                    for (int i = n - 1; i >= 0; i--)
-                    {
-                        x[i] = A[i, n];
-                        for (int j = i + 1; j < n; j++)
-                        {
-                            x[i] -= A[i, j] * x[j];
-                        }
-                        x[i] /= A[i, i];
-                    }
-
-                    return x;
-                }
-
-
-            //public Chart Polar_Plot()
-            //{
-            //    return Polar_Absorption;
-            //}
 
             private void param_ValueChanged(object sender, EventArgs e)
             {
@@ -1551,46 +728,113 @@ namespace Pachyderm_Acoustic
             {
                 if (Material_Type.SelectedIndex < 0) return;
                 ABS_Layer abs = null;
+                string name = null;
+                double Carbon = 0;
+                if (sender == Set_EHM || sender == Set_Est)
+                { 
+                    name = EHM.Names[Material_List.SelectedIndex];
+                    Carbon = EHM.ECC_Abs[Material_List.SelectedIndex];
+                }
+
                 switch (Material_Type.SelectedIndex)
                 {
                     case 0:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.AirSpace, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        abs = new ABS_Layer(ABS_Layer.LayerType.AirSpace, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, 0, "Air");
                         break;
                     case 1:
-                        abs = ABS_Layer.CreateBiot(true, (double) depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value );
+                        if (name == null)
+                        {
+                            name = "Generic Porous Material";
+                            Carbon = 70;
+                        }
+                        abs = ABS_Layer.CreateBiot(true, (double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value, Carbon, name);
                         break;
                     case 2:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousDB, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Porous Material";
+                            Carbon = 70;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousDB, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 3:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousCA, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Porous Material";
+                            Carbon = 70;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousCA, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 4:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousM, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Porous Material";
+                            Carbon = 70;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.PorousM, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 5:
-                        abs = ABS_Layer.CreateSolid((double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9,  (double)PoissonsRatio.Value);
+                        if (name == null)
+                        {
+                            name = "Generic Solid Material";
+                            Carbon = 188;
+                        }
+                        abs = ABS_Layer.CreateSolid((double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9,  (double)PoissonsRatio.Value, Carbon, name);
                         break;
                     case 6:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Perforated_Modal, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Perforated_Modal, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 7:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Slotted_Modal, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Slotted_Modal, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 8:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.CircularPerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.CircularPerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break; 
                     case 9:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.SquarePerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.SquarePerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 10:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Slots, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Slots, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 11:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Microslit, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Microslit, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                     case 12:
-                        abs = new ABS_Layer(ABS_Layer.LayerType.MicroPerforated, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100);
+                        if (name == null)
+                        {
+                            name = "Generic Perforated Material";
+                            Carbon = 188;
+                        }abs = new ABS_Layer(ABS_Layer.LayerType.MicroPerforated, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                 }
 
@@ -1705,16 +949,25 @@ namespace Pachyderm_Acoustic
                 //Done Loading material. Updating may continue.
             }
 
+            public double Total_Carbon = 0;
+
             private void Use_RI_Click(object sender, EventArgs e)
             {
                 Result = AbsorptionModelResult.Random_Incidence;
+                for (int i = 0; i < Layers.Count; i++)
+                {
+                    Total_Carbon += Layers[i].Embodied_Carbon;
+                }
                 this.Close();
             }
 
             private void Smart_Mat_Click(object sender, EventArgs e)
             {
                 Result = AbsorptionModelResult.Smart_Material;
-                /// Build Smart Material here...
+                for (int i = 0; i < Layers.Count; i++)
+                {
+                    Total_Carbon += Layers[i].Embodied_Carbon;
+                }
                 this.Close();
             }
 

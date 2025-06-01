@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2023, Arthur van der Harten 
+//'Copyright (c) 2008-2023, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -17,7 +17,18 @@
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
 using Eto.Forms;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using Pachyderm_Acoustic.AbsorptionModels;
+using System.IO;
+using System.Security.Cryptography;
+using System.Numerics;
+using System.Linq;
+using ScottPlot.TickGenerators;
+using ScottPlot.Interactivity.UserActions;
+using Eto.Drawing;
+using System.Threading.Tasks;
 
 namespace Pachyderm_Acoustic
 {
@@ -29,6 +40,9 @@ namespace Pachyderm_Acoustic
             {
                 this.Title = "Materials Designer [EXPERIMENTAL]";
                 this.Size = new Eto.Drawing.Size(1400, 800);
+                this.Resizable = true;
+                this.WindowStyle = WindowStyle.Default;
+                this.ShowInTaskbar = true;
 
                 this.Alpha_Normal = new ScottPlot.Eto.EtoPlot();
                 Alpha_Normal.Size = new Eto.Drawing.Size(400, 350);
@@ -98,9 +112,11 @@ namespace Pachyderm_Acoustic
                 ////////////////////////////////////////////////
 
                 DynamicLayout All = new DynamicLayout();
+                Sustainability_Reference = new DynamicLayout();
                 DynamicLayout GraphLeft = new DynamicLayout();
                 DynamicLayout CtrlRight = new DynamicLayout();
-                All.AddRow(GraphLeft, CtrlRight);
+                //DynamicLayout ECC_Total_Right = new DynamicLayout();
+                All.AddRow(Sustainability_Reference, GraphLeft, CtrlRight);//, ECC_Total_Right);
 
                 GraphLeft.AddRow(Alpha_Normal);
                 DynamicLayout GraphCtrls = new DynamicLayout();
@@ -145,6 +161,7 @@ namespace Pachyderm_Acoustic
                 ///Ctrls for graph display...
 
                 DynamicLayout GraphLower = new DynamicLayout();
+                GraphLower.AddRow(new Label() { Text = "Polar Absorption Coefficient" }, new Label() { Text = "Impedance" });
                 GraphLower.AddRow(Polar_Absorption, Impedance_Graph);
                 GraphLeft.AddRow(GraphLower);
 
@@ -262,6 +279,7 @@ namespace Pachyderm_Acoustic
 
                 this.label6.Text = "Material Depth (mm)";
 
+                this.depth.Width = 75;
                 this.depth.DecimalPlaces = 3;
                 this.depth.MaxValue = 10000;
                 this.depth.Value = 25;
@@ -277,7 +295,6 @@ namespace Pachyderm_Acoustic
                 this.label15.Text = "Solid Components Properties";
                 this.label15.Visible = false;
 
-
                 this.label13.Text = "Density (kg/m^3)";
                 this.label13.Visible = false;
                 this.Solid_Density.MaxValue = 100000;
@@ -292,7 +309,9 @@ namespace Pachyderm_Acoustic
 
                 this.label12.Text = "Poisson\'s Ratio";
                 this.label12.Visible = false;
-                this.PoissonsRatio.MaxValue = 1;
+                this.PoissonsRatio.MaxValue = 0.5;
+                this.PoissonsRatio.MinValue = 0;
+                this.PoissonsRatio.DecimalPlaces = 2;
                 this.PoissonsRatio.Value = 44;
                 this.PoissonsRatio.Visible = false;
 
@@ -315,7 +334,7 @@ namespace Pachyderm_Acoustic
                 DynamicLayout Perf = new DynamicLayout();
                 Perf.DefaultSpacing = new Eto.Drawing.Size(8, 8);
                 Perf.Padding = 8;
-                this.pitch_label.Text = "Hole Pitch (mm)";
+                this.pitch_label.Text = "Spacing-centers (mm)";
                 this.pitch_label.Visible = false;
                 this.pitch.DecimalPlaces = 3;
                 this.pitch.MaxValue = 1000;
@@ -343,7 +362,7 @@ namespace Pachyderm_Acoustic
                 this.label17.Text = "Porous Medium Properties";
                 this.label17.Visible = false;
 
-                this.Label1.Text = "Airflow Resistivity (Pa *s/m^3)";
+                this.Label1.Text = "Airflow Resistivity (Pa *s/m^2)";
                 this.Label1.Visible = false;
                 this.Sigma.MaxValue = 200000;
                 this.Sigma.Value = 25000;
@@ -361,7 +380,6 @@ namespace Pachyderm_Acoustic
                 BasicPorous.AddRow(Label1, Sigma);
                 BasicPorous.AddRow(null, Resistivity_Feedback);
                 BasicPorous.AddRow(PorosityLabel, Porosity_Percent);
-
 
                 DynamicLayout AdvancedPorous = new DynamicLayout();
                 AdvancedPorous.Padding = 8;
@@ -432,8 +450,660 @@ namespace Pachyderm_Acoustic
                 CtrlRight.AddRow(ParamsAll);
                 CtrlRight.AddRow(CtrlX);
 
+                Sustainability_Reference.DefaultSpacing = new Eto.Drawing.Size(8, 8);
+                Sustainability_Reference.Padding = 8;
+
+                GroupBox Data = new GroupBox() { Text = "Library - EHM Databases" };
+                Material_List = new ListBox() { Height = 200 };
+                Material_List.SelectedIndexChanged += this.Material_List_SelectedIndexChanged;
+                this.Show_ECC_ABS = new CheckBox() { Text = "Show Absorption Coefficients" };
+                this.Show_ECC_ABS.CheckedChanged += Show_ECC_ABS_CheckedChanged;
+                Scrollable matlist = new Scrollable() { Content = Material_List, Height = 200, Width = 250 };
+                matlist.Width = 250;
+                Data.Content = matlist;
+                Data.Width = 250;
+                GroupBox EHM_Data = new GroupBox() { Text = "Documented Performance" };
+                Sustainability_Reference.AddRow(Data);
+                Sustainability_Reference.AddRow(EHM_Data);
+                Estimates = new GroupBox() { Text = "Estimates" };
+                Sustainability_Reference.AddRow(Estimates);
+                DynamicLayout EHM_DataLayout = new DynamicLayout();
+                
+                //Abs_125Hz = new Label() { Text = "   125 Hz:" };
+                //Abs_160Hz = new Label() { Text = "   160 Hz:" };
+                //Abs_200Hz = new Label() { Text = "   200 Hz:" };
+                //Abs_250Hz = new Label() { Text = "   250 Hz:" };
+                //Abs_315Hz = new Label() { Text = "   315 Hz:" };
+                //Abs_400Hz = new Label() { Text = "   400 Hz:" };
+                //Abs_500Hz = new Label() { Text = "   500 Hz:" };
+                //Abs_630Hz = new Label() { Text = "   630 Hz:" };
+                //Abs_800Hz = new Label() { Text = "   800 Hz:" };
+                //Abs_1000Hz = new Label() { Text = "  1000 Hz:" };
+                //Abs_1250Hz = new Label() { Text = "  1250 Hz:" };
+                //Abs_1600Hz = new Label() { Text = "  1600 Hz:" };
+                //Abs_2000Hz = new Label() { Text = "  2000 Hz:" };
+                Set_EHM = new Button() { Text = "Set Direct EHM" };
+                Set_EHM.Click += Set_EHM_Click;
+                Get_Est = new Button { Text = "Fit Estimate" };
+                Get_Est.Click += Get_Est_Click;
+                Set_Est = new Button() { Text = "Set Estimate" };
+                Set_Est.Click += Set_Est_Click;
+
+                EHM_ECC = new Label() { Text = "A1-A3 ECC (kgCO2e/m2):" };
+                EHM_ECC_Thickness = new Label() { Text = "   Ref depth:" };
+                EHM_ECC_ABS = new Label() { Text = "A1-A3 ECC (kgCO2e/m3):" };
+                EHM_Flow_Resist = new Label() { Text = "Flow Resistivity (σ) (pa*s/m^2):" };
+
+                EHM_DataLayout.AddRow(" ");
+                EHM_DataLayout.AddRow(EHM_ECC);
+                EHM_DataLayout.AddRow(EHM_ECC_Thickness);
+                EHM_DataLayout.AddRow(EHM_ECC_ABS);
+                EHM_DataLayout.AddRow(" ");
+                EHM_DataLayout.AddRow(EHM_Flow_Resist);
+                EHM_DataLayout.AddRow(Show_ECC_ABS);
+                EHM_DataLayout.AddRow(Set_EHM);
+                EHM_DataLayout.AddRow(" ");
+
+                //EHM_DataLayout.AddRow(new Label() { Text = "Absorption Coefficient (α) (0.0-1.0):" });
+                //EHM_DataLayout.AddRow(Abs_125Hz);
+                //EHM_DataLayout.AddRow(Abs_160Hz);
+                //EHM_DataLayout.AddRow(Abs_200Hz);
+                //EHM_DataLayout.AddRow(Abs_250Hz);
+                //EHM_DataLayout.AddRow(Abs_315Hz);
+                //EHM_DataLayout.AddRow(Abs_400Hz);
+                //EHM_DataLayout.AddRow(Abs_500Hz);
+                //EHM_DataLayout.AddRow(Abs_630Hz);
+                //EHM_DataLayout.AddRow(Abs_800Hz);
+                //EHM_DataLayout.AddRow(Abs_1000Hz);
+                //EHM_DataLayout.AddRow(Abs_1250Hz);
+                //EHM_DataLayout.AddRow(Abs_1600Hz);
+                //EHM_DataLayout.AddRow(Abs_2000Hz);
+
+                DynamicLayout EstimatesLayout = new DynamicLayout();
+                Est_FlowResistivity = new Label() { Text = "Flow Resistivity (ρ) (pa*s/m^2):" };
+                Est_Porosity = new Label() { Text = "Porosity (φ) (%):" };
+                Est_Density = new Label() { Text = "Density (d) (kg/m^3):" };
+                EstimatesLayout.AddRow(Get_Est);
+                EstimatesLayout.AddRow(Est_FlowResistivity);
+                EstimatesLayout.AddRow(Est_Density);
+                EstimatesLayout.AddRow(Set_Est);
+                Data.Content = Material_List;
+                EHM_Data.Content = EHM_DataLayout;
+                Estimates.Content = EstimatesLayout;
+
+                EmbodiedCarbon_Pie = new ScottPlot.Eto.EtoPlot();
+                EmbodiedCarbon_Pie.Plot.Axes.Frameless();
+                EmbodiedCarbon_Pie.BackgroundColor = Colors.Gray;
+                EmbodiedCarbon_Pie.Plot.Add.Pie(new double[1] { 0 });
+                EmbodiedCarbon_Pie.Plot.Title("Embodied Carbon Coefficients",10);
+                EmbodiedCarbon_Pie.Plot.XLabel("A1-A3 ECC (kgCO2e/m2)",10);
+                EmbodiedCarbon_Pie.Width = 250;
+                EmbodiedCarbon_Pie.BackgroundColor = Colors.SlateGray;
+                EmbodiedCarbon_Pie.Plot.HideGrid();
+                Label ECLBL = new Label();
+                ECLBL.Text = "Embodied Carbon By Material";
+                Sustainability_Reference.AddRow(ECLBL);
+                Sustainability_Reference.AddRow(EmbodiedCarbon_Pie);
+
                 this.Content = All;
             }
+
+            private void Show_ECC_ABS_CheckedChanged(object sender, EventArgs e)
+            {
+                Update_Graphs();
+            }
+
+            private void Set_EHM_Click(object sender, EventArgs e)
+            {
+                if (Material_List.SelectedIndex < 0) return;
+                if (Material_List.SelectedIndex < EHM.ECC_Abs.Count)
+                {
+                    Material_Type.SelectedIndex = 4;
+                    Material_Type.Invalidate();
+                    Sigma.Value = EHM.Flow_Resistivity[Material_List.SelectedIndex];
+                    depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
+                    Add_Click(sender, e);
+                    if (LayerList.Items.Count == 1)
+                    {
+                        Show_ECC_ABS.Visible = true;
+                        Estimates.Visible = true;
+                        Get_Est.Visible = true;
+                        Set_Est.Visible = true;
+                        Est_Density.Visible = true;
+                        Est_FlowResistivity.Visible = true;
+                        Est_Porosity.Visible = true;
+                    }
+                    else
+                    {
+                        Show_ECC_ABS.Visible = false;
+                        Show_ECC_ABS.Checked = false;
+                        Estimates.Visible = false;
+                        Get_Est.Visible = false;
+                        Set_Est.Visible = false;
+                        Est_Density.Visible = false;
+                        Est_FlowResistivity.Visible = false;
+                        Est_Porosity.Visible = false;
+                    }
+                }
+                else 
+                {
+                    ABS_Layer[] layers = EHM.Substrates[Material_List.SelectedIndex - EHM.ECC_Abs.Count];
+                    Layers.Clear();
+                    LayerList.Items.Clear();
+                    foreach (ABS_Layer l in layers)
+                    {
+                        Layers.Add(l);
+                        LayerList.Items.Add(l.Material_Name);
+                    }
+                    Rigid_Term.Checked = false;
+                    Air_Term.Checked = true;
+                    Show_ECC_ABS.Checked = false;
+                    Update_Graphs();
+                }
+            }
+
+            private void Get_Est_Click(object sender, EventArgs e)
+            {
+                // Check if a material is selected in the list
+                if (Material_List.SelectedIndex < 0)
+                {
+                    MessageBox.Show("Please select a material from the list first.");
+                    return;
+                }
+
+                // Step 1: Get target absorption values directly from EHM data
+                int selectedIndex = Material_List.SelectedIndex;
+                double[] targetAbsorption = EHM.Abs_Coef[selectedIndex];
+
+                // Step 2: Get the thickness value directly from EHM data
+                double thickness = EHM.Thickness[selectedIndex];
+
+                // Step 3: Get suggested flow resistivity and standard deviation from EHM
+                double suggestedFlowResistivity = EHM.Flow_Resistivity[selectedIndex];
+                double flowResistivityStdDev = EHM.FR_Dev[selectedIndex];
+
+                // Set search bounds using the standard deviation as a guide
+                double minResistivity = Math.Max(100, suggestedFlowResistivity - 10 * flowResistivityStdDev);
+                double maxResistivity = Math.Min(200000, suggestedFlowResistivity + 10 * flowResistivityStdDev);
+
+                // Implement Bayesian inference for finding best flow resistivity
+                (double bestResistivity, double airspace, double confidence) = BayesianFlowResistivityFit(
+                    targetAbsorption,
+                    thickness,
+                    suggestedFlowResistivity,
+                    flowResistivityStdDev,
+                    minResistivity,
+                    maxResistivity);
+
+                // Step 5: Calculate estimated material properties
+                double estimatedDensity = EstimateDensity(bestResistivity);
+                double estimatedPorosity = EstimatePorosity(bestResistivity);
+
+                Fit_Resistivity = bestResistivity;
+                Fit_Airspace = airspace;
+
+                // Step 6: Update the UI with the results
+                Est_FlowResistivity.Text = $"Flow Resistivity (ρ) (pa*s/m²): {bestResistivity:F0} (confidence: {confidence:P1})";
+                Est_Density.Text = $"Density (d) (kg/m³): {estimatedDensity:F1}";
+                Est_Porosity.Text = $"Airspace needed (m): {airspace:F1}";
+            }
+
+            double Fit_Resistivity = 0;
+            double Fit_Airspace = 0;
+
+            private (double bestResistivity, double airspace, double confidence) BayesianFlowResistivityFit(
+    double[] targetAbsorption,
+    double thickness,
+    double priorMean,
+    double priorStdDev,
+    double minResistivity,
+    double maxResistivity)
+            {
+                // Number of samples for Bayesian inference (increase for better results)
+                int numSamples = 2000;
+
+                // Step 1: Create more principled prior distributions using importance sampling
+                double[] samples = new double[numSamples];
+                double[] weights = new double[numSamples];
+                double[] airspaces = new double[numSamples];
+                double[] errors = new double[numSamples];
+
+                Random random = new Random();
+
+                // Generate samples from a truncated normal distribution
+                for (int i = 0; i < numSamples; i++)
+                {
+                    // Use a better sampling method: Box-Muller transform for normal distribution
+                    double u1 = 1.0 - random.NextDouble();
+                    double u2 = 1.0 - random.NextDouble();
+                    double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+
+                    // Sample from normal distribution, but keep within bounds
+                    double sample;
+                    do
+                    {
+                        sample = priorMean + priorStdDev * randStdNormal;
+                    } while (sample < minResistivity || sample > maxResistivity);
+
+                    samples[i] = sample;
+                }
+
+                // Step 2: Evaluate likelihood for each sample using multiple metrics
+                object lock_records = new object();
+                double minError = double.MaxValue;
+
+                // Store all likelihood information without early aggregation
+                Parallel.For(0, numSamples, i =>
+                {
+                    double airspace = 0;
+                    double error = EvaluateFlowResistivityMultiMetric(
+                        samples[i],
+                        thickness,
+                        targetAbsorption,
+                        ref airspace
+                    );
+
+                    // Store all results for comprehensive posterior analysis
+                    lock (lock_records)
+                    {
+                        errors[i] = error;
+                        airspaces[i] = airspace;
+                        weights[i] = 0; // Will be calculated after all samples are evaluated
+
+                        if (error < minError)
+                            minError = error;
+                    }
+                });
+
+                // Step 3: Convert errors to likelihoods with adaptive scaling
+                double errorRange = errors.Max() - errors.Min();
+                double scaleFactor = errorRange > 0.001 ? 50.0 / errorRange : 50.0;
+
+                for (int i = 0; i < numSamples; i++)
+                {
+                    weights[i] = Math.Exp(-scaleFactor * errors[i]);
+                }
+
+                // Normalize weights
+                double sumWeights = weights.Sum();
+                for (int i = 0; i < numSamples; i++)
+                {
+                    weights[i] /= sumWeights;
+                }
+
+                // Step 4: Calculate posterior statistics using Bayesian model averaging
+                double posteriorMean = 0;
+                double posteriorVar = 0;
+                double maxWeight = 0;
+                int maxWeightIndex = 0;
+                double weightedAirspace = 0;
+
+                // Find MAP (Maximum A Posteriori) estimate and calculate weighted statistics
+                for (int i = 0; i < numSamples; i++)
+                {
+                    posteriorMean += samples[i] * weights[i];
+                    weightedAirspace += airspaces[i] * weights[i];
+
+                    if (weights[i] > maxWeight)
+                    {
+                        maxWeight = weights[i];
+                        maxWeightIndex = i;
+                    }
+                }
+
+                // Calculate variance and effective sample size (ESS)
+                for (int i = 0; i < numSamples; i++)
+                {
+                    posteriorVar += weights[i] * Math.Pow(samples[i] - posteriorMean, 2);
+                }
+
+                // Effective sample size (measure of sampling quality)
+                double effectiveSampleSize = 1.0 / weights.Sum(w => w * w);
+                double confidenceMetric = Math.Min(effectiveSampleSize / numSamples, maxWeight * numSamples);
+
+                // Return the best estimate based on posterior analysis
+                return (samples[maxWeightIndex], airspaces[maxWeightIndex], Math.Min(confidenceMetric, 1.0));
+            }
+
+            // Enhanced evaluation function with multiple error metrics
+            private double EvaluateFlowResistivityMultiMetric(
+                double flowResistivity,
+                double thickness,
+                double[] targetAbsorption,
+                ref double req_airspace)
+            {
+                // Create a Miki porous absorber layer
+                ABS_Layer layer = new ABS_Layer(ABS_Layer.LayerType.PorousM, thickness, 0, 0, flowResistivity, 0.99, 0);
+
+                // Track multiple error metrics
+                double maxError = 0;
+                double mseError = 0;
+                double weightedError = 0;
+                double[] frequencies = new double[1];
+                Complex[] Angles = new Complex[1] { 89 };
+                Complex[][] Trans, R;
+
+                double bestTotalError = double.MaxValue;
+                double bestMaxError = double.MaxValue;
+
+                // Perceptually weight frequencies (mid-range frequencies have higher importance)
+                double[] frequencyWeights = new double[thirdOctaveBands.Length];
+                for (int i = 0; i < thirdOctaveBands.Length; i++)
+                {
+                    // A-weighting inspired perceptual weights (emphasize 500-4000 Hz range)
+                    double f = thirdOctaveBands[i];
+                    frequencyWeights[i] = Math.Min(1.0,
+                        0.2 + 0.8 * Math.Exp(-0.5 * Math.Pow((Math.Log10(f) - Math.Log10(1000)) / 1.0, 2)));
+                }
+
+                foreach (double airspace in airspace_ImpTube_Errors)
+                {
+                    ABS_Layer[] layers = new ABS_Layer[2] {new ABS_Layer(ABS_Layer.LayerType.AirSpace, airspace, 0, 0, 0, 0, 0), layer};
+
+                    Complex[][] Z = Operations.Transfer_Matrix_Divisible(
+                        false,
+                        false,
+                        44100,
+                        343,
+                        layers.ToList(),
+                        ref frequencies,
+                        ref Angles,
+                        out Trans,
+                        out R
+                    );
+
+                    double[] Abs_Coef = Operations.Absorption_Coef(R)[0];
+                    double currentMaxError = 0;
+                    double currentMseError = 0;
+                    double currentWeightedError = 0;
+
+                    // Calculate multiple error metrics across frequency bands
+                    for (int bandIndex = 0; bandIndex < thirdOctaveBands.Length; bandIndex++)
+                    {
+                        double bandFrequency = thirdOctaveBands[bandIndex];
+                        double bandAbsorption = 0;
+                        int count = 0;
+
+                        // Average absorption coefficients within each band
+                        for (int freqIndex = 0; freqIndex < frequencies.Length; freqIndex++)
+                        {
+                            if (frequencies[freqIndex] >= bandFrequency * 0.8909)
+                            {
+                                bandAbsorption += Abs_Coef[freqIndex];
+                                count++;
+                            }
+                            if (bandFrequency * 1.12246 < frequencies[freqIndex]) break;
+                        }
+
+                        if (count > 0)
+                        {
+                            bandAbsorption /= count;
+                        }
+
+                        // Calculate error for this band
+                        double error = Math.Abs(bandAbsorption - targetAbsorption[bandIndex]);
+
+                        // Update error metrics
+                        currentMaxError = Math.Max(currentMaxError, error);
+                        currentMseError += error * error;
+                        currentWeightedError += error * frequencyWeights[bandIndex];
+                    }
+
+                    currentMseError = Math.Sqrt(currentMseError / thirdOctaveBands.Length);
+                    currentWeightedError /= frequencyWeights.Sum();
+
+                    // Combined error metric (weighted combination of different error metrics)
+                    double combinedError =
+                        0.5 * currentMaxError +
+                        0.3 * currentMseError +
+                        0.2 * currentWeightedError;
+
+                    if (combinedError < bestTotalError)
+                    {
+                        bestTotalError = combinedError;
+                        bestMaxError = currentMaxError;
+                        req_airspace = airspace;
+                    }
+                }
+
+                return bestTotalError;
+            }
+
+            /// <summary>
+            /// Uses Bayesian inference to estimate the flow resistivity that best matches target absorption coefficients
+            /// </summary>
+            //private (double bestResistivity, double airspace, double confidence) BayesianFlowResistivityFit(
+            //    double[] targetAbsorption,
+            //    double thickness,
+            //    double priorMean,
+            //    double priorStdDev,
+            //    double minResistivity,
+            //    double maxResistivity)
+            //{
+            //    // Number of samples for Bayesian inference
+            //    int numSamples = 1000;
+
+            //    // Step 1: Generate samples from prior distribution (truncated normal)
+            //    List<double> samples = new List<double>();
+            //    List<double> weights = new List<double>();
+            //    List<double> air_errors = new List<double>();
+            //    Random random = new Random();
+
+            //    while (samples.Count < numSamples)
+            //    {
+            //        // Directly sample from uniform distribution within bounds
+            //        double sample = minResistivity + random.NextDouble() * (maxResistivity - minResistivity);
+
+            //        // Calculate normal PDF weight (unnormalized)
+            //        double normalWeight = Math.Exp(-0.5 * Math.Pow((sample - priorMean) / priorStdDev, 2));
+
+            //        // Accept with probability proportional to normal PDF
+            //        if (random.NextDouble() < normalWeight / Math.Exp(0))
+            //        {
+            //            samples.Add(sample);
+            //        }
+            //    }
+
+            //    // Step 2: Evaluate likelihood for each sample
+            //    double maxLogLikelihood = double.MinValue;
+
+            //    object lock_records = new object();
+
+            //    //for (int i = 0; i < samples.Count; i++)
+            //    System.Threading.Tasks.Parallel.For(0, samples.Count, i =>
+            //    {
+            //        // Calculate error between model predictions and targets
+            //        double airspace = 0;
+            //        double error = EvaluateFlowResistivity(samples[i], thickness, targetAbsorption, ref airspace);
+
+            //        // Convert error to log likelihood (assuming Gaussian errors)
+            //        // The smaller the error, the higher the likelihood
+            //        double logLikelihood = -50 * error; // Scale factor to make differences more pronounced
+
+            //        lock(lock_records)
+            //        {
+            //            if (logLikelihood > maxLogLikelihood)
+            //                maxLogLikelihood = logLikelihood;
+            //            // Store the log likelihood and airspace for this sample
+            //            weights.Add(logLikelihood);
+            //            air_errors.Add(airspace);
+            //        }                
+            //    });
+
+            //    // Step 3: Convert log likelihoods to probabilities
+            //    double sumWeights = 0;
+            //    for (int i = 0; i < weights.Count; i++)
+            //    {
+            //        // Subtract max to avoid numerical underflow when exponentiating
+            //        weights[i] = Math.Exp(weights[i] - maxLogLikelihood);
+            //        sumWeights += weights[i];
+            //    }
+
+            //    // Normalize weights
+            //    for (int i = 0; i < weights.Count; i++)
+            //    {
+            //        weights[i] /= sumWeights;
+            //    }
+
+            //    // Step 4: Calculate posterior mean and confidence
+            //    double posteriorMean = 0;
+            //    double posteriorVar = 0;
+            //    double maxWeight = 0;
+            //    int maxWeightIndex = 0;
+
+            //    // Find MAP (Maximum A Posteriori) estimate
+            //    for (int i = 0; i < weights.Count; i++)
+            //    {
+            //        posteriorMean += samples[i] * weights[i];
+            //        if (weights[i] > maxWeight)
+            //        {
+            //            maxWeight = weights[i];
+            //            maxWeightIndex = i;
+            //        }
+            //    }
+
+            //    // Calculate variance using weighted samples
+            //    for (int i = 0; i < weights.Count; i++)
+            //    {
+            //        posteriorVar += weights[i] * Math.Pow(samples[i] - posteriorMean, 2);
+            //    }
+
+            //    // We'll use normalized maximum weight as a confidence measure (0-1)
+            //    double confidence = maxWeight * numSamples;
+
+            //    // Return the MAP estimate and confidence
+            //   return (samples[maxWeightIndex], air_errors[maxWeightIndex], Math.Min(confidence, 1.0));
+            //}
+
+            double[] airspace_ImpTube_Errors = new double[5] {0, 0.002, 0.005, 0.01, 0.02 };
+            double[] thirdOctaveBands = { 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000 };
+
+            //private double EvaluateFlowResistivity(double flowResistivity, double thickness, double[] targetAbsorption, ref double req_airspace)
+            //{
+            //    // Create a Miki porous absorber layer
+            //    ABS_Layer layer = new ABS_Layer(ABS_Layer.LayerType.PorousM, thickness, 0, 0, flowResistivity, 0.99,0);
+
+            //    // Calculate error between expected and actual absorption
+            //    double error = 0, total_error = 0;
+            //    double[] frequencies = new double[1];
+            //    Complex[] Angles = new Complex[1] { 89 };
+            //    Complex[][] Trans, R;
+            //    double minerror = double.PositiveInfinity;
+            //    double mintotal = double.PositiveInfinity;
+            //    foreach (double airspace in airspace_ImpTube_Errors)
+            //    {
+            //        ABS_Layer[] layers = new ABS_Layer[2] { new ABS_Layer(ABS_Layer.LayerType.AirSpace, airspace, 0, 0, 0, 0, 0), layer};
+            //        Complex[][] Z = Operations.Transfer_Matrix_Divisible(false, false, 44100, 343, layers.ToList(), ref frequencies, ref Angles, out Trans, out R);
+            //        double[] Abs_Coef = Operations.Absorption_Coef(R)[0];
+            //        double absorption = 0;
+
+            //        // Iterate through each third octave band
+            //        for (int bandIndex = 0; bandIndex < thirdOctaveBands.Length; bandIndex++)
+            //        {
+            //            double bandFrequency = thirdOctaveBands[bandIndex];
+            //            double bandAbsorption = 0;
+            //            int count = 0;
+
+            //            // Average the absorption coefficients within the current band
+            //            for (int freqIndex = 0; freqIndex < frequencies.Length; freqIndex++)
+            //            {
+            //                if (frequencies[freqIndex] >= bandFrequency * 0.8909)
+            //                {
+            //                    bandAbsorption += Abs_Coef[freqIndex]; // Reflection coefficient to absorption
+            //                    count++;
+            //                }
+            //                if (bandFrequency * 1.12246 < frequencies[freqIndex]) break;
+            //            }
+
+            //            if (count > 0)
+            //            {
+            //                bandAbsorption /= count; // Average absorption for the band
+            //            }
+
+            //            absorption = bandAbsorption;
+
+            //            // Accumulate the error between calculated and target absorption
+            //            total_error += error;
+            //            error = Math.Max(error, Math.Abs(absorption - targetAbsorption[bandIndex]));
+            //        }
+            //        if (total_error < mintotal && minerror > error)
+            //        {
+            //            minerror = error;
+            //            mintotal = total_error;
+            //            req_airspace = airspace;
+            //        }
+            //    }
+            //    return minerror;
+            //}
+
+            private double EstimateDensity(double flowResistivity)
+            {
+                // Empirical relationship between flow resistivity and density
+                // This is an approximation based on typical materials
+                if (flowResistivity < 10000)
+                    return 10 + 0.002 * flowResistivity; // Low density materials
+                else if (flowResistivity < 50000)
+                    return 30 + 0.001 * (flowResistivity - 10000); // Medium density
+                else
+                    return 70 + 0.0005 * (flowResistivity - 50000); // High density
+            }
+
+            private double EstimatePorosity(double flowResistivity)
+            {
+                // Empirical relationship between flow resistivity and porosity
+                // Higher flow resistivity generally means lower porosity
+                if (flowResistivity < 10000)
+                    return 99.0;
+                else if (flowResistivity < 50000)
+                    return 98.0 - 0.00005 * (flowResistivity - 10000);
+                else
+                    return 96.0 - 0.00002 * (flowResistivity - 50000);
+            }
+
+            private void Set_Est_Click(object sender, EventArgs e)
+            {
+                if (Fit_Airspace > 0)
+                {
+                    Material_Type.SelectedIndex = 0;
+                    depth.Value = Fit_Airspace * 1000;
+                    Add_Click(sender, e);
+                }
+    
+                Material_Type.SelectedIndex = 4;
+                Sigma.Value = Fit_Resistivity;
+                depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
+                Add_Click(sender, e);
+            }
+
+            private DynamicLayout Sustainability_Reference;
+            ListBox Material_List;
+            GroupBox Estimates;
+            Label Est_FlowResistivity;
+            Label Est_Porosity;
+            Label Est_Density;
+            ScottPlot.Eto.EtoPlot EmbodiedCarbon_Pie;
+
+            private Label EHM_ECC;
+            private Label EHM_ECC_ABS;
+            private Label EHM_ECC_Thickness;
+            private Label EHM_Flow_Resist;
+            private CheckBox Show_ECC_ABS;
+            //private Label Abs_125Hz;
+            //private Label Abs_160Hz;
+            //private Label Abs_200Hz;
+            //private Label Abs_250Hz;
+            //private Label Abs_315Hz;
+            //private Label Abs_400Hz;
+            //private Label Abs_500Hz;
+            //private Label Abs_630Hz;
+            //private Label Abs_800Hz;
+            //private Label Abs_1000Hz;
+            //private Label Abs_1250Hz;
+            //private Label Abs_1600Hz;
+            //private Label Abs_2000Hz;
+            private Button Set_EHM;
+            private Button Get_Est;
+            private Button Set_Est;
 
             private ScottPlot.Eto.EtoPlot Alpha_Normal;
             private ScottPlot.Eto.EtoPlot Polar_Absorption;

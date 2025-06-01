@@ -1,8 +1,8 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL) by Arthur van der Harten 
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
-//'Copyright (c) 2008-2025, Arthur van der Harten 
+//'Copyright (c) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
 //'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
 //'it under the terms of the GNU General Public License as published 
 //'by the Free Software Foundation; either version 3 of the License, or 
@@ -102,11 +102,10 @@ namespace Pachyderm_Acoustic
             private ScottPlot.Eto.EtoPlot Analysis_View;
             private CheckBox Normalize_Graph;
             private CheckBox LockUserScale;
-            private DropDown Graph_Octave;
+            private DropDown Graph_Octave;//
             private DropDown Graph_Type;
             private NumericStepper Receiver_Selection;
             private Label RecLbl;
-            //private Button Auralisation;
 
             private TabPage tabTflip;
             private NumericStepper Integration_select;
@@ -177,7 +176,6 @@ namespace Pachyderm_Acoustic
                 this.Analysis_View = new ScottPlot.Eto.EtoPlot();
                 this.Normalize_Graph = new CheckBox();
                 this.LockUserScale = new CheckBox();
-                this.Graph_Octave = new DropDown();
                 this.Graph_Type = new DropDown();
                 //this.Auralisation = new Button();
                 this.Receiver_Selection = new NumericStepper();
@@ -391,11 +389,12 @@ namespace Pachyderm_Acoustic
                 this.IntervalControl.Text = "Time Interval";
                 this.IntervalControl.Width = 200;
                 this.ETlbl.Text = "End Time (ms)";
-                this.STlbl.Text = "Start Time (ms)"; DL.AddRow(ETlbl, null, Start_Time_Control);
+                this.STlbl.Text = "Start Time (ms)"; 
+                DL.AddRow(STlbl, null, Start_Time_Control);
                 this.Start_Time_Control.MaxValue = 10000;
                 this.End_Time_Control.MaxValue = 10000;
                 this.End_Time_Control.Value = 50;
-                DL.AddRow(STlbl, null, End_Time_Control);
+                DL.AddRow(ETlbl, null, End_Time_Control);
                 this.IntervalControl.Content = DL;
 
                 StackLayout SZL = new StackLayout();
@@ -485,15 +484,14 @@ namespace Pachyderm_Acoustic
                 Receiver_Selection.ValueChanged += ReceiverSelection_ValueChanged;
 
                 IR_ctrls.AddRow(RecLbl, Receiver_Selection);
-                IR_ctrls.AddRow(Graph_Type, Octave);
+                IR_ctrls.AddRow(Graph_Type, Graph_Octave);
                 IR_ctrls.AddRow(LockUserScale, Normalize_Graph);
                 IRL.AddRow(IR_ctrls);
 
                 GroupBox display = new GroupBox();
                 display.Text = "Impulse Response";
                 display.Content = Analysis_View;
-                Analysis_View.Plot.Title("Logarithmic Energy Time Curve");
-                Analysis_View.Plot.TitlePanel.Label.Font.Size = 12;
+                Analysis_View.Plot.Title("Logarithmic Energy Time Curve", 12);
                 Analysis_View.Size = new Size(-1, 300);
                 IRL.Add(display);
 
@@ -820,7 +818,7 @@ namespace Pachyderm_Acoustic
                     case "Sound Pressure Level":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
+                            double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                             //Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Utilities.RC_PachTools.Hare_to_RhinoMesh(Map[0].MapMesh(),true));
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
@@ -841,13 +839,13 @@ namespace Pachyderm_Acoustic
                     case "Directionality":
                         if (Map != null)
                         {
-                            PachMapReceiver.Get_Directional_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, Octave.SelectedIndex, SourceList.SelectedSources());
+                            PachMapReceiver.Get_Directional_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, color_control.Octave.SelectedIndex, SourceList.SelectedSources());
                         }
                         break;
                     case "Early Decay Time (EDT)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_EDT_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            double[] Values = PachMapReceiver.Get_EDT_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EDTMin, Current_EDTMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -857,7 +855,7 @@ namespace Pachyderm_Acoustic
                     case "Reverberation Time (T-15)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_RT_Map(Map, 15, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            double[] Values = PachMapReceiver.Get_RT_Map(Map, 15, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -867,7 +865,7 @@ namespace Pachyderm_Acoustic
                     case "Reverberation Time (T-30)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_RT_Map(Map, 30, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            double[] Values = PachMapReceiver.Get_RT_Map(Map, 30, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_RTMin, Current_RTMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -962,7 +960,7 @@ namespace Pachyderm_Acoustic
                     case "Clarity (C-80)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 80, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 80, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -972,7 +970,7 @@ namespace Pachyderm_Acoustic
                     case "Definition (D-50)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_Definition_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            double[] Values = PachMapReceiver.Get_Definition_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_DMin, Current_DMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
@@ -988,7 +986,7 @@ namespace Pachyderm_Acoustic
                                 return;
                             }
                             int SrcID = SourceList.SelectedSources()[0];
-                            int oct = Octave.SelectedIndex;
+                            int oct = color_control.Octave.SelectedIndex;
                             double SWL = 0;
                             if (oct < 7) SWL = Map[SrcID].SWL[oct];
                             else
@@ -1007,7 +1005,7 @@ namespace Pachyderm_Acoustic
                     case "Percent who perceive echoes (EK)":
                         if (Map != null)
                         {
-                            double[] Values = PachMapReceiver.Get_EchoCritPercent_Map(Map, Octave.SelectedIndex, SourceList.SelectedSources());
+                            double[] Values = PachMapReceiver.Get_EchoCritPercent_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources());
                             if (Values == null) return;
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_EMin, Current_EMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
@@ -1199,13 +1197,10 @@ namespace Pachyderm_Acoustic
                     }
 
                     int OCT_ID = color_control.Freq_Band_ID;
-                    Analysis_View.Plot.Title("Logarithmic Energy Time Curve");
-                    Analysis_View.Plot.TitlePanel.Label.Font.Size = 12;
-                    Analysis_View.Plot.XAxis.Label.Text = "Time (seconds)";
-                    Analysis_View.Plot.XAxis.Label.Font.Size = 12;
-                    Analysis_View.Plot.YAxis.Label.Text = "Sound Pressure Level (dB)";
-                    Analysis_View.Plot.YAxis.Label.Font.Size = 12;
-
+                    Analysis_View.Plot.Title("Logarithmic Energy Time Curve", 12);
+                    Analysis_View.Plot.XLabel("Time (seconds)", 12);
+                    Analysis_View.Plot.YLabel("Sound Pressure Level (dB)",12);
+ 
                     if (Map == null) return;
 
                     List<int> SrcIDs = SourceList.SelectedSources();
@@ -1309,34 +1304,29 @@ namespace Pachyderm_Acoustic
 
                     if (!LockUserScale.Checked.Value)
                     {
-                        Analysis_View.Plot.XAxis.Max = time[time.Length - 1];
-                        Analysis_View.Plot.XAxis.Min = time[0];
+                        Analysis_View.Plot.Axes.SetLimitsX(time[0], time[time.Length - 1]);
 
                         if (Normalize_Graph.Checked.Value)
                         {
-                            Analysis_View.Plot.YAxis.Min = -100;
-                            Analysis_View.Plot.YAxis.Max = 0;
+                            Analysis_View.Plot.Axes.SetLimitsY(-100,0);
                         }
                         else
                         {
-                            Analysis_View.Plot.YAxis.Min = 0;
-                            Analysis_View.Plot.YAxis.Max = DirectMagnitude + 15;
+                            Analysis_View.Plot.Axes.SetLimitsY(0, DirectMagnitude+15);
                         }
                     }
                     else
                     {
-                        double max = Analysis_View.Plot.YAxis.Max;
-                        double min = Analysis_View.Plot.YAxis.Min;
+                        double max = Analysis_View.Plot.Axes.Left.Max;
+                        double min = Analysis_View.Plot.Axes.Left.Min;
 
                         if (Normalize_Graph.Checked.Value)
                         {
-                            Analysis_View.Plot.YAxis.Min = min;
-                            Analysis_View.Plot.YAxis.Max = max;
+                            Analysis_View.Plot.Axes.SetLimitsY(min, max);
                         }
                         else
                         {
-                            Analysis_View.Plot.YAxis.Min = min;
-                            Analysis_View.Plot.YAxis.Max = max;
+                            Analysis_View.Plot.Axes.SetLimitsY(min, max);
                         }
                     }
 
@@ -1404,7 +1394,7 @@ namespace Pachyderm_Acoustic
                     t_hi = t + (double)Integration_select.Value;
                 }
 
-                double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, oct, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
+                double[] Values = PachMapReceiver.Get_SPL_Map(Map, new double[] { t_hi, t_lo }, Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, ZeroAtDirect.Checked);
                 Eto.Drawing.Color[] c = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                 Mesh Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, c);
                 if (WC == null) return;

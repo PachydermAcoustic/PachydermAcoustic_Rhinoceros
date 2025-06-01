@@ -1104,9 +1104,37 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            [DllImport("hdf5.dll", SetLastError = true)]
+            private static extern bool H5open();
             private void SOFAToolStripMenuItem_Click(object sender, EventArgs e)
             {
                 string frameworkDescription = RuntimeInformation.FrameworkDescription;
+
+                try
+                {
+                    H5open();
+                }
+                catch (DllNotFoundException)
+                {
+                    var result = MessageBox.Show("HDF5 library is not installed. Would you like to download it now?", "HDF5 Not Found", MessageBoxButtons.YesNo);
+                    if (result == DialogResult.Yes)
+                    {
+                        string url = "https://www.hdfgroup.org/downloads/hdf5/";
+                        if (frameworkDescription.Contains(".NET Framework"))
+                        {
+                            Process.Start(url);
+                        }
+                        else if (frameworkDescription.Contains(".NET"))
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = url,
+                                UseShellExecute = true
+                            });
+                            return;
+                        }
+                    }
+                }
 
                 if (frameworkDescription.Contains(".NET Framework"))
                 {
