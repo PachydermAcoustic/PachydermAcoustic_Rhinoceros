@@ -138,25 +138,24 @@ namespace Pachyderm_Acoustic
             }
         }
 
-        [System.Runtime.InteropServices.Guid("BA18CA6C-C32E-4532-8525-505C6E1148B4")]
-        public class Pach_SpeakerBuilder_Command : Command
-        {
-            ///<returns>The command name as it appears on the Rhino command line</returns> 
-            public override string EnglishName
-            {
-                get
-                {
-                    return "PachyDerm_SpeakerBuilder";
-                }
-            }
+        //public class Pach_SpeakerBuilder_Command : Command
+        //{
+        //    ///<returns>The command name as it appears on the Rhino command line</returns> 
+        //    public override string EnglishName
+        //    {
+        //        get
+        //        {
+        //            return "PachyDerm_SpeakerBuilder";
+        //        }
+        //    }
 
-            ///<summary> This gets called when when the user runs this command.</summary> 
-            protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
-            {
-                Rhino.UI.Panels.OpenPanel(new System.Guid("5CD1A25E-1CC8-4BF2-A103-58CFDA8CF424"));
-                return Result.Success;
-            }
-        }
+        //    ///<summary> This gets called when when the user runs this command.</summary> 
+        //    protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
+        //    {
+        //        Rhino.UI.Panels.OpenPanel(new System.Guid("5CD1A25E-1CC8-4BF2-A103-58CFDA8CF424"));
+        //        return Result.Success;
+        //    }
+        //}
 
         [System.Runtime.InteropServices.Guid("89DE99D2-E07D-4730-8E98-ED1296B93808")]
         public class Pach_SetBackground_Noise : Command

@@ -254,6 +254,21 @@ namespace Pachyderm_Acoustic
             Library_Path.Text = pachset.Lib_Path;
 
             if (!File.Exists(Path.Combine(Library_Path.Text, "Pach_Materials_Library.txt"))) Library_Path.Text = SettingsPath;
+
+            if (!File.Exists(Path.Combine(Library_Path.Text, "Wall_Assemblies_EC.csv")))
+            {
+                string sourceFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.Load("Pachyderm_Acoustic").Location), "misc", "Wall_Assemblies_EC.csv");
+                string destinationFilePath = Path.Combine(Path.GetDirectoryName(SettingsPath), "Wall_Assemblies_EC.csv");
+                File.Copy(sourceFilePath, destinationFilePath);
+            }
+
+            if (!File.Exists(Path.Combine(Library_Path.Text, "Acoustic_Materials_and_ECCs.csv")))
+            {
+                string sourceFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.Load("Pachyderm_Acoustic").Location), "misc", "Acoustic_Materials_and_ECCs.csv");
+                string destinationFilePath = Path.Combine(Path.GetDirectoryName(SettingsPath), "Acoustic_Materials_and_ECCs.csv");
+                File.Copy(sourceFilePath, destinationFilePath);
+            }
+
             if (!File.Exists(Path.Combine(Library_Path.Text, "Pach_Materials_Library.txt")))
             {
                 string sourceFilePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.Load("Pachyderm_Acoustic").Location), "misc", "Pach_Materials_Library.txt");

@@ -42,8 +42,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>General_Public_License.txt</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
-    <AssemblyVersion>2.6.0.14</AssemblyVersion>
-    <FileVersion>2.6.0.14</FileVersion>
+    <AssemblyVersion>2.6.0.20</AssemblyVersion>
+    <FileVersion>2.6.0.20</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <OutputPath>bin\x64\Debug\</OutputPath>
@@ -57,6 +57,9 @@
     <Compile Remove="packages\**" />
     <EmbeddedResource Remove="packages\**" />
     <None Remove="packages\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Pach_Absorption_Designer.Designer-PachydermMarch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Eto">

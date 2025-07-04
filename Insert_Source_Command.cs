@@ -22,6 +22,8 @@ using Rhino;
 using Rhino.Display;
 using Rhino.Commands;
 using Rhino.Geometry;
+using System.Runtime.Remoting;
+using System.Text.RegularExpressions;
 
 namespace Pachyderm_Acoustic
 {
@@ -80,6 +82,47 @@ namespace Pachyderm_Acoustic
 
                 m_source_conduit.SetSource(rhObj);
                 doc.Views.Redraw();
+
+                return Result.Success;
+            }
+        }
+
+        [System.Runtime.InteropServices.Guid("B7AF8F7E-3A4A-4D13-A3E6-759084F5F8F1")]
+        public class PachClusterSourceCommand : Command
+        {
+            ///<returns>The command name as it appears on the Rhino command line</returns> 
+            public override string EnglishName
+            {
+                get
+                {
+                    return "Pach_Cluster_Source";
+                }
+            }
+
+            ///<summary> This gets called when when the user runs this command.</summary> 
+            protected override Result RunCommand(Rhino.RhinoDoc doc, RunMode mode)
+            {
+                Rhino.Input.RhinoGet.GetMultipleObjects("Select source objects to cluster...", false, Rhino.DocObjects.ObjectType.Point, out Rhino.DocObjects.ObjRef[] objRefs);
+
+                List<Guid> SourceObjects = new List<Guid>();
+                Guid clusterid = Guid.NewGuid();
+
+                for (int i = 0; i < objRefs.Length; i++)
+                {
+                    if(objRefs[i].Object().Name == "Acoustical Source")
+                    {
+                        objRefs[i].Object().Geometry.SetUserString("Cluster", clusterid.ToString());
+                        SourceObjects.Add(objRefs[i].ObjectId);
+                    }
+                }
+
+                if (SourceObjects.Count == 0)
+                {
+                    Rhino.RhinoApp.WriteLine("No acoustical sources selected.");
+                    return Result.Cancel;
+                }
+
+                Rhino.RhinoDoc.ActiveDoc.Groups.Add(SourceObjects);
 
                 return Result.Success;
             }

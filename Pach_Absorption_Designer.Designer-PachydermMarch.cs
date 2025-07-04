@@ -455,6 +455,7 @@ namespace Pachyderm_Acoustic
                 CtrlRight.AddRow(Ctrl4);
                 CtrlRight.AddRow(SampleExtent);
                 CtrlRight.AddRow(ParamsAll);
+                CtrlRight.AddSpace();
                 CtrlRight.AddRow(EC_Controls);
                 CtrlRight.AddRow(CtrlX);
 

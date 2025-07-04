@@ -722,6 +722,7 @@ namespace Pachyderm_Acoustic
                         break;
                     }
                     Map[s_id].AddDirect(Direct_Data, Source[s_id]);
+                    Source[s_id].Lighten();
                 }
 
                 if (Source != null)

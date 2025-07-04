@@ -45,6 +45,7 @@ using System.Threading.Tasks;
 using Rhino.FileIO;
 using ScottPlot.Plottables;
 using ScottPlot.TickGenerators;
+using System.Diagnostics.Eventing.Reader;
 
 namespace Pachyderm_Acoustic
 {
@@ -206,8 +207,6 @@ namespace Pachyderm_Acoustic
                 this.Solid_Density.Visible = E;
                 this.YoungsModulus.Visible = E;
                 this.PoissonsRatio.Visible = E;
-                this.label18.Visible = E;
-                this.SoundSpeed.Visible = E;
             }
 
             public void ClearAll()
@@ -679,24 +678,27 @@ namespace Pachyderm_Acoustic
                         if (L.T != ABS_Layer.LayerType.PorousM) return;
                         break;
                     case 5:
-                        if (L.T != ABS_Layer.LayerType.Perforated_Modal) return;
+                        if (L.T != ABS_Layer.LayerType.SolidPlate) return;
                         break;
                     case 6:
-                        if (L.T != ABS_Layer.LayerType.Slotted_Modal) return;
+                        if (L.T != ABS_Layer.LayerType.Perforated_Modal) return;
                         break;
                     case 7:
-                        if (L.T != ABS_Layer.LayerType.SquarePerforations) return;
+                        if (L.T != ABS_Layer.LayerType.Slotted_Modal) return;
                         break;
                     case 8:
                         if (L.T != ABS_Layer.LayerType.CircularPerforations) return;
                         break;
                     case 9:
-                        if (L.T != ABS_Layer.LayerType.Slots) return;
+                        if (L.T != ABS_Layer.LayerType.SquarePerforations) return;
                         break;
                     case 10:
-                        if (L.T != ABS_Layer.LayerType.Microslit) return;
+                        if (L.T != ABS_Layer.LayerType.Slots) return;
                         break;
                     case 11:
+                        if (L.T != ABS_Layer.LayerType.Microslit) return;
+                        break;
+                    case 12:
                         if (L.T != ABS_Layer.LayerType.MicroPerforated) return;
                         break;
                 }
@@ -708,11 +710,12 @@ namespace Pachyderm_Acoustic
                 L.porosity = (double)Porosity_Percent.Value / 100;
                 L.PoissonsRatio = (double)PoissonsRatio.Value;
                 L.Thermal_Permeability = (double)ThermalPermeability.Value;
-                L.YoungsModulus = (double)YoungsModulus.Value;
+                L.YoungsModulus = (double)YoungsModulus.Value*1E9;
                 L.Viscous_Characteristic_Length = (double)ViscousCharacteristicLength.Value;
                 L.density = (double)Solid_Density.Value;
                 L.tortuosity = (double)Tortuosity.Value;
-                L.SpeedOfSound = (double)SoundSpeed.Value;
+                L.Material_Name = EC_Name.Text;
+                L.Embodied_Carbon = EC_Coefficient.Value;
 
                 Layers[LayerList.SelectedIndex] = L;
                 LayerList.Items.Insert(LayerList.SelectedIndex, (ListItem)L.ToString());
@@ -747,7 +750,7 @@ namespace Pachyderm_Acoustic
                             name = "Generic Porous Material";
                             Carbon = 70;
                         }
-                        abs = ABS_Layer.CreateBiot(true, (double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)SoundSpeed.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value, Carbon, name);
+                        abs = ABS_Layer.CreateBiot(true, (double)depth.Value / 1000, (double)Solid_Density.Value, (double)YoungsModulus.Value * 1E9, (double)PoissonsRatio.Value, (double)Tortuosity.Value, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, (double)ViscousCharacteristicLength.Value, (double)ThermalPermeability.Value, Carbon, name);
                         break;
                     case 2:
                         if (name == null)
@@ -939,14 +942,47 @@ namespace Pachyderm_Acoustic
                     default:
                         return;
                 }
-                depth.Value = L.depth * 1000;
-                pitch.Value = L.pitch * 1000;
-                diameter.Value = L.width * 1000;
-                Porosity_Percent.Value = L.porosity * 100;
-                Sigma.Value = L.Flow_Resist;
+                if (L.depth != 0) depth.Value = L.depth * 1000;
+                if (L.pitch != 0) pitch.Value = L.pitch * 1000;
+                if (L.width != 0) diameter.Value = L.width * 1000;
+                if (L.porosity != 0) Porosity_Percent.Value = L.porosity * 100;
+                if (L.Flow_Resist != 0) Sigma.Value = L.Flow_Resist;
+                if (L.density != 0) Solid_Density.Value = L.density;
+                if (L.YoungsModulus != 0) YoungsModulus.Value = L.YoungsModulus * 1E-9;
+                if (L.PoissonsRatio != 0) PoissonsRatio.Value = L.PoissonsRatio;
+                if (L.Thermal_Permeability != 0) ThermalPermeability.Value = L.Thermal_Permeability;
+                if (L.Viscous_Characteristic_Length != 0) ViscousCharacteristicLength.Value = L.Viscous_Characteristic_Length;
+                if (L.tortuosity != 0) Tortuosity.Value = L.tortuosity;
+                if (L.Material_Name != null) EC_Name.Text = L.Material_Name;
+                else { 
+                    if (Material_Type.SelectedIndex == 0)
+                    {
+                        EC_Name.Text = "Air";
+                    }
+                    else if (Material_Type.SelectedIndex < 5) 
+                    {
+                        EC_Name.Text = "Generic Porous Absorber";
+                        EC_Coefficient.Value = 70;
+                    }
+                    else if (Material_Type.SelectedIndex == 5)
+                    {
+                        EC_Name.Text = "Generic Solid";
+                        EC_Coefficient.Value = 188;
+                    }
+                    else if (Material_Type.SelectedIndex < 12)
+                    {
+                        EC_Name.Text = "Generic Perforated Material";
+                        EC_Coefficient.Value = 188;
+                    }
+                    else
+                    {
+                        EC_Name.Text = "Generic Material";
+                        EC_Coefficient.Value = 188;
+                    }
+                }
+                if (L.Embodied_Carbon != 0) EC_Coefficient.Value = L.Embodied_Carbon;
 
                 indexchanged = false;
-                //Done Loading material. Updating may continue.
             }
 
             public double Total_Carbon = 0;

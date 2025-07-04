@@ -865,15 +865,15 @@ namespace Pachyderm_Acoustic
             private void Load_Library()
             {
                 if (LayerDisplay.SelectedIndex < 0) LayerDisplay.SelectedIndex = 0;
-                LayerNames.Clear();
+                LayerPaths.Clear();
 
                 object Selection = LayerDisplay.SelectedValue;
                 LayerDisplay.Items.Clear();
                 for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
                 {
-                    if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerNames.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name, q));
+                    if (!Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) LayerPaths.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].FullPath, Rhino.RhinoDoc.ActiveDoc.Layers[q].Id));
                 }
-                foreach (layer l in LayerNames) LayerDisplay.Items.Add(l.name.ToString());
+                foreach (layer l in LayerPaths) LayerDisplay.Items.Add(l.path.ToString());
                 if (Selection == null) LayerDisplay.SelectedIndex = 0;
                 else LayerDisplay.SelectedValue = Selection;
 
@@ -1246,6 +1246,7 @@ namespace Pachyderm_Acoustic
                         }
                         IR_Parts_Analysis.Visible = true;
                     }
+                    Source[s].Lighten();
                 }
 
                 if (Source != null)
@@ -1356,7 +1357,7 @@ namespace Pachyderm_Acoustic
 
             #region Tab 2: Materials Tab 
 
-            private List<layer> LayerNames = new List<layer>();
+            private List<layer> LayerPaths = new List<layer>();
             private Acoustics_Library Materials = new Acoustics_Library();
 
             private void Materials_MouseEnter(object sender, System.EventArgs e)
@@ -1364,38 +1365,37 @@ namespace Pachyderm_Acoustic
                 if (Tabs.SelectedPage.Text == "Materials")
                 {
                     string Selection = LayerDisplay.SelectedValue.ToString();
-                    LayerNames.Clear();
+                    LayerPaths.Clear();
                     for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
                     {
                         if (Rhino.RhinoDoc.ActiveDoc.Layers[q].IsDeleted) continue;
-                        LayerNames.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].Name, q));
+                        LayerPaths.Add(new layer(Rhino.RhinoDoc.ActiveDoc.Layers[q].FullPath, Rhino.RhinoDoc.ActiveDoc.Layers[q].Id));
                     }
                     LayerDisplay.Items.Clear();
-                    for (int i = 0; i < LayerNames.Count; i++) if (LayerNames[i]!= null) LayerDisplay.Items.Add(LayerNames[i].name);
+                    for (int i = 0; i < LayerPaths.Count; i++) if (LayerPaths[i]!= null) LayerDisplay.Items.Add(LayerPaths[i].path);
                     LayerDisplay.SelectedValue = Selection;
                 }
             }
 
             public class layer
             {
-                public string name;
-                public int id;
+                public string path;
+                public Guid layer_id;
 
-                public layer(string n, int index)
+                public layer(string n, Guid id)
                 {
-                    name = n;
-                    id = index;
+                    path = n;
+                    layer_id = id;
                 }
 
                 public override string ToString()
                 {
-                    return name;
+                    return path;
                 }
             }
 
             private void Acoustics_Coef_Update(object sender, System.EventArgs e)
             {
-                //UpdateForm();
                 Commit_Layer_Acoustics();
             }
 
@@ -1568,7 +1568,7 @@ namespace Pachyderm_Acoustic
                 for(int i = 0; i < Absd.Length; i++) Abs[i] = (int)(Absd[i]*10);
                 for(int i = 0; i < Sctd.Length; i++) Sct[i] = (int)(Sctd[i]);
 
-                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(this.LayerPaths[layer_index].layer_id);
                 double[] TL = null;
                 if (Trans_Check.Checked.Value)
                 {
@@ -1586,7 +1586,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 layer.SetUserString("Acoustics", RCPachTools.EncodeAcoustics(Abs, Sct, Trn));
-                Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
+                //Rhino.RhinoDoc.ActiveDoc.Layers.Modify(layer, layer_index, false);
             }
 
             public void Set_Phase_Regime(bool Linear_Phase)
@@ -1643,9 +1643,9 @@ namespace Pachyderm_Acoustic
 
             private void Retrieve_Layer_Acoustics(object sender, EventArgs e)
             {
-                //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                 int layer_index = LayerDisplay.SelectedIndex;// (LayerDisplay.SelectedItem as layer).id;
-                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                if (layer_index < 0) return;
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(LayerPaths[layer_index].layer_id);
                 string AC = layer.GetUserString("Acoustics");
                 string TL = layer.GetUserString("Transmission");
 

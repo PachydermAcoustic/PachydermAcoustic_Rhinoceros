@@ -20,9 +20,6 @@ using Rhino.PlugIns;
 using Rhino.Geometry;
 using System.Collections.Generic;
 using System;
-using System.Threading;
-using Eto.Forms;
-using Pachyderm_Acoustic.Properties;
 using Rhino.UI;
 using Rhino.Runtime;
 
@@ -173,11 +170,12 @@ namespace Pachyderm_Acoustic
 
             public string SpecialCode { get => specialCode; set => specialCode = value; }
 
-            public bool Source(out Environment.Source[] S)
+            public bool Source(out Environment.Source[] Srcs)
             {
-                S = new Environment.Source[0];
                 System.Guid[] S_ID = SourceConduit.Instance.UUID.ToArray();
-                S = new Environment.Source[S_ID.Length];
+                List<Environment.Source> S = new List<Environment.Source>();
+                Dictionary<String,List<Environment.Source>> s_dict = new Dictionary<String, List<Environment.Source>>();
+
                 for (int id = 0; id < S_ID.Length; id++)
                 {
                     if (S_ID[id] == System.Guid.Empty || S_ID[id] == System.Guid.NewGuid()) break;
@@ -188,7 +186,24 @@ namespace Pachyderm_Acoustic
                         string S_Type = Origin.Geometry.GetUserString("SourceType");
                         string SWL = Origin.Geometry.GetUserString("SWL");
                         string D = Origin.Geometry.GetUserString("Delay");
-                        double delay; if (D != ""&& D != null) delay = double.Parse(D)/1000; else delay = 0;
+                        double delay; if (D != "" && D != null) delay = double.Parse(D) / 1000; else delay = 0;
+                        string cluster = Origin.Geometry.GetUserString("Cluster");
+
+                        List<Environment.Source> c_list = new List<Environment.Source>();
+
+                        if (cluster != null && cluster != "")
+                        {
+                            if (!s_dict.TryGetValue(cluster, out List<Environment.Source> sources))
+                            {
+                                c_list = new List<Environment.Source>();
+                                s_dict.Add(cluster, c_list);
+                            }
+                            else c_list = sources;
+                        }
+                        else 
+                        {
+                            cluster = null;
+                        }
 
                         string Ph = Origin.Geometry.GetUserString("Phase");
                         //double[] phase = new double[8];
@@ -199,27 +214,29 @@ namespace Pachyderm_Acoustic
                         //}
 
                         double[] SWL_Values = Utilities.PachTools.DecodeSourcePower(SWL);
+                        Pachyderm_Acoustic.Environment.Source s = null;
+
                         switch (S_Type)
                         {
                             case "":
                             case "0":
-                                S[id] = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "1":
-                                S[id] = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
-                                                              break;
+                                s = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                break;
                             case "2":
                             case "3":
                                 string Bands = Origin.Geometry.GetUserString("Bands");
                                 string[] B;
-                                //if (Bands != "" && Bands != null)
-                                //    B = Bands.Split(';');
-                                //else
                                 B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                S[id] = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
+                                s = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
                                 break;
                         }
+
+                        if (cluster == null) { S.Add(s); }
+                        else { c_list.Add(s); }
                     }
                     else if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Brep)
                     {
@@ -256,7 +273,19 @@ namespace Pachyderm_Acoustic
                         S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false);
                     }
                 }
-                if (S.Length > 0) return true;
+                //If there are any clusters, add them to the list
+                foreach (KeyValuePair<string, List<Environment.Source>> kvp in s_dict)
+                {
+                    List<Environment.Source> c_list = kvp.Value;
+                    Environment.SourceCluster cs = new Environment.SourceCluster(c_list,S.Count);
+                    S.Add(cs);
+                }
+                if (S.Count > 0)
+                {
+                    Srcs = S.ToArray();
+                    return true;
+                }
+                Srcs = new Environment.Source[0];
                 return false;
             }
 
