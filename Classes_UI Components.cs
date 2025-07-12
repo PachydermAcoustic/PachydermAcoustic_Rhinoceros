@@ -127,8 +127,8 @@ namespace Pachyderm_Acoustic
                 List<int> SrcID = SelectedSources();
 
                 if (SrcID.Count < 1) return;
-                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(DS[SrcID[0]].SWL);
-                mod.ShowModal();
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Rec[SrcID[0]].SWL);
+                mod.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, this);
                 if (mod.accept)
                 {
                     foreach (int i in SrcID)
@@ -137,7 +137,7 @@ namespace Pachyderm_Acoustic
                         if (DS != null)
                         {
                             factor = DS[i].Set_Power(mod.Power);
-                            DS[i].Create_Filter();
+                            if (Rec[i].HasFilter()) DS[i].Create_Filter();
                         }
                         if (Rec != null)
                         {
@@ -145,7 +145,7 @@ namespace Pachyderm_Acoustic
                             Rec[i].Set_Power(factor);
                             Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Creating Filter...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            Rec[i].Create_Filter(VB);
+                            if (Rec[i].HasFilter()) Rec[i].Create_Filter(VB);
                             VB.Close();
                         }
                         if(IS != null)

@@ -185,12 +185,103 @@ namespace Pachyderm_Acoustic
                         else { noise[i] = 0; }
                 }
 
-                for (int i = 0; i < 8; i++)
+                // Add option to choose noise criteria method
+                Rhino.Input.Custom.GetOption getOption = new Rhino.Input.Custom.GetOption();
+                getOption.SetCommandPrompt("Choose background noise input method");
+                getOption.AddOption("Manual");
+                getOption.AddOption("NoiseCriteria");
+                getOption.AddOption("NoiseRating"); 
+                getOption.AddOption("RoomCriteria");
+                
+                Rhino.Input.GetResult optionResult = getOption.Get();
+                if (optionResult != Rhino.Input.GetResult.Option)
+                    return Result.Cancel;
+
+                string selectedOption = getOption.Option().EnglishName;
+
+                if (selectedOption == "Manual")
                 {
+                    // Original manual input method
+                    for (int i = 0; i < 8; i++)
+                    {
+                        try
+                        {
+                            Rhino.Input.RhinoGet.GetNumber(string.Format("Specify background noise sound pressure level at {0} Hertz.", freq[i]), true, ref noise[i]);
+                        }
+                        catch
+                        {
+                            return Result.Nothing;
+                        }
+                    }
+                }
+                else if (selectedOption == "NoiseCriteria")
+                {
+                    double ncValue = 40.0; // Initial default
+                    bool validInput = false;
+                    
+                    while (!validInput)
+                    {
+                        try
+                        {
+                            Result result = Rhino.Input.RhinoGet.GetNumber("Specify Noise Criteria (NC) value (15-80)", true, ref ncValue);
+                            if (result == Result.Cancel)
+                                return Result.Cancel;
+
+                            if (ncValue >= 15 && ncValue <= 80)
+                            {
+                                validInput = true;
+                                noise = Pachyderm_Acoustic.Utilities.AcousticalMath.Noise_Criteria(ncValue);
+                            }
+                            else
+                            {
+                                Rhino.RhinoApp.WriteLine("NC value must be between 15 and 80. Please try again.");
+                            }
+                        }
+                        catch
+                        {
+                            return Result.Nothing;
+                        }
+                    }
+                }
+                else if (selectedOption == "NoiseRating")
+                {
+                    double nrValue = 40.0; // Initial default
+                    bool validInput = false;
+                    
+                    while (!validInput)
+                    {
+                        try
+                        {
+                            Result result = Rhino.Input.RhinoGet.GetNumber("Specify Noise Rating (NR) value (0-130)", true, ref nrValue);
+                            if (result == Result.Cancel)
+                                return Result.Cancel;
+                                
+                            if (nrValue >= 0 && nrValue <= 130)
+                            {
+                                validInput = true;
+                                noise = Pachyderm_Acoustic.Utilities.AcousticalMath.Noise_Rating(nrValue);
+                            }
+                            else
+                            {
+                                Rhino.RhinoApp.WriteLine("NR value must be between 0 and 130. Please try again.");
+                            }
+                        }
+                        catch
+                        {
+                            return Result.Nothing;
+                        }
+                    }
+                }
+                else if (selectedOption == "RoomCriteria")
+                {
+                    double rcValue = 40.0; // Initial default
                     try
                     {
-
-                        Rhino.Input.RhinoGet.GetNumber(string.Format("Specify background noise sound pressure level at {0} Hertz.", freq[i]), true, ref noise[i]);
+                        Result result = Rhino.Input.RhinoGet.GetNumber("Specify Room Criteria (RC) value", true, ref rcValue);
+                        if (result == Result.Cancel)
+                            return Result.Cancel;
+                            
+                        noise = Pachyderm_Acoustic.Utilities.AcousticalMath.Room_Criteria(rcValue);
                     }
                     catch
                     {
