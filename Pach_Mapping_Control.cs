@@ -668,14 +668,62 @@ namespace Pachyderm_Acoustic
                     if (Source[s_id] is LineSource)
                     {
                         //cull samples to suit map density...
+                        //int skip = (int)Math.Floor(Increment.Value * 2 / 100);
+                        //if (skip > 1)
+                        //{
+                        //    Hare.Geometry.Point[][] smpl = (Source[s_id] as LineSource).Samples;
+                        //    List<Hare.Geometry.Point> newsmpl = new List<Hare.Geometry.Point>();
+                        //    for(int h = 0; h < smpl.Length; h++) for (int i = 0; i < smpl[h].Length; i += skip) newsmpl.Add(smpl[i]);
+                        //    if (newsmpl.Count < 2) newsmpl.Add(smpl[h].Last());
+                        //    (Source[s_id] as LineSource).Samples = newsmpl.ToArray();
+                        //}
+                        //cull samples to suit map density...
                         int skip = (int)Math.Floor(Increment.Value * 2 / 100);
                         if (skip > 1)
                         {
-                            Hare.Geometry.Point[] smpl = (Source[s_id] as LineSource).Samples;
-                            List<Hare.Geometry.Point> newsmpl = new List<Hare.Geometry.Point>();
-                            for (int i = 0; i < smpl.Length; i += skip) newsmpl.Add(smpl[i]);
-                            if (newsmpl.Count < 2) newsmpl.Add(smpl.Last());
-                            (Source[s_id] as LineSource).Samples = newsmpl.ToArray();
+                            LineSource lineSource = Source[s_id] as LineSource;
+                            Hare.Geometry.Point[][] smpl = lineSource.Samples;
+                            double[][] originalPower = lineSource.Power;
+
+                            // Create new multilevel sample structure
+                            List<List<Hare.Geometry.Point>> newSmplGroups = new List<List<Hare.Geometry.Point>>();
+                            List<double[]> newPowerGroups = new List<double[]>();
+
+                            // Process each height group separately
+                            for (int h = 0; h < smpl.Length; h++)
+                            {
+                                List<Hare.Geometry.Point> newSmplGroup = new List<Hare.Geometry.Point>();
+
+                                // Cull samples in this height group
+                                for (int i = 0; i < smpl[h].Length; i += skip)
+                                {
+                                    newSmplGroup.Add(smpl[h][i]);
+                                }
+
+                                // Ensure at least one sample per group
+                                if (newSmplGroup.Count < 1 && smpl[h].Length > 0)
+                                {
+                                    newSmplGroup.Add(smpl[h].Last());
+                                }
+
+                                newSmplGroups.Add(newSmplGroup);
+
+                                // Adjust power to compensate for reduced sample count
+                                // Each remaining sample now represents 'skip' times more power
+                                double[] adjustedPower = new double[8];
+                                double powerMultiplier = (double)skip;
+
+                                for (int oct = 0; oct < 8; oct++)
+                                {
+                                    adjustedPower[oct] = originalPower[h][oct] * powerMultiplier;
+                                }
+
+                                newPowerGroups.Add(adjustedPower);
+                            }
+
+                            // Convert back to array format and update the LineSource
+                            lineSource.Samples = newSmplGroups.Select(g => g.ToArray()).ToArray();
+                            lineSource.Power = newPowerGroups.ToArray();
                         }
                     }
 
@@ -697,7 +745,7 @@ namespace Pachyderm_Acoustic
                         return;
                     }
 
-                    ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource());
+                    ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource(), 1000);
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
                     SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);

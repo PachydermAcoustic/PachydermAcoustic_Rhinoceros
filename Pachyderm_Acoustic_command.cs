@@ -16,9 +16,18 @@
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
 
+using Pachyderm_Acoustic.Utilities;
+using Rhino;
 using Rhino.Commands;
+using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Input;
+using Rhino.Input.Custom;
+using Rhino.UI;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
@@ -468,6 +477,354 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Strings.SetString("EmbodiedCarbonSummary", summaryText);
 
                 return Result.Success;
+            }
+        }
+
+        public class ExportPachydermModelCommand : Command
+        {
+            public override string EnglishName => "Pach_ExportModel";
+
+            protected override Result RunCommand(RhinoDoc doc, RunMode mode)
+            {
+                // Prompt for save location
+                string filename = "";
+                var fd = new Rhino.UI.SaveFileDialog { Filter = "Pachyderm Model (*.pmodel)|*.pmodel|All Files (*.*)|*.*" };
+                if (fd.ShowSaveDialog())
+                    filename = fd.FileName;
+                else
+                    return Result.Cancel;
+
+                // Configure options
+                double meshQuality = 1.0;
+                bool includeCurvature = true;
+
+                using (GetNumber getNumber = new GetNumber())
+                {
+                    getNumber.SetCommandPrompt("Mesh quality (0.1-10.0, higher is better quality)");
+                    getNumber.SetDefaultNumber(1.0);
+                    getNumber.SetLowerLimit(0.1, false);
+                    getNumber.SetUpperLimit(10.0, false);
+
+                    if (getNumber.Get() != GetResult.Number)
+                        return Result.Cancel;
+
+                    meshQuality = getNumber.Number();
+                }
+
+                using (GetOption getOption = new GetOption())
+                {
+                    getOption.SetCommandPrompt("Include curvature information?");
+                    getOption.AddOption("Yes");
+                    getOption.AddOption("No");
+                    getOption.SetCommandPromptDefault("Yes");
+
+                    if (getOption.Get() != GetResult.Option)
+                        return Result.Cancel;
+
+                    includeCurvature = getOption.Option().Index == 0;
+                }
+
+                // Export the model
+                try
+                {
+                    ExportModel(doc, filename, meshQuality, includeCurvature);
+                    RhinoApp.WriteLine($"Model exported to {filename}");
+                    return Result.Success;
+                }
+                catch (Exception ex)
+                {
+                    RhinoApp.WriteLine($"Error: {ex.Message}");
+                    return Result.Failure;
+                }
+            }
+
+            private void ExportModel(RhinoDoc doc, string filename, double meshQuality, bool includeCurvature)
+            {
+                // Get all visible objects
+                List<RhinoObject> objects = doc.Objects.GetObjectList(new ObjectEnumeratorSettings() { VisibleFilter = true }).ToList<RhinoObject>();
+
+                if (objects.Count == 0)
+                {
+                    throw new Exception("No valid geometry found in the model.");
+                }
+
+                // Process model to extract vertices, materials, and polygons
+                Dictionary<int, Point3d> vertices = new Dictionary<int, Point3d>();
+                Dictionary<string, int> materialMap = new Dictionary<string, int>();
+                Dictionary<int, MaterialDefinition> materials = new Dictionary<int, MaterialDefinition>();
+                List<ObjectDefinition> modelObjects = new List<ObjectDefinition>();
+
+                int vertexIndex = 1; // Start at 1 to match file format
+
+                foreach (RhinoObject obj in objects)
+                {
+                    // Get material from layer
+                    string layerName = doc.Layers[obj.Attributes.LayerIndex].Name;
+                    int materialId;
+
+                    if (!materialMap.TryGetValue(layerName, out materialId))
+                    {
+                        materialId = materialMap.Count + 1; // Start at 1
+                        materialMap[layerName] = materialId;
+                        materials[materialId] = CreateMaterialFromLayer(doc.Layers[obj.Attributes.LayerIndex]);
+                    }
+
+                    // Create meshes from geometry
+                    Mesh[] meshes = CreateMeshes(obj, meshQuality);
+
+                    foreach (Mesh mesh in meshes)
+                    {
+                        // Create a new object definition
+                        ObjectDefinition objectDef = new ObjectDefinition
+                        {
+                            MaterialId = materialId,
+                            Polygons = new List<PolygonDefinition>()
+                        };
+
+                        // Process mesh vertices
+                        Dictionary<Point3d, int> meshVertexMap = new Dictionary<Point3d, int>();
+                        for (int i = 0; i < mesh.Vertices.Count; i++)
+                        {
+                            Point3d vertex = mesh.Vertices[i];
+                            if (!meshVertexMap.ContainsKey(vertex))
+                            {
+                                meshVertexMap[vertex] = vertexIndex;
+                                vertices[vertexIndex] = vertex;
+                                vertexIndex++;
+                            }
+                        }
+
+                        // Process mesh faces
+                        for (int i = 0; i < mesh.Faces.Count; i++)
+                        {
+                            MeshFace face = mesh.Faces[i];
+                            PolygonDefinition polyDef = new PolygonDefinition
+                            {
+                                VertexIds = new List<int>(),
+                                IsCurved = false,
+                                Kurvature = new double[2] { 0, 0 },
+                                FrameAxes = new Hare.Geometry.Vector[2] { new Hare.Geometry.Vector(), new Hare.Geometry.Vector() }
+                            };
+
+                            // Add vertex indices
+                            polyDef.VertexIds.Add(meshVertexMap[mesh.Vertices[face.A]]);
+                            polyDef.VertexIds.Add(meshVertexMap[mesh.Vertices[face.B]]);
+                            polyDef.VertexIds.Add(meshVertexMap[mesh.Vertices[face.C]]);
+                            if (face.IsQuad)
+                                polyDef.VertexIds.Add(meshVertexMap[mesh.Vertices[face.D]]);
+
+                            // Calculate curvature if needed
+                            if (includeCurvature)
+                            {
+                                CalculateCurvature(mesh, i, ref polyDef);
+                            }
+
+                            objectDef.Polygons.Add(polyDef);
+                        }
+
+                        modelObjects.Add(objectDef);
+                    }
+                }
+
+                // Write the file
+                using (StreamWriter writer = new StreamWriter(filename))
+                {
+                    writer.WriteLine("# Pachyderm Acoustic Model - Exported from Rhinoceros");
+                    writer.WriteLine("# Date: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    writer.WriteLine();
+
+                    // Write vertices
+                    writer.WriteLine("[VERTICES]");
+                    foreach (var vertex in vertices)
+                    {
+                        writer.WriteLine($"{vertex.Key} {FormatPoint(vertex.Value)}");
+                    }
+                    writer.WriteLine();
+
+                    // Write materials
+                    writer.WriteLine("[MATERIALS]");
+                    foreach (var material in materials)
+                    {
+                        writer.WriteLine($"{material.Key} {material.Value.Name}");
+                        writer.WriteLine($"ABSORPTION={FormatArray(material.Value.AbsorptionCoefficients)}");
+                        writer.WriteLine($"SCATTERING={FormatArray(material.Value.ScatteringCoefficients)}");
+                        writer.WriteLine($"TRANSMISSION={FormatArray(material.Value.TransmissionCoefficients)}");
+                        writer.WriteLine("[END]");
+                    }
+                    writer.WriteLine();
+
+                    // Write objects
+                    foreach (var obj in modelObjects)
+                    {
+                        writer.WriteLine($"[OBJECT {obj.MaterialId}]");
+                        foreach (var poly in obj.Polygons)
+                        {
+                            string polyLine = $"POLY {string.Join(",", poly.VertexIds)}";
+
+                            if (poly.IsCurved)
+                            {
+                                polyLine += $" CURVE={poly.Kurvature[0]},{poly.Kurvature[1]}";
+                                polyLine += $" FRAME={FormatVector(poly.FrameAxes[0])},{FormatVector(poly.FrameAxes[1])}";
+                            }
+
+                            writer.WriteLine(polyLine);
+                        }
+                        writer.WriteLine();
+                    }
+                }
+            }
+
+            private bool IsValidGeometry(RhinoObject obj)
+            {
+                return obj.ObjectType == ObjectType.Brep ||
+                       obj.ObjectType == ObjectType.Mesh ||
+                       obj.ObjectType == ObjectType.Surface ||
+                       obj.ObjectType == ObjectType.Extrusion;
+            }
+
+            private Mesh[] CreateMeshes(RhinoObject obj, double meshQuality)
+            {
+                MeshingParameters mp = new MeshingParameters();
+                mp.MinimumEdgeLength = Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance * 2;
+                mp.MaximumEdgeLength = Rhino.RhinoDoc.ActiveDoc.ModelAbsoluteTolerance * 100 / meshQuality;
+                mp.JaggedSeams = false;
+                mp.RefineGrid = true;
+                mp.SimplePlanes = false;
+                mp.RelativeTolerance = 0.1 / meshQuality; // Adjust based on quality
+
+                Rhino.Geometry.GeometryBase geo = obj.Geometry;
+
+                if (geo is Mesh mesh)
+                {
+                    // Clone the mesh to avoid modifying the original
+                    Mesh meshCopy = mesh.DuplicateMesh();
+                    meshCopy.Faces.ConvertQuadsToTriangles();
+                    return new Mesh[] { meshCopy };
+                }
+                else if (geo is Brep)
+                {
+                    return Mesh.CreateFromBrep(geo as Brep, mp);
+                }
+                else if (geo is Surface surface)
+                {
+                    Brep brep = surface.ToBrep();
+                    return Mesh.CreateFromBrep(brep, mp);
+                }
+                else if (geo is Extrusion extrusion)
+                {
+                    Brep brep = extrusion.ToBrep();
+                    return Mesh.CreateFromBrep(brep, mp);
+                }
+
+                return new Mesh[0];
+            }
+
+            private void CalculateCurvature(Mesh mesh, int faceIndex, ref PolygonDefinition polyDef)
+            {
+                MeshFace face = mesh.Faces[faceIndex];
+
+                // Try to estimate curvature from normals
+                Vector3d n0 = mesh.Normals[face.A];
+                Vector3d n1 = mesh.Normals[face.B];
+                Vector3d n2 = mesh.Normals[face.C];
+
+                // Average normal
+                Vector3d avgNormal = (n0 + n1 + n2) / 3.0;
+                avgNormal.Unitize();
+
+                // Check if this is a curved face (normals differ significantly)
+                double angleVariation = Math.Max(
+                    Math.Max(Vector3d.VectorAngle(n0, n1), Vector3d.VectorAngle(n1, n2)),
+                    Vector3d.VectorAngle(n2, n0));
+
+                if (angleVariation > 0.1) // About 5.7 degrees
+                {
+                    polyDef.IsCurved = true;
+
+                    // Calculate principal curvature directions
+                    // This is a simplification - we use the face edges as the frame axes
+                    Point3d p0 = mesh.Vertices[face.A];
+                    Point3d p1 = mesh.Vertices[face.B];
+                    Point3d p2 = mesh.Vertices[face.C];
+
+                    Vector3d edge1 = p1 - p0;
+                    Vector3d edge2 = p2 - p0;
+
+                    edge1.Unitize();
+                    edge2.Unitize();
+
+                    // Make sure the second axis is perpendicular to the first
+                    Vector3d axis2 = Vector3d.CrossProduct(avgNormal, edge1);
+                    axis2.Unitize();
+
+                    // Estimate curvature values - this is approximate
+                    // Higher values for more curved surfaces
+                    polyDef.Kurvature[0] = angleVariation * 2; // Primary curvature
+                    polyDef.Kurvature[1] = angleVariation; // Secondary curvature
+
+                    // Set frame axes
+                    polyDef.FrameAxes[0] = ToHareVector(edge1);
+                    polyDef.FrameAxes[1] = ToHareVector(axis2);
+                }
+            }
+
+            private MaterialDefinition CreateMaterialFromLayer(Layer layer)
+            {
+                // Default values for materials
+                MaterialDefinition material = new MaterialDefinition
+                {
+                    Name = layer.Name,
+                    AbsorptionCoefficients = new double[8] { 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 },
+                    ScatteringCoefficients = new double[8] { 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1 },
+                    TransmissionCoefficients = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 }
+                };
+
+                // Try to get material properties from user data
+                // In a real implementation, you would extract these from your custom material database or layer user data
+
+                return material;
+            }
+
+            private string FormatPoint(Point3d pt)
+            {
+                return $"{pt.X} {pt.Y} {pt.Z}";
+            }
+
+            private string FormatVector(Hare.Geometry.Vector v)
+            {
+                return $"{v.dx},{v.dy},{v.dz}";
+            }
+
+            private string FormatArray(double[] values)
+            {
+                return string.Join(",", values);
+            }
+
+            private Hare.Geometry.Vector ToHareVector(Vector3d v)
+            {
+                return new Hare.Geometry.Vector(v.X, v.Y, v.Z);
+            }
+
+            private class MaterialDefinition
+            {
+                public string Name { get; set; }
+                public double[] AbsorptionCoefficients { get; set; }
+                public double[] ScatteringCoefficients { get; set; }
+                public double[] TransmissionCoefficients { get; set; }
+            }
+
+            private class PolygonDefinition
+            {
+                public List<int> VertexIds { get; set; }
+                public bool IsCurved { get; set; }
+                public double[] Kurvature { get; set; }
+                public Hare.Geometry.Vector[] FrameAxes { get; set; }
+            }
+
+            private class ObjectDefinition
+            {
+                public int MaterialId { get; set; }
+                public List<PolygonDefinition> Polygons { get; set; }
             }
         }
     }

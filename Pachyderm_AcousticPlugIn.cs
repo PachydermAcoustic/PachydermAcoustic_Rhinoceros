@@ -270,7 +270,7 @@ namespace Pachyderm_Acoustic
                         {
                             Samples[i] = Utilities.RCPachTools.RPttoHPt(pts[i]);
                         }
-                        S[id] = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false);
+                        S.Add(new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false));
                     }
                 }
                 //If there are any clusters, add them to the list

@@ -42,7 +42,6 @@ namespace Pachyderm_Acoustic
         [GuidAttribute("8559be06-21d7-4535-803e-95a9dd3a2898")]
         public class PachHybridControl : Panel, IPanel
         {
-            // This call is required by the Windows Form Designer. 
             public PachHybridControl()
             {
                 this.MenuStrip = new SegmentedButton();
@@ -667,6 +666,7 @@ namespace Pachyderm_Acoustic
                 this.DistributionType.Items.Add("Monaural");
                 this.DistributionType.Items.Add("Stereo");
                 this.DistributionType.Items.Add("Binaural (select file...)");
+                this.DistributionType.Items.Add("Surround Array via VBAP...");
                 this.DistributionType.Items.Add("A-Format (type I-A)");
                 this.DistributionType.Items.Add("A-Format (type II-A)");
                 this.DistributionType.Items.Add("First Order Ambisonics (ACN+SN3D)");
@@ -675,7 +675,14 @@ namespace Pachyderm_Acoustic
                 this.DistributionType.Items.Add("Second Order Ambisonics(FuMa+SN3D)");
                 this.DistributionType.Items.Add("Third Order Ambisonics(ACN+SN3D)");
                 this.DistributionType.Items.Add("Third Order Ambisonics(FuMa+SN3D)");
-                this.DistributionType.Items.Add("Surround Array via VBAP...");
+                this.DistributionType.Items.Add("Fourth Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Fourth Order Ambisonics(FuMa+SN3D)");
+                this.DistributionType.Items.Add("Fifth Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Fifth Order Ambisonics(FuMa+SN3D)");
+                this.DistributionType.Items.Add("Sixth Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Sixth Order Ambisonics(FuMa+SN3D)");
+                this.DistributionType.Items.Add("Seventh Order Ambisonics(ACN+SN3D)");
+                this.DistributionType.Items.Add("Seventh Order Ambisonics(FuMa+SN3D)");
                 this.DistributionType.SelectedIndex = 1;
                 this.DistributionType.SelectedValueChanged += this.DistributionType_SelectedIndexChanged;
 
@@ -936,6 +943,14 @@ namespace Pachyderm_Acoustic
                 Source_Aim.Items.Clear();
                 Receiver_Choice.SelectedIndex = 0;
 
+                List<Hare.Geometry.Point> R;
+                plugin.Receiver(out R);
+                Recs = new Hare.Geometry.Point[R.Count];
+                for (int q = 0; q < R.Count; q++)
+                {
+                    Recs[q] = R[q];
+                }
+
                 IS_Data = null;
                 Direct_Data = null;
                 List<Hare.Geometry.Point> RPT;
@@ -1010,7 +1025,6 @@ namespace Pachyderm_Acoustic
                         return;
                     }
                 }
-                ///
 
                 double[] s_total = new double[8];
                 double[] a_total = new double[8];
@@ -1093,14 +1107,13 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-                ///
 
                 ////////////////////////////////////////////////
                 //in order to check coefficients for all polygons
                 //for (int i = 0; i < PScene.Count(); i++)
                 //{
                 //    Hare.Geometry.Point p = PScene.polygon_centroid(i);
-
+                    
                 //    double coef = PScene.AbsorptionValue[i].Coefficient_A_Broad(4);
                 //    Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot(coef.ToString(), new Point3d(p.x, p.y, p.z));
                 //}
@@ -1176,7 +1189,8 @@ namespace Pachyderm_Acoustic
                             ProgressBox VB = new ProgressBox("Creating IR filters for deterinistic reflections...");
                             VB.Show();
                             IS_Data[s] = IS;
-                            IS_Data[s].Create_Filter(Source[s].SWL(), 4096, VB);
+                            Populate_Sources();
+                            IS_Data[s].Create_Filter(Source[s].SWL(), 16384, VB);
                             VB.Close();
                         }
                         else
@@ -1194,12 +1208,14 @@ namespace Pachyderm_Acoustic
                         while (!TISTA.IsCompleted) await Task.Delay(1500);
                         IST = TISTA.GetResult() as IS_Trace;
 
+                        Populate_Sources();
+
                         if (IST != null)
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for Deterministic Reflections...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             IS_Data[s].Lookup_Sequences(IST.IS_Sequences());
-                            IS_Data[s].Create_Filter(Source[s].SWL(), 4096, VB);
+                            IS_Data[s].Create_Filter(Source[s].SWL(), 16384, VB);
                             VB.Close();
                         }
                         else
@@ -1212,7 +1228,7 @@ namespace Pachyderm_Acoustic
                     {
                         CancellationTokenSource CTS = new CancellationTokenSource();
                         CancellationToken CT = CTS.Token;
-                        ConvergenceProgress CP = new ConvergenceProgress(CTS);
+                        ConvergenceProgress CP = new ConvergenceProgress(CTS, 44100);
                         SplitRayTracer RT = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
                         if (!Spec_Rays.Checked) CP.Show();
 
@@ -1232,6 +1248,7 @@ namespace Pachyderm_Acoustic
                         if (RT != null)
                         {
                             Receiver[s] = RT.GetReceiver;
+                            Populate_Sources();
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             await Task.Run(() => { Receiver[s].Create_Filter(VB); });
@@ -1251,22 +1268,12 @@ namespace Pachyderm_Acoustic
 
                 if (Source != null)
                 {
-                    List<Hare.Geometry.Point> R;
-                    plugin.Receiver(out R);
-                    Recs = new Hare.Geometry.Point[R.Count];
-                    for (int q = 0; q < R.Count; q++)
-                    {
-                        Recs[q] = R[q];
-                    }
                     if (SavePath != null) Utilities.FileIO.Write_Pac1(SavePath, Direct_Data, IS_Data, Receiver);
-
                     OpenAnalysis();
                     cleanup();
                 }
 
                 Rhino.RhinoApp.CommandPrompt = "Command:";
-
-                Populate_Sources();
 
                 ///Set a recommended minimum auralization ceiling...
                 List<int> srcs = new List<int>();
@@ -1599,7 +1606,7 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
                     ProgressBox VB = new ProgressBox("Creating IR Filters for Deterministic Reflections...");
                     VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                    for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 4096, VB);
+                    for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 16384, VB);
                     VB.change_title("Creating Impulse Responses...");
                     for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
                     VB.Close();
@@ -1886,7 +1893,6 @@ namespace Pachyderm_Acoustic
                     VB.Show(Rhino.RhinoDoc.ActiveDoc);
                     double[] ETC_BB = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SrcIDs, false, true, VB);
                     VB.Close();
-                    ///Need a new PT_Curve method that will apply the correct power to each filter appropriately. This one forces only one power level to be used...)
                     for (int oct = 0; oct < 8; oct++)
                     {
                         ETC[oct] = Audio.Pach_SP.FIR_Bandpass(ETC_BB, oct, SampleRate, 0);
@@ -2117,28 +2123,28 @@ namespace Pachyderm_Acoustic
 
                     case "Strength/Loudness (G)":
 
-                        double G = AcousticalMath.Strength(ETC[0], Direct_Data[SrcIDs[0]].SWL[0], false);
+                        double G = AcousticalMath.Strength(ETC[0], Direct_Data[SrcIDs[0]].SWL[0], pressure);
                         SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[1], Direct_Data[SrcIDs[0]].SWL[1], false);
+                        G = AcousticalMath.Strength(ETC[1], Direct_Data[SrcIDs[0]].SWL[1], pressure);
                         SRT2.Text = string.Format("125 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[2], Direct_Data[SrcIDs[0]].SWL[2], false);
+                        G = AcousticalMath.Strength(ETC[2], Direct_Data[SrcIDs[0]].SWL[2], pressure);
                         SRT3.Text = string.Format("250 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[3], Direct_Data[SrcIDs[0]].SWL[3], false);
+                        G = AcousticalMath.Strength(ETC[3], Direct_Data[SrcIDs[0]].SWL[3], pressure);
                         SRT4.Text = string.Format("500 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[4], Direct_Data[SrcIDs[0]].SWL[4], false);
+                        G = AcousticalMath.Strength(ETC[4], Direct_Data[SrcIDs[0]].SWL[4], pressure);
                         SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[5], Direct_Data[SrcIDs[0]].SWL[5], false);
+                        G = AcousticalMath.Strength(ETC[5], Direct_Data[SrcIDs[0]].SWL[5], pressure);
                         SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[6], Direct_Data[SrcIDs[0]].SWL[6], false);
+                        G = AcousticalMath.Strength(ETC[6], Direct_Data[SrcIDs[0]].SWL[6], pressure);
                         SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(G, 2));
 
-                        G = AcousticalMath.Strength(ETC[7], Direct_Data[SrcIDs[0]].SWL[7], false);
+                        G = AcousticalMath.Strength(ETC[7], Direct_Data[SrcIDs[0]].SWL[7], pressure);
                         SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(G, 2));
                         break;
 
@@ -2264,28 +2270,28 @@ namespace Pachyderm_Acoustic
                         SRT8.Text = string.Format("8000 hz. : {0} %", Math.Round(D50, 2));
                         break;
                     case "Center Time (TS)":
-                        double TS = AcousticalMath.Center_Time(ETC[0], SampleRate, dtime);
+                        double TS = AcousticalMath.Center_Time(ETC[0], SampleRate, dtime, pressure);
                         SRT1.Text = string.Format("62.5 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[1], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[1], SampleRate, dtime, pressure);
                         SRT2.Text = string.Format("125 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[2], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[2], SampleRate, dtime, pressure);
                         SRT3.Text = string.Format("250 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[3], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[3], SampleRate, dtime, pressure);
                         SRT4.Text = string.Format("500 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[4], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[4], SampleRate, dtime, pressure);
                         SRT5.Text = string.Format("1000 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[5], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[5], SampleRate, dtime, pressure);
                         SRT6.Text = string.Format("2000 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[6], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[6], SampleRate, dtime, pressure);
                         SRT7.Text = string.Format("4000 hz. : {0} ms.", Math.Round(TS * 1000, 2));
 
-                        TS = AcousticalMath.Center_Time(ETC[7], SampleRate, dtime);
+                        TS = AcousticalMath.Center_Time(ETC[7], SampleRate, dtime, pressure);
                         SRT8.Text = string.Format("8000 hz. : {0} ms.", Math.Round(TS * 1000, 2));
                         break;
                     case "Initial Time Delay Gap (ITDG)":
@@ -2607,7 +2613,7 @@ namespace Pachyderm_Acoustic
                                 Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                                 break;
                             case "Pressure Time Curve":
-                                zero_sample = 4096 / 2;
+                                zero_sample = 16384 / 2;
                                 Filter2 = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, true);
                                 if (OCT_ID < 8)
                                 {
@@ -2623,7 +2629,7 @@ namespace Pachyderm_Acoustic
                                 Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                                 break;
                             case "Lateral PTC":
-                                zero_sample = 4096 / 2;
+                                zero_sample = 16384 / 2;
                                 Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[1];
                                 if (OCT_ID < 8)
                                 {
@@ -2639,7 +2645,7 @@ namespace Pachyderm_Acoustic
                                 Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                                 break;
                             case "Vertical PTC":
-                                zero_sample = 4096 / 2;
+                                zero_sample = 16384 / 2;
                                 Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[2];
                                 if (OCT_ID < 8)
                                 {
@@ -2655,7 +2661,7 @@ namespace Pachyderm_Acoustic
                                 Schroeder = AcousticalMath.Schroeder_Integral(Filter);
                                 break;
                             case "Fore-Aft PTC":
-                                zero_sample = 4096 / 2;
+                                zero_sample = 16384 / 2;
                                 Filter2 = IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[0];
                                 if (OCT_ID < 8)
                                 {
@@ -3158,41 +3164,6 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoApp.RunScript("PachyDerm_Auralisation", false);
             }
 
-            //private void DelayMod_Click(object sender, EventArgs e)
-            //{
-            //    //Interface for time selection...
-            //    double t = Direct_Data[SourceList.SelectedSources()[0]].Delay_ms;
-            //    Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
-
-            //    foreach (int id in SourceList.SelectedIndices)
-            //    {
-            //        Direct_Data[id].Delay_ms = t;
-            //    }
-            //    Update_Graph(null, null);
-            //}
-
-            //private void Source_Power_Mod_Click(object sender, EventArgs e)
-            //{
-            //    List<int> srcs = SourceList.SelectedSources();
-            //    if (srcs.Count < 1) return;
-            //    Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Direct_Data[srcs[0]].SWL);
-            //    mod.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow);
-            //    if (mod.accept)
-            //    {
-            //        //Pressure_Ready = false;
-            //        foreach (int i in srcs)
-            //        {
-            //            double[] factor = Direct_Data[i].Set_Power(mod.Power);
-            //            IS_Data[i].Set_Power(factor);
-            //            Receiver[i].Set_Power(factor);
-            //            Direct_Data[i].Create_Filter();
-            //            IS_Data[i].Create_Filter(mod.Power, 4096);
-            //            Receiver[i].Create_Filter();
-            //        }
-            //    }
-            //    Update_Graph(null, null);
-            //}
-
             private void Convergence_CheckedChanged(object sender, EventArgs e)
             {
                 if (sender == Spec_Rays)
@@ -3418,6 +3389,422 @@ namespace Pachyderm_Acoustic
                         Response[13] = Temp[4];
                         Response[14] = Temp[5];
                         Response[15] = Temp[6];
+                        break;
+                    case "Fourth Order Ambisonics(ACN+SN3D)":
+                        Response = new double[25][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        break;
+                    case "Fourth Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[25][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        break;
+                    case "Fifth Order Ambisonics(ACN+SN3D)":
+                        Response = new double[36][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        break;
+                    case "Fifth Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[36][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        break;
+                    case "Sixth Order Ambisonics(ACN+SN3D)":
+                        Response = new double[49][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        Temp = IR_Construction.AurFilter_Ambisonics6(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[36] = Temp[0];
+                        Response[37] = Temp[1];
+                        Response[38] = Temp[2];
+                        Response[39] = Temp[3];
+                        Response[40] = Temp[4];
+                        Response[41] = Temp[5];
+                        Response[42] = Temp[6];
+                        Response[43] = Temp[7];
+                        Response[44] = Temp[8];
+                        Response[45] = Temp[9];
+                        Response[46] = Temp[10];
+                        Response[47] = Temp[11];
+                        Response[48] = Temp[12];
+                        break;
+                    case "Sixth Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[49][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        Temp = IR_Construction.AurFilter_Ambisonics6(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[36] = Temp[0];
+                        Response[37] = Temp[1];
+                        Response[38] = Temp[2];
+                        Response[39] = Temp[3];
+                        Response[40] = Temp[4];
+                        Response[41] = Temp[5];
+                        Response[42] = Temp[6];
+                        Response[43] = Temp[7];
+                        Response[44] = Temp[8];
+                        Response[45] = Temp[9];
+                        Response[46] = Temp[10];
+                        Response[47] = Temp[11];
+                        Response[48] = Temp[12];
+                        break;
+                    case "Seventh Order Ambisonics(ACN+SN3D)":
+                        Response = new double[64][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        Temp = IR_Construction.AurFilter_Ambisonics6(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[36] = Temp[0];
+                        Response[37] = Temp[1];
+                        Response[38] = Temp[2];
+                        Response[39] = Temp[3];
+                        Response[40] = Temp[4];
+                        Response[41] = Temp[5];
+                        Response[42] = Temp[6];
+                        Response[43] = Temp[7];
+                        Response[44] = Temp[8];
+                        Response[45] = Temp[9];
+                        Response[46] = Temp[10];
+                        Response[47] = Temp[11];
+                        Response[48] = Temp[12];
+                        Temp = IR_Construction.AurFilter_Ambisonics7(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.ACN);
+                        Response[49] = Temp[0];
+                        Response[50] = Temp[1];
+                        Response[51] = Temp[2];
+                        Response[52] = Temp[3];
+                        Response[53] = Temp[4];
+                        Response[54] = Temp[5];
+                        Response[55] = Temp[6];
+                        Response[56] = Temp[7];
+                        Response[57] = Temp[8];
+                        Response[58] = Temp[9];
+                        Response[59] = Temp[10];
+                        Response[60] = Temp[11];
+                        Response[61] = Temp[12];
+                        Response[62] = Temp[13];
+                        Response[63] = Temp[14];
+                        break;
+                    case "Seventh Order Ambisonics(FuMa+SN3D)":
+                        Response = new double[64][];
+                        Temp = IR_Construction.AurFilter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[0] = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, true);
+                        Response[1] = Temp[0];
+                        Response[2] = Temp[1];
+                        Response[3] = Temp[2];
+                        Temp = IR_Construction.AurFilter_Ambisonics2(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[4] = Temp[0];
+                        Response[5] = Temp[1];
+                        Response[6] = Temp[2];
+                        Response[7] = Temp[3];
+                        Response[8] = Temp[4];
+                        Temp = IR_Construction.AurFilter_Ambisonics3(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[9] = Temp[0];
+                        Response[10] = Temp[1];
+                        Response[11] = Temp[2];
+                        Response[12] = Temp[3];
+                        Response[13] = Temp[4];
+                        Response[14] = Temp[5];
+                        Response[15] = Temp[6];
+                        Temp = IR_Construction.AurFilter_Ambisonics4(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[16] = Temp[0];
+                        Response[17] = Temp[1];
+                        Response[18] = Temp[2];
+                        Response[19] = Temp[3];
+                        Response[20] = Temp[4];
+                        Response[21] = Temp[5];
+                        Response[22] = Temp[6];
+                        Response[23] = Temp[7];
+                        Response[24] = Temp[8];
+                        Temp = IR_Construction.AurFilter_Ambisonics5(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[25] = Temp[0];
+                        Response[26] = Temp[1];
+                        Response[27] = Temp[2];
+                        Response[28] = Temp[3];
+                        Response[29] = Temp[4];
+                        Response[30] = Temp[5];
+                        Response[31] = Temp[6];
+                        Response[32] = Temp[7];
+                        Response[33] = Temp[8];
+                        Response[34] = Temp[9];
+                        Response[35] = Temp[10];
+                        Temp = IR_Construction.AurFilter_Ambisonics6(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[36] = Temp[0];
+                        Response[37] = Temp[1];
+                        Response[38] = Temp[2];
+                        Response[39] = Temp[3];
+                        Response[40] = Temp[4];
+                        Response[41] = Temp[5];
+                        Response[42] = Temp[6];
+                        Response[43] = Temp[7];
+                        Response[44] = Temp[8];
+                        Response[45] = Temp[9];
+                        Response[46] = Temp[10];
+                        Response[47] = Temp[11];
+                        Response[48] = Temp[12];
+                        Temp = IR_Construction.AurFilter_Ambisonics7(Direct_Data, IS_Data, Receiver, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, IR_Construction.Ambisonics_Component_Order.FuMa);
+                        Response[49] = Temp[0];
+                        Response[50] = Temp[1];
+                        Response[51] = Temp[2];
+                        Response[52] = Temp[3];
+                        Response[53] = Temp[4];
+                        Response[54] = Temp[5];
+                        Response[55] = Temp[6];
+                        Response[56] = Temp[7];
+                        Response[57] = Temp[8];
+                        Response[58] = Temp[9];
+                        Response[59] = Temp[10];
+                        Response[60] = Temp[11];
+                        Response[61] = Temp[12];
+                        Response[62] = Temp[13];
+                        Response[63] = Temp[14];
                         break;
                     default:
                         Response = new double[Channel_View.Items.Count][];
@@ -3832,89 +4219,6 @@ namespace Pachyderm_Acoustic
             protected override void Dispose(bool disposing)
             {
                 base.Dispose(disposing);
-                //Calculate.Dispose();
-                //RTBox.Dispose();
-                //ISBox.Dispose();
-
-                //Image_Order.Dispose();
-                //RT_Count.Dispose();
-                //CO_TIME.Dispose();
-                //Spec_RayCount.Dispose();
-                //tabTL.Dispose();
-                //tabTC.Dispose();
-                //tabTransControls.Dispose();
-                //tabCoef.Dispose(); 
-                //TabAnalysis.Dispose();
-                //TabMaterials.Dispose();
-                //TabImpulse.Dispose();
-                //Material_Lib.Dispose();
-                //ReceiverSelection.Dispose();
-                //ParameterBox.Dispose();
-                ////LayerDisplay.Dispose();
-                //PathCount.Dispose();
-                //Parameter_Choice.Dispose();
-                //MediumProps.Dispose();
-                //Specular_Trace.Dispose();
-                //Receiver_Choice.Dispose();
-                ////ScatFlat.Dispose();
-                //SaveAbsBox.Dispose();
-                //Save_Material.Dispose();
-                //Material_Name.Dispose();
-                ////EdgeFreq.Dispose();
-                //SourceList.Dispose();
-                //ISOCOMP.Dispose();
-                //BTM_ED.Dispose();
-                //Alt_Choice.Dispose();
-                //Azi_Choice.Dispose();
-                //IS_Path_Box.Dispose();
-                //Graph_Octave.Dispose();
-                //Analysis_View.Dispose();
-                //Normalize_Graph.Dispose();
-                //LockUserScale.Dispose();
-                //Graph_Type.Dispose();
-                //Source_Aim.Dispose();
-                //AimatSrc.Dispose();
-                //Abs_Designer.Dispose();
-                //SmartMat_Display.Dispose();
-
-
-
-                //MenuStrip.Dispose();
-                //fileToolStripMenuItem.Dispose();
-                //saveDataToolStripMenuItem.Dispose();
-                //openDataToolStripMenuItem.Dispose();
-                //saveParameterResultsToolStripMenuItem.Dispose();
-                //savePTBFormatToolStripMenuItem.Dispose();
-                //saveEDCToolStripMenuItem.Dispose();
-                //savePressureResultsToolStripMenuItem.Dispose();
-                //savePressurePTBFormatToolStripMenuItem.Dispose();
-
-                //Auralisation.Dispose();
-                //Delete_Material.Dispose();
-
-                //Spec_Rays.Dispose();
-                //DetailedConvergence.Dispose();
-                //Minimum_Convergence.Dispose();
-                //quart_lambda.Dispose();
-                //user_quart_lambda.Dispose();
-                //PlasterScatter.Dispose();
-                //GlassScatter.Dispose();
-
-                //Trans_Check.Dispose();
-
-                //SaveTLBox.Dispose();
-                //DeleteAssembly.Dispose();
-                //SaveAssembly.Dispose();
-                //IsolationAssemblies.Dispose();
-                //TL_Check.Dispose();
-                //Isolation_Lib.Dispose();
-                //labelVar.Dispose();
-
-                ////Absorption.Dispose();
-                ////Scattering.Dispose();
-                ////Transparency.Dispose();
-                ////Trans_Flat.Dispose();
-                //Tabs.Dispose();
             }
 
 
@@ -3933,64 +4237,66 @@ namespace Pachyderm_Acoustic
                 sf.Filters.Add( new FileFilter("Pachyderm Ray Data file (*.pac1)", ".pac1"));
                 sf.CurrentFilterIndex = 0;
 
-                if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
-                {
-                    System.IO.BinaryWriter sw = new System.IO.BinaryWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
-                    //1. Date & Time
-                    sw.Write(System.DateTime.Now.ToString());
-                    //2. Plugin Version... if less than 1.1, assume only 1 source.
-                    sw.Write(plugin.Version);
-                    //3. Cut off Time (seconds) and SampleRate
-                    sw.Write((double)CO_TIME.Value);
-                    sw.Write(SampleRate);
-                    //4.0 Source Count(int)
-                    Hare.Geometry.Point[] SRC;
-                    plugin.SourceOrigin(out SRC);
-                    sw.Write(SRC.Length);
-                    for (int i = 0; i < SRC.Length; i++)
-                    {
-                        //4.1 Source Location x (double)    
-                        sw.Write(SRC[i].x);
-                        //4.2 Source Location y (double)
-                        sw.Write(SRC[i].y);
-                        //4.3 Source Location z (double)
-                        sw.Write(SRC[i].z);
-                    }
-                    //5. No of Receivers
-                    sw.Write(Recs.Length);
+                if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok) FileIO.Write_Pac1(sf.FileName, Direct_Data, IS_Data, Receiver);
 
-                    //6. Write the coordinates of each receiver point
-                    for (int q = 0; q < Recs.Length; q++)
-                    {
-                        sw.Write(Recs[q].x);
-                        sw.Write(Recs[q].y);
-                        sw.Write(Recs[q].z);
-                        sw.Write(Direct_Data[0].Rho_C[q]);
-                    }
+                //if (sf.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Ok)
+                //{
+                //    System.IO.BinaryWriter sw = new System.IO.BinaryWriter(System.IO.File.Open(sf.FileName, System.IO.FileMode.Create));
+                //    //1. Date & Time
+                //    sw.Write(System.DateTime.Now.ToString());
+                //    //2. Plugin Version... if less than 1.1, assume only 1 source.
+                //    sw.Write(plugin.Version);
+                //    //3. Cut off Time (seconds) and SampleRate
+                //    sw.Write((double)CO_TIME.Value);
+                //    sw.Write(SampleRate);
+                //    //4.0 Source Count(int)
+                //    Hare.Geometry.Point[] SRC;
+                //    plugin.SourceOrigin(out SRC);
+                //    sw.Write(SRC.Length);
+                //    for (int i = 0; i < SRC.Length; i++)
+                //    {
+                //        //4.1 Source Location x (double)    
+                //        sw.Write(SRC[i].x);
+                //        //4.2 Source Location y (double)
+                //        sw.Write(SRC[i].y);
+                //        //4.3 Source Location z (double)
+                //        sw.Write(SRC[i].z);
+                //    }
+                //    //5. No of Receivers
+                //    sw.Write(Recs.Length);
 
-                    for (int s = 0; s < SRC.Length; s++)
-                    {
-                        if (Direct_Data != null)
-                        {
-                            //7. Write Direct Sound Data
-                            Direct_Data[s].Write_Data(ref sw);
-                        }
+                //    //6. Write the coordinates of each receiver point
+                //    for (int q = 0; q < Recs.Length; q++)
+                //    {
+                //        sw.Write(Recs[q].x);
+                //        sw.Write(Recs[q].y);
+                //        sw.Write(Recs[q].z);
+                //        sw.Write(Direct_Data[0].Rho_C[q]);
+                //    }
 
-                        if (IS_Data[0] != null)
-                        {
-                            //8. Write Image Source Sound Data
-                            IS_Data[s].Write_Data(ref sw);
-                        }
+                //    for (int s = 0; s < SRC.Length; s++)
+                //    {
+                //        if (Direct_Data != null)
+                //        {
+                //            //7. Write Direct Sound Data
+                //            Direct_Data[s].Write_Data(ref sw);
+                //        }
 
-                        if (Receiver.Length > s && Receiver[s] != null)
-                        {
-                            //9. Write Ray Traced Sound Data
-                            Receiver[s].Write_Data(ref sw);
-                        }
-                    }
-                    sw.Write("End");
-                    sw.Close();
-                }
+                //        if (IS_Data[0] != null)
+                //        {
+                //            //8. Write Image Source Sound Data
+                //            IS_Data[s].Write_Data(ref sw);
+                //        }
+
+                //        if (Receiver.Length > s && Receiver[s] != null)
+                //        {
+                //            //9. Write Ray Traced Sound Data
+                //            Receiver[s].Write_Data(ref sw);
+                //        }
+                //    }
+                //    sw.Write("End");
+                //    sw.Close();
+                //}
             }
 
             private async void Read_File(string path)
@@ -4116,7 +4422,7 @@ namespace Pachyderm_Acoustic
                                 C50[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
                                 C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
                                 D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                                TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
+                                TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                                 double[] L_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
                                 LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 100;
                                 LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 100;
@@ -4208,14 +4514,14 @@ namespace Pachyderm_Acoustic
                                 T15[s, r, oct] = AcousticalMath.T_X(Schroeder, 15, SampleRate);
                                 T20[s, r, oct] = AcousticalMath.T_X(Schroeder, 20, SampleRate);
                                 T30[s, r, oct] = AcousticalMath.T_X(Schroeder, 30, SampleRate);
-                                G[s, r, oct] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
-                                C50[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                                C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
-                                D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                                TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
-                                double[] L_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value, true)[1];
-                                LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
-                                LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
+                                G[s, r, oct] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], true);
+                                C50[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), true);
+                                C80[s, r, oct] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), true);
+                                D50[s, r, oct] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), true);
+                                TS[s, r, oct] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r), true) * 1000;
+                                double[] L_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int>() { s }, false, (double)this.Alt_Choice.Value, (double)this.Azi_Choice.Value,true)[1];
+                                LF[s, r, oct] = AcousticalMath.Lateral_Fraction(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), true) * 1000;
+                                LE[s, r, oct] = AcousticalMath.Lateral_Efficiency(ETC, L_ETC, SampleRate, Direct_Data[s].Min_Time(r), true) * 1000;
                             }
                         }
                     }
@@ -4268,7 +4574,7 @@ namespace Pachyderm_Acoustic
                             ParamValues[s, r, oct, 1] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
                             ParamValues[s, r, oct, 2] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
                             ParamValues[s, r, oct, 3] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
-                            ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
+                            ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r), false) * 1000;
                             ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
                             double azi, alt;
                             PachTools.World_Angles(Direct_Data[s].Src.Origin, Recs[r], true, out alt, out azi);
@@ -4341,10 +4647,10 @@ namespace Pachyderm_Acoustic
                             Schroeder = AcousticalMath.Schroeder_Integral(ETC);
                             ParamValues[s, r, oct, 0] = AcousticalMath.T_X(Schroeder, 30, SampleRate);
                             ParamValues[s, r, oct, 1] = AcousticalMath.EarlyDecayTime(Schroeder, SampleRate);
-                            ParamValues[s, r, oct, 2] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), false);
-                            ParamValues[s, r, oct, 3] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), false);
-                            ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r)) * 1000;
-                            ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], false);
+                            ParamValues[s, r, oct, 2] = AcousticalMath.Definition(ETC, SampleRate, 0.05, Direct_Data[s].Min_Time(r), true);
+                            ParamValues[s, r, oct, 3] = AcousticalMath.Clarity(ETC, SampleRate, 0.08, Direct_Data[s].Min_Time(r), true);
+                            ParamValues[s, r, oct, 4] = AcousticalMath.Center_Time(ETC, SampleRate, Direct_Data[s].Min_Time(r), true) * 1000;
+                            ParamValues[s, r, oct, 5] = AcousticalMath.Strength(ETC, Direct_Data[s].SWL[oct], true);
                             double azi, alt;
                             PachTools.World_Angles(Direct_Data[s].Src.Origin, Recs[r], true, out alt, out azi);
                             double[][] Lateral_ETC = IR_Construction.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, oct, r, new System.Collections.Generic.List<int> { s }, false, alt, azi, true);

@@ -67,6 +67,8 @@ namespace Pachyderm_Acoustic
                 SrcTypes = new List<string>();
                 for (int i = 0; i < ct; i++)
                 {
+                    if (Direct != null && Direct[i] == null) continue;
+
                     string type = (Direct != null) ? Direct[i].type : Receiver[i].SrcType;
                     Delay[i] = (Direct != null) ? Direct[i].Delay_ms : Receiver[i].delay_ms;
 
@@ -153,10 +155,9 @@ namespace Pachyderm_Acoustic
                             Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             IS[i].Set_Power(factor);
-                            IS[i].Create_Filter(mod.Power, 4096, VB);
+                            IS[i].Create_Filter(mod.Power, 16384, VB);
                             VB.Close();
                         }
-                        
                     }
                 }
                 Update(this, EventArgs.Empty);

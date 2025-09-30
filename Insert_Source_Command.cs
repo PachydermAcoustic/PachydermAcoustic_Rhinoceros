@@ -15,15 +15,16 @@
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
-using System;
-using System.Drawing;
-using System.Collections.Generic;
 using Rhino;
-using Rhino.Display;
 using Rhino.Commands;
+using Rhino.Display;
 using Rhino.Geometry;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.Remoting;
 using System.Text.RegularExpressions;
+using static Pachyderm_Acoustic.Utilities.StandardConstructions;
 
 namespace Pachyderm_Acoustic
 {
@@ -417,7 +418,8 @@ namespace Pachyderm_Acoustic
                 GO.GeometryFilter = Rhino.DocObjects.ObjectType.Curve;
                 GO.AddOption("TrafficWelsh");
                 GO.AddOption("TrafficFHWA");
-                GO.AddOption("AircraftANCON");
+                GO.AddOption("Aircraft");
+                GO.AddOption("RailISO");
                 GO.AddOption("Custom");
                 //GO.AddOptionList("SourceType", new List<string>() { "TrafficWelshStandard", "TrafficFHWA Standard", "Custom" }, 2);
                 GO.GroupSelect = false;
@@ -474,27 +476,229 @@ namespace Pachyderm_Acoustic
                             int t = 0;
                             Rhino.Input.RhinoGet.GetBool("Full throttle?", false, "Yes", "No", ref throttle);
 
-                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.FHWA_TNM10_SoundPower(s, pavement, (int)Veh[0], (int)Veh[1], (int)Veh[2], (int)Veh[3], (int)Veh[4], throttle);
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.FHWA_TNM30_SoundPower(s, pavement, (int)Veh[0], (int)Veh[1], (int)Veh[2], (int)Veh[3], (int)Veh[4], throttle);
                         }
-                        else if (type == 3)//"Aircraft (ANCON-derived)")
+                        else if (type == 3)//"Aircraft")
                         {
-                            Rhino.Input.Custom.GetOption GOpt = new Rhino.Input.Custom.GetOption();
-                            GOpt.SetCommandPrompt("Takeoff or Landing?");
-                            GOpt.AddOption("Takeoff");
-                            GOpt.AddOption("Landing");
-                            GOpt.AddOption("Both");
-                            GOpt.AcceptNothing(false);
-                            GOpt.Get();
-                            int TL_Choice = GOpt.OptionIndex();
+                            // Modern Aircraft Noise Source Configuration per ICAO/ECAC Standards
 
-                            double SWLA = 150;
+                            // 1. Aircraft Category Selection per ICAO Annex 16
+                            Rhino.Input.Custom.GetOption GOpt_category = new Rhino.Input.Custom.GetOption();
+                            GOpt_category.SetCommandPrompt("Select Aircraft Category (ICAO Classification - MTOW = Maximum Takeoff Weight)");
+                            GOpt_category.AddOption("Light");        // MTOW ≤ 19,000 lbs
+                            GOpt_category.AddOption("Medium");       // 19,000-300,000 lbs
+                            GOpt_category.AddOption("Heavy");        // 300,000-661,000 lbs  
+                            GOpt_category.AddOption("SuperHeavy");   // > 661,000 lbs
+                            GOpt_category.AcceptNothing(false);
 
-                            Rhino.Input.RhinoGet.GetNumber("What is the broadband sound power of the aircraft (in dBA)?", false, ref SWLA);
-                            Rhino.Input.RhinoGet.GetNumber("What is the maximum velocity of the aircraft in m/s?", false, ref velocity);
-                            Rhino.Input.RhinoGet.GetNumber("What is the slant angle for this aircraft?", false, ref delta);
+                            // Display helpful information about aircraft categories
+                            Rhino.RhinoApp.WriteLine("Aircraft Category Guidelines (ICAO Annex 16):");
+                            Rhino.RhinoApp.WriteLine("Light (≤19,000 lbs): Cessna 172, Citation Mustang, King Air 90, Diamond DA40");
+                            Rhino.RhinoApp.WriteLine("Medium (19,000-300,000 lbs): Embraer E-Jets, CRJ series, Boeing 737, Airbus A320");
+                            Rhino.RhinoApp.WriteLine("Heavy (300,000-661,000 lbs): Boeing 767/777-200, Airbus A330/A350, C-130 Hercules");
+                            Rhino.RhinoApp.WriteLine("SuperHeavy (>661,000 lbs): Boeing 747/777-300ER, Airbus A380, C-5 Galaxy, An-225");
 
-                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_SoundPower(SWLA, velocity, delta, (Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use)Enum.ToObject(typeof(Pachyderm_Acoustic.Utilities.StandardConstructions.Ancon_runway_use), TL_Choice));
+                            GOpt_category.Get();
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category aircraft_category =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
 
+                            // Display selected category with examples
+                            string selectedCategory = aircraft_category.ToString();
+                            string examples = "";
+                            switch (aircraft_category)
+                            {
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Light:
+                                    examples = "Examples: General aviation aircraft, small business jets, training aircraft";
+                                    break;
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Medium:
+                                    examples = "Examples: Regional jets, narrow-body airliners, medium business jets";
+                                    break;
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Heavy:
+                                    examples = "Examples: Wide-body aircraft, large commercial jets, military transports";
+                                    break;
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.SuperHeavy:
+                                    examples = "Examples: Jumbo jets, very large cargo aircraft, strategic airlifters";
+                                    break;
+                            }
+                            Rhino.RhinoApp.WriteLine($"Selected: {selectedCategory} - {examples}");
+                            aircraft_category = (Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
+
+                            // 2. Engine Type Selection per ICAO Doc 9501
+                            Rhino.Input.Custom.GetOption GOpt_engine = new Rhino.Input.Custom.GetOption();
+                            GOpt_engine.SetCommandPrompt("Select Engine Technology Type");
+                            GOpt_engine.AddOption("Turboprop");     // Propeller-driven
+                            GOpt_engine.AddOption("Turbojet");      // Pure jet
+                            GOpt_engine.AddOption("Turbofan");      // Modern commercial standard
+                            GOpt_engine.AddOption("Electric");      // Emerging technology
+
+                            // Display engine type information
+                            Rhino.RhinoApp.WriteLine("Engine Type Characteristics:");
+                            Rhino.RhinoApp.WriteLine("Turboprop: Propeller-driven, efficient at lower speeds, lower noise at low frequencies");
+                            Rhino.RhinoApp.WriteLine("Turbojet: Pure jet exhaust, high-speed capability, emphasizes high-frequency noise");
+                            Rhino.RhinoApp.WriteLine("Turbofan: Fan-assisted, modern commercial standard, balanced noise spectrum");
+                            Rhino.RhinoApp.WriteLine("Electric: Emerging technology, significantly quieter across all frequencies");
+
+                            GOpt_engine.AcceptNothing(false);
+                            GOpt_engine.Get();
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type engine_type =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type)(GOpt_engine.OptionIndex() - 1);
+
+                            // Display selected engine type
+                            Rhino.RhinoApp.WriteLine($"Selected Engine Type: {engine_type}");
+
+                            // 3. Flight Phase Selection per FAA Order 1050.1F
+                            Rhino.Input.Custom.GetOption GOpt_phase = new Rhino.Input.Custom.GetOption();
+                            GOpt_phase.SetCommandPrompt("Select Flight Phase");
+                            GOpt_phase.AddOption("Takeoff");        // High thrust, climbing
+                            GOpt_phase.AddOption("Climb");          // Reduced thrust, continued ascent
+                            GOpt_phase.AddOption("Cruise");         // Nominal thrust, level flight
+                            GOpt_phase.AddOption("Approach");       // Variable thrust, descending
+                            GOpt_phase.AddOption("Landing");        // Low thrust, final approach
+
+                            // Display flight phase information
+                            Rhino.RhinoApp.WriteLine("Flight Phase Characteristics:");
+                            Rhino.RhinoApp.WriteLine("Takeoff: Maximum thrust, steep climb angle, highest noise levels");
+                            Rhino.RhinoApp.WriteLine("Climb: Reduced thrust, moderate climb angle, decreasing noise");
+                            Rhino.RhinoApp.WriteLine("Cruise: Nominal thrust, level flight, steady noise levels");
+                            Rhino.RhinoApp.WriteLine("Approach: Variable thrust, descending flight path, moderate noise");
+                            Rhino.RhinoApp.WriteLine("Landing: Low thrust, shallow descent, configuration noise dominant");
+
+                            GOpt_phase.AcceptNothing(false);
+                            GOpt_phase.Get();
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase flight_phase =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase)(GOpt_phase.OptionIndex() - 1);
+
+                            // Display selected flight phase
+                            Rhino.RhinoApp.WriteLine($"Selected Flight Phase: {flight_phase}");
+                            // 4. Aircraft Operational Parameters
+                            double aircraft_speed_kts = 150.0; // Default cruise speed
+                            double reference_noise_level = 85.0; // Default reference level in dB(A)
+                            double altitude_ft = 1000.0; // Default altitude
+                            double flight_path_angle_deg = 0.0; // Default level flight
+
+                            // Get aircraft speed
+                            Rhino.Input.RhinoGet.GetNumber("Aircraft speed in knots", false, ref aircraft_speed_kts);
+
+                            // Get reference noise level
+                            Rhino.Input.RhinoGet.GetNumber("Reference noise level in dB(A)", false, ref reference_noise_level);
+
+                            // Get operational altitude
+                            Rhino.Input.RhinoGet.GetNumber("Aircraft altitude in feet", false, ref altitude_ft);
+
+                            // Get flight path angle for takeoff/approach operations
+                            if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Takeoff ||
+                                flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Climb)
+                            {
+                                flight_path_angle_deg = 15.0; // Default climb angle
+                                Rhino.Input.RhinoGet.GetNumber("Flight path angle in degrees (positive = climbing)", false, ref flight_path_angle_deg);
+                            }
+                            else if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Approach ||
+                                     flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Landing)
+                            {
+                                flight_path_angle_deg = -3.0; // Default approach angle
+                                Rhino.Input.RhinoGet.GetNumber("Flight path angle in degrees (negative = descending)", false, ref flight_path_angle_deg);
+                            }
+
+                            // 5. Flight Direction Vector (derived from curve direction)
+                            // This will be calculated from the curve geometry in the source creation
+
+                            // Calculate enhanced sound power spectrum using modern standards
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Enhanced_Aircraft_SoundPower(
+                                aircraft_category,
+                                engine_type,
+                                flight_phase,
+                                reference_noise_level,
+                                aircraft_speed_kts,
+                                altitude_ft);
+
+                            // Store enhanced aircraft parameters for line source creation
+                            velocity = aircraft_speed_kts * 0.514444; // Convert to m/s for storage
+                            delta = flight_path_angle_deg; // Store flight path angle
+
+                            // Display information about the enhanced modeling
+                            Rhino.RhinoApp.WriteLine("Enhanced Aircraft Noise Source Configuration:");
+                            Rhino.RhinoApp.WriteLine($"Category: {aircraft_category} | Engine: {engine_type} | Phase: {flight_phase}");
+                            Rhino.RhinoApp.WriteLine($"Speed: {aircraft_speed_kts:F1} kts | Altitude: {altitude_ft:F0} ft | Path Angle: {flight_path_angle_deg:F1}°");
+                            Rhino.RhinoApp.WriteLine("Based on ICAO Annex 16, ECAC Doc 29, and FAA Order 1050.1F standards");
+                        }
+
+                        else if (type == 4)//"Rail (ISO 3095)")
+                        {
+                            // Rail Noise Source Configuration per ISO 3095 and FTA Standards
+
+                            // 1. Rail Vehicle Type Selection per ISO 3095
+                            Rhino.Input.Custom.GetOption GOpt_vehicle = new Rhino.Input.Custom.GetOption();
+                            GOpt_vehicle.SetCommandPrompt("Select Rail Vehicle Type (ISO 3095 Classification)");
+                            GOpt_vehicle.AddOption("LightRail");      // Light rail, trams, streetcars
+                            GOpt_vehicle.AddOption("PassengerTrain"); // Passenger trains, commuter rail
+                            GOpt_vehicle.AddOption("FreightTrain");   // Freight trains, cargo
+                            GOpt_vehicle.AddOption("HighSpeedRail");  // High-speed passenger trains
+                            GOpt_vehicle.AddOption("Subway");         // Underground/metro systems
+                            GOpt_vehicle.AcceptNothing(false);
+
+                            // Display rail vehicle information
+                            Rhino.RhinoApp.WriteLine("Rail Vehicle Type Guidelines (ISO 3095:2013):");
+                            Rhino.RhinoApp.WriteLine("LightRail: Trams, streetcars, light rail transit (LRT) systems");
+                            Rhino.RhinoApp.WriteLine("PassengerTrain: Commuter trains, intercity passenger service");
+                            Rhino.RhinoApp.WriteLine("FreightTrain: Cargo trains, freight locomotives with cars");
+                            Rhino.RhinoApp.WriteLine("HighSpeedRail: High-speed passenger trains (>200 km/h)");
+                            Rhino.RhinoApp.WriteLine("Subway: Underground metro, subway, rapid transit systems");
+
+                            GOpt_vehicle.Get();
+                            Rail_Vehicle_Type vehicle_type = (Rail_Vehicle_Type)(GOpt_vehicle.OptionIndex() - 1);
+
+                            // 2. Track Type Selection per FTA Guidelines
+                            Rhino.Input.Custom.GetOption GOpt_track = new Rhino.Input.Custom.GetOption();
+                            GOpt_track.SetCommandPrompt("Select Track/Rail Type");
+                            GOpt_track.AddOption("ContinuousWelded");    // Modern continuous welded rail
+                            GOpt_track.AddOption("JointedRail");         // Traditional jointed rail
+                            GOpt_track.AddOption("EmbeddedRail");        // Embedded in concrete/asphalt
+                            GOpt_track.AddOption("ElevatedStructure");   // On bridges/elevated structures
+                            GOpt_track.AddOption("SpecialTrackwork");    // Switches, crossings, etc.
+                            GOpt_track.AcceptNothing(false);
+
+                            // Display track type information
+                            Rhino.RhinoApp.WriteLine("Track Type Characteristics:");
+                            Rhino.RhinoApp.WriteLine("ContinuousWelded: Modern smooth rail, lower noise at joints");
+                            Rhino.RhinoApp.WriteLine("JointedRail: Traditional rail with joints, higher impact noise");
+                            Rhino.RhinoApp.WriteLine("EmbeddedRail: Rail embedded in street surface, urban applications");
+                            Rhino.RhinoApp.WriteLine("ElevatedStructure: Rail on bridges/viaducts, structural noise effects");
+                            Rhino.RhinoApp.WriteLine("SpecialTrackwork: Switches, crossings, turnouts - higher noise levels");
+
+                            GOpt_track.Get();
+                            Track_Type track_type = (Track_Type)(GOpt_track.OptionIndex() - 1);
+
+                            // 3. Operating Conditions
+                            double train_speed_kph = 80.0; // Default speed
+                            double train_length_m = 100.0; // Default train length
+                            int num_cars = 4; // Default number of cars
+                            bool horn_warning = false; // Horn/whistle usage
+
+                            // Get operational parameters
+                            Rhino.Input.RhinoGet.GetNumber("Train speed in km/h", false, ref train_speed_kph);
+                            Rhino.Input.RhinoGet.GetNumber("Train length in meters", false, ref train_length_m);
+                            Rhino.Input.RhinoGet.GetInteger("Number of cars/units", true, ref num_cars);
+                            Rhino.Input.RhinoGet.GetBool("Horn/whistle operation?", false, "Yes", "No", ref horn_warning);
+
+                            // Calculate rail noise spectrum using ISO 3095 methodology
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.ISO3095_Rail_SoundPower(
+                                vehicle_type,
+                                track_type,
+                                train_speed_kph,
+                                train_length_m,
+                                num_cars,
+                                horn_warning);
+
+                            // Store parameters
+                            velocity = train_speed_kph / 3.6; // Convert to m/s for storage
+                            delta = 0.0; // Level operation for rail
+
+                            // Display configuration summary
+                            Rhino.RhinoApp.WriteLine("Rail Noise Source Configuration:");
+                            Rhino.RhinoApp.WriteLine($"Vehicle: {vehicle_type} | Track: {track_type}");
+                            Rhino.RhinoApp.WriteLine($"Speed: {train_speed_kph:F1} km/h | Length: {train_length_m:F0} m | Cars: {num_cars}");
+                            Rhino.RhinoApp.WriteLine($"Horn Operation: {(horn_warning ? "Yes" : "No")}");
+                            Rhino.RhinoApp.WriteLine("Based on ISO 3095:2013 and FTA Transit Noise Guidelines");
                         }
                     }
                     else if (GR == Rhino.Input.GetResult.Object)
@@ -515,11 +719,42 @@ namespace Pachyderm_Acoustic
                             {
                                 rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
                             }
-                            else if (choice == 3)//"Aircraft (ANCON-derived)")
+                            else if (choice == 3)//"Aircraft (Enhanced)")
                             {
-                                rhObj.Geometry.SetUserString("SourceType", "Aircraft (ANCON derived)");
-                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
-                                rhObj.Geometry.SetUserString("delta", delta.ToString());
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category aircraft_category = Utilities.StandardConstructions.Aircraft_Category.Medium;
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type engine_type = Utilities.StandardConstructions.Engine_Type.Turbojet;
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase flight_phase = Utilities.StandardConstructions.Flight_Phase.Takeoff;
+                                double aircraft_speed_kts = 150.0; // Default cruise speed
+                                double reference_noise_level = 85.0; // Default reference level in dB(A)
+                                double altitude_ft = 1000.0; // Default altitude
+                                double flight_path_angle_deg = 0.0; // Default level flight
+
+                                rhObj.Geometry.SetUserString("SourceType", "Aircraft");
+                                rhObj.Geometry.SetUserString("AircraftCategory", aircraft_category.ToString());
+                                rhObj.Geometry.SetUserString("EngineType", engine_type.ToString());
+                                rhObj.Geometry.SetUserString("FlightPhase", flight_phase.ToString());
+                                rhObj.Geometry.SetUserString("AircraftSpeed", aircraft_speed_kts.ToString());
+                                rhObj.Geometry.SetUserString("ReferenceLevel", reference_noise_level.ToString());
+                                rhObj.Geometry.SetUserString("Altitude", altitude_ft.ToString());
+                                rhObj.Geometry.SetUserString("FlightPathAngle", flight_path_angle_deg.ToString());
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString()); // For backward compatibility
+                                rhObj.Geometry.SetUserString("delta", delta.ToString()); // For backward compatibility
+                            }
+                            else if (choice == 4)//"Rail (ISO 3095)")
+                            {
+                                Utilities.StandardConstructions.Rail_Vehicle_Type vehicle_type = Utilities.StandardConstructions.Rail_Vehicle_Type.PassengerTrain;
+                                Utilities.StandardConstructions.Track_Type track_type = Utilities.StandardConstructions.Track_Type.ContinuousWelded;
+                                double train_speed_kph = 80.0; // Default speed
+                                double train_length_m = 100.0; // Default train length
+                                int num_cars = 4; // Default number of cars
+                                bool horn_warning = false; // Horn/whistle usage
+                                rhObj.Geometry.SetUserString("SourceType", "Railway");
+                                rhObj.Geometry.SetUserString("VehicleType", vehicle_type.ToString());
+                                rhObj.Geometry.SetUserString("TrackType", track_type.ToString());
+                                rhObj.Geometry.SetUserString("TrainSpeed", train_speed_kph.ToString());
+                                rhObj.Geometry.SetUserString("TrainLength", train_length_m.ToString());
+                                rhObj.Geometry.SetUserString("NumCars", num_cars.ToString());
+                                rhObj.Geometry.SetUserString("HornOperation", horn_warning.ToString());
                             }
                             else
                             {

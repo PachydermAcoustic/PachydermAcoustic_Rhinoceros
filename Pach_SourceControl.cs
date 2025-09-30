@@ -469,7 +469,7 @@ namespace Pachyderm_Acoustic
                     string[] L;
                     try
                     {
-                        L = CLF_Read.SecureAccess.Read(Rhino.UI.RhinoEtoApp.MainWindow);
+                        L = CLF_Read.SecureAccess.ReadAny(Rhino.UI.RhinoEtoApp.MainWindow);
                         if (L == null)
                         {
                             SourceType.SelectedIndex = 0;
