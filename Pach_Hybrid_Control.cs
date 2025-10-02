@@ -23,6 +23,7 @@ using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using System.Runtime.InteropServices;
 using System.Linq;
+using System.IO;
 using Eto.Drawing;
 using Eto.Forms;
 using Rhino.UI;
@@ -452,6 +453,8 @@ namespace Pachyderm_Acoustic
                 this.Parameter_Choice.Items.Add("Modulation Transfer Index (MTI - root STI)");
                 this.Parameter_Choice.Items.Add("Lateral Fraction (LF)");
                 this.Parameter_Choice.Items.Add("Lateral Efficiency (LE)");
+                this.Parameter_Choice.Items.Add("Interaural Cross-Correlation (Early)");
+                this.Parameter_Choice.Items.Add("Interaural Cross-Correlation (Late)");
                 this.Parameter_Choice.Items.Add("Echo Criterion (Music, 10%)");
                 this.Parameter_Choice.Items.Add("Echo Criterion (Music, 50%)");
                 this.Parameter_Choice.Items.Add("Echo Criterion (Speech, 10%)");
@@ -511,7 +514,6 @@ namespace Pachyderm_Acoustic
                 this.Alt_Choice.Height = 18;
 
                 Label labelAzi = new Label();
-                labelAzi.Text = "Azimuth";
                 labelAzi.Text = "Azimuth";
                 this.Azi_Choice = new NumericStepper();
                 this.Azi_Choice.DecimalPlaces = 2;
@@ -1834,7 +1836,7 @@ namespace Pachyderm_Acoustic
                     Update_Graph(null, new System.EventArgs());
                 }
             }
- 
+
             private void Parameter_Choice_SelectedIndexChanged(object sender, System.EventArgs e)
             {
                 Update_Parameters();
@@ -2507,6 +2509,117 @@ namespace Pachyderm_Acoustic
                         AcousticalMath.EchoCriterion(Audio.Pach_SP.FIR_Bandpass(IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, Receiver_Choice.SelectedIndex, SrcIDs, false, true, null), 7, SampleRate, 0), SampleRate, dtime, false, out EKG, out PercEcho, out Echo10, out Echo50);
                         SRT8.Text = string.Format("8000 hz. : {0}", Echo50);
                         break;
+
+
+                    case "Interaural Cross-Correlation (Early)":
+                        {
+                            double[][][] BinauralIRsPerBand = GenAllOctBandBinauralIRs(SampleRate);
+                            int refLen = BinauralIRsPerBand[0][0].Length;
+                            double irDur = refLen / (double)SampleRate;
+
+                            var lengthMismatches = (
+                                from band in Enumerable.Range(0, BinauralIRsPerBand.Length)
+                                from channel in Enumerable.Range(0, BinauralIRsPerBand[band].Length)
+                                where BinauralIRsPerBand[band][channel].Length != refLen
+                                select $"Band {band}, Channel {(channel == 0 ? "L" : "R")}"
+                                ).ToList();
+
+                            if (lengthMismatches.Any())
+                            {
+                                string errorMsg = $"Error: Inconsistent binaural IR lengths detected:\n{string.Join("\n", lengthMismatches)}\n" +
+                                                  $"Expected length: {refLen} samples ({irDur:F3} seconds at {SampleRate} Hz).";
+                                Console.WriteLine(errorMsg);
+                                throw new InvalidOperationException(errorMsg);
+                            }
+
+                            const double EarlyWinEnd = 0.08; // 80 ms
+                            if (EarlyWinEnd > irDur)
+                            {
+                                string errorMsg = $"Error: Analysis window (0-{EarlyWinEnd} s) exceeds IR duration ({irDur:F3} s).";
+                                Console.WriteLine(errorMsg);
+                                throw new InvalidOperationException(errorMsg);
+                            }
+
+                            double IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[0][0], BinauralIRsPerBand[0][1], SampleRate, dtime, 0.08);
+                            SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[1][0], BinauralIRsPerBand[1][1], SampleRate, dtime, 0.08);
+                            SRT2.Text = string.Format("125 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[2][0], BinauralIRsPerBand[2][1], SampleRate, dtime, 0.08);
+                            SRT3.Text = string.Format("250 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[3][0], BinauralIRsPerBand[3][1], SampleRate, dtime, 0.08);
+                            SRT4.Text = string.Format("500 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[4][0], BinauralIRsPerBand[4][1], SampleRate, dtime, 0.08);
+                            SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[5][0], BinauralIRsPerBand[5][1], SampleRate, dtime, 0.08);
+                            SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[6][0], BinauralIRsPerBand[6][1], SampleRate, dtime, 0.08);
+                            SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(IACCE, 2));
+
+                            IACCE = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[7][0], BinauralIRsPerBand[7][1], SampleRate, dtime, 0.08);
+                            SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(IACCE, 2));
+                            break;
+                        }
+
+                    case "Interaural Cross-Correlation (Late)":
+                        {
+                            double[][][] BinauralIRsPerBand = GenAllOctBandBinauralIRs(SampleRate);
+                            int refLen = BinauralIRsPerBand[0][0].Length;
+                            double irDur = refLen / (double)SampleRate;
+
+                            var lengthMismatches = (
+                                from band in Enumerable.Range(0, BinauralIRsPerBand.Length)
+                                from channel in Enumerable.Range(0, BinauralIRsPerBand[band].Length)
+                                where BinauralIRsPerBand[band][channel].Length != refLen
+                                select $"Band {band}, Channel {(channel == 0 ? "L" : "R")}"
+                            ).ToList();
+
+                            if (lengthMismatches.Any())
+                            {
+                                string errorMsg = $"Error: Inconsistent binaural IR lengths detected:\n{string.Join("\n", lengthMismatches)}\n" +
+                                                  $"Expected length: {refLen} samples ({irDur:F3} seconds at {SampleRate} Hz).";
+                                Console.WriteLine(errorMsg);
+                                throw new InvalidOperationException(errorMsg);
+                            }
+
+                            const double lateWindowStart = 0.08; // 80 ms
+                            if (irDur <= lateWindowStart)
+                            {
+                                string errorMsg = $"IR too short for late IACC analysis (requires at least {lateWindowStart}s, got {irDur:F3}s).";
+                                Console.WriteLine(errorMsg);
+                                throw new InvalidOperationException(errorMsg);
+                            }
+
+                            double IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[0][0], BinauralIRsPerBand[0][1], SampleRate, 0.08, irDur);
+                            SRT1.Text = string.Format("62.5 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[1][0], BinauralIRsPerBand[1][1], SampleRate, 0.08, irDur);
+                            SRT2.Text = string.Format("125 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[2][0], BinauralIRsPerBand[2][1], SampleRate, 0.08, irDur);
+                            SRT3.Text = string.Format("250 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[3][0], BinauralIRsPerBand[3][1], SampleRate, 0.08, irDur);
+                            SRT4.Text = string.Format("500 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[4][0], BinauralIRsPerBand[4][1], SampleRate, 0.08, irDur);
+                            SRT5.Text = string.Format("1000 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[5][0], BinauralIRsPerBand[5][1], SampleRate, 0.08, irDur);
+                            SRT6.Text = string.Format("2000 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[6][0], BinauralIRsPerBand[6][1], SampleRate, 0.08, irDur);
+                            SRT7.Text = string.Format("4000 hz. : {0}", Math.Round(IACCL, 2));
+
+                            IACCL = AcousticalMath.InterauralCrossCorrelation(BinauralIRsPerBand[7][0], BinauralIRsPerBand[7][1], SampleRate, 0.08, irDur);
+                            SRT8.Text = string.Format("8000 hz. : {0}", Math.Round(IACCL, 2));
+                            break;
+                        }
                 }
             }
 
@@ -2831,9 +2944,28 @@ namespace Pachyderm_Acoustic
 
                         List<int> SrcIDs = SourceList.SelectedSources();
 
-                        List<ScottPlot.Color> C = new List<ScottPlot.Color> { ScottPlot.Colors.Red, ScottPlot.Colors.OrangeRed, ScottPlot.Colors.Orange, ScottPlot.Colors.DarkGoldenRod, ScottPlot.Colors.Olive, ScottPlot.Colors.Green, ScottPlot.Colors.Aquamarine, ScottPlot.Colors.Azure, ScottPlot.Colors.Blue, ScottPlot.Colors.Indigo, ScottPlot.Colors.Violet };
-
                         Response = RenderFilter(44100);
+
+                        List<ScottPlot.Color> C;
+
+                        if (Response.Length == 2) // Left and right channels are easily differentiable
+                        {
+                            C = new List<ScottPlot.Color>
+                            {
+                                ScottPlot.Colors.Blue,
+                                ScottPlot.Colors.Orange
+                            };
+                        }
+                        else
+                        {
+                            C = new List<ScottPlot.Color>
+                            {
+                                ScottPlot.Colors.Red, ScottPlot.Colors.OrangeRed, ScottPlot.Colors.Orange,
+                                ScottPlot.Colors.DarkGoldenRod, ScottPlot.Colors.Olive, ScottPlot.Colors.Green,
+                                ScottPlot.Colors.Aquamarine, ScottPlot.Colors.Azure, ScottPlot.Colors.Blue,
+                                ScottPlot.Colors.Indigo, ScottPlot.Colors.Violet
+                            };
+                        }
 
                         //Get the maximum value of the Direct Sound
                         double DirectMagnitude = 0;
@@ -3043,9 +3175,13 @@ namespace Pachyderm_Acoustic
             private void Receiver_Choice_SelectedIndexChanged(object sender, EventArgs e)
             {
                 OpenAnalysis();
-                Update_Parameters();
                 Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
-                if (Receiver_Choice.SelectedIndex >= 0 && Receiver_Choice.Items.Count >= 0) Update_Graph(null, System.EventArgs.Empty);
+                if (Receiver_Choice.SelectedIndex >= 0 && Receiver_Choice.Items.Count >= 0)
+                {
+                    Update_Parameters();
+                    Update_Graph(null, System.EventArgs.Empty);
+                }
+                
                 List<int> srcs = SelectedSources();
                 double dtime = double.PositiveInfinity;
 
@@ -3295,12 +3431,7 @@ namespace Pachyderm_Acoustic
                     case "Binaural (select file...)":
                         Response = new double[2][];
                         if (hrtf == null) break;
-                        Response = IR_Construction.Aurfilter_HRTF(Direct_Data, IS_Data, Receiver, hrtf, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true);
-                        if (Graph_Octave.SelectedIndex != 8)
-                        {
-                            Response[0] = Pachyderm_Acoustic.Audio.Pach_SP.FIR_Bandpass(Response[0], Graph_Octave.SelectedIndex, Sample_Frequency, 0);
-                            Response[1] = Pachyderm_Acoustic.Audio.Pach_SP.FIR_Bandpass(Response[1], Graph_Octave.SelectedIndex, Sample_Frequency, 0);
-                        }
+                        Response = IR_Construction.Aurfilter_HRTF(Direct_Data, IS_Data, Receiver, hrtf, CutoffTime, Sample_Frequency, Receiver_Choice.SelectedIndex, SelectedSources(), _sysCompSettingsPrimitives, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true, false);
                         break;
                     case "First Order Ambisonics (ACN+SN3D)":
                         Response = new double[4][];
@@ -3824,6 +3955,98 @@ namespace Pachyderm_Acoustic
                 return Response;
             }
 
+            private static readonly object _hrtfLock = new object();
+            private static Pachyderm_Acoustic.Audio.HRTF _cachedHrtf = null;
+
+            public static Pachyderm_Acoustic.Audio.HRTF GetOrLoadHrtf(PachHybridControl control)
+            {
+                if (_cachedHrtf != null)
+                {
+                    return _cachedHrtf;
+                }
+
+                lock (_hrtfLock)
+                {
+                    if (_cachedHrtf != null)
+                        return _cachedHrtf;
+
+                    // Citation notice
+                    Rhino.RhinoApp.WriteLine(
+                        "Default HRTF (KEMAR subject 80) will be used.\n\n" +
+                        "We sincerely thank the Advanced Acoustic Information Systems Laboratory, RIEC, Tohoku University, Japan,\n" +
+                        "for providing this dataset.\n\n" +
+                        "Citation:\n" +
+                        "K. Watanabe, Y. Iwaya, Y. Suzuki, S. Takane, and S. Sato,\n" +
+                        "\"Dataset of head-related transfer functions measured with a circular loudspeaker array,\"\n" +
+                        "Acoust. Sci. & Tech. 35(3), 159-165 (2014). Copyright 2013 by Advanced Acoustic Information Systems Laboratory,\n" +
+                        "RIEC, Tohoku University, Japan. All rights reserved.\n\n");
+
+                    string dir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                    string kemarPath = Path.Combine(dir, "RIEC_hrir_subject_080.sofa");
+
+                    if (!File.Exists(kemarPath))
+                    {
+                        Console.WriteLine($"Error: Required HRTF file not found at: {kemarPath}");
+                        throw new FileNotFoundException($"HRTF file not found at: {kemarPath}");
+                    }
+
+                    _cachedHrtf = new Pachyderm_Acoustic.Audio.HRTF(kemarPath);
+                    Console.WriteLine($"Using HRTF file at: {kemarPath}");
+
+                    return _cachedHrtf;
+                }
+            }
+
+            public double[][][] GenAllOctBandBinauralIRs(int sampleFrequency)
+            {
+                var hrtf = GetOrLoadHrtf(this);
+
+                double[][] Broadband;
+                try
+                {
+                    Broadband = IR_Construction.Aurfilter_HRTF(
+                        Direct_Data,
+                        IS_Data,
+                        Receiver,
+                        hrtf,
+                        CutoffTime,
+                        sampleFrequency,
+                        Receiver_Choice.SelectedIndex,
+                        SelectedSources(),
+                        _sysCompSettingsPrimitives,
+                        false,
+                        (double)Alt_Choice.Value,
+                        (double)Azi_Choice.Value,
+                        true,
+                        true,
+                        true);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Aurfilter_HRTF failed: {ex.Message}");
+                    throw;
+                }
+
+                if (Broadband == null || Broadband.Length < 2 || Broadband[0] == null || Broadband[1] == null)
+                {
+                    Console.WriteLine("Error: Invalid broadband data returned from Aurfilter_HRTF.");
+                    return null;
+                }
+
+                double[][][] BinauralIRsPerBand = new double[8][][];
+                for (int band = 0; band < 8; band++)
+                {
+                    BinauralIRsPerBand[band] = new double[2][];
+                    BinauralIRsPerBand[band][0] = Pachyderm_Acoustic.Audio.Pach_SP.FIR_Bandpass(
+                        Broadband[0], band, sampleFrequency, 0);
+                    BinauralIRsPerBand[band][1] = Pachyderm_Acoustic.Audio.Pach_SP.FIR_Bandpass(
+                        Broadband[1], band, sampleFrequency, 0);
+                }
+
+                Console.WriteLine("All octave-band binaural IRs generated successfully.");
+                return BinauralIRsPerBand;
+            }
+
             private Eto.Forms.OpenFileDialog GetWave = new Eto.Forms.OpenFileDialog();
             Pachyderm_Acoustic.Audio.HRTF hrtf;
             public Pachyderm_Acoustic.Audio.HRTF ReadSofaHRTF()
@@ -3831,21 +4054,225 @@ namespace Pachyderm_Acoustic
                 GetWave.Filters.Clear();
                 GetWave.Filters.Add("HRTF - SOFA convention (*.sofa) |*.sofa");
                 GetWave.CurrentFilterIndex = 0;
-                if (GetWave.ShowDialog(this) == DialogResult.Ok)
+
+                var result = GetWave.ShowDialog(this);
+                if (result != DialogResult.Ok)
                 {
-                    try
+                    Rhino.RhinoApp.WriteLine("HRTF selection cancelled by user.");
+                    return null;
+                }
+
+                var hrtf = new Pachyderm_Acoustic.Audio.HRTF(GetWave.FileName);
+                if (!hrtf.ValidationPassed)
+                {
+                    Rhino.RhinoApp.WriteLine($"{hrtf.ValidationMessage}");
+                    return null;
+                }
+
+                Rhino.RhinoApp.WriteLine($"Using HRTF file at: {GetWave.FileName}");
+                Channel_View.Items.Clear();
+                Channel_View.Items.Add(new channel(0, new Hare.Geometry.Vector(0, 0, 0), channel.channel_type.hrtf, 0));
+
+                return hrtf;
+            }
+
+            private Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings _sysCompSettingsPrimitives;
+
+            public static Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings GetSystemCompSettingsPrimitives()
+            {
+                var rhinoSettings = GetRhinoSystemCompSettings();
+
+                return new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
+                {
+                    SelectedEQ = (int)rhinoSettings.SelectedEQ,
+                    SmoothingOct = rhinoSettings.SmoothingOct,
+                    MaxBoostDb = rhinoSettings.MaxBoostDb,
+                    LowFreqHz = rhinoSettings.LowFreqHz,
+                    MinPhase = rhinoSettings.MinPhase,
+                    IsCalibrated = rhinoSettings.IsCalibrated,
+                    TFReference = rhinoSettings.TFReference,
+                    ConvertToDTF = rhinoSettings.ConvertToDTF,
+                    InputIsDTF = rhinoSettings.InputIsDTF,
+                    FreeFieldIncidence = rhinoSettings.FreeFieldIncidence
+                };
+            }
+
+            public static RhinoSystemCompSettings GetRhinoSystemCompSettings()
+            {
+                var settings = new RhinoSystemCompSettings();
+
+                Rhino.RhinoApp.WriteLine("How should the input dataset be interpreted?");
+                Rhino.RhinoApp.WriteLine("1 = Full HRTF");
+                Rhino.RhinoApp.WriteLine("2 = Directional-only");
+
+                int inputType = ReadIntInRange("Choice: ", 1, 2);
+                settings.InputIsDTF = (inputType == 2);
+
+                if (settings.InputIsDTF) return settings;
+
+                settings.ConvertToDTF = ReadBool("Do you want to convert this HRTF to a Directional Transfer Function? (y/n): ");
+
+                Rhino.RhinoApp.WriteLine("Equalisation compensates for the response of the measurement system.");
+                Rhino.RhinoApp.WriteLine("Select type:");
+
+                if (settings.ConvertToDTF)
+                {
+                    // If converting to DTF, user must choose an EQ style (No EQ not allowed)
+                    Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
+                    Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
+                    Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
+
+                    int choice = ReadIntInRange("Choice: ", 1, 3);
+                    AssignEQSettings(settings, choice);
+                }
+                else
+                {
+                    Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
+                    Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
+                    Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
+                    Rhino.RhinoApp.WriteLine("4 = No equalisation");
+
+                    int choice = ReadIntInRange("Choice: ", 1, 4);
+                    AssignEQSettings(settings, choice);
+                }
+
+                return settings;
+            }
+
+            private static void AssignEQSettings(RhinoSystemCompSettings settings, int choice)
+            {
+                bool enableSmoothing;
+
+                switch (choice)
+                {
+                    case 1: // Measurement EQ
+                        settings.SelectedEQ = RhinoSystemCompSettings.EQType.Measurement;
+
+                        // Load transfer function
+                        var openDialog = new Eto.Forms.OpenFileDialog
+                        {
+                            Title = "Select transfer function for measurement equalisation (mono)"
+                        };
+                        openDialog.Filters.Add("Wave Audio (*.wav)|*.wav");
+
+                        if (openDialog.ShowDialog(null) != Eto.Forms.DialogResult.Ok)
+                            throw new OperationCanceledException("User cancelled dialog.");
+
+                        int tfFs;
+                        double[][] tfReference = Pachyderm_Acoustic.Audio.Pach_SP.Wave.ReadtoDouble(openDialog.FileName, true, out tfFs);
+
+                        if (tfReference.Length != 1)
+                            Rhino.RhinoApp.WriteLine("Warning: .wav contains multiple channels. Using channel 0 as mono reference."); // Gardner, 1997 recommends mono - 'equalize the data set with respect to a reference measurement obtained using one of the ear microphones positioned at the center of the head with no head present'.
+
+                        settings.TFReference = tfReference[0];
+                        settings.IsCalibrated = ReadBool("Is the transfer function magnitude calibrated? (y/n): ");
+
+                        enableSmoothing = ReadBool("Enable smoothing? (y/n): ");
+                        settings.SmoothingOct = enableSmoothing
+                            ? ReadClampedDouble("Enter smoothing octave fraction (e.g., 0.33): ", 0.05, 2.0)
+                            : null;
+                        break;
+
+                    case 2: // Free-field EQ
+                        settings.SelectedEQ = RhinoSystemCompSettings.EQType.FreeField;
+                        settings.FreeFieldIncidence = ReadIntInRange("Specify the azimuth of the free-field reference (e.g. 30°):", 0, 360);
+                        settings.MaxBoostDb = ReadClampedDouble("Max boost (dB) [press Enter to skip]: ", 0, 24);
+                        settings.LowFreqHz = ReadClampedDouble("Low-frequency cutoff (Hz) [press Enter to skip]: ", 20, 20000);
+                        enableSmoothing = ReadBool("Enable smoothing? (y/n): ");
+                        settings.SmoothingOct = enableSmoothing
+                            ? ReadClampedDouble("Enter smoothing octave fraction (e.g., 0.33): ", 0.05, 2.0)
+                            : null;
+                        break;
+
+                    case 3: // Diffuse-field EQ
+                        settings.SelectedEQ = RhinoSystemCompSettings.EQType.DiffuseField;
+                        settings.MaxBoostDb = ReadClampedDouble("Max boost (dB) [press Enter to skip]: ", 0, 24);
+                        settings.LowFreqHz = ReadClampedDouble("Low-frequency cutoff (Hz) [press Enter to skip]: ", 20, 20000);
+                        settings.MinPhase = ReadBool("Use minimum-phase filter? (y/n): ");
+                        enableSmoothing = ReadBool("Enable smoothing? (y/n): ");
+                        settings.SmoothingOct = enableSmoothing
+                            ? ReadClampedDouble("Enter smoothing octave fraction (e.g., 0.33): ", 0.05, 2.0)
+                            : null;
+                        break;
+
+                    case 0: // No EQ
+                    default:
+                        settings.SelectedEQ = RhinoSystemCompSettings.EQType.None;
+                        Rhino.RhinoApp.WriteLine("No equalisation applied.");
+                        break;
+                }
+            }
+
+            private static int ReadIntInRange(string prompt, int min, int max)
+            {
+                while (true)
+                {
+                    int result = 0;
+                    var rc = Rhino.Input.RhinoGet.GetInteger(prompt, false, ref result);
+
+                    if (rc == Rhino.Commands.Result.Success && result >= min && result <= max)
+                        return result;
+
+                    if (rc == Rhino.Commands.Result.Cancel)
+                        throw new OperationCanceledException();
+
+                    Rhino.RhinoApp.WriteLine($"Invalid choice. Enter an integer between {min} and {max}.");
+                }
+            }
+
+            private static double? ReadClampedDouble(string prompt, double min, double max, double? defaultValue = null)
+            {
+                double number = defaultValue ?? 0.0;
+
+                var rc = Rhino.Input.RhinoGet.GetNumber(prompt, true, ref number, min, max);
+                if (rc == Rhino.Commands.Result.Success)
+                {
+                    return Clamp(number, min, max);
+                }
+                if (rc == Rhino.Commands.Result.Nothing)
+                {
+                    return defaultValue;
+                }
+                if (rc == Rhino.Commands.Result.Cancel)
+                {
+                    return null;
+                }
+
+                return null;
+            }
+
+            public static double Clamp(double value, double min, double max)
+            {
+                if (value < min) return min;
+                if (value > max) return max;
+                return value;
+            }
+
+            public static bool ReadBool(string prompt)
+            {
+                var go = new Rhino.Input.Custom.GetOption();
+                go.SetCommandPrompt(prompt);
+
+                int optYes = go.AddOption("Yes");
+                int optNo = go.AddOption("No");
+
+                while (true)
+                {
+                    Rhino.Input.GetResult rc = go.Get();
+
+                    if (rc == Rhino.Input.GetResult.Option)
                     {
-                        Channel_View.Items.Clear();
-                        return new Pachyderm_Acoustic.Audio.HRTF(GetWave.FileName);
-                        Channel_View.Items.Add(new channel(0, new Hare.Geometry.Vector(0, 0, 0), channel.channel_type.hrtf, 0));
+                        if (go.Option().Index == optYes)
+                            return true;
+                        if (go.Option().Index == optNo)
+                            return false;
                     }
-                    catch (Exception x)
+                    else
                     {
-                        Rhino.RhinoApp.CommandLineOut.Write(x.StackTrace);
-                        return null;
+                        // Covers Nothing (Enter) and Cancel (Esc)
+                        Rhino.RhinoApp.WriteLine("Invalid input. Please choose Yes or No.");
                     }
                 }
-                return null;
             }
 
             public void ReadArray()
@@ -4088,6 +4515,22 @@ namespace Pachyderm_Acoustic
                         break;
                     case "Binaural (select file...)":
                         hrtf = ReadSofaHRTF();
+                        if (hrtf == null)
+                        {
+                            return;
+                        }
+                        try
+                        {
+                            _sysCompSettingsPrimitives = GetSystemCompSettingsPrimitives();
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Rhino.RhinoApp.WriteLine("Equalisation cancelled by user. Defaulting to none.");
+                            _sysCompSettingsPrimitives = new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
+                            {
+                                SelectedEQ = 0 // Default to 'None'
+                            };
+                        }
                         break;
                     case "A-Format (type I-A)":
                         Channel_View.Items.Add(channel.FLU(0));
@@ -4114,6 +4557,14 @@ namespace Pachyderm_Acoustic
 
             private void Graph_Octave_SelectedIndexChanged(object sender, EventArgs e)
             {
+                var dropdown = sender as DropDown;
+                if (dropdown == null || dropdown.SelectedIndex < 0) return;
+
+                if (Response == null)
+                {
+                    Rhino.RhinoApp.WriteLine("No impulse response found to update graph...");
+                    return;
+                }
                 Update_Graph(sender, e);
             }
 
@@ -4971,6 +5422,22 @@ namespace Pachyderm_Acoustic
             int SFreq_Rendered;
 
 
+        }
+
+        public class RhinoSystemCompSettings
+        {
+            public enum EQType { None = 0, Measurement = 1, FreeField = 2, DiffuseField = 3 }
+
+            public EQType SelectedEQ { get; set; }
+            public double? SmoothingOct { get; set; }
+            public double? MaxBoostDb { get; set; }
+            public double? LowFreqHz { get; set; }
+            public bool MinPhase { get; set; }
+            public bool IsCalibrated { get; set; }
+            public double[] TFReference { get; set; }
+            public bool ConvertToDTF { get; set; }
+            public bool InputIsDTF { get; set; }
+            public int FreeFieldIncidence { get; set; }
         }
     }
 }
