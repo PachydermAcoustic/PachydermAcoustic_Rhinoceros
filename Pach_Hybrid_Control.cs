@@ -4167,7 +4167,7 @@ namespace Pachyderm_Acoustic
                         settings.TFReference = tfReference[0];
                         settings.IsCalibrated = ReadBool("Is the transfer function magnitude calibrated? (y/n): ");
 
-                        enableSmoothing = ReadBool("Enable smoothing? (y/n): ");
+                        enableSmoothing = ReadBool("Enable smoothing? (y/n): "); // It should be noted that this refers to smoothing of the EQ curve, not the input data.
                         settings.SmoothingOct = enableSmoothing
                             ? ReadClampedDouble("Enter smoothing octave fraction (e.g., 0.33): ", 0.05, 2.0)
                             : null;
@@ -4269,7 +4269,6 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        // Covers Nothing (Enter) and Cancel (Esc)
                         Rhino.RhinoApp.WriteLine("Invalid input. Please choose Yes or No.");
                     }
                 }
