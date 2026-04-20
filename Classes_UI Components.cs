@@ -1001,13 +1001,13 @@ namespace Pachyderm_Acoustic
 
                 if (frameworkDescription.Contains(".NET Framework"))
                 {
-                    System.Diagnostics.Process.Start("https://www.orase.org/resources");
+                    System.Diagnostics.Process.Start("https://www.orase.org/documentation");
                 }
                 else if (frameworkDescription.Contains(".NET"))
                 {
                     System.Diagnostics.Process.Start(new ProcessStartInfo
                     {
-                        FileName = "https://www.orase.org/resources",
+                        FileName = "https://www.orase.org/documentation",
                         UseShellExecute = true
                     });
                 }

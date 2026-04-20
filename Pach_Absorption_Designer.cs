@@ -249,9 +249,136 @@ namespace Pachyderm_Acoustic
                 return Layers_;
             }
 
-            private void Update_Graphs()
+            private CancellationTokenSource _buildCts;
+            private Thread _buildThread;
+            private readonly object _buildLock = new object();
+            private int _buildGeneration;
+
+            private List<ABS_Layer> Material_Layers_Snapshot()
+            {
+                List<ABS_Layer> snapshot = new List<ABS_Layer>(Layers.Count);
+                foreach (ABS_Layer layer in Layers)
+                {
+                    ABS_Layer copy = new ABS_Layer(layer.T, layer.depth, layer.pitch, layer.width,
+                        layer.Flow_Resist, layer.porosity, layer.Embodied_Carbon,
+                        layer.Material_Name ?? "Unknown");
+                    copy.density = layer.density;
+                    copy.YoungsModulus = layer.YoungsModulus;
+                    copy.PoissonsRatio = layer.PoissonsRatio;
+                    copy.tortuosity = layer.tortuosity;
+                    copy.Viscous_Characteristic_Length = layer.Viscous_Characteristic_Length;
+                    copy.Thermal_Permeability = layer.Thermal_Permeability;
+                    copy.shape = layer.shape;
+                    copy.grid = layer.grid;
+                    snapshot.Add(copy);
+                }
+                return snapshot;
+            }
+
+            private async void Update_Graphs()
             {
                 if (LayerList.Items.Count < 1) return;
+
+                // Increment generation — only the latest call should proceed
+                int myGeneration = ++_buildGeneration;
+
+                // Cancel any in-flight build
+                _buildCts?.Cancel();
+
+                // Wait for previous thread to actually stop
+                if (_buildThread != null && _buildThread.IsAlive)
+                {
+                    while (_buildThread.IsAlive)
+                        await Task.Delay(10);
+                }
+
+                // If a newer call arrived while we were waiting, let it take over
+                if (myGeneration != _buildGeneration) return;
+
+                _buildCts = new CancellationTokenSource();
+                CancellationToken token = _buildCts.Token;
+
+                List<ABS_Layer> layers;
+                try { layers = Material_Layers_Snapshot(); }
+                catch { return; }
+
+                if (layers.Count == 0) return;
+
+                bool transmission = Air_Term.Checked;
+                bool infiniteSample = Inf_Sample.Checked;
+                bool finiteSample = Fin_Sample.Checked;
+                var zrLocal = Zr;
+
+                if (finiteSample && zrLocal == null) return;
+
+                ScottPlot.Color fade = new ScottPlot.Color(255, 255, 255, 200);
+
+                if (!(Alpha_Normal.Plot.PlottableList.LastOrDefault() is ScottPlot.Plottables.Rectangle))
+                {
+
+                    var axAlpha = Alpha_Normal.Plot.Axes.GetLimits();
+                    Rectangle r = Alpha_Normal.Plot.Add.Rectangle(axAlpha.Left, axAlpha.Right, axAlpha.Bottom, axAlpha.Top);
+                    r.FillColor = fade;
+                    Alpha_Normal.Refresh();
+
+                    var axPolar = Polar_Absorption.Plot.Axes.GetLimits();
+                    r = Polar_Absorption.Plot.Add.Rectangle(axPolar.Left, axPolar.Right, axPolar.Bottom, axPolar.Top);
+                    r.FillColor = fade;
+                    Polar_Absorption.Refresh();
+
+                    var axImp = Impedance_Graph.Plot.Axes.GetLimits();
+                    r = Impedance_Graph.Plot.Add.Rectangle(axImp.Left, axImp.Right, axImp.Bottom, axImp.Top);
+                    r.FillColor = fade;
+                    Impedance_Graph.Refresh();
+
+                    var axPie = EmbodiedCarbon_Pie.Plot.Axes.GetLimits();
+                    r = EmbodiedCarbon_Pie.Plot.Add.Rectangle(axPie.Left, axPie.Right, axPie.Bottom, axPie.Top);
+                    r.FillColor = fade;
+                    EmbodiedCarbon_Pie.Refresh();
+                }
+                Environment.Smart_Material result = null;
+
+                _buildThread = new Thread(() =>
+                {
+                    try
+                    {
+                        if (infiniteSample)
+                            result = new Environment.Smart_Material(transmission, layers, 16000, 1.2, 343, token);
+                        else
+                            result = new Environment.Smart_Material(transmission, layers, 16000, 1.2, 343, zrLocal, 0.1, token);
+                    }
+                    catch (OperationCanceledException) { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Smart_Material build failed: " + ex.Message);
+                    }
+                });
+                _buildThread.IsBackground = true;
+                _buildThread.Start();
+
+                // Poll until thread completes — keeps Eto message pump alive
+                do
+                {
+                    await Task.Delay(50);
+                } while (_buildThread.IsAlive);
+
+                // If a newer call arrived while we were building, discard this result
+                if (myGeneration != _buildGeneration) return;
+
+                // If canceled while waiting, a newer Update_Graphs is taking over
+                if (token.IsCancellationRequested) return;
+
+                if (result == null) return;
+
+                sm = result;
+                Render_Graphs();
+            }
+
+            private Thread _iirThread;
+
+            private void Render_Graphs()
+            {
+                if (sm == null || sm.frequency == null) return;
 
                 if (Chart_Contents.SelectedIndex == 0)
                 {
@@ -261,15 +388,6 @@ namespace Pachyderm_Acoustic
 
                     Alpha_Normal.Plot.YLabel("Alpha (0 to 1)", 10);
 
-                    if (Fin_Sample.Checked && Zr == null) return;
-
-                    List<ABS_Layer> Layers_ = Material_Layers();
-
-                    if (Layers_.Count == 0) return;
-
-                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343);
-                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers_, 16000, 1.2, 343, Zr, 0.1);
-
                     double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
 
                     //Polar Graph
@@ -277,47 +395,38 @@ namespace Pachyderm_Acoustic
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
 
                     RI_Absorption = new double[8];
-                    Polar_Absorption.Plot.Axes.SetLimitsY(0,1);
+                    Polar_Absorption.Plot.Axes.SetLimitsY(0, 1);
 
-                    ScottPlot.Color[] colors = new Color[8] {ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet };
+                    ScottPlot.Color[] colors = new Color[8] { ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet };
 
                     for (int oct = 0; oct < 8; oct++)
                     {
-                        // Create a new polar plot for each octave
                         var polarPlot = Polar_Absorption.Plot.Add.PolarAxis(1);
 
                         polarPlot.Circles.ForEach(x => x.LineColor = Colors.Grey);
                         polarPlot.Spokes.ForEach(x => x.LineColor = Colors.Grey);
                         polarPlot.Rotation = Angle.FromDegrees(90);
-                        // Set the properties for the polar plot
                         List<Coordinates> polar = new List<Coordinates>();
                         for (int i = 0; i < AnglesDeg.Length; i++)
                         {
-                            polar.Add( polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
+                            polar.Add(polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
                         }
 
                         Polar_Absorption.Plot.Add.ScatterLine(polar, colors[oct]);
-
-                        // Ensure no markers are displayed
                         (Polar_Absorption.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
 
-                        // Update the Y-axis limits if necessary
                         for (int a = 0; a < sm.Ang_Coef_Oct[oct].Length; a++)
                         {
                             if (Polar_Absorption.Plot.Axes.Left.Max < sm.Ang_Coef_Oct[oct][a])
                                 Polar_Absorption.Plot.Axes.Left.Max = Math.Ceiling(sm.Ang_Coef_Oct[oct][a] * 10) / 10;
                         }
                     }
-                    // Make changes to the plot's overall configuration
+
                     Polar_Absorption.Plot.Title("Absorption Coefficient by Angle of Incidence", size: 14);
                     Polar_Absorption.Plot.Layout.Frameless();
-                    Polar_Absorption.Plot.Axes.Margins(0,0,0,0);
+                    Polar_Absorption.Plot.Axes.Margins(0, 0, 0, 0);
                     Polar_Absorption.Plot.Benchmark.IsVisible = false;
-
-                    // Set axis limits to show the full polar plot
                     Polar_Absorption.Plot.Axes.SetLimits(-1.5, 1.5, -1.5, 1.5);
-
-                    // Force refresh the plot
                     Polar_Absorption.Refresh();
 
                     //Z Graph
@@ -358,34 +467,21 @@ namespace Pachyderm_Acoustic
 
                     Color[] pie_color = new Color[]
                     {
-                        ScottPlot.Colors.Red,
-                        ScottPlot.Colors.Orange,
-                        ScottPlot.Colors.Yellow,
-                        ScottPlot.Colors.Green,
-                        ScottPlot.Colors.Blue,
-                        ScottPlot.Colors.BlueViolet,
-                        ScottPlot.Colors.Violet,
-                        ScottPlot.Colors.Plum,
-                        ScottPlot.Colors.Cyan,
-                        ScottPlot.Colors.Magenta,
-                        ScottPlot.Colors.Lime,
-                        ScottPlot.Colors.Pink,
-                        ScottPlot.Colors.Teal,
-                        ScottPlot.Colors.Brown,
-                        ScottPlot.Colors.Gold,
-                        ScottPlot.Colors.Coral,
-                        ScottPlot.Colors.Turquoise,
-                        ScottPlot.Colors.Indigo,
-                        ScottPlot.Colors.Salmon,
-                        ScottPlot.Colors.Khaki
+                        ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow,
+                        ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet,
+                        ScottPlot.Colors.Violet, ScottPlot.Colors.Plum, ScottPlot.Colors.Cyan,
+                        ScottPlot.Colors.Magenta, ScottPlot.Colors.Lime, ScottPlot.Colors.Pink,
+                        ScottPlot.Colors.Teal, ScottPlot.Colors.Brown, ScottPlot.Colors.Gold,
+                        ScottPlot.Colors.Coral, ScottPlot.Colors.Turquoise, ScottPlot.Colors.Indigo,
+                        ScottPlot.Colors.Salmon, ScottPlot.Colors.Khaki
                     };
 
                     foreach (var kvp in materialValues)
                     {
-                        string label = kvp.Key + " :\n" + Math.Round(kvp.Value,1).ToString() + " kgCO2e/m2"; 
+                        string label = kvp.Key + " :\n" + Math.Round(kvp.Value, 1).ToString() + " kgCO2e/m2";
                         double value = kvp.Value;
                         if (value == 0) continue;
-                        int i = slices.Count % pie_color.Length; // Use modulo to cycle through colors
+                        int i = slices.Count % pie_color.Length;
                         PieSlice slice = new PieSlice(value, pie_color[i], label);
                         slice.LabelStyle.Bold = true;
                         slices.Add(slice);
@@ -397,7 +493,7 @@ namespace Pachyderm_Acoustic
                     var pie = EmbodiedCarbon_Pie.Plot.Add.Pie(slices.ToArray());
                     pie.SliceLabelDistance = 0.75;
                     pie.ExplodeFraction = .1;
-                    EmbodiedCarbon_Pie.Plot.Axes.SetLimitsX(1,1);
+                    EmbodiedCarbon_Pie.Plot.Axes.SetLimitsX(1, 1);
                     EmbodiedCarbon_Pie.Plot.Legend.IsVisible = true;
                     EmbodiedCarbon_Pie.Refresh();
 
@@ -410,22 +506,19 @@ namespace Pachyderm_Acoustic
 
                     if (Direction_choice.SelectedIndex == 0)
                     {
-                        //for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], sm.NI_Coef[i]);
                         if (sm.RI_Averages != null) Alpha_Normal.Plot.Add.Scatter(logfreq, sm.RI_Averages, ScottPlot.Colors.Maroon);
-                        Alpha_Normal.Plot.Add.Scatter(logfreq, sm.NI_Coef, ScottPlot.Colors.Blue);//
+                        Alpha_Normal.Plot.Add.Scatter(logfreq, sm.NI_Coef, ScottPlot.Colors.Blue);
                         (Alpha_Normal.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                         double[] logfreq_third = thirdOctaveBands.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
                         if (Material_List.SelectedIndex >= 0 && Show_ECC_ABS.Checked == true) Alpha_Normal.Plot.Add.Scatter(logfreq_third, EHM.Abs_Coef[Material_List.SelectedIndex], ScottPlot.Colors.Green);
                     }
                     else
                     {
-                        double[][] acoef = AbsorptionModels.Operations.Absorption_Coef(sm.Reflection_Coefficient); //(sm.Z, sm.frequency);
-                                                                                                                   //for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Series[0].Points.AddXY(sm.frequency[i], acoef[Direction_choice.SelectedIndex + 17][i]); //sm.NI_Coef[i]);
+                        double[][] acoef = AbsorptionModels.Operations.Absorption_Coef(sm.Reflection_Coefficient);
                         Alpha_Normal.Plot.Add.Scatter(logfreq, acoef[Direction_choice.SelectedIndex + 17], ScottPlot.Colors.Blue);
                         (Alpha_Normal.Plot.PlottableList[0] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                     }
 
-                    //double[] xs = new double[8] { 63, 125, 250, 500, 1000, 2000, 4000, 8000 };
                     double[] xs = new double[8] { 3, 4, 5, 6, 7, 8, 9, 10 };
                     double[] ys = new double[8];
                     for (int oct = 0; oct < 8; oct++) ys[oct] = RI_Absorption[oct];
@@ -441,21 +534,11 @@ namespace Pachyderm_Acoustic
 
                     Alpha_Normal.Plot.YLabel("Transmission Loss (dB)", 10);
 
-                    if (Fin_Sample.Checked && Zr == null) return;
-
-                    List<ABS_Layer> Layers = Material_Layers();
-
-                    if (Layers.Count == 0) return;
-
-                    if (Inf_Sample.Checked) sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343);
-                    else sm = new Environment.Smart_Material(Air_Term.Checked, Layers, 16000, 1.2, 343, Zr, 0.1);
-
                     double[] logfreq = sm.frequency.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
 
                     double[] AnglesDeg = new double[sm.Angles.Length];
                     for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
 
-                    //Z graph...
                     RI_Absorption = new double[8];
 
                     double[] real = new double[sm.Z[18].Length];
@@ -476,41 +559,24 @@ namespace Pachyderm_Acoustic
 
                     Impedance_Graph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[12]
                     {
-                            new Tick(1, "16 Hz."),
-                            new Tick(2, "31.25 Hz."),
-                            new Tick(3, "62.5 Hz."),
-                            new Tick(4, "125 Hz."),
-                            new Tick(5, "250 Hz."),
-                            new Tick(6, "500 Hz."),
-                            new Tick(7, "1000 Hz."),
-                            new Tick(8, "2000 Hz."),
-                            new Tick(9, "4000 Hz."),
-                            new Tick(10, "8000 Hz."),
-                            new Tick(11, "16000 Hz."),
-                            new Tick(12, "32000 Hz.")
+                        new Tick(1, "16 Hz."), new Tick(2, "31.25 Hz."), new Tick(3, "62.5 Hz."),
+                        new Tick(4, "125 Hz."), new Tick(5, "250 Hz."), new Tick(6, "500 Hz."),
+                        new Tick(7, "1000 Hz."), new Tick(8, "2000 Hz."), new Tick(9, "4000 Hz."),
+                        new Tick(10, "8000 Hz."), new Tick(11, "16000 Hz."), new Tick(12, "32000 Hz.")
                     });
 
-                    //T graph...
                     double[] TL = new double[sm.frequency.Length];
-                    double[] aTL = new double[sm.frequency.Length];
-
                     double max = double.NegativeInfinity;
 
                     for (int i = 0; i < sm.frequency.Length; i++)
                     {
-                        //Complex tau = 0;
-                        //for (int a = 0; a < sm.Angles.Length; a++)
-                        //{
-                        //    tau += sm.Trans_Coefficient[a][i] * Math.Cos(a * sm.Angles.Length / 180) * Math.Sin(a * sm.Angles.Length / 180);                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
-                        //}
-                        //aTL[i] = -10 * Complex.Log10(tau).Real;
-                        TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[Direction_choice.SelectedIndex + 17][i]).Real;                        //TL[i] = 10 * Math.Log10((sm.Trans_Loss[19][i].Real * sm.Trans_Loss[19][i].Real));
+                        TL[i] = -10 * Complex.Log10(sm.Trans_Coefficient[Direction_choice.SelectedIndex + 17][i]).Real;
                         max = Math.Max(TL[i], max);
                     }
 
                     double maxTL = 0;
                     double minTL = double.PositiveInfinity;
-                    Polar_Absorption.Plot.Axes.SetLimitsY(0,1);
+                    Polar_Absorption.Plot.Axes.SetLimitsY(0, 1);
 
                     ScottPlot.Color[] colors = new Color[8] { ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet, ScottPlot.Colors.Plum };
 
@@ -519,24 +585,17 @@ namespace Pachyderm_Acoustic
                         double[] TL_ang = new double[sm.Ang_tau_Oct[oct].Length];
                         for (int a = 0; a < sm.Ang_tau_Oct[oct].Length; a++)
                         {
-                            //if (Polar_Absorption.ChartAreas[0].AxisY.Maximum < sm.Ang_Coef_Oct[oct][a])
-                            //{
-                            double TLnow = sm.Ang_tau_Oct[oct][a];// - 10 * Math.Log10(sm.Ang_tau_Oct[oct][a]);
+                            double TLnow = sm.Ang_tau_Oct[oct][a];
                             maxTL = Math.Max(TLnow, maxTL);
                             minTL = Math.Min(TLnow, minTL);
                             TL_ang[a] = TLnow;
-                            //Polar_Absorption.ChartAreas[0].AxisY.Maximum = sm.Ang_tau_Oct[oct][a] * 10;
-                            //}
                         }
                         Polar_Absorption.Plot.Add.Scatter(AnglesDeg, TL_ang, colors[oct]);
                         (Polar_Absorption.Plot.PlottableList[oct] as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
                     }
 
-                    ///Plot Embodied Carbon
-                    
-                    Polar_Absorption.Plot.Axes.Left.Max = 1; //Math.Min(1, maxTL);// maxTL;
-                    if (Chart_Contents.SelectedIndex == 0) Polar_Absorption.Plot.Title("Absorption Coefficient by Angle of Incidence");
-                    else Polar_Absorption.Plot.Title("Transmission Coefficient by Angle of Incidence");
+                    Polar_Absorption.Plot.Axes.Left.Max = 1;
+                    Polar_Absorption.Plot.Title("Transmission Coefficient by Angle of Incidence");
 
                     for (int i = 0; i < sm.frequency.Length; i++) Alpha_Normal.Plot.Add.Scatter(logfreq[i], TL[i]);
                     double[] xs = new double[8] { 63, 125, 250, 500, 1000, 2000, 4000, 8000 };
@@ -547,37 +606,23 @@ namespace Pachyderm_Acoustic
                         ys[oct] = TLnow;
                     }
                     Alpha_Normal.Plot.Axes.SetLimitsY(0, -10 * Math.Log10(minTL));
-                    if (Chart_Contents.SelectedIndex == 0) Alpha_Normal.Plot.Title("Absorption Coefficient");
-                    else Alpha_Normal.Plot.Title("Transmission Loss (dB)");
+                    Alpha_Normal.Plot.Title("Transmission Loss (dB)");
                 }
 
-                Impedance_Graph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
+                Impedance_Graph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[12]
                 {
-                            //new Tick(1, "16"),
-                            //new Tick(2, "31"),
-                            new Tick(3, "63"),
-                            new Tick(4, "125"),
-                            new Tick(5, "250"),
-                            new Tick(6, "500"),
-                            new Tick(7, "1k"),
-                            new Tick(8, "2k"),
-                            new Tick(9, "4k"),
-                            new Tick(10, "8k")
-                            //new Tick(11, "16k"),
-                            //new Tick(12, "32k")
+                    new Tick(1, "16"), new Tick(2, "31"), new Tick(3, "63"), new Tick(4, "125"),
+                    new Tick(5, "250"), new Tick(6, "500"), new Tick(7, "1k"), new Tick(8, "2k"),
+                    new Tick(9, "4k"), new Tick(10, "8k"), new Tick(11, "16k"), new Tick(12, "32k")
                 });
 
-                Alpha_Normal.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[8]
-                 {
-                            new Tick(3, "62.5 Hz."),
-                            new Tick(4, "125 Hz."),
-                            new Tick(5, "250 Hz."),
-                            new Tick(6, "500 Hz."),
-                            new Tick(7, "1000 Hz."),
-                            new Tick(8, "2000 Hz."),
-                            new Tick(9, "4000 Hz."),
-                            new Tick(10, "8000 Hz.")
-                 });
+                Alpha_Normal.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(new Tick[12]
+                {
+                    new Tick(1, "16"), new Tick(2, "31"), new Tick(3, "63"), new Tick(4, "125"),
+                    new Tick(5, "250"), new Tick(6, "500"), new Tick(7, "1k"), new Tick(8, "2k"),
+                    new Tick(9, "4k"), new Tick(10, "8k"), new Tick(11, "16k"), new Tick(12, "32k")
+                });
+
                 Alpha_Normal.Plot.Legend.ManualItems.Clear();
                 Alpha_Normal.Plot.Legend.ManualItems.Add(new LegendItem());
                 Alpha_Normal.Plot.Legend.ManualItems.Add(new LegendItem());
@@ -588,11 +633,10 @@ namespace Pachyderm_Acoustic
                 Alpha_Normal.Plot.Legend.ManualItems[0].LabelText = "Angular Absorption Coefficient";
                 Alpha_Normal.Plot.Legend.ManualItems[1].LabelText = "Random Incidence Absorption Coefficient";
                 Alpha_Normal.Plot.Legend.Alignment = ScottPlot.Alignment.LowerRight;
-
                 Alpha_Normal.Plot.Legend.IsVisible = true;
 
-                Polar_Absorption.Plot.XLabel("Angle of Incidence (degrees)",10);
-                Polar_Absorption.Plot.YLabel("Coefficient",10);
+                Polar_Absorption.Plot.XLabel("Angle of Incidence (degrees)", 10);
+                Polar_Absorption.Plot.YLabel("Coefficient", 10);
                 Polar_Absorption.Plot.Legend.ManualItems.Clear();
                 for (int oct = 0; oct < 8; oct++)
                 {
@@ -619,36 +663,153 @@ namespace Pachyderm_Acoustic
                 Polar_Absorption.Plot.Legend.OutlineStyle = LineStyle.None;
                 Polar_Absorption.Plot.Legend.BackgroundColor = ScottPlot.Color.FromARGB(0);
 
-                //Alpha_Normal.Plot.AutoScale();
                 Alpha_Normal.Plot.Axes.SetLimits(2.5, 10.5, 0, 1.2);
-                Alpha_Normal.Plot.XLabel("Frequency (Hz.)",10);
-                Alpha_Normal.Invalidate();
-                //Impedance_Graph.Plot.AutoScale();
+                Alpha_Normal.Plot.XLabel("Frequency (Hz.)", 10);
                 Impedance_Graph.Plot.Axes.SetLimitsX(2.5, 10.5);
-                Impedance_Graph.Invalidate();
                 Impedance_Graph.Plot.XLabel("Frequency (Hz.)", 10);
-                Polar_Absorption.Invalidate();
                 Alpha_Normal.Plot.Benchmark.IsVisible = false;
-                Fit_IIR();
-            }
 
+                Alpha_Normal.Invalidate();
+                Impedance_Graph.Invalidate();
+                Polar_Absorption.Invalidate();
+
+                // Kick off async IIR fit — will add green curve when done
+                if (Chart_Contents.SelectedIndex == 0) Fit_IIR_Async();
+            }
+            private async void Fit_IIR_Async()
+            {
+                int myGeneration = _buildGeneration;
+
+                // Cancel previous IIR thread if still running
+                if (_iirThread != null && _iirThread.IsAlive)
+                {
+                    // It will be orphaned — generation check prevents it from touching the UI
+                    _iirThread = null;
+                }
+
+                // Capture what we need from the UI thread
+                var smLocal = sm;
+                double fs = 44100;
+                double maxfreq = 10000;
+                int iirOrder = 0; // (int)IIR_Order.Value if you want to re-enable
+
+                double[] iirAlpha = null;
+                double[] iirLogfreq = null;
+
+                _iirThread = new Thread(() =>
+                {
+                    try
+                    {
+                        double[] frequencies;
+                        (double[] a, double[] b) = smLocal.Estimate_IIR_Coefficients(fs, maxfreq, out frequencies, iirOrder);
+
+                        if (a == null || b == null || frequencies == null || frequencies.Length < 2) return;
+
+                        Complex[] Y_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, fs);
+
+                        int start = 0;
+                        while (start < frequencies.Length && frequencies[start] < 1.0) start++;
+
+                        int count = frequencies.Length - start;
+                        if (count < 2) return;
+
+                        double[] alpha = new double[count];
+                        double[] logfreq = new double[count];
+
+                        for (int i = 0; i < count; i++)
+                        {
+                            int fi = i + start;
+                            Complex Y = Y_spec[fi];
+
+                            Complex denom = Complex.One + Y;
+                            if (denom.Magnitude < 1e-12) denom = new Complex(1e-12, 0);
+                            Complex R = (Complex.One - Y) / denom;
+
+                            double r2 = R.Real * R.Real + R.Imaginary * R.Imaginary;
+                            double a_i = 1.0 - r2;
+                            if (a_i < 0) a_i = 0;
+                            if (a_i > 1) a_i = 1;
+
+                            alpha[i] = a_i;
+                            logfreq[i] = Math.Log(frequencies[fi] / 7.8125, 2);
+                        }
+
+                        iirAlpha = alpha;
+                        iirLogfreq = logfreq;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("IIR fit failed: " + ex.Message);
+                    }
+                });
+                _iirThread.IsBackground = true;
+                _iirThread.Start();
+
+                do
+                {
+                    await Task.Delay(50);
+                } while (_iirThread.IsAlive);
+
+                // If the user changed parameters while we were fitting, discard
+                if (myGeneration != _buildGeneration) return;
+
+                if (iirAlpha == null || iirLogfreq == null) return;
+
+                // Add the green IIR curve to the existing graph
+                Alpha_Normal.Plot.Add.Scatter(iirLogfreq, iirAlpha, ScottPlot.Colors.Green);
+                (Alpha_Normal.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
+                Alpha_Normal.Invalidate();
+            }
             private void Fit_IIR()
             {
-                // Get frequency range and desired reflection spectrum
                 double fs = 44100;
                 double maxfreq = 10000;
                 int samplect = 4096;
 
                 double[] frequencies;
 
-                (double[] a, double[] b) = sm.Estimate_IIR_Coefficients(fs, maxfreq, out frequencies, (int)IIR_Order.Value);
+                (double[] a, double[] b) = sm.Estimate_IIR_Coefficients(fs, maxfreq, out frequencies, 0);// (int)IIR_Order.Value);
 
-                // Recalculate with normalized coefficients
-                Complex[] IIR_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);
+                if (a == null || b == null || frequencies == null || frequencies.Length < 2) return;
+
+                Complex[] Y_spec = Audio.Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, 44100);
+
+
+                //////////////////////////////
+                double ftest = 500;
+                Complex Hfit = Audio.Pach_SP.IIR_Design.AB_FreqResponse( new List<double>(b), new List<double>(a), new double[] { ftest }, fs)[0];
+                Complex Htrue = 1.2 * 343 * sm.Admittance(ftest);
+                //////////////////////////////
+                int start = 0;
+                while (start < frequencies.Length && frequencies[start] < 1.0) start++;
+
+                int count = frequencies.Length - start;
+                if (count < 2) return;
+
+                double[] alpha = new double[count];
+                double[] logfreq = new double[count];
+
+                for (int i = 0; i < count; i++)
+                {
+                    int fi = i + start;
+
+                    Complex Y = Y_spec[fi];
+
+                    // R from admittance: Y = (1 - R)/(1 + R)  =>  R = (1 - Y)/(1 + Y)
+                    Complex denom = Complex.One + Y;
+                    if (denom.Magnitude < 1e-12) denom = new Complex(1e-12, 0);
+                    Complex R = (Complex.One - Y) / denom;
+
+                    double r2 = R.Real * R.Real + R.Imaginary * R.Imaginary;
+                    double a_i = 1.0 - r2;
+                    if (a_i < 0) a_i = 0;
+                    if (a_i > 1) a_i = 1;
+
+                    alpha[i] = a_i;
+                    logfreq[i] = Math.Log(frequencies[fi] / 7.8125, 2);
+                }
 
                 // Calculate and plot the absorption coefficients
-                double[] alpha = AbsorptionModels.Operations.Absorption_Coef(IIR_spec);
-                double[] logfreq = frequencies.ToList().Select(y => Math.Log(y / 7.8125, 2)).ToArray();
                 Alpha_Normal.Plot.Add.Scatter(logfreq, alpha, ScottPlot.Colors.Green);
                 (Alpha_Normal.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = MarkerStyle.None;
             }
@@ -687,19 +848,10 @@ namespace Pachyderm_Acoustic
                         if (L.T != ABS_Layer.LayerType.Slotted_Modal) return;
                         break;
                     case 8:
-                        if (L.T != ABS_Layer.LayerType.CircularPerforations) return;
+                        if (L.T != ABS_Layer.LayerType.Perforated_Panel) return;
                         break;
                     case 9:
-                        if (L.T != ABS_Layer.LayerType.SquarePerforations) return;
-                        break;
-                    case 10:
-                        if (L.T != ABS_Layer.LayerType.Slots) return;
-                        break;
-                    case 11:
-                        if (L.T != ABS_Layer.LayerType.Microslit) return;
-                        break;
-                    case 12:
-                        if (L.T != ABS_Layer.LayerType.MicroPerforated) return;
+                        if (L.T != ABS_Layer.LayerType.Slotted_Panel) return;
                         break;
                 }
 
@@ -806,7 +958,7 @@ namespace Pachyderm_Acoustic
                             name = "Generic Perforated Material";
                             Carbon = 188;
                         }
-                        abs = new ABS_Layer(ABS_Layer.LayerType.CircularPerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Perforated_Panel, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break; 
                     case 9:
                         if (name == null)
@@ -814,30 +966,7 @@ namespace Pachyderm_Acoustic
                             name = "Generic Perforated Material";
                             Carbon = 188;
                         }
-                        abs = new ABS_Layer(ABS_Layer.LayerType.SquarePerforations, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
-                        break;
-                    case 10:
-                        if (name == null)
-                        {
-                            name = "Generic Perforated Material";
-                            Carbon = 188;
-                        }
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Slots, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
-                        break;
-                    case 11:
-                        if (name == null)
-                        {
-                            name = "Generic Perforated Material";
-                            Carbon = 188;
-                        }
-                        abs = new ABS_Layer(ABS_Layer.LayerType.Microslit, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
-                        break;
-                    case 12:
-                        if (name == null)
-                        {
-                            name = "Generic Perforated Material";
-                            Carbon = 188;
-                        }abs = new ABS_Layer(ABS_Layer.LayerType.MicroPerforated, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
+                        abs = new ABS_Layer(ABS_Layer.LayerType.Slotted_Panel, (double)depth.Value / 1000, (double)pitch.Value / 1000, (double)diameter.Value / 1000, (double)Sigma.Value, (double)Porosity_Percent.Value / 100, Carbon, name);
                         break;
                 }
 
@@ -896,7 +1025,7 @@ namespace Pachyderm_Acoustic
                 //Tell the interface that we have selected a material from the list, so that it doesn't update the graph, as the material settings populate.
                 indexchanged = true;
                 if (LayerList.SelectedIndex < 0) return;
-                ABS_Layer L = (Layers[LayerList.SelectedIndex] as ABS_Layer);
+                ABS_Layer L = Layers[LayerList.SelectedIndex];
 
                 switch (L.T)
                 {
@@ -918,26 +1047,17 @@ namespace Pachyderm_Acoustic
                     case ABS_Layer.LayerType.SolidPlate:
                         Material_Type.SelectedIndex = 5;
                         break;
-                    case ABS_Layer.LayerType.CircularPerforations:
-                        Material_Type.SelectedIndex = 8;
-                        break;
-                    case ABS_Layer.LayerType.SquarePerforations:
-                        Material_Type.SelectedIndex = 9;
-                        break;
                     case ABS_Layer.LayerType.Perforated_Modal:
                         Material_Type.SelectedIndex = 6;
                         break;
                     case ABS_Layer.LayerType.Slotted_Modal:
                         Material_Type.SelectedIndex = 7;
                         break;
-                    case ABS_Layer.LayerType.MicroPerforated:
-                        Material_Type.SelectedIndex = 12;
+                    case ABS_Layer.LayerType.Perforated_Panel:
+                        Material_Type.SelectedIndex = 8;
                         break;
-                    case ABS_Layer.LayerType.Microslit:
-                        Material_Type.SelectedIndex = 11;
-                        break;
-                    case ABS_Layer.LayerType.Slots:
-                        Material_Type.SelectedIndex = 10;
+                    case ABS_Layer.LayerType.Slotted_Panel:
+                        Material_Type.SelectedIndex = 9;
                         break;
                     default:
                         return;

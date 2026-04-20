@@ -1,19 +1,20 @@
-﻿using System;
+﻿using Pachyderm_Acoustic.Environment;
+using Pachyderm_Acoustic.UI;
+using Rhino.Commands;
+using Rhino.Geometry;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Pachyderm_Acoustic.Environment;
-using Pachyderm_Acoustic.UI;
-using Rhino.Commands;
-using Rhino.Geometry;
 
 namespace Pachyderm_Acoustic
 {
     namespace Utilities
     {
-        public class RCPachTools: PachTools
+        public class RCPachTools : PachTools
         {
             ///// <summary>
             ///// Shorthand tool used to run a simulation.
@@ -44,7 +45,7 @@ namespace Pachyderm_Acoustic
                         }
                     case 1:
                         {
-                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal; 
+                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal;
                             break;
                         }
                     case 2:
@@ -199,7 +200,7 @@ namespace Pachyderm_Acoustic
             {
                 Hare.Geometry.Point[][] polys = new Hare.Geometry.Point[M.Faces.Count][];
 
-                for(int i = 0; i < M.Faces.Count; i++)
+                for (int i = 0; i < M.Faces.Count; i++)
                 {
                     Hare.Geometry.Point[] pts;
                     if (M.Faces[i].IsTriangle)
@@ -208,7 +209,8 @@ namespace Pachyderm_Acoustic
                         pts[0] = RPttoHPt(M.Vertices[M.Faces[i].A]);
                         pts[1] = RPttoHPt(M.Vertices[M.Faces[i].B]);
                         pts[2] = RPttoHPt(M.Vertices[M.Faces[i].C]);
-                    }else
+                    }
+                    else
                     {
                         pts = new Hare.Geometry.Point[4];
                         pts[0] = RPttoHPt(M.Vertices[M.Faces[i].A]);
@@ -739,7 +741,7 @@ namespace Pachyderm_Acoustic
                             MF.VertexColors.SetColor(f + 2, C[i].Rb, C[i].Gb, C[i].Bb);
                         }
                     }
-                    MF.CollapseFacesByArea(0.01,1000);
+                    MF.CollapseFacesByArea(0.01, 1000);
                     //MF.CollapseFacesByByAspectRatio(.1);
                     return MF;
                 }
@@ -751,6 +753,219 @@ namespace Pachyderm_Acoustic
                     return MM;
                 }
             }
+
+            public static Mesh PlotMeshTextured(PachMapReceiver[] Rec_List, Eto.Drawing.Color[] C, out string texturePath, int cellSize = 4,
+                double textureSaturation = 1.20, // 1.0 = no change
+                double textureValue = 1.05,      // 1.0 = no change (HSV V multiplier)
+                double textureGamma = 1.00       // 1.0 = no change (RGB gamma)
+            )
+            {
+                if (Rec_List == null || Rec_List.Length == 0)
+                    throw new ArgumentException("Rec_List is null or empty.");
+
+                if (Rec_List[0].Rec_Vertex)
+                    throw new NotSupportedException(
+                        "This combined mode is intended for per-face colors (Rec_Vertex == false).");
+
+                Mesh source = HaretoRhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
+
+                int faceCount = source.Faces.Count;
+                if (C == null || C.Length < faceCount)
+                    throw new ArgumentException("Color array must contain at least one color per face.");
+
+                // Build a square-ish atlas.
+                int cols = (int)Math.Ceiling(Math.Sqrt(faceCount));
+                int rows = (int)Math.Ceiling((double)faceCount / cols);
+
+                int atlasWidth = Math.Max(1, cols * cellSize);
+                int atlasHeight = Math.Max(1, rows * cellSize);
+
+                // Save atlas to a temp PNG file that Rhino can reference
+                texturePath = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    $"PachydermFalseColor_{Guid.NewGuid():N}.png");
+
+                // Create atlas image (cross-platform via SkiaSharp).
+                using (var bitmap = new SKBitmap(atlasWidth, atlasHeight, SKColorType.Rgba8888, SKAlphaType.Premul))
+                using (var canvas = new SKCanvas(bitmap))
+                {
+                    canvas.Clear(SKColors.Transparent);
+
+                    for (int i = 0; i < faceCount; i++)
+                    {
+                        int col = i % cols;
+                        int row = i / cols;
+
+                        int px = col * cellSize;
+                        int py = row * cellSize;
+
+                        // Boost ONLY the texture color
+                        var boosted = BoostTextureColor(
+                            (byte)C[i].Rb, (byte)C[i].Gb, (byte)C[i].Bb, (byte)C[i].Ab,
+                            textureSaturation, textureValue, textureGamma);
+
+                        using (var paint = new SKPaint { Color = boosted, IsAntialias = false })
+                        {
+                            canvas.DrawRect(px, py, cellSize, cellSize, paint);
+                        }
+                    }
+
+                    using (var image = SKImage.FromBitmap(bitmap))
+                    using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
+                    using (var stream = System.IO.File.OpenWrite(texturePath))
+                    {
+                        data.SaveTo(stream);
+                    }
+                }
+
+                // Build output mesh with duplicated vertices per face.
+                Mesh mapped = new Mesh();
+                var vertexColors = new List<System.Drawing.Color>(faceCount * 4);
+
+                for (int i = 0; i < faceCount; i++)
+                {
+                    MeshFace f = source.Faces[i];
+
+                    int col = i % cols;
+                    int row = i / cols;
+
+                    // Sample inside the cell, not on edges, to avoid bleeding.
+                    float u0 = (float)((col * cellSize + 0.5) / atlasWidth);
+                    float v0 = (float)((row * cellSize + 0.5) / atlasHeight);
+                    float u1 = (float)(((col + 1) * cellSize - 0.5) / atlasWidth);
+                    float v1 = (float)(((row + 1) * cellSize - 0.5) / atlasHeight);
+
+                    // Flip V for Rhino image mapping conventions.
+                    float rv0 = 1.0f - v0;
+                    float rv1 = 1.0f - v1;
+
+                    // Vertex colors remain ORIGINAL (unboosted)
+                    var faceColor = System.Drawing.Color.FromArgb(
+                        C[i].Ab, C[i].Rb, C[i].Gb, C[i].Bb);
+
+                    if (f.IsQuad)
+                    {
+                        mapped.Vertices.Add(source.Vertices[f.A]);
+                        mapped.Vertices.Add(source.Vertices[f.B]);
+                        mapped.Vertices.Add(source.Vertices[f.C]);
+                        mapped.Vertices.Add(source.Vertices[f.D]);
+
+                        int vi = mapped.Vertices.Count - 4;
+                        mapped.Faces.AddFace(vi, vi + 1, vi + 2, vi + 3);
+
+                        // UVs
+                        mapped.TextureCoordinates.Add(u0, rv1);
+                        mapped.TextureCoordinates.Add(u1, rv1);
+                        mapped.TextureCoordinates.Add(u1, rv0);
+                        mapped.TextureCoordinates.Add(u0, rv0);
+
+                        // Matching vertex colors (original)
+                        vertexColors.Add(faceColor);
+                        vertexColors.Add(faceColor);
+                        vertexColors.Add(faceColor);
+                        vertexColors.Add(faceColor);
+                    }
+                    else
+                    {
+                        mapped.Vertices.Add(source.Vertices[f.A]);
+                        mapped.Vertices.Add(source.Vertices[f.B]);
+                        mapped.Vertices.Add(source.Vertices[f.C]);
+
+                        int vi = mapped.Vertices.Count - 3;
+                        mapped.Faces.AddFace(vi, vi + 1, vi + 2);
+
+                        // UVs
+                        mapped.TextureCoordinates.Add(u0, rv1);
+                        mapped.TextureCoordinates.Add(u1, rv1);
+                        mapped.TextureCoordinates.Add((u0 + u1) * 0.5f, rv0);
+
+                        // Matching vertex colors (original)
+                        vertexColors.Add(faceColor);
+                        vertexColors.Add(faceColor);
+                        vertexColors.Add(faceColor);
+                    }
+                }
+
+                mapped.VertexColors.SetColors(vertexColors.ToArray());
+                mapped.Normals.ComputeNormals();
+                mapped.Compact();
+
+                return mapped;
+            }
+
+            /// <summary>
+            /// Boosts the texture color: optional HSV saturation/value boost + optional gamma lift.
+            /// Leaves alpha unchanged.
+            /// </summary>
+            private static SKColor BoostTextureColor(
+                byte r, byte g, byte b, byte a,
+                double satMul, double valMul, double gamma)
+            {
+                // 1) HSV boost (saturation/value)
+                RgbToHsv(r / 255.0, g / 255.0, b / 255.0, out double h, out double s, out double v);
+                s = Clamp01(s * satMul);
+                v = Clamp01(v * valMul);
+
+                HsvToRgb(h, s, v, out double rr, out double gg, out double bb);
+
+                // 2) Optional gamma lift (apply to RGB after HSV)
+                if (Math.Abs(gamma - 1.0) > 1e-6)
+                {
+                    // gamma < 1 brightens mids; gamma > 1 darkens mids
+                    rr = Clamp01(Math.Pow(rr, gamma));
+                    gg = Clamp01(Math.Pow(gg, gamma));
+                    bb = Clamp01(Math.Pow(bb, gamma));
+                }
+
+                return new SKColor(
+                    (byte)Math.Round(Clamp01(rr) * 255.0),
+                    (byte)Math.Round(Clamp01(gg) * 255.0),
+                    (byte)Math.Round(Clamp01(bb) * 255.0),
+                    a);
+            }
+
+            private static void RgbToHsv(double r, double g, double b, out double h, out double s, out double v)
+            {
+                double max = Math.Max(r, Math.Max(g, b));
+                double min = Math.Min(r, Math.Min(g, b));
+                double d = max - min;
+
+                v = max;
+                s = max <= 1e-12 ? 0.0 : d / max;
+
+                if (d <= 1e-12)
+                {
+                    h = 0.0;
+                    return;
+                }
+
+                if (max == r) h = 60.0 * (((g - b) / d) % 6.0);
+                else if (max == g) h = 60.0 * (((b - r) / d) + 2.0);
+                else h = 60.0 * (((r - g) / d) + 4.0);
+
+                if (h < 0.0) h += 360.0;
+            }
+
+            private static void HsvToRgb(double h, double s, double v, out double r, out double g, out double b)
+            {
+                double c = v * s;
+                double x = c * (1.0 - Math.Abs((h / 60.0) % 2.0 - 1.0));
+                double m = v - c;
+
+                double rr, gg, bb;
+                if (h < 60.0) { rr = c; gg = x; bb = 0; }
+                else if (h < 120.0) { rr = x; gg = c; bb = 0; }
+                else if (h < 180.0) { rr = 0; gg = c; bb = x; }
+                else if (h < 240.0) { rr = 0; gg = x; bb = c; }
+                else if (h < 300.0) { rr = x; gg = 0; bb = c; }
+                else { rr = c; gg = 0; bb = x; }
+
+                r = rr + m;
+                g = gg + m;
+                b = bb + m;
+            }
+
+            private static double Clamp01(double x) => x < 0.0 ? 0.0 : (x > 1.0 ? 1.0 : x);
 
             public static void PlotMapValues(PachMapReceiver[] RecList, double[] Values, int decimals = 0)
             {

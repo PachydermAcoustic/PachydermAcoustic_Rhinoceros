@@ -75,10 +75,6 @@
 			<HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\RhinoCommon.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="CLF_Read">
-			<HintPath>..\PachydermAcoustic_Universal\Pachyderm_Acoustic_Universal\Resources\CLF_Read.dll</HintPath>
-			<Private>True</Private>
-		</Reference>
 		<!--<Reference Update="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -119,12 +115,11 @@
 
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\CLF_Read_v2.n7\CLF_Read\CLF_Read.csproj" />
 		<ProjectReference Include="..\Hare\Hare.csproj">
 			<Private>True</Private>
 		</ProjectReference>
-		<ProjectReference Include="..\PachydermAcoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj">
-			<Private>True</Private>
-		</ProjectReference>
+		<ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj" />
 		<ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj" />
 		<ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj" />
 	</ItemGroup>
@@ -132,7 +127,6 @@
 		<!--<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.4" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />-->
 		<PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-		<PackageReference Include="NAudio" Version="2.2.1" />
 		<PackageReference Include="System.DirectoryServices" Version="8.0.0" />
 		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 		<PackageReference Include="System.Resources.Extensions" Version="7.0.0" />

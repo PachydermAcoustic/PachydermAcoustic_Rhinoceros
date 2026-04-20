@@ -245,6 +245,15 @@ namespace Pachyderm_Acoustic
                 if (PreviewDisplay != null) PreviewDisplay.SetColorScale(colorcontrol.Scale, new double[2] { (double)colorcontrol.Min, (double)colorcontrol.Max });
             }
 
+            public void Toggle_Conduits_On(object sender, System.EventArgs e)
+            {
+                if (PreviewDisplay != null) PreviewDisplay.Enabled = true;
+            }
+            public void Toggle_Conduits_Off(object sender, System.EventArgs e)
+            {
+                if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
+            }
+
             private async void onPreview_Click(object sender, EventArgs e)
             {
                 if (T != null && T.ThreadState == System.Threading.ThreadState.Running)
@@ -307,6 +316,9 @@ namespace Pachyderm_Acoustic
 
                     RTParticles[j].Begin();
                 }
+
+                this.Load += Toggle_Conduits_On;
+                this.UnLoad += Toggle_Conduits_Off;
 
                 ForwButton.Enabled = true;
                 BackButton.Enabled = true;

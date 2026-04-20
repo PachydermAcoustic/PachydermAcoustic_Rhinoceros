@@ -36,7 +36,6 @@ namespace Pachyderm_Acoustic
             {
                 samplefreq = Samplefreq;
                 canceled = CTS;
-                //this.Location = new Eto.Drawing.Point(100, 200);
                 DynamicLayout Layout = new Eto.Forms.DynamicLayout();
                 this.Conv_View = new ScottPlot.Eto.EtoPlot();
                 this.Hist_View = new ScottPlot.Eto.EtoPlot();
@@ -93,7 +92,7 @@ namespace Pachyderm_Acoustic
                     Conv_TargetX = X;
                     Conv_TargetY = Y;
                 }
-                Update_Targets();
+                Update();
             }
 
             public void Update_Targets()
@@ -108,6 +107,7 @@ namespace Pachyderm_Acoustic
                         C.LineStyle.Color = ScottPlot.Colors.Gray;
                         C.LineStyle.Pattern = LinePattern.Dotted;
                         last_pos = CNEW;
+
                         if (i < Conv_TargetY.Length - 1)
                         {
                             Coordinates next_pos = new Coordinates(CNEW.X, Conv_TargetY[i + 1]);
@@ -129,128 +129,144 @@ namespace Pachyderm_Acoustic
 
                     double max1 = history[0].Max();
                     double max2 = history[1].Max();
+                    double histMax = Math.Min(20, Math.Max(max1, max2));
 
-                    Hist_View.Plot.Axes.SetLimitsY(0, Math.Min(20, Math.Max(max1, max2 )));
+                    Hist_View.Plot.Axes.SetLimitsY(0, histMax <= 0 ? 1 : histMax);
                 }
-                Conv_View.Invalidate();
-                Hist_View.Invalidate();
-                IR_View[0].Invalidate();
-                IR_View[1].Invalidate();
             }
 
             object ui_lock = new object();
 
             public void Update()
             {
-                lock (ui_lock)
+                Eto.Forms.Application.Instance.AsyncInvoke(() =>
                 {
+                    lock (ui_lock)
+                    {
+                        Update_Targets();
+
                         Conv_View.Invalidate();
                         Hist_View.Invalidate();
                         IR_View[0].Invalidate();
                         IR_View[1].Invalidate();
-                        Rhino.RhinoApp.InvokeOnUiThread(new Action(() =>
-                        {
-                            Hist_View.Update(new Eto.Drawing.Rectangle(Hist_View.Size));
-                            Conv_View.Update(new Eto.Drawing.Rectangle(Conv_View.Size));
-                        }));
-                }
+                    }
+                });
             }
 
-            public async void Fill(string title, double[] YArray, int ID, Queue<double[]> IR = null)
+            public async void Fill(string title, double[] YArray, int ID, Queue<double[]> IR = null, int Ray_Req = 0, List<double[]> Add_Functions = null)
             {
-                //double[] Conv1, double Conv2, double ConvInf, int ID, int count, double corr,
-                lock (ui_lock)
+                Eto.Forms.Application.Instance.AsyncInvoke(() =>
                 {
-                    if (ID == 0)
+                    lock (ui_lock)
                     {
-                        Conv_View.Plot.Clear();
-                        Hist_View.Plot.Clear();
-                    }
+                        if (ID == 0)
+                        {
+                            Conv_View.Plot.Clear();
+                            Hist_View.Plot.Clear();
+                            Update_Targets();
+                        }
 
-                    if (IR == null || IR.Count == 0) IR_View[ID].Enabled = false;
-                    else
-                    {
-                        IR_View[ID].Enabled = true;
-                        IR_View[ID].Plot.Clear();
-                        
-                        // Add null checks for each IR element before passing to Add.Signal
-                        if (IR.Count > 4) 
+                        if (IR == null || IR.Count == 0) IR_View[ID].Enabled = false;
+                        else
                         {
-                            double[] irData = IR.ElementAtOrDefault(3);
-                            if (irData != null && irData.Length > 0)
-                                IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
-                        }
-                        if (IR.Count > 3) 
-                        {
-                            double[] irData = IR.ElementAtOrDefault(2);
-                            if (irData != null && irData.Length > 0)
-                                IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
-                        }
-                        if (IR.Count > 2) 
-                        {
-                            double[] irData = IR.ElementAtOrDefault(4);
-                            if (irData != null && irData.Length > 0)
-                                IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
-                        }
-                        if (IR.Count > 1) 
-                        {
-                            double[] irData = IR.ElementAtOrDefault(1);
-                            if (irData != null && irData.Length > 0)
-                                IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
-                        }
-                        if (IR.Count > 0)
-                        {
-                            double[] IR_curr = IR.ElementAtOrDefault(0);
-                            if (IR_curr != null && IR_curr.Length > 0)
+                            Eto.Forms.Application.Instance.AsyncInvoke(() =>
                             {
-                                IR_View[ID].Plot.Add.Signal(IR_curr, 1.0 / samplefreq, ID == 0 ? ScottPlot.Color.FromARGB(0x800000FF) : ScottPlot.Color.FromARGB(0x80FF0000)); //ScottPlot.Color.FromARGB(0x330000F) : ScottPlot.Color.FromARGB(0x33FF0000));//ScottPlot.Color.FromARGB(0x800000FF) : ScottPlot.Color.FromARGB(0x80FF0000));
-                                IR_View[ID].Plot.Axes.SetLimits(0, IR_curr.Length / samplefreq, -70, 0);
+                                IR_View[ID].Enabled = true;
+                                IR_View[ID].Plot.Clear();
+
+                                // Add null checks for each IR element before passing to Add.Signal
+                                if (IR.Count > 4)
+                                {
+                                    double[] irData = IR.ElementAtOrDefault(3);
+                                    if (irData != null && irData.Length > 0)
+                                        IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
+                                }
+                                if (IR.Count > 3)
+                                {
+                                    double[] irData = IR.ElementAtOrDefault(2);
+                                    if (irData != null && irData.Length > 0)
+                                        IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
+                                }
+                                if (IR.Count > 2)
+                                {
+                                    double[] irData = IR.ElementAtOrDefault(4);
+                                    if (irData != null && irData.Length > 0)
+                                        IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
+                                }
+                                if (IR.Count > 1)
+                                {
+                                    double[] irData = IR.ElementAtOrDefault(1);
+                                    if (irData != null && irData.Length > 0)
+                                        IR_View[ID].Plot.Add.Signal(irData, 1.0 / samplefreq, ScottPlot.Color.FromARGB(0x33808080));
+                                }
+                                if (IR.Count > 0)
+                                {
+                                    double[] IR_curr = IR.ElementAtOrDefault(0);
+                                    if (IR_curr != null && IR_curr.Length > 0)
+                                    {
+                                        IR_View[ID].Plot.Add.Signal(IR_curr, 1.0 / samplefreq, ID == 0 ? ScottPlot.Color.FromARGB(0x800000FF) : ScottPlot.Color.FromARGB(0x80FF0000)); //ScottPlot.Color.FromARGB(0x330000F) : ScottPlot.Color.FromARGB(0x33FF0000));//ScottPlot.Color.FromARGB(0x800000FF) : ScottPlot.Color.FromARGB(0x80FF0000));
+                                        IR_View[ID].Plot.Axes.SetLimits(0, IR_curr.Length / samplefreq, -70, 0);
+                                    }
+                                }
+                                if (Add_Functions != null)
+                                {
+                                    for (int i = 0; i < Add_Functions.Count; i++)
+                                    {
+                                        if (Add_Functions.Count == 3)
+                                        {
+                                            ScottPlot.Color c = i == 0 ? ScottPlot.Colors.Blue : i == 1 ? ScottPlot.Colors.Purple : ScottPlot.Colors.Red;
+                                            IR_View[ID].Plot.Add.Signal(Add_Functions[i], 1.0 / samplefreq, c);
+                                        }
+                                        else IR_View[ID].Plot.Add.Signal(Add_Functions[i], 1.0 / samplefreq);
+                                    }
+                                }
+
+                                if (Ray_Req != 0) IR_View[ID].Plot.Title("Current Initial Ray Minimum : " + Ray_Req.ToString() + " Rays");
+
+                                IR_View[ID].Invalidate();
+                            });
+                        }
+
+                        if (Conv_TargetX != null && Conv_TargetX.Count() > 0 && YArray != null && YArray.Count() > 0) Conv_View.Plot.Title(title);
+
+                        double x_last = 0;
+
+                        double ConvMax = 0;
+
+                        double xplotmod = ID == 0 ? 0 : 1;
+
+                        for (int i = 0; i < Conv_TargetX.Length; i++)
+                        {
+                            double width = (Conv_TargetX[i] - x_last) * 0.5;
+                            if (!double.IsNaN(YArray[i])) ConvMax = Math.Max(ConvMax, YArray[i] / Conv_TargetY[i]);
+                            Coordinates CNEW = new Coordinates(x_last + width * xplotmod, 0);
+                            var R = Conv_View.Plot.Add.Rectangle(new CoordinateRect(new Coordinates(CNEW.X + width, YArray[i]), CNEW));
+
+                            R.FillColor = ID == 0 ? ScottPlot.Color.FromARGB(0x330000FF) : ScottPlot.Color.FromARGB(0x33FF0000);
+                            R.LineColor = R.FillColor;
+                            x_last = Conv_TargetX[i];
+                        }
+
+                        // Add proper bounds checking and null validation for history
+                        if (ID >= 0 && ID < history.Length && history[ID] != null)
+                        {
+                            history[ID].Enqueue(ConvMax);
+                            if (history[ID].Count > 20) history[ID].Dequeue();
+
+                            if (domh != null && domh.Length > 0)
+                            {
+                                double[] historyArray = history[ID].ToArray();
+                                if (historyArray != null && historyArray.Length > 0)
+                                {
+                                    Hist_View.Plot.Add.Scatter(domh, historyArray, ID == 0 ? ScottPlot.Colors.Blue : ScottPlot.Colors.Red);
+                                }
                             }
                         }
-                        IR_View[ID].Invalidate();
+
+                        Conv_View.Invalidate();
+                        Hist_View.Invalidate();
                     }
-
-                    if (Conv_TargetX != null && Conv_TargetX.Count() > 0 && YArray != null && YArray.Count() > 0) Conv_View.Plot.Title(title);
-
-                    double x_last = 0;
-
-                    double ConvMax = 0;
-
-                    double xplotmod = ID == 0 ? 0 : 1;
-
-                    for (int i = 0; i < Conv_TargetX.Length; i++)
-                    {
-                        double width = (Conv_TargetX[i] - x_last) * 0.5;
-                        if (!double.IsNaN(YArray[i])) ConvMax = Math.Max(ConvMax, YArray[i] / Conv_TargetY[i]);
-                        Coordinates CNEW = new Coordinates(x_last + width * xplotmod, 0);
-                        var R = Conv_View.Plot.Add.Rectangle(new CoordinateRect(new Coordinates(CNEW.X + width, YArray[i]), CNEW));
-
-                        R.FillColor = ID == 0 ? ScottPlot.Color.FromARGB(0x330000FF) : ScottPlot.Color.FromARGB(0x33FF0000);
-                        R.LineColor = R.FillColor;
-                        x_last = Conv_TargetX[i];
-                    }
-
-                    // Add proper bounds checking and null validation for history
-                    if (ID >= 0 && ID < history.Length && history[ID] != null)
-                    {
-                        this.history[ID].Enqueue(ConvMax);
-                        if (this.history[ID].Count > 20) this.history[ID].Dequeue();
-                        
-                        // Ensure domh is not null and has valid data
-                        if (domh != null && domh.Length > 0)
-                        {
-                            double[] historyArray = this.history[ID].ToArray();
-                            if (historyArray != null && historyArray.Length > 0)
-                            {
-                                Hist_View.Plot.Add.Scatter(domh, historyArray, ID == 0 ? ScottPlot.Colors.Blue : ScottPlot.Colors.Red);
-                            }
-                        }
-                    }
-                    
-                    if (this.history[ID].Count < 20) CT.Add(CT.Count - 10);
-
-                    Update_Targets();
-                }
+                });
             }
 
             public event EventHandler Conclusion;
@@ -274,6 +290,7 @@ namespace Pachyderm_Acoustic
             { 
                 get { return canceled.Token; }
             }
+
             public CancellationTokenSource Canceler
             {
                 get { return canceled; }

@@ -37,8 +37,8 @@ namespace Pachyderm_Acoustic
         partial class Pach_Absorption_Designer
         {
             private void InitializeComponent()
-            { 
-                this.Title = "Materials Designer [EXPERIMENTAL]";
+            {
+                this.Title = "Materials Designer";
                 this.Size = new Eto.Drawing.Size(1500, 800);
                 this.Resizable = true;
                 this.WindowStyle = WindowStyle.Default;
@@ -67,43 +67,43 @@ namespace Pachyderm_Acoustic
                 this.label19 = new Eto.Forms.Label();
                 this.Tortuosity = new Eto.Forms.NumericStepper();
                 this.Smart_Mat = new Eto.Forms.Button();
-            this.label16 = new Eto.Forms.Label();
-            this.YoungsModulus = new Eto.Forms.NumericStepper();
-            this.Solid_Density = new Eto.Forms.NumericStepper();
-            this.PoissonsRatio = new Eto.Forms.NumericStepper();
-            this.depth = new Eto.Forms.NumericStepper();
-            this.label6 = new Eto.Forms.Label();
-            this.label11 = new Eto.Forms.Label();
-            this.label12 = new Eto.Forms.Label();
-            this.label13 = new Eto.Forms.Label();
-            this.pitch_label = new Eto.Forms.Label();
-            this.diam_label = new Eto.Forms.Label();
-            this.pitch = new Eto.Forms.NumericStepper();
-            this.diameter = new Eto.Forms.NumericStepper();
-            this.label21 = new Eto.Forms.Label();
-            this.label22 = new Eto.Forms.Label();
-            this.Air_Term = new Eto.Forms.RadioButton();
-            this.Rigid_Term = new Eto.Forms.RadioButton();
-            this.label4 = new Eto.Forms.Label();
-            this.label5 = new Eto.Forms.Label();
-            this.label14 = new Eto.Forms.Label();
-            this.label15 = new Eto.Forms.Label();
-            this.Zf_Incorp_Method = new Eto.Forms.ComboBox();
-            this.Z_rad_feedback = new Eto.Forms.Label();
-            this.Calc_Zr = new Eto.Forms.Button();
-            this.Inf_Sample = new Eto.Forms.RadioButton();
-            this.XDim = new Eto.Forms.NumericStepper();
-            this.YDim = new Eto.Forms.NumericStepper();
-            this.Fin_Sample = new Eto.Forms.RadioButton();
-            this.Material_Type = new Eto.Forms.ComboBox();
-            this.Up = new Eto.Forms.Button();
-            this.Dn = new Eto.Forms.Button();
-            this.Rem = new Eto.Forms.Button();
-            this.Add = new Eto.Forms.Button();
-            this.Chart_Contents = new Eto.Forms.ComboBox();
-            this.IIR_Order = new Eto.Forms.NumericStepper();
-            this.Direction_choice = new Eto.Forms.ComboBox();
-            Cancel = new Eto.Forms.Button();
+                this.label16 = new Eto.Forms.Label();
+                this.YoungsModulus = new Eto.Forms.NumericStepper();
+                this.Solid_Density = new Eto.Forms.NumericStepper();
+                this.PoissonsRatio = new Eto.Forms.NumericStepper();
+                this.depth = new Eto.Forms.NumericStepper();
+                this.label6 = new Eto.Forms.Label();
+                this.label11 = new Eto.Forms.Label();
+                this.label12 = new Eto.Forms.Label();
+                this.label13 = new Eto.Forms.Label();
+                this.pitch_label = new Eto.Forms.Label();
+                this.diam_label = new Eto.Forms.Label();
+                this.pitch = new Eto.Forms.NumericStepper();
+                this.diameter = new Eto.Forms.NumericStepper();
+                this.label21 = new Eto.Forms.Label();
+                this.label22 = new Eto.Forms.Label();
+                this.Air_Term = new Eto.Forms.RadioButton();
+                this.Rigid_Term = new Eto.Forms.RadioButton();
+                this.label4 = new Eto.Forms.Label();
+                this.label5 = new Eto.Forms.Label();
+                this.label14 = new Eto.Forms.Label();
+                this.label15 = new Eto.Forms.Label();
+                this.Zf_Incorp_Method = new Eto.Forms.ComboBox();
+                this.Z_rad_feedback = new Eto.Forms.Label();
+                this.Calc_Zr = new Eto.Forms.Button();
+                this.Inf_Sample = new Eto.Forms.RadioButton();
+                this.XDim = new Eto.Forms.NumericStepper();
+                this.YDim = new Eto.Forms.NumericStepper();
+                this.Fin_Sample = new Eto.Forms.RadioButton();
+                this.Material_Type = new Eto.Forms.ComboBox();
+                this.Up = new Eto.Forms.Button();
+                this.Dn = new Eto.Forms.Button();
+                this.Rem = new Eto.Forms.Button();
+                this.Add = new Eto.Forms.Button();
+                this.Chart_Contents = new Eto.Forms.ComboBox();
+                this.IIR_Order = new Eto.Forms.NumericStepper();
+                this.Direction_choice = new Eto.Forms.ComboBox();
+                Cancel = new Eto.Forms.Button();
 
                 ////////////////////////////////////////////////
 
@@ -197,11 +197,8 @@ namespace Pachyderm_Acoustic
                 this.Material_Type.Items.Add("Solid Plate");
                 this.Material_Type.Items.Add("Perforated Plate (Modal Solution)");
                 this.Material_Type.Items.Add("Slotted Plate (Modal Solution)");
-                this.Material_Type.Items.Add("Perforated Plate (Circular)");
-                this.Material_Type.Items.Add("Perforated Plate (Square)");
-                this.Material_Type.Items.Add("Slotted Plate");
-                this.Material_Type.Items.Add("Micro-slit Plate");
-                this.Material_Type.Items.Add("Micro-Perforated Plate");
+                this.Material_Type.Items.Add("Perforated Plate (Classical)");
+                this.Material_Type.Items.Add("Slotted Plate (Classical)");
                 this.Material_Type.SelectedIndexChanged += this.comboBox1_SelectedIndexChanged;
                 Ctrl3.AddRow(label8, Material_Type);
                 Ctrl3.DefaultSpacing = new Eto.Drawing.Size(8, 8);
@@ -448,7 +445,7 @@ namespace Pachyderm_Acoustic
                 this.Use_RI.Click += this.Use_RI_Click;
                 Cancel.Text = "Cancel";
                 Cancel.Click += this.Cancel_Click;
-                CtrlX.AddRow( Smart_Mat, Use_RI, Cancel);
+                CtrlX.AddRow(Smart_Mat, Use_RI, Cancel);
 
                 CtrlRight.AddRow(Ctrl12);
                 CtrlRight.AddRow(Ctrl3);
@@ -476,7 +473,7 @@ namespace Pachyderm_Acoustic
                 Estimates = new GroupBox() { Text = "Estimates" };
                 Sustainability_Reference.AddRow(Estimates);
                 DynamicLayout EHM_DataLayout = new DynamicLayout();
-                
+
                 //Abs_125Hz = new Label() { Text = "   125 Hz:" };
                 //Abs_160Hz = new Label() { Text = "   160 Hz:" };
                 //Abs_200Hz = new Label() { Text = "   200 Hz:" };
@@ -543,8 +540,8 @@ namespace Pachyderm_Acoustic
                 EmbodiedCarbon_Pie.Plot.Axes.Frameless();
                 EmbodiedCarbon_Pie.BackgroundColor = Colors.Gray;
                 EmbodiedCarbon_Pie.Plot.Add.Pie(new double[1] { 0 });
-                EmbodiedCarbon_Pie.Plot.Title("Embodied Carbon Coefficients",10);
-                EmbodiedCarbon_Pie.Plot.XLabel("A1-A3 ECC (kgCO2e/m2)",10);
+                EmbodiedCarbon_Pie.Plot.Title("Embodied Carbon Coefficients", 10);
+                EmbodiedCarbon_Pie.Plot.XLabel("A1-A3 ECC (kgCO2e/m2)", 10);
                 EmbodiedCarbon_Pie.Width = 250;
                 EmbodiedCarbon_Pie.BackgroundColor = Colors.SlateGray;
                 EmbodiedCarbon_Pie.Plot.HideGrid();
@@ -594,7 +591,7 @@ namespace Pachyderm_Acoustic
                         Est_Porosity.Visible = false;
                     }
                 }
-                else 
+                else
                 {
                     ABS_Layer[] layers = EHM.Substrates[Material_List.SelectedIndex - EHM.ECC_Abs.Count];
                     Layers.Clear();
@@ -774,12 +771,10 @@ namespace Pachyderm_Acoustic
                 return (samples[maxWeightIndex], airspaces[maxWeightIndex], Math.Min(confidenceMetric, 1.0));
             }
 
+
+
             // Enhanced evaluation function with multiple error metrics
-            private double EvaluateFlowResistivityMultiMetric(
-                double flowResistivity,
-                double thickness,
-                double[] targetAbsorption,
-                ref double req_airspace)
+            private double EvaluateFlowResistivityMultiMetric(double flowResistivity, double thickness, double[] targetAbsorption, ref double req_airspace)
             {
                 // Create a Miki porous absorber layer
                 ABS_Layer layer = new ABS_Layer(ABS_Layer.LayerType.PorousM, thickness, 0, 0, flowResistivity, 0.99, 0);
@@ -807,19 +802,9 @@ namespace Pachyderm_Acoustic
 
                 foreach (double airspace in airspace_ImpTube_Errors)
                 {
-                    ABS_Layer[] layers = new ABS_Layer[2] {new ABS_Layer(ABS_Layer.LayerType.AirSpace, airspace, 0, 0, 0, 0, 0), layer};
+                    ABS_Layer[] layers = new ABS_Layer[2] { new ABS_Layer(ABS_Layer.LayerType.AirSpace, airspace, 0, 0, 0, 0, 0), layer };
 
-                    Complex[][] Z = Operations.Transfer_Matrix_Divisible(
-                        false,
-                        false,
-                        44100,
-                        343,
-                        layers.ToList(),
-                        ref frequencies,
-                        ref Angles,
-                        out Trans,
-                        out R
-                    );
+                    Complex[][] Z = Operations.Transfer_Matrix_Divisible(false, false, 44100, 343, layers.ToList(), ref frequencies, ref Angles, out Trans, out R);
 
                     double[] Abs_Coef = Operations.Absorption_Coef(R)[0];
                     double currentMaxError = 0;
@@ -878,7 +863,7 @@ namespace Pachyderm_Acoustic
                 return bestTotalError;
             }
 
-            double[] airspace_ImpTube_Errors = new double[5] {0, 0.002, 0.005, 0.01, 0.02 };
+            double[] airspace_ImpTube_Errors = new double[5] { 0, 0.002, 0.005, 0.01, 0.02 };
             double[] thirdOctaveBands = { 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000 };
 
             private double EstimateDensity(double flowResistivity)
@@ -913,7 +898,7 @@ namespace Pachyderm_Acoustic
                     depth.Value = Fit_Airspace * 1000;
                     Add_Click(sender, e);
                 }
-    
+
                 Material_Type.SelectedIndex = 4;
                 Sigma.Value = Fit_Resistivity;
                 depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
@@ -933,19 +918,6 @@ namespace Pachyderm_Acoustic
             private Label EHM_ECC_Thickness;
             private Label EHM_Flow_Resist;
             private CheckBox Show_ECC_ABS;
-            //private Label Abs_125Hz;
-            //private Label Abs_160Hz;
-            //private Label Abs_200Hz;
-            //private Label Abs_250Hz;
-            //private Label Abs_315Hz;
-            //private Label Abs_400Hz;
-            //private Label Abs_500Hz;
-            //private Label Abs_630Hz;
-            //private Label Abs_800Hz;
-            //private Label Abs_1000Hz;
-            //private Label Abs_1250Hz;
-            //private Label Abs_1600Hz;
-            //private Label Abs_2000Hz;
             private Button Set_EHM;
             private Button Get_Est;
             private Button Set_Est;
@@ -965,7 +937,6 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.Label pitch_label;
             private Eto.Forms.Label PorosityLabel;
             private Eto.Forms.NumericStepper Porosity_Percent;
-            //private Eto.Forms.Label PolarTitle;
             private Eto.Forms.Button Smart_Mat;
             private Eto.Forms.Label label6;
             private Eto.Forms.Label label9;

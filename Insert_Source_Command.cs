@@ -15,14 +15,18 @@
 //'You should have received a copy of the GNU General Public 
 //'License along with Pachyderm-Acoustic; if not, write to the Free Software 
 //'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
+using Pachyderm_Acoustic.Environment;
 using Rhino;
 using Rhino.Commands;
 using Rhino.Display;
+using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Input;
+using Rhino.Input.Custom;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Runtime.Remoting;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static Pachyderm_Acoustic.Utilities.StandardConstructions;
 
@@ -431,6 +435,7 @@ namespace Pachyderm_Acoustic
                 int pavement = 0;
                 double SPLW = 0;
                 double[] SWL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
+                double[] Veh = new double[5];
                 double velocity = 83;
                 double delta = 45;
                 double choice = 0;
@@ -446,12 +451,11 @@ namespace Pachyderm_Acoustic
                         {
                             Rhino.Input.RhinoGet.GetNumber("Input basis road sound pressure level at 1 m from street...", false, ref SPLW);
                             SPLW += 8;
-                            SWL = Utilities.StandardConstructions.FHWA_Welsh_SoundPower(SPLW);
+                            SWL = Utilities.StandardConstructions.Vehicle_Noise.FHWA_Welsh_SoundPower(SPLW);
                         }
                         else if (type == 2)//"Traffic (FHWA Standard)")
                         {
-                            double s = 0;
-                            Rhino.Input.RhinoGet.GetNumber("Enter the speed of traffic on this road (in kph)...", false, ref s);
+                            Rhino.Input.RhinoGet.GetNumber("Enter the speed of traffic on this road (in kph)...", false, ref velocity);
 
                             ///Pavement
                             Rhino.Input.Custom.GetOption GOpt = new Rhino.Input.Custom.GetOption();
@@ -465,7 +469,6 @@ namespace Pachyderm_Acoustic
                             pavement = GOpt.OptionIndex();
 
                             ///Vehicle tallies
-                            double[] Veh = new double[5] { 0, 0, 0, 0, 0 };
                             Rhino.Input.RhinoGet.GetNumber("Enter the number of automobiles per hour...", false, ref Veh[0]);
                             Rhino.Input.RhinoGet.GetNumber("Enter the number of medium trucks per hour...", false, ref Veh[1]);
                             Rhino.Input.RhinoGet.GetNumber("Enter the number of heavy trucks per hour...", false, ref Veh[2]);
@@ -476,7 +479,7 @@ namespace Pachyderm_Acoustic
                             int t = 0;
                             Rhino.Input.RhinoGet.GetBool("Full throttle?", false, "Yes", "No", ref throttle);
 
-                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.FHWA_TNM30_SoundPower(s, pavement, (int)Veh[0], (int)Veh[1], (int)Veh[2], (int)Veh[3], (int)Veh[4], throttle);
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.FHWA_TNM30_SoundPower(velocity, pavement, (int)Veh[0], (int)Veh[1], (int)Veh[2], (int)Veh[3], (int)Veh[4], throttle);
                         }
                         else if (type == 3)//"Aircraft")
                         {
@@ -499,29 +502,29 @@ namespace Pachyderm_Acoustic
                             Rhino.RhinoApp.WriteLine("SuperHeavy (>661,000 lbs): Boeing 747/777-300ER, Airbus A380, C-5 Galaxy, An-225");
 
                             GOpt_category.Get();
-                            Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category aircraft_category =
-                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category aircraft_category =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
 
                             // Display selected category with examples
                             string selectedCategory = aircraft_category.ToString();
                             string examples = "";
                             switch (aircraft_category)
                             {
-                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Light:
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category.Light:
                                     examples = "Examples: General aviation aircraft, small business jets, training aircraft";
                                     break;
-                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Medium:
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category.Medium:
                                     examples = "Examples: Regional jets, narrow-body airliners, medium business jets";
                                     break;
-                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.Heavy:
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category.Heavy:
                                     examples = "Examples: Wide-body aircraft, large commercial jets, military transports";
                                     break;
-                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category.SuperHeavy:
+                                case Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category.SuperHeavy:
                                     examples = "Examples: Jumbo jets, very large cargo aircraft, strategic airlifters";
                                     break;
                             }
                             Rhino.RhinoApp.WriteLine($"Selected: {selectedCategory} - {examples}");
-                            aircraft_category = (Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
+                            aircraft_category = (Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category)(GOpt_category.OptionIndex() - 1);
 
                             // 2. Engine Type Selection per ICAO Doc 9501
                             Rhino.Input.Custom.GetOption GOpt_engine = new Rhino.Input.Custom.GetOption();
@@ -540,8 +543,8 @@ namespace Pachyderm_Acoustic
 
                             GOpt_engine.AcceptNothing(false);
                             GOpt_engine.Get();
-                            Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type engine_type =
-                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type)(GOpt_engine.OptionIndex() - 1);
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Engine_Type engine_type =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Engine_Type)(GOpt_engine.OptionIndex() - 1);
 
                             // Display selected engine type
                             Rhino.RhinoApp.WriteLine($"Selected Engine Type: {engine_type}");
@@ -565,8 +568,8 @@ namespace Pachyderm_Acoustic
 
                             GOpt_phase.AcceptNothing(false);
                             GOpt_phase.Get();
-                            Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase flight_phase =
-                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase)(GOpt_phase.OptionIndex() - 1);
+                            Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase flight_phase =
+                                (Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase)(GOpt_phase.OptionIndex() - 1);
 
                             // Display selected flight phase
                             Rhino.RhinoApp.WriteLine($"Selected Flight Phase: {flight_phase}");
@@ -586,14 +589,14 @@ namespace Pachyderm_Acoustic
                             Rhino.Input.RhinoGet.GetNumber("Aircraft altitude in feet", false, ref altitude_ft);
 
                             // Get flight path angle for takeoff/approach operations
-                            if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Takeoff ||
-                                flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Climb)
+                            if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase.Takeoff ||
+                                flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase.Climb)
                             {
                                 flight_path_angle_deg = 15.0; // Default climb angle
                                 Rhino.Input.RhinoGet.GetNumber("Flight path angle in degrees (positive = climbing)", false, ref flight_path_angle_deg);
                             }
-                            else if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Approach ||
-                                     flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase.Landing)
+                            else if (flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase.Approach ||
+                                     flight_phase == Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase.Landing)
                             {
                                 flight_path_angle_deg = -3.0; // Default approach angle
                                 Rhino.Input.RhinoGet.GetNumber("Flight path angle in degrees (negative = descending)", false, ref flight_path_angle_deg);
@@ -603,13 +606,7 @@ namespace Pachyderm_Acoustic
                             // This will be calculated from the curve geometry in the source creation
 
                             // Calculate enhanced sound power spectrum using modern standards
-                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Enhanced_Aircraft_SoundPower(
-                                aircraft_category,
-                                engine_type,
-                                flight_phase,
-                                reference_noise_level,
-                                aircraft_speed_kts,
-                                altitude_ft);
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Enhanced_Aircraft_SoundPower(aircraft_category, engine_type, flight_phase, reference_noise_level, aircraft_speed_kts, altitude_ft);
 
                             // Store enhanced aircraft parameters for line source creation
                             velocity = aircraft_speed_kts * 0.514444; // Convert to m/s for storage
@@ -645,7 +642,7 @@ namespace Pachyderm_Acoustic
                             Rhino.RhinoApp.WriteLine("Subway: Underground metro, subway, rapid transit systems");
 
                             GOpt_vehicle.Get();
-                            Rail_Vehicle_Type vehicle_type = (Rail_Vehicle_Type)(GOpt_vehicle.OptionIndex() - 1);
+                            Vehicle_Noise.Rail_Vehicle_Type vehicle_type = (Vehicle_Noise.Rail_Vehicle_Type)(GOpt_vehicle.OptionIndex() - 1);
 
                             // 2. Track Type Selection per FTA Guidelines
                             Rhino.Input.Custom.GetOption GOpt_track = new Rhino.Input.Custom.GetOption();
@@ -666,37 +663,37 @@ namespace Pachyderm_Acoustic
                             Rhino.RhinoApp.WriteLine("SpecialTrackwork: Switches, crossings, turnouts - higher noise levels");
 
                             GOpt_track.Get();
-                            Track_Type track_type = (Track_Type)(GOpt_track.OptionIndex() - 1);
+                            Vehicle_Noise.Track_Type track_type = (Vehicle_Noise.Track_Type)(GOpt_track.OptionIndex() - 1);
 
                             // 3. Operating Conditions
-                            double train_speed_kph = 80.0; // Default speed
+                            velocity = 80.0; // Default speed
                             double train_length_m = 100.0; // Default train length
                             int num_cars = 4; // Default number of cars
                             bool horn_warning = false; // Horn/whistle usage
 
                             // Get operational parameters
-                            Rhino.Input.RhinoGet.GetNumber("Train speed in km/h", false, ref train_speed_kph);
+                            Rhino.Input.RhinoGet.GetNumber("Velocity", false, ref velocity);
                             Rhino.Input.RhinoGet.GetNumber("Train length in meters", false, ref train_length_m);
                             Rhino.Input.RhinoGet.GetInteger("Number of cars/units", true, ref num_cars);
                             Rhino.Input.RhinoGet.GetBool("Horn/whistle operation?", false, "Yes", "No", ref horn_warning);
 
                             // Calculate rail noise spectrum using ISO 3095 methodology
-                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.ISO3095_Rail_SoundPower(
+                            SWL = Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.ISO3095_Rail_SoundPower(
                                 vehicle_type,
                                 track_type,
-                                train_speed_kph,
+                                velocity,
                                 train_length_m,
                                 num_cars,
                                 horn_warning);
 
                             // Store parameters
-                            velocity = train_speed_kph / 3.6; // Convert to m/s for storage
+                            velocity /= 3.6; // Convert to m/s for storage
                             delta = 0.0; // Level operation for rail
 
                             // Display configuration summary
                             Rhino.RhinoApp.WriteLine("Rail Noise Source Configuration:");
                             Rhino.RhinoApp.WriteLine($"Vehicle: {vehicle_type} | Track: {track_type}");
-                            Rhino.RhinoApp.WriteLine($"Speed: {train_speed_kph:F1} km/h | Length: {train_length_m:F0} m | Cars: {num_cars}");
+                            Rhino.RhinoApp.WriteLine($"Speed: {velocity:F1} km/h | Length: {train_length_m:F0} m | Cars: {num_cars}");
                             Rhino.RhinoApp.WriteLine($"Horn Operation: {(horn_warning ? "Yes" : "No")}");
                             Rhino.RhinoApp.WriteLine("Based on ISO 3095:2013 and FTA Transit Noise Guidelines");
                         }
@@ -714,16 +711,23 @@ namespace Pachyderm_Acoustic
                             if (choice == 1)//"Traffic (Welsh Standard)")
                             {
                                 rhObj.Geometry.SetUserString("SourceType", "Traffic (Welsh)");
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
                             }
                             else if (choice == 2)//"Traffic (FWHA Standard)")
                             {
                                 rhObj.Geometry.SetUserString("SourceType", "Traffic (FHWA)");
+                                rhObj.Geometry.SetUserString("Automobiles", Veh[0].ToString());
+                                rhObj.Geometry.SetUserString("Medium_Trucks", Veh[1].ToString());
+                                rhObj.Geometry.SetUserString("Heavy_Trucks", Veh[2].ToString());
+                                rhObj.Geometry.SetUserString("Buses", Veh[3].ToString());
+                                rhObj.Geometry.SetUserString("Motorcycles", Veh[4].ToString());
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
                             }
                             else if (choice == 3)//"Aircraft (Enhanced)")
                             {
-                                Pachyderm_Acoustic.Utilities.StandardConstructions.Aircraft_Category aircraft_category = Utilities.StandardConstructions.Aircraft_Category.Medium;
-                                Pachyderm_Acoustic.Utilities.StandardConstructions.Engine_Type engine_type = Utilities.StandardConstructions.Engine_Type.Turbojet;
-                                Pachyderm_Acoustic.Utilities.StandardConstructions.Flight_Phase flight_phase = Utilities.StandardConstructions.Flight_Phase.Takeoff;
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category aircraft_category = Utilities.StandardConstructions.Vehicle_Noise.Aircraft_Category.Medium;
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Engine_Type engine_type = Utilities.StandardConstructions.Vehicle_Noise.Engine_Type.Turbojet;
+                                Pachyderm_Acoustic.Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase flight_phase = Utilities.StandardConstructions.Vehicle_Noise.Flight_Phase.Takeoff;
                                 double aircraft_speed_kts = 150.0; // Default cruise speed
                                 double reference_noise_level = 85.0; // Default reference level in dB(A)
                                 double altitude_ft = 1000.0; // Default altitude
@@ -742,19 +746,19 @@ namespace Pachyderm_Acoustic
                             }
                             else if (choice == 4)//"Rail (ISO 3095)")
                             {
-                                Utilities.StandardConstructions.Rail_Vehicle_Type vehicle_type = Utilities.StandardConstructions.Rail_Vehicle_Type.PassengerTrain;
-                                Utilities.StandardConstructions.Track_Type track_type = Utilities.StandardConstructions.Track_Type.ContinuousWelded;
-                                double train_speed_kph = 80.0; // Default speed
+                                Utilities.StandardConstructions.Vehicle_Noise.Rail_Vehicle_Type vehicle_type = Utilities.StandardConstructions.Vehicle_Noise.Rail_Vehicle_Type.PassengerTrain;
+                                Utilities.StandardConstructions.Vehicle_Noise.Track_Type track_type = Utilities.StandardConstructions.Vehicle_Noise.Track_Type.ContinuousWelded;
+                                velocity = 80.0; // Default speed
                                 double train_length_m = 100.0; // Default train length
                                 int num_cars = 4; // Default number of cars
                                 bool horn_warning = false; // Horn/whistle usage
                                 rhObj.Geometry.SetUserString("SourceType", "Railway");
                                 rhObj.Geometry.SetUserString("VehicleType", vehicle_type.ToString());
                                 rhObj.Geometry.SetUserString("TrackType", track_type.ToString());
-                                rhObj.Geometry.SetUserString("TrainSpeed", train_speed_kph.ToString());
                                 rhObj.Geometry.SetUserString("TrainLength", train_length_m.ToString());
                                 rhObj.Geometry.SetUserString("NumCars", num_cars.ToString());
                                 rhObj.Geometry.SetUserString("HornOperation", horn_warning.ToString());
+                                rhObj.Geometry.SetUserString("Velocity", velocity.ToString());
                             }
                             else
                             {
@@ -784,6 +788,514 @@ namespace Pachyderm_Acoustic
             }
         }
 
+        public class FIATrackLineSource_Command : Command
+        {
+            private const double GRAVITY = 9.81;
+
+            public override string EnglishName => "Insert_FIATrackLineSource";
+
+            // FIA track types (based on your graphic + your needs)
+            private enum FiaTrackType
+            {
+                Grade1,
+                Grade2,
+                Grade3,
+                Grade4,
+                Grade5,
+                Grade6,
+                DragStrip,
+                TestTrack,
+                LandSpeedRecord,
+                OffRoadCompetition
+            }
+
+            private enum FhwaBucket
+            {
+                Automobile,
+                MediumTruck,
+                HeavyTruck,
+                Bus,
+                Motorcycle
+            }
+
+            private sealed class TrackDefaults
+            {
+                public string Label;
+                public double MinSpeedKph;
+                public double MaxSpeedKph;
+                public double LateralG;
+                public double AccelG;
+                public double BrakeG;
+                public int DefaultCars;
+                public FhwaBucket DefaultBucket;
+            }
+
+            private static TrackDefaults Defaults(FiaTrackType type)
+            {
+                // These are *starting* defaults. You will tune them as you calibrate sound power / speed.
+                // The important bit is: the command is now capable of supporting any type consistently.
+                switch (type)
+                {
+                    case FiaTrackType.Grade1: // F1-ish
+                        return new TrackDefaults { Label = "Grade 1", MinSpeedKph = 60, MaxSpeedKph = 370, LateralG = 5.5, AccelG = 1.4, BrakeG = 5.5, DefaultCars = 20, DefaultBucket = FhwaBucket.Motorcycle };
+
+                    case FiaTrackType.Grade2: // F2/F3/WEC-ish
+                        return new TrackDefaults { Label = "Grade 2", MinSpeedKph = 60, MaxSpeedKph = 330, LateralG = 4.8, AccelG = 1.1, BrakeG = 5.0, DefaultCars = 22, DefaultBucket = FhwaBucket.Motorcycle };
+
+                    case FiaTrackType.Grade3: // GT / Formula Regional
+                        return new TrackDefaults { Label = "Grade 3", MinSpeedKph = 50, MaxSpeedKph = 300, LateralG = 4.0, AccelG = 0.9, BrakeG = 4.5, DefaultCars = 30, DefaultBucket = FhwaBucket.Automobile };
+
+                    case FiaTrackType.Grade4: // F4-ish
+                        return new TrackDefaults { Label = "Grade 4", MinSpeedKph = 40, MaxSpeedKph = 260, LateralG = 3.2, AccelG = 0.7, BrakeG = 3.8, DefaultCars = 26, DefaultBucket = FhwaBucket.Automobile };
+
+                    case FiaTrackType.Grade5: // provisional
+                        return new TrackDefaults { Label = "Grade 5", MinSpeedKph = 40, MaxSpeedKph = 260, LateralG = 3.2, AccelG = 0.7, BrakeG = 3.8, DefaultCars = 20, DefaultBucket = FhwaBucket.Automobile };
+
+                    case FiaTrackType.Grade6: // rally/off-road facilities
+                    case FiaTrackType.OffRoadCompetition:
+                        return new TrackDefaults { Label = "Grade 6 / Off-road", MinSpeedKph = 20, MaxSpeedKph = 180, LateralG = 2.2, AccelG = 0.6, BrakeG = 3.0, DefaultCars = 12, DefaultBucket = FhwaBucket.Automobile };
+
+                    case FiaTrackType.DragStrip:
+                        // Not a closed-circuit “laps” situation; you can still run it, but you should use PassesPerHour directly.
+                        return new TrackDefaults { Label = "Drag strip", MinSpeedKph = 0, MaxSpeedKph = 500, LateralG = 1.2, AccelG = 2.0, BrakeG = 2.0, DefaultCars = 2, DefaultBucket = FhwaBucket.Motorcycle };
+
+                    case FiaTrackType.TestTrack:
+                        return new TrackDefaults { Label = "Test track", MinSpeedKph = 20, MaxSpeedKph = 320, LateralG = 3.5, AccelG = 0.8, BrakeG = 4.0, DefaultCars = 10, DefaultBucket = FhwaBucket.Automobile };
+
+                    case FiaTrackType.LandSpeedRecord:
+                        return new TrackDefaults { Label = "Land speed", MinSpeedKph = 0, MaxSpeedKph = 600, LateralG = 0.9, AccelG = 0.8, BrakeG = 1.5, DefaultCars = 1, DefaultBucket = FhwaBucket.Motorcycle };
+
+                    default:
+                        return new TrackDefaults { Label = "Default", MinSpeedKph = 40, MaxSpeedKph = 260, LateralG = 3.0, AccelG = 0.7, BrakeG = 3.8, DefaultCars = 20, DefaultBucket = FhwaBucket.Automobile };
+                }
+            }
+
+            protected override Result RunCommand(RhinoDoc doc, RunMode mode)
+            {
+                SourceConduit m_source_conduit = SourceConduit.Instance;
+
+                // Select the track curve/polycurve
+                var go = new GetObject();
+                go.SetCommandPrompt("Select the track curve / polycurve");
+                go.GeometryFilter = ObjectType.Curve;
+                go.SubObjectSelect = false;
+                go.Get();
+                if (go.CommandResult() != Result.Success) return go.CommandResult();
+
+                var trackCurve = go.Object(0).Curve();
+                if (trackCurve == null) return Result.Failure;
+
+                double trackLength = trackCurve.GetLength();
+                RhinoApp.WriteLine($"Track length: {trackLength:F0} m ({trackLength / 1000.0:F2} km)");
+
+                // Options
+                var opt = new GetOption();
+                opt.SetCommandPrompt("FIA Track Line Source Options");
+
+                // Track type list
+                var types = new List<string>(Enum.GetNames(typeof(FiaTrackType)));
+                int typeIndex = 0;
+                opt.AddOptionList("TrackType", types, typeIndex);
+
+                // Pavement (reuse your existing FHWA pavement argument)
+                var pavementOpt = new OptionInteger(1, 0, 3);
+                opt.AddOptionInteger("PavementType", ref pavementOpt);
+
+                // Control whether we compute passes/hr from lap time (closed circuit) or force a pass rate (drag/testing)
+                var useLapPassRate = new OptionToggle(true, "Fixed", "FromLapTime");
+                opt.AddOptionToggle("PassRateMode", ref useLapPassRate);
+
+                var passesPerHourOpt = new OptionInteger(600, 1, 200000); // only used if Fixed
+                opt.AddOptionInteger("PassesPerHour", ref passesPerHourOpt);
+
+                // Cars on track (only used if FromLapTime)
+                var carsOpt = new OptionInteger(25, 1, 200);
+                opt.AddOptionInteger("NumberOfCars", ref carsOpt);
+
+                // Duty factor (fraction of hour cars are circulating)
+                var dutyOpt = new OptionDouble(1.0, 0.0, 1.0);
+                opt.AddOptionDouble("DutyFactor", ref dutyOpt);
+
+                // Vehicle bucket mapping for FHWA_TNM10 call
+                var buckets = new List<string>(Enum.GetNames(typeof(FhwaBucket)));
+                int bucketIndex = 0;
+                opt.AddOptionList("FHWABucket", buckets, bucketIndex);
+
+                // Allow overrides for dynamics
+                var latGOpt = new OptionDouble(5.0, 1.0, 7.0);
+                opt.AddOptionDouble("LateralG", ref latGOpt);
+
+                var accelGOpt = new OptionDouble(1.0, 0.1, 3.0);
+                opt.AddOptionDouble("AccelG", ref accelGOpt);
+
+                var brakeGOpt = new OptionDouble(5.0, 0.5, 7.0);
+                opt.AddOptionDouble("BrakeG", ref brakeGOpt);
+
+                // Speed caps
+                var minKphOpt = new OptionDouble(40.0, 0.0, 200.0);
+                opt.AddOptionDouble("MinSpeedKph", ref minKphOpt);
+
+                var maxKphOpt = new OptionDouble(300.0, 50.0, 800.0);
+                opt.AddOptionDouble("MaxSpeedKph", ref maxKphOpt);
+
+                opt.AcceptNothing(true);
+
+                // Prime defaults from Grade1 initially
+                ApplyDefaults(FiaTrackType.Grade1, ref carsOpt, ref bucketIndex, ref latGOpt, ref accelGOpt, ref brakeGOpt, ref minKphOpt, ref maxKphOpt);
+
+                double Tlap, passesPerHour, avgSpeedKph, duty;
+                double latG, accelG, brakeG, minKph, maxKph;
+                int numCars;
+
+                while (true)
+                {
+                    var res = opt.Get();
+                    if (res == Rhino.Input.GetResult.Nothing) break;
+                    if (res == Rhino.Input.GetResult.Cancel) return Result.Cancel;
+
+                    // If TrackType changed, refresh defaults (but keep user overrides if they already changed values)
+                    if (res == Rhino.Input.GetResult.Option && opt.OptionIndex() >= 0)
+                    {
+                        var on = opt.Option().EnglishName;
+
+                        typeIndex = opt.Option().CurrentListOptionIndex;
+                        if (on == "TrackType") ApplyDefaults((FiaTrackType)typeIndex, ref carsOpt, ref bucketIndex, ref latGOpt, ref accelGOpt, ref brakeGOpt, ref minKphOpt, ref maxKphOpt);
+                        // Clear and re-add all options to refresh the display
+
+                        latG = latGOpt.CurrentValue;
+                        accelG = accelGOpt.CurrentValue;
+                        brakeG = brakeGOpt.CurrentValue;
+                        minKph = minKphOpt.CurrentValue;
+                        maxKph = maxKphOpt.CurrentValue;
+
+                        // Analyze track -> segments with speeds/throttle
+                        var ana = AnalyzeTrackByLength(trackCurve, latG, accelG, brakeG, minKph, maxKph);
+
+                        // Compute lap time from speeds (harmonic mean, correct)
+                        Tlap = 0.0;
+                        foreach (var seg in ana.Segments)
+                        {
+                            double v = Math.Max(0.1, seg.AverageSpeedKph / 3.6);
+                            Tlap += seg.Length / v;
+                        }
+
+                        numCars = carsOpt.CurrentValue;
+                        duty = dutyOpt.CurrentValue;
+
+                        // Passes per hour at any point
+                        if (useLapPassRate.CurrentValue) // FromLapTime
+                        {
+                            passesPerHour = (numCars * duty) * (3600.0 / Math.Max(1e-6, Tlap));
+                        }
+                        else
+                        {
+                            passesPerHour = passesPerHourOpt.CurrentValue;
+                        }
+
+                        avgSpeedKph = (trackLength / Math.Max(1e-6, Tlap)) * 3.6;
+
+                        RhinoApp.WriteLine($"Avg speed (from lap time): {avgSpeedKph:0.0} km/h");
+                        passesPerHourOpt.CurrentValue = (int)Math.Ceiling(passesPerHour);
+
+                        opt.ClearCommandOptions();
+                        opt.AddOptionList("TrackType", types, typeIndex);
+                        opt.AddOptionInteger("PavementType", ref pavementOpt);
+                        opt.AddOptionToggle("PassRateMode", ref useLapPassRate);
+                        opt.AddOptionInteger("PassesPerHour", ref passesPerHourOpt);
+                        opt.AddOptionInteger("NumberOfCars", ref carsOpt);
+                        opt.AddOptionDouble("DutyFactor", ref dutyOpt);
+                        opt.AddOptionList("FHWABucket", buckets, bucketIndex);
+                        opt.AddOptionDouble("LateralG", ref latGOpt);
+                        opt.AddOptionDouble("AccelG", ref accelGOpt);
+                        opt.AddOptionDouble("BrakeG", ref brakeGOpt);
+                        opt.AddOptionDouble("MinSpeedKph", ref minKphOpt);
+                        opt.AddOptionDouble("MaxSpeedKph", ref maxKphOpt);
+
+                        if (on == "FHWABucket")
+                        {
+                            bucketIndex = opt.Option().CurrentListOptionIndex;
+                        }
+                    }
+                }
+
+                var type = (FiaTrackType)typeIndex;
+                var dflt = Defaults(type);
+
+                int pavement = pavementOpt.CurrentValue;
+
+                numCars = carsOpt.CurrentValue;
+                duty = dutyOpt.CurrentValue;
+
+                latG = latGOpt.CurrentValue;
+                accelG = accelGOpt.CurrentValue;
+                brakeG = brakeGOpt.CurrentValue;
+
+                minKph = minKphOpt.CurrentValue;
+                maxKph = maxKphOpt.CurrentValue;
+
+                var bucket = (FhwaBucket)bucketIndex;
+
+                // Analyze track -> segments with speeds/throttle
+                var analysis = AnalyzeTrackByLength(trackCurve, latG, accelG, brakeG, minKph, maxKph);
+
+                // Compute lap time from speeds (harmonic mean, correct)
+                Tlap = 0.0;
+                foreach (var seg in analysis.Segments)
+                {
+                    double v = Math.Max(0.1, seg.AverageSpeedKph / 3.6);
+                    Tlap += seg.Length / v;
+                }
+
+                // Passes per hour at any point
+                //double passesPerHour;
+                if (useLapPassRate.CurrentValue) // FromLapTime
+                {
+                    passesPerHour = (numCars * duty) * (3600.0 / Math.Max(1e-6, Tlap));
+                }
+                else
+                {
+                    passesPerHour = passesPerHourOpt.CurrentValue;
+                }
+
+                avgSpeedKph = (trackLength / Math.Max(1e-6, Tlap)) * 3.6;
+
+                RhinoApp.WriteLine($"\nTrack Type: {type} ({dflt.Label})");
+                RhinoApp.WriteLine($"Segments: {analysis.Segments.Count}");
+                RhinoApp.WriteLine($"Lap time: {Tlap:0.00} s");
+                RhinoApp.WriteLine($"Avg speed (from lap time): {avgSpeedKph:0.0} km/h");
+                RhinoApp.WriteLine($"Passes per hour at any point: {passesPerHour:0.0}");
+
+                // Cluster/group setup
+                Guid clusterid = Guid.NewGuid();
+                List<Guid> segIds = new List<Guid>();
+
+                foreach (var seg in analysis.Segments)
+                {
+                    // Trim segment curve
+                    Curve segCrv = trackCurve.Trim(seg.StartT, seg.EndT);
+                    if (segCrv == null) continue;
+
+                    Guid cid = doc.Objects.AddCurve(segCrv);
+                    if (cid == Guid.Empty) continue;
+
+                    var rhObj = doc.Objects.Find(cid);
+                    if (rhObj == null) continue;
+
+                    // Build the FHWA call counts
+                    int autos = 0, med = 0, heavy = 0, bus = 0, moto = 0;
+                    int q = (int)Math.Round(passesPerHour);
+
+                    switch (bucket)
+                    {
+                        case FhwaBucket.Automobile: autos = q; break;
+                        case FhwaBucket.MediumTruck: med = q; break;
+                        case FhwaBucket.HeavyTruck: heavy = q; break;
+                        case FhwaBucket.Bus: bus = q; break;
+                        case FhwaBucket.Motorcycle: moto = q; break;
+                    }
+
+                    // Compute SWL using your existing standard construction
+                    double[] SWL = Utilities.StandardConstructions.Vehicle_Noise.FHWA_TNM10_SoundPower(
+                        (int)Math.Round(seg.AverageSpeedKph),
+                        pavement,
+                        autos, med, heavy, bus,
+                        moto,
+                        seg.FullThrottle
+                    );
+
+                    // Tag the Rhino curve as a Pachyderm “source object”
+                    rhObj.Attributes.Name = "Acoustical Source";
+                    rhObj.Geometry.SetUserString("SourceType", "FIA_Track_Segment");
+                    rhObj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(SWL));
+                    rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
+                    rhObj.Geometry.SetUserString("Cluster", clusterid.ToString());
+
+                    // Metadata for traceability
+                    rhObj.Geometry.SetUserString("FIA_TrackType", type.ToString());
+                    rhObj.Geometry.SetUserString("FHWA_Bucket", bucket.ToString());
+                    rhObj.Geometry.SetUserString("PassesPerHour", passesPerHour.ToString("F1"));
+                    rhObj.Geometry.SetUserString("LapTime_s", Tlap.ToString("F2"));
+                    rhObj.Geometry.SetUserString("DutyFactor", duty.ToString("F2"));
+                    rhObj.Geometry.SetUserString("NumCars", numCars.ToString());
+                    rhObj.Geometry.SetUserString("Pavement", pavement.ToString());
+
+                    rhObj.Geometry.SetUserString("SegmentSpeed", seg.AverageSpeedKph.ToString("F0"));
+                    rhObj.Geometry.SetUserString("FullThrottle", seg.FullThrottle.ToString());
+                    rhObj.Geometry.SetUserString("SegLen_m", seg.Length.ToString("F2"));
+
+                    doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+                    m_source_conduit.SetSource(rhObj);
+
+                    segIds.Add(cid);
+                }
+
+                if (segIds.Count > 0) doc.Groups.Add(segIds);
+
+                RhinoApp.WriteLine($"\nFIA Track Line Source created.");
+                RhinoApp.WriteLine($"  Segments created: {segIds.Count}");
+                RhinoApp.WriteLine($"  Cluster ID: {clusterid}");
+                RhinoApp.WriteLine($"  SourceType: FIA_Track_Segment");
+                doc.Views.Redraw();
+
+                return Result.Success;
+            }
+
+            private static void ApplyDefaults(
+                FiaTrackType type,
+                ref OptionInteger carsOpt,
+                ref int bucketIndex,
+                ref OptionDouble latGOpt,
+                ref OptionDouble accelGOpt,
+                ref OptionDouble brakeGOpt,
+                ref OptionDouble minKphOpt,
+                ref OptionDouble maxKphOpt)
+            {
+                var d = Defaults(type);
+                carsOpt.CurrentValue = d.DefaultCars;
+                bucketIndex = (int)d.DefaultBucket;
+
+                latGOpt.CurrentValue = d.LateralG;
+                accelGOpt.CurrentValue = d.AccelG;
+                brakeGOpt.CurrentValue = d.BrakeG;
+
+                minKphOpt.CurrentValue = d.MinSpeedKph;
+                maxKphOpt.CurrentValue = d.MaxSpeedKph;
+            }
+
+            private sealed class TrackSegment
+            {
+                public double StartT;
+                public double EndT;
+                public double Length;
+                public double AverageSpeedKph;
+                public bool FullThrottle;
+            }
+
+            private sealed class TrackAnalysis
+            {
+                public List<TrackSegment> Segments = new List<TrackSegment>();
+            }
+
+            // This is a cleaned-up version of your analysis approach:
+            // - sample by LENGTH (not domain)
+            // - compute raw speed from curvature
+            // - apply forward accel constraint and backward brake constraint in kph-space
+            // - segment based on speed/curvature changes
+            private static TrackAnalysis AnalyzeTrackByLength(
+                Curve crv,
+                double lateralG,
+                double accelG,
+                double brakeG,
+                double minSpeedKph,
+                double maxSpeedKph)
+            {
+                var result = new TrackAnalysis();
+
+                // 1 sample per meter (you can relax this if you want)
+                double L = crv.GetLength();
+                int n = Math.Max(200, (int)Math.Round(L)); // at least 200 points
+
+                double[] t = new double[n];
+                double[] kappa = new double[n];
+                double[] v = new double[n]; // kph
+
+                for (int i = 0; i < n; i++)
+                {
+                    double s = (L * i) / (n - 1);
+                    if (!crv.LengthParameter(s, out double ti))
+                        ti = crv.Domain.ParameterAt((double)i / (n - 1));
+
+                    t[i] = ti;
+
+                    var kvec = crv.CurvatureAt(ti);
+                    kappa[i] = kvec.Length;
+
+                    if (kappa[i] > 1e-9)
+                    {
+                        double R = 1.0 / kappa[i];
+                        double vmax_ms = Math.Sqrt(Math.Max(0.0, lateralG * GRAVITY * R));
+                        double vmax_kph = vmax_ms * 3.6;
+                        v[i] = Math.Max(minSpeedKph, Math.Min(maxSpeedKph, vmax_kph));
+                    }
+                    else v[i] = maxSpeedKph;
+                }
+
+                double ds = L / (n - 1);
+
+                // accel pass (forward)
+                for (int i = 1; i < n; i++)
+                    v[i] = Math.Min(v[i], MaxNextSpeedKph(v[i - 1], ds, accelG));
+
+                // brake pass (backward)
+                for (int i = n - 2; i >= 0; i--)
+                    v[i] = Math.Min(v[i], MaxNextSpeedKph(v[i + 1], ds, brakeG));
+
+                // segmentation thresholds
+                const double MIN_SEG_LEN = 5.0;
+                const double SPEED_DKPH = 10.0;
+                const double DKAPPA = 0.005;
+
+                int start = 0;
+                double startS = 0.0;
+
+                for (int i = 1; i < n; i++)
+                {
+                    double curS = (L * i) / (n - 1);
+                    double segLen = curS - startS;
+
+                    bool speedChanged = Math.Abs(v[i] - v[start]) > SPEED_DKPH;
+                    bool curvChanged = Math.Abs(kappa[i] - kappa[start]) > DKAPPA;
+                    bool last = (i == n - 1);
+
+                    if ((segLen >= MIN_SEG_LEN && (speedChanged || curvChanged)) || last)
+                    {
+                        double sumV = 0.0;
+                        double maxK = 0.0;
+                        int count = i - start + 1;
+
+                        for (int j = start; j <= i; j++)
+                        {
+                            sumV += v[j];
+                            maxK = Math.Max(maxK, kappa[j]);
+                        }
+                        double avgV = sumV / count;
+
+                        bool accelerating = (start == 0) || (avgV > v[Math.Max(0, start - 1)] + 1.0);
+                        bool fullThrottle = accelerating && maxK < 0.01;
+
+                        // segment end parameter: use t[i], start parameter t[start]
+                        double segStartT = t[start];
+                        double segEndT = t[i];
+
+                        // approximate segment length by s difference
+                        double endS = curS;
+
+                        result.Segments.Add(new TrackSegment
+                        {
+                            StartT = segStartT,
+                            EndT = segEndT,
+                            Length = Math.Max(0.01, endS - startS),
+                            AverageSpeedKph = avgV,
+                            FullThrottle = fullThrottle
+                        });
+
+                        start = i;
+                        startS = curS;
+                    }
+                }
+
+                return result;
+            }
+
+            private static double MaxNextSpeedKph(double vPrevKph, double ds_m, double gLong)
+            {
+                double a = Math.Max(0.0, gLong) * GRAVITY; // m/s^2
+                double vPrev = Math.Max(0.0, vPrevKph / 3.6); // m/s
+                double vNext = Math.Sqrt(Math.Max(0.0, vPrev * vPrev + 2.0 * a * ds_m));
+                return vNext * 3.6;
+            }
+        }
+
         /// <summary>
         /// Handles the source objects, and displays an icon instead of the point object it is based on.
         /// </summary>
@@ -797,6 +1309,10 @@ namespace Pachyderm_Acoustic
             DisplayBitmap SU;
             DisplayBitmap LS;
             DisplayBitmap LU;
+
+            // ROYGBIV color scale for FIA track segments (30-400 kph range)
+            private static readonly Pach_Graphics.HSV_colorscale SpeedColorScale =
+                new Pach_Graphics.HSV_colorscale(1, 1, 0, 4.0 / 3.0, 1, 0, 1, 1, false, 12);
 
             public SourceConduit()
             : base()
@@ -1129,28 +1645,89 @@ namespace Pachyderm_Acoustic
                             double[] par = crv.DivideByLength(10, true, out pts);
                             if (par == null || par.Length == 0) par = crv.DivideByCount(2, true, out pts);
 
+                            // Check if this is an FIA track segment or any clustered line source
+                            string sourceType = rhobj.Geometry.GetUserString("SourceType");
+                            string segmentSpeedStr = rhobj.Geometry.GetUserString("SegmentSpeed");
+                            string fullThrottleStr = rhobj.Geometry.GetUserString("FullThrottle");
+                            string clusterStr = rhobj.Geometry.GetUserString("Cluster");
+                            bool isFiaSegment = sourceType == "FIA_Track_Segment" && !string.IsNullOrEmpty(segmentSpeedStr);
+                            bool isClusteredLine = !string.IsNullOrEmpty(clusterStr);
+                            bool suppressEndpointLabels = isFiaSegment || isClusteredLine;
+
+                            Color segmentColor = Color.Red;
+                            bool fullThrottle = false;
+
+                            if (isFiaSegment)
+                            {
+                                double speed = double.Parse(segmentSpeedStr);
+                                fullThrottle = fullThrottleStr == "True";
+                                Eto.Drawing.Color etoColor = SpeedColorScale.GetValue(speed, 30, 400);
+                                segmentColor = Color.FromArgb(etoColor.ToArgb());
+                            }
+
+                            // Line thickness: thicker for full throttle segments
+                            int lineThickness = fullThrottle ? 3 : 1;
+
+                            // Draw circles along the curve
                             for (int i = 0; i < par.Length; i++)
                             {
                                 Rhino.Geometry.Vector3d V = crv.TangentAt(par[i]);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), .5), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), .7), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.2), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.4), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 1.9), System.Drawing.Color.Red);
-                                e.Display.DrawCircle(new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(pts[i], V), 2.1), System.Drawing.Color.Red);
+                                Plane circlePlane = new Rhino.Geometry.Plane(pts[i], V);
+
+                                e.Display.DrawCircle(new Circle(circlePlane, .5), segmentColor, lineThickness);
+                                e.Display.DrawCircle(new Circle(circlePlane, .7), segmentColor, lineThickness);
+                                e.Display.DrawCircle(new Circle(circlePlane, 1.2), segmentColor, lineThickness);
+                                e.Display.DrawCircle(new Circle(circlePlane, 1.4), segmentColor, lineThickness);
+                                e.Display.DrawCircle(new Circle(circlePlane, 1.9), segmentColor, lineThickness);
+                                e.Display.DrawCircle(new Circle(circlePlane, 2.1), segmentColor, lineThickness);
                             }
 
-                            Rhino.Geometry.Point2d screen_pt0 = e.Display.Viewport.WorldToClient(pts[0]);
-                            Rhino.Geometry.Point2d screen_pt1 = e.Display.Viewport.WorldToClient(pts[pts.Length - 1]);
-                            if ((rhobj.IsSelected(false) != 0))
+                            // Draw direction arrow at midpoint
+                            double midParam = crv.Domain.Mid;
+                            Point3d midPt = crv.PointAt(midParam);
+                            Vector3d tangent = crv.TangentAt(midParam);
+                            tangent.Unitize();
+
+                            double arrowLength = 3.0;
+                            double arrowHeadSize = 1.5;
+                            Point3d arrowTip = midPt + tangent * arrowLength;
+                            Vector3d perp = Vector3d.CrossProduct(tangent, Vector3d.ZAxis);
+                            if (perp.Length < 0.01) perp = Vector3d.CrossProduct(tangent, Vector3d.XAxis);
+                            perp.Unitize();
+
+                            Point3d arrowLeft = arrowTip - tangent * arrowHeadSize + perp * arrowHeadSize * 0.5;
+                            Point3d arrowRight = arrowTip - tangent * arrowHeadSize - perp * arrowHeadSize * 0.5;
+
+                            int arrowThickness = fullThrottle ? 4 : 2;
+                            e.Display.DrawLine(midPt, arrowTip, segmentColor, arrowThickness);
+                            e.Display.DrawLine(arrowTip, arrowLeft, segmentColor, arrowThickness);
+                            e.Display.DrawLine(arrowTip, arrowRight, segmentColor, arrowThickness);
+
+                            // Midpoint speed label (only for FIA segments)
+                            if (isFiaSegment)
                             {
-                                e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
-                                e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt1.X, (int)screen_pt1.Y + 40), false, 12, "Arial");
+                                Point2d screenMid = e.Display.Viewport.WorldToClient(midPt);
+                                string speedLabel = $"{segmentSpeedStr} km/h";
+                                if (fullThrottle) speedLabel += " [WOT]";
+
+                                Color textColor = (rhobj.IsSelected(false) != 0) ? Color.Yellow : Color.White;
+                                e.Display.Draw2dText(speedLabel, textColor, new Point2d((int)screenMid.X, (int)screenMid.Y - 20), true, 16, "Arial");
                             }
-                            else
+
+                            if (!suppressEndpointLabels)
                             {
-                                e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
-                                e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt1.X, (int)screen_pt1.Y + 40), false, 12, "Arial");
+                                Rhino.Geometry.Point2d screen_pt0 = e.Display.Viewport.WorldToClient(pts[0]);
+                                Rhino.Geometry.Point2d screen_pt1 = e.Display.Viewport.WorldToClient(pts[pts.Length - 1]);
+                                if ((rhobj.IsSelected(false) != 0))
+                                {
+                                    e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
+                                    e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt1.X, (int)screen_pt1.Y + 40), false, 12, "Arial");
+                                }
+                                else
+                                {
+                                    e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt0.X, (int)screen_pt0.Y + 40), false, 12, "Arial");
+                                    e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt1.X, (int)screen_pt1.Y + 40), false, 12, "Arial");
+                                }
                             }
                         }
                     }

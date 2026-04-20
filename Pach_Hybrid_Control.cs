@@ -550,6 +550,9 @@ namespace Pachyderm_Acoustic
                 analysis_tabs.Pages.Add(Auralization);
                 DynamicLayout SimRev = new DynamicLayout();
                 SimRev.DefaultSpacing = new Size(8,8);
+                analysis_tabs.SelectedIndexChanged += Toggle_Aur_Conduits;
+                analysis_tabs.SelectedIndexChanged += Update_Graph;
+
 
                 this.IS_Path_Box = new PathListBox();
                 this.IS_Path_Box.Update += this.IS_Path_Box_MouseUp;
@@ -865,7 +868,16 @@ namespace Pachyderm_Acoustic
                     Update_Graph(null, null);
                 }
             }
-            
+
+            public void Toggle_Aur_Conduits(object sender, System.EventArgs e)
+            {
+                if (AuralisationConduit.Instance != null)
+                {
+                    if (analysis_tabs.SelectedIndex == 1) AuralisationConduit.Instance.Enabled = true;
+                    else AuralisationConduit.Instance.Enabled= false;
+                }
+            }
+
             private void Load_Library_Event(object sender, Rhino.DocObjects.Tables.LayerTableEventArgs e)
             {
                 Load_Library();
@@ -920,6 +932,7 @@ namespace Pachyderm_Acoustic
 
             private async void Calculate_Click(object sender, System.EventArgs e)
             {
+                SampleRate = 44100;
                 IR_Parts_Analysis.Visible = false;
                 string SavePath = null;
                 CutoffTime = (double)this.CO_TIME.Value;
@@ -3295,11 +3308,6 @@ namespace Pachyderm_Acoustic
 
             #endregion
 
-            private void Auralisation_Click(object sender, EventArgs e)
-            {
-                Rhino.RhinoApp.RunScript("PachyDerm_Auralisation", false);
-            }
-
             private void Convergence_CheckedChanged(object sender, EventArgs e)
             {
                 if (sender == Spec_Rays)
@@ -4078,66 +4086,66 @@ namespace Pachyderm_Acoustic
 
             private Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings _sysCompSettingsPrimitives;
 
-            public static Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings GetSystemCompSettingsPrimitives()
-            {
-                var rhinoSettings = GetRhinoSystemCompSettings();
+            //public static Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings GetSystemCompSettingsPrimitives()
+            //{
+            //    var rhinoSettings = GetRhinoSystemCompSettings();
 
-                return new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
-                {
-                    SelectedEQ = (int)rhinoSettings.SelectedEQ,
-                    SmoothingOct = rhinoSettings.SmoothingOct,
-                    MaxBoostDb = rhinoSettings.MaxBoostDb,
-                    LowFreqHz = rhinoSettings.LowFreqHz,
-                    MinPhase = rhinoSettings.MinPhase,
-                    IsCalibrated = rhinoSettings.IsCalibrated,
-                    TFReference = rhinoSettings.TFReference,
-                    ConvertToDTF = rhinoSettings.ConvertToDTF,
-                    InputIsDTF = rhinoSettings.InputIsDTF,
-                    FreeFieldIncidence = rhinoSettings.FreeFieldIncidence
-                };
-            }
+            //    return new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
+            //    {
+            //        SelectedEQ = (int)rhinoSettings.SelectedEQ,
+            //        SmoothingOct = rhinoSettings.SmoothingOct,
+            //        MaxBoostDb = rhinoSettings.MaxBoostDb,
+            //        LowFreqHz = rhinoSettings.LowFreqHz,
+            //        MinPhase = rhinoSettings.MinPhase,
+            //        IsCalibrated = rhinoSettings.IsCalibrated,
+            //        TFReference = rhinoSettings.TFReference,
+            //        ConvertToDTF = rhinoSettings.ConvertToDTF,
+            //        InputIsDTF = rhinoSettings.InputIsDTF,
+            //        FreeFieldIncidence = rhinoSettings.FreeFieldIncidence
+            //    };
+            //}
 
-            public static RhinoSystemCompSettings GetRhinoSystemCompSettings()
-            {
-                var settings = new RhinoSystemCompSettings();
+            //public static RhinoSystemCompSettings GetRhinoSystemCompSettings()
+            //{
+            //    var settings = new RhinoSystemCompSettings();
 
-                Rhino.RhinoApp.WriteLine("How should the input dataset be interpreted?");
-                Rhino.RhinoApp.WriteLine("1 = Full HRTF");
-                Rhino.RhinoApp.WriteLine("2 = Directional-only");
+            //    Rhino.RhinoApp.WriteLine("How should the input dataset be interpreted?");
+            //    Rhino.RhinoApp.WriteLine("1 = Raw HRTF");
+            //    Rhino.RhinoApp.WriteLine("2 = Reconstructed");
 
-                int inputType = ReadIntInRange("Choice: ", 1, 2);
-                settings.InputIsDTF = (inputType == 2);
+            //    int inputType = ReadIntInRange("Choice: ", 1, 2);
+            //    settings.InputIsDTF = (inputType == 2);
 
-                if (settings.InputIsDTF) return settings;
+            //    if (settings.InputIsDTF) return settings;
+                
+            //    settings.ConvertToDTF = ReadBool("Do you want to convert this HRTF to a Constructed Directional Transfer Function? (y/n): ");
 
-                settings.ConvertToDTF = ReadBool("Do you want to convert this HRTF to a Directional Transfer Function? (y/n): ");
+            //    Rhino.RhinoApp.WriteLine("Equalisation compensates for the response of the measurement system.");
+            //    Rhino.RhinoApp.WriteLine("Select type:");
 
-                Rhino.RhinoApp.WriteLine("Equalisation compensates for the response of the measurement system.");
-                Rhino.RhinoApp.WriteLine("Select type:");
+            //    if (settings.ConvertToDTF)
+            //    {
+            //        // If converting to DTF, user must choose an EQ style (No EQ not allowed)
+            //        Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
+            //        Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
+            //        Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
 
-                if (settings.ConvertToDTF)
-                {
-                    // If converting to DTF, user must choose an EQ style (No EQ not allowed)
-                    Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
-                    Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
-                    Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
+            //        int choice = ReadIntInRange("Choice: ", 1, 3);
+            //        AssignEQSettings(settings, choice);
+            //    }
+            //    else
+            //    {
+            //        Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
+            //        Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
+            //        Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
+            //        Rhino.RhinoApp.WriteLine("4 = No equalisation");
 
-                    int choice = ReadIntInRange("Choice: ", 1, 3);
-                    AssignEQSettings(settings, choice);
-                }
-                else
-                {
-                    Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
-                    Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
-                    Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
-                    Rhino.RhinoApp.WriteLine("4 = No equalisation");
+            //        int choice = ReadIntInRange("Choice: ", 1, 4);
+            //        AssignEQSettings(settings, choice);
+            //    }
 
-                    int choice = ReadIntInRange("Choice: ", 1, 4);
-                    AssignEQSettings(settings, choice);
-                }
-
-                return settings;
-            }
+            //    return settings;
+            //}
 
             private static void AssignEQSettings(RhinoSystemCompSettings settings, int choice)
             {
@@ -4513,23 +4521,31 @@ namespace Pachyderm_Acoustic
                         Channel_View.Items.Add(channel.Right(1));
                         break;
                     case "Binaural (select file...)":
-                        hrtf = ReadSofaHRTF();
-                        if (hrtf == null)
+                        HrtfCompensationOptions seed = new HrtfCompensationOptions();
+
+                        if (_sysCompSettingsPrimitives != null)
                         {
-                            return;
+                            seed.InputIsDTF = _sysCompSettingsPrimitives.InputIsDTF;
+                            seed.ConvertToDTF = _sysCompSettingsPrimitives.ConvertToDTF;
+                            seed.SelectedEQ = (RhinoSystemCompSettings.EQType)_sysCompSettingsPrimitives.SelectedEQ;
+                            seed.SmoothingOct = _sysCompSettingsPrimitives.SmoothingOct;
+                            seed.MaxBoostDb = _sysCompSettingsPrimitives.MaxBoostDb;
+                            seed.LowFreqHz = _sysCompSettingsPrimitives.LowFreqHz;
+                            seed.MinPhase = _sysCompSettingsPrimitives.MinPhase;
+                            seed.IsCalibrated = _sysCompSettingsPrimitives.IsCalibrated;
+                            seed.FreeFieldIncidence = _sysCompSettingsPrimitives.FreeFieldIncidence;
                         }
-                        try
-                        {
-                            _sysCompSettingsPrimitives = GetSystemCompSettingsPrimitives();
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            Rhino.RhinoApp.WriteLine("Equalisation cancelled by user. Defaulting to none.");
-                            _sysCompSettingsPrimitives = new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
-                            {
-                                SelectedEQ = 0 // Default to 'None'
-                            };
-                        }
+
+                        string initialPath = null;
+                        var dlg = new Pachyderm_Acoustic.UI.PachHrtfDialog(initialPath, seed);
+                        bool ok = dlg.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
+                        if (!ok || dlg.ResultData == null) return;
+
+                        hrtf = dlg.ResultData.Hrtf;
+                        _sysCompSettingsPrimitives = dlg.ResultData.CompensationPrimitives;
+
+                        Channel_View.Items.Clear();
+                        Channel_View.Items.Add(new channel(0, new Hare.Geometry.Vector(0, 0, 0), channel.channel_type.hrtf, 0));
                         break;
                     case "A-Format (type I-A)":
                         Channel_View.Items.Add(channel.FLU(0));

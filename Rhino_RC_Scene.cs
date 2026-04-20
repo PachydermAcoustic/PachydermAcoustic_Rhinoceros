@@ -1298,7 +1298,7 @@ namespace Pachyderm_Acoustic
                 {
                     Point3d[] P = Rhino.Geometry.Intersect.Intersection.RayShoot(new Ray3d(S_Origin, Dir), BrepList, 1);
 
-                    if (P == null) { X_PT = new List<Point3d> { default(Point3d) }; u = 0; v = 0; t = new List<double> { 0 }; Code = new List<int> { 0 }; return false; }
+                    if (P.Length == 0) { X_PT = new List<Point3d> { default(Point3d) }; u = 0; v = 0; t = new List<double> { 0 }; Code = new List<int> { 0 }; return false; }
 
                     Voxels.PointIsInVoxel(P[0], ref XVoxel, ref YVoxel, ref ZVoxel);
                     try

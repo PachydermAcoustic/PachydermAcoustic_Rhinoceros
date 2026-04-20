@@ -170,7 +170,7 @@ namespace Pachyderm_Acoustic
 
             public string SpecialCode { get => specialCode; set => specialCode = value; }
 
-            public bool Source(out Environment.Source[] Srcs)
+            public bool Source(out Environment.Source[] Srcs, double line_El_m = 4)
             {
                 System.Guid[] S_ID = SourceConduit.Instance.UUID.ToArray();
                 List<Environment.Source> S = new List<Environment.Source>();
@@ -200,7 +200,7 @@ namespace Pachyderm_Acoustic
                             }
                             else c_list = sources;
                         }
-                        else 
+                        else
                         {
                             cluster = null;
                         }
@@ -262,15 +262,36 @@ namespace Pachyderm_Acoustic
                     {
                         string SWL = Origin.Geometry.GetUserString("SWL");
 
-                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1d / 4d);
-                        if (pts == null || pts.Length == 0) pts = new Point3d[1] { (Origin.Geometry as Curve).PointAtNormalizedLength(0.5) };
+                        string cluster = Origin.Geometry.GetUserString("Cluster");
+                        List<Environment.Source> c_list = new List<Environment.Source>();
+
+                        if (cluster != null && cluster != "")
+                        {
+                            if (!s_dict.TryGetValue(cluster, out List<Environment.Source> sources))
+                            {
+                                c_list = new List<Environment.Source>();
+                                s_dict.Add(cluster, c_list);
+                            }
+                            else c_list = sources;
+                        }
+                        else
+                        {
+                            cluster = null;
+                        }
+
+                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1d / line_El_m);
+                        if (pts == null || pts.Length < 2) pts = new Point3d[2] { (Origin.Geometry as Curve).PointAtStart, (Origin.Geometry as Curve).PointAtEnd };
                         Hare.Geometry.Point[] Samples = new Hare.Geometry.Point[pts.Length];
 
                         for (int i = 0; i < pts.Length; i++)
                         {
                             Samples[i] = Utilities.RCPachTools.RPttoHPt(pts[i]);
                         }
-                        S.Add(new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, 4, id, false));
+
+                        var lineSrc = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, line_El_m, id, false);
+
+                        if (cluster == null) { S.Add(lineSrc); }
+                        else { c_list.Add(lineSrc); }
                     }
                 }
                 //If there are any clusters, add them to the list

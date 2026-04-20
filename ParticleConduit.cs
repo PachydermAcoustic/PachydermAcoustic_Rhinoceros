@@ -132,19 +132,10 @@ namespace Pachyderm_Acoustic
                     }
                 }
 
-                //foreach(int[] i in voxel)
-                //{
-                //    if (i == null)
-                //    {
-                //        Rhino.RhinoApp.WriteLine("oops...");
-                //    }
-                //}
-
                 System.Threading.Semaphore S = new System.Threading.Semaphore(1, 1);
                 if (Nearest_Neighbor)
                 {
                     System.Threading.Tasks.Parallel.For(0, pts.Length, s =>
-                    //for (int s = 0; s < pts.Length; s++)
                     {
                         if (e[s] > emin)
                         {
@@ -339,30 +330,6 @@ namespace Pachyderm_Acoustic
                 }
                 this.Enabled = true;
             }
-
-            //public void Populate(List<List<Point3d>> P, List<List<double>> pressure)
-            //{
-            //    Mesh_Vis = false;
-            //    Section_Vis = false;
-            //    if (pressure.Count > 0)
-            //    {
-            //        PC = new PointCloud();
-            //        for (int j = 0; j < P.Count; j++)
-            //        {
-            //            for (int i = 0; i < P[j].Count; i++)
-            //            {
-            //                PC.Add(P[j][i], P_Color(Utilities.AcousticalMath.SPL_Intensity(pressure[j][i] * pressure[j][i])));
-            //            }
-            //        }
-            //    }
-            //    else
-            //    {
-            //        for (int j = 0; j < P.Count; j++)
-            //        {
-            //            PC = new PointCloud(P[j]);
-            //        }
-            //    }
-            //}
 
             protected override void  PostDrawObjects(DrawEventArgs e)        
             {
