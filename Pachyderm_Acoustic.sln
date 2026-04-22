@@ -1,9 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37012.4 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pachyderm_Acoustic", "Pachyderm_Acoustic.csproj", "{3EE4FD69-312E-479C-B4E7-E807F711F7EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScottPlot", "..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj", "{11957613-DC8D-C4A9-438F-C0F24935D75C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hare", "..\Hare\Hare.csproj", "{7DDF9BFD-B5C8-D94F-87AC-88BF0F5B4C76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScottPlot.Eto", "..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj", "{864C2104-CD14-556B-6AED-22D7BB0C8FE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pachyderm_Acoustic_Universal", "..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj", "{5D18DE4E-5829-49B8-2387-881A28474D76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +23,27 @@ Global
 		{3EE4FD69-312E-479C-B4E7-E807F711F7EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3EE4FD69-312E-479C-B4E7-E807F711F7EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3EE4FD69-312E-479C-B4E7-E807F711F7EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11957613-DC8D-C4A9-438F-C0F24935D75C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11957613-DC8D-C4A9-438F-C0F24935D75C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11957613-DC8D-C4A9-438F-C0F24935D75C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11957613-DC8D-C4A9-438F-C0F24935D75C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DDF9BFD-B5C8-D94F-87AC-88BF0F5B4C76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DDF9BFD-B5C8-D94F-87AC-88BF0F5B4C76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DDF9BFD-B5C8-D94F-87AC-88BF0F5B4C76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DDF9BFD-B5C8-D94F-87AC-88BF0F5B4C76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{864C2104-CD14-556B-6AED-22D7BB0C8FE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{864C2104-CD14-556B-6AED-22D7BB0C8FE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{864C2104-CD14-556B-6AED-22D7BB0C8FE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{864C2104-CD14-556B-6AED-22D7BB0C8FE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D18DE4E-5829-49B8-2387-881A28474D76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D18DE4E-5829-49B8-2387-881A28474D76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D18DE4E-5829-49B8-2387-881A28474D76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D18DE4E-5829-49B8-2387-881A28474D76}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E64769C5-B554-4F33-9CEE-9B48F034D4A2}
 	EndGlobalSection
 EndGlobal
