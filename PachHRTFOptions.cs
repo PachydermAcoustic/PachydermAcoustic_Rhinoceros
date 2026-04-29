@@ -17,7 +17,6 @@ namespace Pachyderm_Acoustic.UI
     public sealed class HrtfCompensationOptions
     {
         public bool InputIsDTF { get; set; }
-        public bool ConvertToDTF { get; set; }
         public RhinoSystemCompSettings.EQType SelectedEQ { get; set; }
 
         public string MeasurementReferencePath { get; set; }
@@ -31,15 +30,11 @@ namespace Pachyderm_Acoustic.UI
 
         public Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings ToPrimitiveSettings()
         {
-            var primitive = new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
-            {
-                InputIsDTF = InputIsDTF
-            };
+            var primitive = new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings();
 
             if (InputIsDTF)
             {
                 primitive.SelectedEQ = (int)RhinoSystemCompSettings.EQType.None;
-                primitive.ConvertToDTF = false;
                 primitive.SmoothingOct = null;
                 primitive.MaxBoostDb = null;
                 primitive.LowFreqHz = null;
@@ -50,7 +45,6 @@ namespace Pachyderm_Acoustic.UI
                 return primitive;
             }
 
-            primitive.ConvertToDTF = ConvertToDTF;
             primitive.SelectedEQ = (int)SelectedEQ;
             primitive.SmoothingOct = SmoothingOct;
             primitive.MaxBoostDb = MaxBoostDb;
@@ -101,7 +95,6 @@ namespace Pachyderm_Acoustic.UI
         private Button _browseSofaButton;
 
         private DropDown _inputTypeDrop;
-        private CheckBox _convertToDtf;
         private DropDown _eqTypeDrop;
         private Label _eqNote;
 
@@ -181,7 +174,6 @@ namespace Pachyderm_Acoustic.UI
             return new HrtfCompensationOptions
             {
                 InputIsDTF = false,
-                ConvertToDTF = false,
                 SelectedEQ = RhinoSystemCompSettings.EQType.None,
                 FreeFieldIncidence = 30
             };
@@ -198,13 +190,6 @@ namespace Pachyderm_Acoustic.UI
             _inputTypeDrop.Items.Add("Directional-only / DTF");
             _inputTypeDrop.SelectedIndex = c.InputIsDTF ? 1 : 0;
             _inputTypeDrop.SelectedIndexChanged += delegate { UpdateUiState(); };
-
-            _convertToDtf = new CheckBox
-            {
-                Text = "Convert full HRTF to DTF",
-                Checked = c.ConvertToDTF
-            };
-            _convertToDtf.CheckedChanged += delegate { UpdateUiState(); };
 
             _eqTypeDrop = new DropDown();
             _eqTypeDrop.Items.Add("None");
@@ -358,7 +343,6 @@ namespace Pachyderm_Acoustic.UI
             layout.Spacing = new Size(8, 8);
 
             layout.AddRow(new Label { Text = "Input interpretation", Width = 180 }, _inputTypeDrop);
-            layout.AddRow(_convertToDtf, null);
             layout.AddRow(new Label { Text = "Equalisation", Width = 180 }, _eqTypeDrop);
             layout.AddRow(_eqNote);
             layout.AddRow(_measurementPanel);
@@ -367,7 +351,7 @@ namespace Pachyderm_Acoustic.UI
 
             return new GroupBox
             {
-                Text = "Input / Equalisation / DTF Processing",
+                Text = "Input / Equalisation Processing",
                 Content = layout
             };
         }
@@ -375,10 +359,8 @@ namespace Pachyderm_Acoustic.UI
         private void UpdateUiState()
         {
             bool inputIsDtf = _inputTypeDrop.SelectedIndex == 1;
-            bool convertToDtf = _convertToDtf.Checked == true;
             RhinoSystemCompSettings.EQType eq = GetSelectedEqType();
 
-            _convertToDtf.Enabled = !inputIsDtf;
             _eqTypeDrop.Enabled = !inputIsDtf;
 
             if (inputIsDtf)
@@ -386,7 +368,7 @@ namespace Pachyderm_Acoustic.UI
                 _measurementPanel.Visible = false;
                 _freeFieldPanel.Visible = false;
                 _diffuseFieldPanel.Visible = false;
-                _eqNote.Text = "Directional-only / DTF input bypasses HRTF-to-DTF conversion and equalisation setup.";
+                _eqNote.Text = "Directional-only / DTF input bypasses equalisation setup.";
             }
             else
             {
@@ -394,9 +376,7 @@ namespace Pachyderm_Acoustic.UI
                 _freeFieldPanel.Visible = eq == RhinoSystemCompSettings.EQType.FreeField;
                 _diffuseFieldPanel.Visible = eq == RhinoSystemCompSettings.EQType.DiffuseField;
 
-                _eqNote.Text = (convertToDtf && eq == RhinoSystemCompSettings.EQType.None)
-                    ? "Equalisation is required when converting a full HRTF to DTF."
-                    : string.Empty;
+                _eqNote.Text = string.Empty;
             }
 
             _measurementSmoothing.Enabled = _measurementUseSmoothing.Checked == true;
@@ -419,18 +399,11 @@ namespace Pachyderm_Acoustic.UI
         private HrtfCompensationOptions BuildCompensationOptions()
         {
             bool inputIsDtf = _inputTypeDrop.SelectedIndex == 1;
-            bool convertToDtf = !inputIsDtf && _convertToDtf.Checked == true;
             RhinoSystemCompSettings.EQType eq = inputIsDtf ? RhinoSystemCompSettings.EQType.None : GetSelectedEqType();
-
-            if (convertToDtf && eq == RhinoSystemCompSettings.EQType.None)
-            {
-                throw new InvalidOperationException("Choose Measurement, Free-field, or Diffuse-field equalisation when converting a full HRTF to DTF.");
-            }
 
             var c = new HrtfCompensationOptions
             {
                 InputIsDTF = inputIsDtf,
-                ConvertToDTF = convertToDtf,
                 SelectedEQ = eq
             };
 

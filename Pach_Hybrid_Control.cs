@@ -4086,67 +4086,6 @@ namespace Pachyderm_Acoustic
 
             private Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings _sysCompSettingsPrimitives;
 
-            //public static Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings GetSystemCompSettingsPrimitives()
-            //{
-            //    var rhinoSettings = GetRhinoSystemCompSettings();
-
-            //    return new Pachyderm_Acoustic.Audio.SystemResponseCompensation.SystemCompensationSettings
-            //    {
-            //        SelectedEQ = (int)rhinoSettings.SelectedEQ,
-            //        SmoothingOct = rhinoSettings.SmoothingOct,
-            //        MaxBoostDb = rhinoSettings.MaxBoostDb,
-            //        LowFreqHz = rhinoSettings.LowFreqHz,
-            //        MinPhase = rhinoSettings.MinPhase,
-            //        IsCalibrated = rhinoSettings.IsCalibrated,
-            //        TFReference = rhinoSettings.TFReference,
-            //        ConvertToDTF = rhinoSettings.ConvertToDTF,
-            //        InputIsDTF = rhinoSettings.InputIsDTF,
-            //        FreeFieldIncidence = rhinoSettings.FreeFieldIncidence
-            //    };
-            //}
-
-            //public static RhinoSystemCompSettings GetRhinoSystemCompSettings()
-            //{
-            //    var settings = new RhinoSystemCompSettings();
-
-            //    Rhino.RhinoApp.WriteLine("How should the input dataset be interpreted?");
-            //    Rhino.RhinoApp.WriteLine("1 = Raw HRTF");
-            //    Rhino.RhinoApp.WriteLine("2 = Reconstructed");
-
-            //    int inputType = ReadIntInRange("Choice: ", 1, 2);
-            //    settings.InputIsDTF = (inputType == 2);
-
-            //    if (settings.InputIsDTF) return settings;
-                
-            //    settings.ConvertToDTF = ReadBool("Do you want to convert this HRTF to a Constructed Directional Transfer Function? (y/n): ");
-
-            //    Rhino.RhinoApp.WriteLine("Equalisation compensates for the response of the measurement system.");
-            //    Rhino.RhinoApp.WriteLine("Select type:");
-
-            //    if (settings.ConvertToDTF)
-            //    {
-            //        // If converting to DTF, user must choose an EQ style (No EQ not allowed)
-            //        Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
-            //        Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
-            //        Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
-
-            //        int choice = ReadIntInRange("Choice: ", 1, 3);
-            //        AssignEQSettings(settings, choice);
-            //    }
-            //    else
-            //    {
-            //        Rhino.RhinoApp.WriteLine("1 = Measurement Equalisation");
-            //        Rhino.RhinoApp.WriteLine("2 = Free-Field Equalisation");
-            //        Rhino.RhinoApp.WriteLine("3 = Diffuse-Field Equalisation");
-            //        Rhino.RhinoApp.WriteLine("4 = No equalisation");
-
-            //        int choice = ReadIntInRange("Choice: ", 1, 4);
-            //        AssignEQSettings(settings, choice);
-            //    }
-
-            //    return settings;
-            //}
-
             private static void AssignEQSettings(RhinoSystemCompSettings settings, int choice)
             {
                 bool enableSmoothing;
@@ -4525,8 +4464,6 @@ namespace Pachyderm_Acoustic
 
                         if (_sysCompSettingsPrimitives != null)
                         {
-                            seed.InputIsDTF = _sysCompSettingsPrimitives.InputIsDTF;
-                            seed.ConvertToDTF = _sysCompSettingsPrimitives.ConvertToDTF;
                             seed.SelectedEQ = (RhinoSystemCompSettings.EQType)_sysCompSettingsPrimitives.SelectedEQ;
                             seed.SmoothingOct = _sysCompSettingsPrimitives.SmoothingOct;
                             seed.MaxBoostDb = _sysCompSettingsPrimitives.MaxBoostDb;
@@ -5450,8 +5387,6 @@ namespace Pachyderm_Acoustic
             public bool MinPhase { get; set; }
             public bool IsCalibrated { get; set; }
             public double[] TFReference { get; set; }
-            public bool ConvertToDTF { get; set; }
-            public bool InputIsDTF { get; set; }
             public int FreeFieldIncidence { get; set; }
         }
     }
