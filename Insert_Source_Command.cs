@@ -1304,6 +1304,7 @@ namespace Pachyderm_Acoustic
             private bool m_bHandlerAdded = false;
             private List<System.Guid> m_id_list = new List<System.Guid>();
             public List<Balloon> m_Balloons = new List<Balloon>();
+            private List<RhinoCabinetDisplay> m_Cabinets = new List<RhinoCabinetDisplay>();
             public Dodec d = new Dodec(0.18);
             DisplayBitmap SS;
             DisplayBitmap SU;
@@ -1375,6 +1376,7 @@ namespace Pachyderm_Acoustic
             {
                 m_id_list.Clear();
                 m_Balloons.Clear();
+                m_Cabinets.Clear();
                 this.Enabled = false;
                 // we don't want to watch for events any more 
                 SetupEventHandlers(false);
@@ -1441,6 +1443,7 @@ namespace Pachyderm_Acoustic
                             int index = m_id_list.IndexOf(m_id);
                             m_id_list.RemoveAt(index);
                             m_Balloons.RemoveAt(index);
+                            m_Cabinets.RemoveAt(index);
                             if (m_id_list.Count < 1)
                             {
                                 this.Enabled = false;
@@ -1475,6 +1478,7 @@ namespace Pachyderm_Acoustic
                 if (!m_id_list.Contains(rhino_object.Attributes.ObjectId))
                 {
                     m_id_list.Add(rhino_object.Attributes.ObjectId);
+                    m_Cabinets.Add(BuildRhinoCabinetDisplay(rhino_object)); 
                     string typ = "";
                     typ = rhino_object.Geometry.GetUserString("SourceType");
                     if (rhino_object.ObjectType == Rhino.DocObjects.ObjectType.Point)
@@ -1571,9 +1575,10 @@ namespace Pachyderm_Acoustic
                                 if ((rhobj.IsSelected(false) != 0))
                                 {
                                     //Display the balloon for 1khz.
-                                    e.Display.DrawSprite(LS, pt, 0.25f, true);// screen_pt, 32.0f);
+                                    //e.Display.DrawSprite(LS, pt, 0.25f, true);// screen_pt, 32.0f);
+                                    DrawCabinetOrSprite(e, rhobj, index, LS, pt, 0.25f);
                                     e.Display.DrawMeshWires(Utilities.RCPachTools.HaretoRhinoMesh(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
-                                    e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
+                                    e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                                     double Theta = (m_Balloons[index].CurrentAlt + 270) * System.Math.PI / 180;
                                     double Phi = (m_Balloons[index].CurrentAzi - 90) * System.Math.PI / 180;
                                     Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
@@ -1581,10 +1586,8 @@ namespace Pachyderm_Acoustic
                                 }
                                 else
                                 {
-                                    //Display the Icon for a loudspeaker.
-                                    e.Display.DrawSprite(LU, pt, 0.5f, true);// screen_pt, 32.0f);
-                                                                             //e.Display.DrawMeshVertices(this.m_Balloons[i].m_DisplayMesh, R);
-                                    e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 12, "Arial");
+                                    DrawCabinetOrSprite(e, rhobj, index, LU, pt, 0.25f);
+                                    e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                                 }
                             }
                             else
@@ -1746,9 +1749,210 @@ namespace Pachyderm_Acoustic
                         {
                             while (m_Balloons.Count < m_id_list.Count) m_Balloons.Add(null);
                         }
+
+                        if (m_Cabinets == null) m_Cabinets = new List<RhinoCabinetDisplay>();
+                        if (m_Cabinets.Count < m_id_list.Count)
+                        {
+                            while (m_Cabinets.Count < m_id_list.Count) m_Cabinets.Add(null);
+                        }
+
                         m_Balloons[i] = B;
+
+                        Rhino.DocObjects.RhinoObject rhobj = null;
+                        if (Rhino.RhinoDoc.ActiveDoc != null)
+                        {
+                            rhobj = Rhino.RhinoDoc.ActiveDoc.Objects.Find(ID);
+                        }
+
+                        m_Cabinets[i] = rhobj != null ? BuildRhinoCabinetDisplay(rhobj) : null;
+
                         return;
                     }
+                }
+            }
+
+            private void DrawCabinetOrSprite(DrawEventArgs e, Rhino.DocObjects.RhinoObject rhobj, int index, DisplayBitmap fallbackSprite, Rhino.Geometry.Point3d pt, float spriteScale)
+            {
+                RhinoCabinetDisplay cab = GetCabinetDisplay(rhobj, index);
+
+                if (cab != null && cab.HasGeometry)
+                {
+                    DrawCabinet(e, cab);
+                    return;
+                }
+
+                e.Display.DrawSprite(fallbackSprite, pt, spriteScale, true);
+            }
+
+            private RhinoCabinetDisplay GetCabinetDisplay(Rhino.DocObjects.RhinoObject rhobj, int index)
+            {
+                while (m_Cabinets.Count < m_id_list.Count) m_Cabinets.Add(null);
+
+                int hash = GetCabinetHash(rhobj);
+                RhinoCabinetDisplay cab = m_Cabinets[index];
+
+                if (cab == null || cab.Hash != hash)
+                {
+                    cab = BuildRhinoCabinetDisplay(rhobj);
+                    m_Cabinets[index] = cab;
+                }
+
+                return cab;
+            }
+
+            private void DrawCabinet(DrawEventArgs e, RhinoCabinetDisplay cab)
+            {
+                Color wireColor = Color.Black;
+                Color bodyColor = Color.FromArgb(110, 110, 110);
+
+                if (cab.Mesh != null && cab.Mesh.Vertices.Count > 0 && cab.Mesh.Faces.Count > 0)
+                {
+                    DisplayMaterial material = new DisplayMaterial(bodyColor, 0.35);
+                    e.Display.DrawMeshShaded(cab.Mesh, material);
+                    e.Display.DrawMeshWires(cab.Mesh, wireColor);
+                }
+
+                for (int i = 0; i < cab.Lines.Count; i++)
+                {
+                    e.Display.DrawLine(cab.Lines[i], wireColor, 1);
+                }
+            }
+
+            private RhinoCabinetDisplay BuildRhinoCabinetDisplay(Rhino.DocObjects.RhinoObject rhobj)
+            {
+                if (rhobj == null || rhobj.Geometry == null) return null;
+
+                string pointNotation = rhobj.Geometry.GetUserString("CLF_CabinetPoints");
+                string faceNotation = rhobj.Geometry.GetUserString("CLF_CabinetFaces");
+                string lineNotation = rhobj.Geometry.GetUserString("CLF_CabinetLines");
+
+                Hare.Geometry.Point origin = GetHareSourceOrigin(rhobj);
+
+                double alt;
+                double azi;
+                double axial;
+
+                Cabinet_Geometry_Parser.ParseAiming(
+                    rhobj.Geometry.GetUserString("Aiming"),
+                    out alt,
+                    out azi,
+                    out axial);
+
+                double unitScale = 1.0;
+
+                if (Rhino.RhinoDoc.ActiveDoc != null)
+                {
+                    unitScale = Rhino.RhinoMath.UnitScale(
+                        Rhino.UnitSystem.Meters,
+                        Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem);
+                }
+
+                Cabinet_Geometry cab = Cabinet_Geometry_Parser.ParseAndTransform(
+                    pointNotation,
+                    faceNotation,
+                    lineNotation,
+                    origin,
+                    alt,
+                    azi,
+                    axial,
+                    unitScale);
+
+                if (cab == null || !cab.HasGeometry) return null;
+
+                RhinoCabinetDisplay display = new RhinoCabinetDisplay();
+
+                if (cab.HasMesh)
+                {
+                    display.Mesh = BuildRhinoCabinetMesh(cab);
+                }
+
+                if (cab.HasLines)
+                {
+                    for (int i = 0; i < cab.Lines.Count; i++)
+                    {
+                        Cabinet_Line line = cab.Lines[i];
+
+                        display.Lines.Add(new Rhino.Geometry.Line(
+                            new Rhino.Geometry.Point3d(line.A.x, line.A.y, line.A.z),
+                            new Rhino.Geometry.Point3d(line.B.x, line.B.y, line.B.z)));
+                    }
+                }
+
+                display.Hash = GetCabinetHash(rhobj);
+
+                return display.HasGeometry ? display : null;
+            }
+
+            private Hare.Geometry.Point GetHareSourceOrigin(Rhino.DocObjects.RhinoObject rhobj)
+            {
+                Rhino.Geometry.Point pt = rhobj.Geometry as Rhino.Geometry.Point;
+
+                if (pt != null)
+                {
+                    Rhino.Geometry.Point3d p = pt.Location;
+                    return new Hare.Geometry.Point(p.X, p.Y, p.Z);
+                }
+
+                Rhino.Geometry.BoundingBox bbox = rhobj.Geometry.GetBoundingBox(true);
+                return new Hare.Geometry.Point(bbox.Min.X, bbox.Min.Y, bbox.Min.Z);
+            }
+
+            private Rhino.Geometry.Mesh BuildRhinoCabinetMesh(Cabinet_Geometry cab)
+            {
+                Rhino.Geometry.Mesh mesh = new Rhino.Geometry.Mesh();
+
+                for (int i = 0; i < cab.Vertices.Count; i++)
+                {
+                    Hare.Geometry.Point p = cab.Vertices[i];
+                    mesh.Vertices.Add(p.x, p.y, p.z);
+                }
+
+                for (int i = 0; i < cab.Faces.Count; i++)
+                {
+                    int[] face = cab.Faces[i];
+
+                    if (face == null || face.Length < 3) continue;
+
+                    if (face.Length == 3)
+                    {
+                        mesh.Faces.AddFace(face[0], face[1], face[2]);
+                    }
+                    else if (face.Length == 4)
+                    {
+                        mesh.Faces.AddFace(face[0], face[1], face[2], face[3]);
+                    }
+                    else
+                    {
+                        for (int j = 1; j < face.Length - 1; j++)
+                        {
+                            mesh.Faces.AddFace(face[0], face[j], face[j + 1]);
+                        }
+                    }
+                }
+
+                if (mesh.Faces.Count == 0) return null;
+
+                mesh.Normals.ComputeNormals();
+                mesh.Compact();
+
+                return mesh;
+            }
+
+            private int GetCabinetHash(Rhino.DocObjects.RhinoObject rhobj)
+            {
+                unchecked
+                {
+                    int hash = 17;
+
+                    hash = hash * 23 + (rhobj.Geometry.GetUserString("CLF_CabinetPoints") ?? "").GetHashCode();
+                    hash = hash * 23 + (rhobj.Geometry.GetUserString("CLF_CabinetFaces") ?? "").GetHashCode();
+                    hash = hash * 23 + (rhobj.Geometry.GetUserString("CLF_CabinetLines") ?? "").GetHashCode();
+                    hash = hash * 23 + (rhobj.Geometry.GetUserString("Aiming") ?? "").GetHashCode();
+
+                    Rhino.Geometry.BoundingBox bbox = rhobj.Geometry.GetBoundingBox(true);
+                    hash = hash * 23 + bbox.Min.GetHashCode();
+
+                    return hash;
                 }
             }
 
@@ -1805,6 +2009,21 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+            private sealed class RhinoCabinetDisplay
+            {
+                public Rhino.Geometry.Mesh Mesh;
+                public readonly List<Rhino.Geometry.Line> Lines = new List<Rhino.Geometry.Line>();
+                public int Hash;
+
+                public bool HasGeometry
+                {
+                    get
+                    {
+                        return (Mesh != null && Mesh.Vertices.Count > 0 && Mesh.Faces.Count > 0)
+                            || Lines.Count > 0;
+                    }
+                }
+            }
             public class Dodec
             {
                 List<Rhino.Geometry.Line> L = new List<Rhino.Geometry.Line>();

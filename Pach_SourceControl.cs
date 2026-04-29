@@ -23,6 +23,7 @@ using Pachyderm_Acoustic.UI;
 using Rhino.UI;
 using Eto.Drawing;
 using Eto.Forms;
+using Pachyderm_Acoustic.Environment;
 
 namespace Pachyderm_Acoustic
 {
@@ -33,6 +34,12 @@ namespace Pachyderm_Acoustic
         {
             private List<Rhino.DocObjects.RhinoObject> Objects = new List<Rhino.DocObjects.RhinoObject>();
             private SourceConduit SC;
+            private SpeakerPatternConduit SpeakerPattern;
+            private GroupBox PatternDisplayBox;
+            private CheckBox ShowPatternDisplay;
+            private DropDown PatternOctave;
+            private bool UpdatingPatternControls = false;
+            private bool SourceControlVisible = false;
 
             private ComboBox SourceType;
 
@@ -82,6 +89,13 @@ namespace Pachyderm_Acoustic
             public Pach_SourceControl()
             {
                 SC = SourceConduit.Instance;
+                SpeakerPattern = new SpeakerPatternConduit();
+                SpeakerPattern.Mode = SpeakerPatternConduit.Display_Mode.Boundary_Contours;
+                SpeakerPattern.Contour_Levels = new double[] { -1, -2, -3, -4, -5, -6, -12, -18 };
+                SpeakerPattern.Octave = 4;
+                SpeakerPattern.Contour_Mesh_Max_Edge = 2.0;
+                SpeakerPattern.Enabled = false;
+
                 DynamicLayout Layout = new DynamicLayout();
                 Layout.Padding = 8;
                 Layout.DefaultPadding = 8;
@@ -273,6 +287,37 @@ namespace Pachyderm_Acoustic
                 Directional_Controls.AddRow(dir);
                 Directional_Controls.AddRow(SrcDetails);
 
+                PatternDisplayBox = new GroupBox();
+                PatternDisplayBox.Text = "Pattern Display";
+                PatternDisplayBox.Visible = false;
+                PatternDisplayBox.Enabled = false;
+
+                ShowPatternDisplay = new CheckBox();
+                ShowPatternDisplay.Text = "Show Pattern Contours";
+                ShowPatternDisplay.Checked = true;
+                ShowPatternDisplay.CheckedChanged += PatternDisplay_CheckedChanged;
+
+                PatternOctave = new DropDown();
+                PatternOctave.Items.Add("63 Hz.");
+                PatternOctave.Items.Add("125 Hz.");
+                PatternOctave.Items.Add("250 Hz.");
+                PatternOctave.Items.Add("500 Hz.");
+                PatternOctave.Items.Add("1 kHz.");
+                PatternOctave.Items.Add("2 kHz.");
+                PatternOctave.Items.Add("4 kHz.");
+                PatternOctave.Items.Add("8 kHz.");
+                PatternOctave.SelectedIndex = 4;
+                PatternOctave.SelectedIndexChanged += PatternOctave_SelectedIndexChanged;
+
+                DynamicLayout PDL = new DynamicLayout();
+                PDL.Padding = 8;
+                PDL.DefaultSpacing = new Size(4, 8);
+                PDL.AddRow(ShowPatternDisplay);
+                PDL.AddRow(new Label { Text = "Octave Band:" }, PatternOctave);
+
+                PatternDisplayBox.Content = PDL;
+                Directional_Controls.AddRow(PatternDisplayBox);
+
                 Directional_Controls.Enabled = true;
                 Directional_Controls.Visible = true;
 
@@ -303,15 +348,26 @@ namespace Pachyderm_Acoustic
                     Maximum.Width = (Width - 40) / 2;
 
                     SrcDetails.Width = this.Width - 40;
+                    if (PatternDisplayBox != null) PatternDisplayBox.Width = this.Width - 40;
+                    if (PatternOctave != null) PatternOctave.Width = Math.Max(80, this.Width - 160);
                     Invalidate();
                 };
 
                 this.Content = Layout;
+                this.Load += SourceControl_Load;
+                this.UnLoad += SourceControl_UnLoad;
             }
 
             public void Load_Doc(List<Rhino.DocObjects.RhinoObject> Obj)
             {
                 Objects = Obj;
+
+                if (Objects == null || Objects.Count == 0)
+                {
+                    ClearSpeakerPatternConduit();
+                    UpdatePatternControlState(false);
+                    return;
+                }
 
                 SWL0.MaxValue = 200;
                 SWL1.MaxValue = 200;
@@ -336,6 +392,8 @@ namespace Pachyderm_Acoustic
                             if (!Mode.Equals(Mode2))
                             {
                                 SourceType.Text = "";
+                                ClearSpeakerPatternConduit();
+                                UpdatePatternControlState(false);
                                 return;
                             }
                         }
@@ -400,6 +458,10 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
+
+                UpdatePatternControlState();
+                UpdateSpeakerPatternConduit();
+
             }
 
             private void Commit()
@@ -414,6 +476,7 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 Load_Doc(Objects);
+                UpdateSpeakerPatternConduit();
             }
 
             private void SWL_ValueChanged(object sender, System.EventArgs e)
@@ -446,6 +509,8 @@ namespace Pachyderm_Acoustic
 
             private void Select_Type()
             {
+                bool UpdatePattern = false;
+
                 if (SourceType.SelectedIndex != 2 && SourceType.SelectedIndex != 3)
                 {
                     SWL0.MaxValue = 200;
@@ -460,13 +525,23 @@ namespace Pachyderm_Acoustic
                     SrcDetails.Visible = false;
                     SrcDIR.Enabled = false;
                     SrcDIR.Visible = false;
+                    foreach (RhinoObject obj in Objects)
+                    {
+                        ClearCabinetGeometryUserStrings(obj);
+                    }
                     Commit();
+                    ClearSpeakerPatternConduit();
                     return;
                 }
 
                 if (SourceType.SelectedIndex == 2)
                 {
                     string[] L;
+                    int DataLength;
+                    string CabPts;
+                    string CabFaces;
+                    string CabLines;
+
                     try
                     {
                         L = CLF_Read.SecureAccess.ReadAny(Rhino.UI.RhinoEtoApp.MainWindow);
@@ -475,6 +550,8 @@ namespace Pachyderm_Acoustic
                             SourceType.SelectedIndex = 0;
                             return;
                         }
+
+                        ExtractCabinetGeometryStrings(L, out DataLength, out CabPts, out CabFaces, out CabLines);
                     }
                     catch (System.Exception)
                     {
@@ -488,11 +565,14 @@ namespace Pachyderm_Acoustic
 
                         for (int i = 0; i < Objects.Count; i++)
                         {
-
                             Objects[i].Geometry.SetUserString("Model", L[0]);
                             Objects[i].Geometry.SetUserString("FileType", L[1]);
 
-                            if (L.Length == 13)
+                            Objects[i].Geometry.SetUserString("CLF_CabinetPoints", string.IsNullOrEmpty(CabPts) ? "P|" : CabPts);
+                            Objects[i].Geometry.SetUserString("CLF_CabinetFaces", string.IsNullOrEmpty(CabFaces) ? "F|" : CabFaces);
+                            Objects[i].Geometry.SetUserString("CLF_CabinetLines", string.IsNullOrEmpty(CabLines) ? "L|" : CabLines);
+
+                            if (L.Length == 16)
                             {
                                 Sens = L[2];
                                 Max = L[3];
@@ -511,6 +591,7 @@ namespace Pachyderm_Acoustic
                                 Objects[i].Geometry.SetUserString("Bands", L[12]);
 
                                 SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                                UpdatePattern = true;
                             }
                             else
                             {
@@ -528,14 +609,14 @@ namespace Pachyderm_Acoustic
                                     Sens += (10 * (Math.Log10(Math.Pow(10, double.Parse(SP[idx - 4]) / 10) + Math.Pow(10, double.Parse(SP[idx - 3]) / 10) + Math.Pow(10, double.Parse(SP[idx - 2]) / 10)))).ToString() + ";";
                                     Max += (10 * (Math.Log10(Math.Pow(10, double.Parse(MP[idx - 4]) / 10) + Math.Pow(10, double.Parse(MP[idx - 3]) / 10) + Math.Pow(10, double.Parse(MP[idx - 2]) / 10)))).ToString() + ";";
 
-                                    string[] balloon0 = L[idx].Split(';') ;
+                                    string[] balloon0 = L[idx].Split(';');
                                     string[] balloon1 = L[idx + 1].Split(';');
                                     string[] balloon2 = L[idx + 2].Split(';');
                                     for (int r = 0; r < balloon0.Length - 1; r++)
                                     {
                                         balloon[oct] += (10 * (Math.Log10(Math.Pow(10, double.Parse(balloon0[r]) / 10) + Math.Pow(10, double.Parse(balloon1[r]) / 10) + Math.Pow(10, double.Parse(balloon2[r]) / 10)))).ToString() + ";";
                                     }
-                                    Objects[i].Geometry.SetUserString("Balloon" + Math.Ceiling(62.5 * Math.Pow(2,oct)).ToString(), balloon[oct]);
+                                    Objects[i].Geometry.SetUserString("Balloon" + Math.Ceiling(62.5 * Math.Pow(2, oct)).ToString(), balloon[oct]);
                                 }
 
                                 Objects[i].Geometry.SetUserString("Sensitivity", Sens);
@@ -552,11 +633,12 @@ namespace Pachyderm_Acoustic
                                 Objects[i].Geometry.SetUserString("Bands", L[28]);
 
                                 SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                                UpdatePattern = true;
                             }
 
                             Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
                             Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
-                            
+
                             SrcDetails.Enabled = true;
                             SrcDetails.Visible = true;
                             SrcDIR.Enabled = true;
@@ -599,21 +681,26 @@ namespace Pachyderm_Acoustic
                 {
                     Eto.Forms.OpenFileDialog OF = new Eto.Forms.OpenFileDialog();
 
-                    if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) != Eto.Forms.DialogResult.Cancel)
+                    if (OF.ShowDialog(Rhino.UI.RhinoEtoApp.MainWindow) == Eto.Forms.DialogResult.Cancel)
                     {
-                        CODES = Balloon.Read_Generic(OF.FileName);
-
-                        string[] nomcode = CODES[8].Split(';');
-                        string[] maxcode = CODES[9].Split(';');
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            ballooncodes[oct] = CODES[oct];
-                            SWLnom[oct] = double.Parse(nomcode[oct]);
-                            SWLmax[oct] = double.Parse(maxcode[oct]);
-                        }
-
-                        B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                        SourceType.SelectedIndex = 0;
+                        ClearSpeakerPatternConduit();
+                        return;
                     }
+
+                    CODES = Balloon.Read_Generic(OF.FileName);
+
+                    string[] nomcode = CODES[8].Split(';');
+                    string[] maxcode = CODES[9].Split(';');
+
+                    for (int oct = 0; oct < 8; oct++)
+                    {
+                        ballooncodes[oct] = CODES[oct];
+                        SWLnom[oct] = double.Parse(nomcode[oct]);
+                        SWLmax[oct] = double.Parse(maxcode[oct]);
+                    }
+
+                    B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
                 }
                 else if (SourceType.SelectedIndex == 4)
                 {
@@ -644,56 +731,110 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                    if (Objects.Count != 0 && SourceType.SelectedIndex != 2)
+                if (Objects.Count != 0 && SourceType.SelectedIndex != 2)
+                {
+                    for (int i = 0; i < Objects.Count; i++)
                     {
-                        for (int i = 0; i < Objects.Count; i++)
-                        {
-                            Objects[i].Geometry.SetUserString("Sensitivity", CODES[8]);
-                            Objects[i].Geometry.SetUserString("SWLMax", CODES[9]);
+                        Objects[i].Geometry.SetUserString("Sensitivity", CODES[8]);
+                        Objects[i].Geometry.SetUserString("SWLMax", CODES[9]);
 
-                            Objects[i].Geometry.SetUserString("Balloon63", ballooncodes[0]);
-                            Objects[i].Geometry.SetUserString("Balloon125", ballooncodes[1]);
-                            Objects[i].Geometry.SetUserString("Balloon250", ballooncodes[2]);
-                            Objects[i].Geometry.SetUserString("Balloon500", ballooncodes[3]);
-                            Objects[i].Geometry.SetUserString("Balloon1000", ballooncodes[4]);
-                            Objects[i].Geometry.SetUserString("Balloon2000", ballooncodes[5]);
-                            Objects[i].Geometry.SetUserString("Balloon4000", ballooncodes[6]);
-                            Objects[i].Geometry.SetUserString("Balloon8000", ballooncodes[7]);
+                        Objects[i].Geometry.SetUserString("Balloon63", ballooncodes[0]);
+                        Objects[i].Geometry.SetUserString("Balloon125", ballooncodes[1]);
+                        Objects[i].Geometry.SetUserString("Balloon250", ballooncodes[2]);
+                        Objects[i].Geometry.SetUserString("Balloon500", ballooncodes[3]);
+                        Objects[i].Geometry.SetUserString("Balloon1000", ballooncodes[4]);
+                        Objects[i].Geometry.SetUserString("Balloon2000", ballooncodes[5]);
+                        Objects[i].Geometry.SetUserString("Balloon4000", ballooncodes[6]);
+                        Objects[i].Geometry.SetUserString("Balloon8000", ballooncodes[7]);
 
-                            Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
-                            Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
-                            SC.AddBalloon(Objects[i].Attributes.ObjectId, B);
+                        Objects[i].Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
+                        Objects[i].Geometry.SetUserString("Delay", Delay_ms.Value.ToString());
+                        SC.AddBalloon(Objects[i].Attributes.ObjectId, B);
+                        SrcDIR.Enabled = true;
 
-                            SrcDetails.Enabled = true;
-                            SrcDetails.Visible = true;
-                            SrcDIR.Enabled = true;
-                            SrcDIR.Visible = true;
+                        SrcDetails.Enabled = true;
+                        SrcDetails.Visible = true;
+                        SrcDIR.Enabled = true;
+                        SrcDIR.Visible = true;
 
-                            SWL0.MaxValue = (!double.IsInfinity(SWLmax[0]) && !double.IsNaN(SWLmax[0])) ? (double)SWLmax[0] : (double)200;
-                            SWL1.MaxValue = (!double.IsInfinity(SWLmax[1]) && !double.IsNaN(SWLmax[1])) ? (double)SWLmax[1] : (double)200;
-                            SWL2.MaxValue = (!double.IsInfinity(SWLmax[2]) && !double.IsNaN(SWLmax[2])) ? (double)SWLmax[2] : (double)200;
-                            SWL3.MaxValue = (!double.IsInfinity(SWLmax[3]) && !double.IsNaN(SWLmax[3])) ? (double)SWLmax[3] : (double)200;
-                            SWL4.MaxValue = (!double.IsInfinity(SWLmax[4]) && !double.IsNaN(SWLmax[4])) ? (double)SWLmax[4] : (double)200;
-                            SWL5.MaxValue = (!double.IsInfinity(SWLmax[5]) && !double.IsNaN(SWLmax[5])) ? (double)SWLmax[5] : (double)200;
-                            SWL6.MaxValue = (!double.IsInfinity(SWLmax[6]) && !double.IsNaN(SWLmax[6])) ? (double)SWLmax[6] : (double)200;
-                            SWL7.MaxValue = (!double.IsInfinity(SWLmax[7]) && !double.IsNaN(SWLmax[7])) ? (double)SWLmax[7] : (double)200;
+                        SWL0.MaxValue = (!double.IsInfinity(SWLmax[0]) && !double.IsNaN(SWLmax[0])) ? (double)SWLmax[0] : (double)200;
+                        SWL1.MaxValue = (!double.IsInfinity(SWLmax[1]) && !double.IsNaN(SWLmax[1])) ? (double)SWLmax[1] : (double)200;
+                        SWL2.MaxValue = (!double.IsInfinity(SWLmax[2]) && !double.IsNaN(SWLmax[2])) ? (double)SWLmax[2] : (double)200;
+                        SWL3.MaxValue = (!double.IsInfinity(SWLmax[3]) && !double.IsNaN(SWLmax[3])) ? (double)SWLmax[3] : (double)200;
+                        SWL4.MaxValue = (!double.IsInfinity(SWLmax[4]) && !double.IsNaN(SWLmax[4])) ? (double)SWLmax[4] : (double)200;
+                        SWL5.MaxValue = (!double.IsInfinity(SWLmax[5]) && !double.IsNaN(SWLmax[5])) ? (double)SWLmax[5] : (double)200;
+                        SWL6.MaxValue = (!double.IsInfinity(SWLmax[6]) && !double.IsNaN(SWLmax[6])) ? (double)SWLmax[6] : (double)200;
+                        SWL7.MaxValue = (!double.IsInfinity(SWLmax[7]) && !double.IsNaN(SWLmax[7])) ? (double)SWLmax[7] : (double)200;
 
-                            SWL0.Value = (double)SWLnom[0];
-                            SWL1.Value = (double)SWLnom[1];
-                            SWL2.Value = (double)SWLnom[2];
-                            SWL3.Value = (double)SWLnom[3];
-                            SWL4.Value = (double)SWLnom[4];
-                            SWL5.Value = (double)SWLnom[5];
-                            SWL6.Value = (double)SWLnom[6];
-                            SWL7.Value = (double)SWLnom[7];
+                        SWL0.Value = (double)SWLnom[0];
+                        SWL1.Value = (double)SWLnom[1];
+                        SWL2.Value = (double)SWLnom[2];
+                        SWL3.Value = (double)SWLnom[3];
+                        SWL4.Value = (double)SWLnom[4];
+                        SWL5.Value = (double)SWLnom[5];
+                        SWL6.Value = (double)SWLnom[6];
+                        SWL7.Value = (double)SWLnom[7];
 
-                            Commit();
-                        }
+                        ClearCabinetGeometryUserStrings(Objects[i]);
+
+                        Commit();
                     }
-                
+                }
+
                 Load_Doc(Objects);
+                if (UpdatePattern)
+                {
+                    UpdateSpeakerPatternConduit();
+                }
+                else
+                {
+                    ClearSpeakerPatternConduit();
+                }
             }
 
+            private static void ExtractCabinetGeometryStrings(string[] L, out int dataLength, out string cabinetPoints, out string cabinetFaces, out string cabinetLines)
+            {
+                cabinetPoints = "P|";
+                cabinetFaces = "F|";
+                cabinetLines = "L|";
+                dataLength = L == null ? 0 : L.Length;
+
+                if (L == null || L.Length < 4) return;
+
+                string p = L[L.Length - 3];
+                string f = L[L.Length - 2];
+                string l = L[L.Length - 1];
+
+                bool hasAppendedGeometry =
+                    !string.IsNullOrEmpty(p) && p.StartsWith("P|") &&
+                    !string.IsNullOrEmpty(f) && f.StartsWith("F|") &&
+                    !string.IsNullOrEmpty(l) && l.StartsWith("L|");
+
+                if (!hasAppendedGeometry) return;
+
+                cabinetPoints = p;
+                cabinetFaces = f;
+                cabinetLines = l;
+                dataLength = L.Length - 3;
+            }
+
+            private static void SetCabinetGeometryUserStrings(
+                Rhino.DocObjects.RhinoObject obj,
+                string cabinetPoints,
+                string cabinetFaces,
+                string cabinetLines)
+            {
+                obj.Geometry.SetUserString("CLF_CabinetPoints", string.IsNullOrEmpty(cabinetPoints) ? "P|" : cabinetPoints);
+                obj.Geometry.SetUserString("CLF_CabinetFaces", string.IsNullOrEmpty(cabinetFaces) ? "F|" : cabinetFaces);
+                obj.Geometry.SetUserString("CLF_CabinetLines", string.IsNullOrEmpty(cabinetLines) ? "L|" : cabinetLines);
+            }
+
+            private static void ClearCabinetGeometryUserStrings(Rhino.DocObjects.RhinoObject obj)
+            {
+                obj.Geometry.SetUserString("CLF_CabinetPoints", "P|");
+                obj.Geometry.SetUserString("CLF_CabinetFaces", "F|");
+                obj.Geometry.SetUserString("CLF_CabinetLines", "L|");
+            }
             private void SrcDetails_Click(object sender, System.EventArgs e)
             {
                 if (Objects.Count != 0)
@@ -732,6 +873,7 @@ namespace Pachyderm_Acoustic
                 foreach (RhinoObject OBJ in Objects)
                 {
                     OBJ.Geometry.SetUserString("Aiming", Alt.Value.ToString() + ";" + Azi.Value.ToString() + ";" + AxialRot.Value.ToString());
+                    UpdateSpeakerPatternConduit();
                     this.SC.Update_Aiming(OBJ.Attributes.ObjectId, (float)Alt.Value, (float)Azi.Value, (float)AxialRot.Value);
                 }
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
@@ -811,12 +953,119 @@ namespace Pachyderm_Acoustic
                     this.SC.Update_Aiming(OBJ.Attributes.ObjectId, (float)Alt.Value, (float)Azi.Value, (float)AxialRot.Value);
                 }
             }
+
+            private void SourceControl_Load(object sender, EventArgs e)
+            {
+                SourceControlVisible = true;
+                UpdatePatternControlState();
+                UpdateSpeakerPatternConduit();
+            }
+
+            private void SourceControl_UnLoad(object sender, EventArgs e)
+            {
+                SourceControlVisible = false;
+                ClearSpeakerPatternConduit();
+            }
+
+            private void PatternDisplay_CheckedChanged(object sender, EventArgs e)
+            {
+                if (UpdatingPatternControls) return;
+                UpdateSpeakerPatternConduit();
+            }
+
+            private void PatternOctave_SelectedIndexChanged(object sender, EventArgs e)
+            {
+                if (UpdatingPatternControls) return;
+
+                if (SpeakerPattern != null && PatternOctave != null && PatternOctave.SelectedIndex >= 0)
+                {
+                    SpeakerPattern.Octave = PatternOctave.SelectedIndex;
+                }
+
+                UpdateSpeakerPatternConduit();
+            }
+
+            private bool PatternDisplayEnabled()
+            {
+                if (ShowPatternDisplay == null) return false;
+                return ShowPatternDisplay.Checked == true;
+            }
+
+            private bool ViewingSingleSpeakerSource()
+            {
+                if (Objects == null) return false;
+                if (Objects.Count != 1) return false;
+                if (Objects[0] == null) return false;
+                if (Objects[0].Geometry == null) return false;
+
+                if (Objects[0].Attributes.Name != "Acoustical Source" &&
+                    Objects[0].Name != "Acoustical Source")
+                {
+                    return false;
+                }
+
+                string mode = Objects[0].Geometry.GetUserString("SourceType");
+
+                // SourceType list:
+                // 0 = Geodesic Directional Distribution
+                // 1 = Pseudo-Random Directional Distribution
+                // 2 = Common Loudspeaker Format
+                // 3 = Directional Source
+                return mode == "2" || mode == "3";
+            }
+
+            private void UpdatePatternControlState()
+            {
+                UpdatePatternControlState(ViewingSingleSpeakerSource());
+            }
+
+            private void UpdatePatternControlState(bool showPatternControls)
+            {
+                UpdatingPatternControls = true;
+
+                if (PatternDisplayBox != null)
+                {
+                    PatternDisplayBox.Visible = showPatternControls;
+                    PatternDisplayBox.Enabled = showPatternControls;
+                }
+
+                UpdatingPatternControls = false;
+            }
+
+            private void UpdateSpeakerPatternConduit()
+            {
+                if (SpeakerPattern == null) return;
+
+                if (!SourceControlVisible || !PatternDisplayEnabled() || !ViewingSingleSpeakerSource())
+                {
+                    SpeakerPattern.Clear();
+                    return;
+                }
+
+                if (PatternOctave != null && PatternOctave.SelectedIndex >= 0)
+                {
+                    SpeakerPattern.Octave = PatternOctave.SelectedIndex;
+                }
+
+                SpeakerPattern.SetSource(Objects[0]);
+            }
+
+            public void ClearSpeakerPatternConduit()
+            {
+                if (SpeakerPattern != null)
+                {
+                    SpeakerPattern.Clear();
+                }
+            }
             #region IPanel methods
             public void PanelShown(uint documentSerialNumber, ShowPanelReason reason)
             {
                 // Called when the panel tab is made visible, in Mac Rhino this will happen
                 // for a document panel when a new document becomes active, the previous
                 // documents panel will get hidden and the new current panel will get shown.
+                SourceControlVisible = true;
+                UpdatePatternControlState();
+                UpdateSpeakerPatternConduit();
             }
 
             public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
@@ -824,11 +1073,15 @@ namespace Pachyderm_Acoustic
                 // Called when the panel tab is hidden, in Mac Rhino this will happen
                 // for a document panel when a new document becomes active, the previous
                 // documents panel will get hidden and the new current panel will get shown.
+                SourceControlVisible = false;
+                ClearSpeakerPatternConduit();
             }
 
             public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
             {
                 // Called when the document or panel container is closed/destroyed
+                SourceControlVisible = false;
+                ClearSpeakerPatternConduit();
             }
             #endregion IPanel methods
         }
@@ -882,6 +1135,8 @@ namespace Pachyderm_Acoustic
                     Source_Props.Load_Doc(Selected);
                     return true;
                 }
+                Source_Props.ClearSpeakerPatternConduit();
+
                 //default case is not to support the selected object type 
                 return false;
             }
@@ -893,7 +1148,6 @@ namespace Pachyderm_Acoustic
                     return "Sound Source Control";
                 }
             }
-
         }
     }
 }
