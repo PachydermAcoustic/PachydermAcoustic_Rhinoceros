@@ -75,9 +75,9 @@
 			<HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\RhinoCommon.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="CLF_Read">
+		<!--<Reference Include="CLF_Read">
 			<HintPath>..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Resources\CLF_Read.dll</HintPath>
-		</Reference>
+		</Reference>-->
 		<!--<Reference Update="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -118,6 +118,7 @@
 
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\CLF_Read_v2.n7\CLF_Read\CLF_Read.csproj" />
 		<ProjectReference Include="..\Hare\Hare.csproj">
 			<Private>True</Private>
 		</ProjectReference>

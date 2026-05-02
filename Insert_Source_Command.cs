@@ -1832,30 +1832,16 @@ namespace Pachyderm_Acoustic
                 double azi;
                 double axial;
 
-                Cabinet_Geometry_Parser.ParseAiming(
-                    rhobj.Geometry.GetUserString("Aiming"),
-                    out alt,
-                    out azi,
-                    out axial);
+                Cabinet_Geometry_Parser.ParseAiming( rhobj.Geometry.GetUserString("Aiming"), out alt, out azi, out axial);
 
                 double unitScale = 1.0;
 
                 if (Rhino.RhinoDoc.ActiveDoc != null)
                 {
-                    unitScale = Rhino.RhinoMath.UnitScale(
-                        Rhino.UnitSystem.Meters,
-                        Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem);
+                    unitScale = Rhino.RhinoMath.UnitScale( Rhino.UnitSystem.Meters, Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem);
                 }
 
-                Cabinet_Geometry cab = Cabinet_Geometry_Parser.ParseAndTransform(
-                    pointNotation,
-                    faceNotation,
-                    lineNotation,
-                    origin,
-                    alt,
-                    azi,
-                    axial,
-                    unitScale);
+                Cabinet_Geometry cab = Cabinet_Geometry_Parser.ParseAndTransform( pointNotation, faceNotation, lineNotation, origin, alt, azi, axial, unitScale);
 
                 if (cab == null || !cab.HasGeometry) return null;
 
