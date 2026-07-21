@@ -219,7 +219,8 @@ namespace Pachyderm_Acoustic
                         switch (S_Type)
                         {
                             case "":
-                            case "0":
+                            case "0": 
+                            case null:
                                 s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "1":

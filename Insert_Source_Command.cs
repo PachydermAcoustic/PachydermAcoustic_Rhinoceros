@@ -400,6 +400,11 @@ namespace Pachyderm_Acoustic
                     obj.Geometry.SetUserString("ArrayDelayOctaveMs", "0;0;0;0;0;0;0;0");
                 }
 
+                if (string.IsNullOrWhiteSpace(obj.Geometry.GetUserString("ArrayGainOctaveDb")))
+                {
+                    obj.Geometry.SetUserString("ArrayGainOctaveDb", "0;0;0;0;0;0;0;0");
+                }
+
                 if (string.IsNullOrWhiteSpace(obj.Geometry.GetUserString("Delay")))
                 {
                     obj.Geometry.SetUserString("Delay", "0");
@@ -2381,7 +2386,6 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < m_id_list.Count; i++)
                 {
                     if (m_Balloons == null) return;
-                    //IRhinoObject rhobj = m_pChannelAttrs.m_pObject;
                     if ((id == m_id_list[i]))
                     {
                         if (m_Balloons[i] == null) return;

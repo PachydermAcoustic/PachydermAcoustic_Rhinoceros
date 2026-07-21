@@ -621,15 +621,6 @@ namespace Pachyderm_Acoustic
 
                                 Objects[i].Geometry.SetUserString("Sensitivity", Sens);
                                 Objects[i].Geometry.SetUserString("SWLMax", Max);
-
-                                //Objects[i].Geometry.SetUserString("Balloon63", L[4]);
-                                //Objects[i].Geometry.SetUserString("Balloon125", L[5]);
-                                //Objects[i].Geometry.SetUserString("Balloon250", L[6]);
-                                //Objects[i].Geometry.SetUserString("Balloon500", L[7]);
-                                //Objects[i].Geometry.SetUserString("Balloon1000", L[8]);
-                                //Objects[i].Geometry.SetUserString("Balloon2000", L[9]);
-                                //Objects[i].Geometry.SetUserString("Balloon4000", L[10]);
-                                //Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
                                 Objects[i].Geometry.SetUserString("Bands", L[28]);
 
                                 SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));

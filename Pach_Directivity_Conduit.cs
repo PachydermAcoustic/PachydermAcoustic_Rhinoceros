@@ -648,17 +648,24 @@ namespace Pachyderm_Acoustic
                         if (oct >= 0 && oct < parts.Length)
                         {
                             double bandDelay = 0.0;
-
-                            if (!double.TryParse(
-                                parts[oct],
-                                NumberStyles.Float,
-                                CultureInfo.InvariantCulture,
-                                out bandDelay))
+                            if (!double.TryParse(parts[oct], NumberStyles.Float, CultureInfo.InvariantCulture, out bandDelay))
                             {
                                 double.TryParse(parts[oct], out bandDelay);
                             }
-
                             delayMs += bandDelay;
+                        }
+                    }
+
+                    string arrayGainText = src.Geometry.GetUserString("ArrayGainOctaveDb");
+
+                    if (!string.IsNullOrWhiteSpace(arrayGainText))
+                    {
+                        double[] arrayGain = Utilities.PachTools.DecodeEight(arrayGainText);
+
+                        if (arrayGain != null && arrayGain.Length > 0)
+                        {
+                            int gainOct = Math.Max(0, Math.Min(oct, arrayGain.Length - 1));
+                            gainDb += arrayGain[gainOct];
                         }
                     }
 
@@ -684,10 +691,7 @@ namespace Pachyderm_Acoustic
                     cz += elementOrigins[i].Z;
                 }
 
-                Point3d arrayCenter = new Point3d(
-                    cx / elementOrigins.Count,
-                    cy / elementOrigins.Count,
-                    cz / elementOrigins.Count);
+                Point3d arrayCenter = new Point3d(cx / elementOrigins.Count, cy / elementOrigins.Count,cz / elementOrigins.Count);
 
                 double maxGainDb = double.NegativeInfinity;
 
@@ -792,9 +796,6 @@ namespace Pachyderm_Acoustic
                         raw[i] = double.NaN;
                         return;
                     }
-
-                    // Equivalent array pattern at a reference radius.
-                    // This keeps the display as an aiming/directivity tool rather than a wall-specific near-field interference map.
                     Point3d virtualTarget = arrayCenter + patternDirection * Array_Reference_Distance;
 
                     System.Numerics.Complex sum = System.Numerics.Complex.Zero;
@@ -812,7 +813,6 @@ namespace Pachyderm_Acoustic
                         double gain = Math.Pow(10.0, (elementGainsDb[e] - maxGainDb + directivityDb) / 20.0);
                         double tau = elementDelaysMs[e] / 1000.0;
 
-                        // Use element-to-target distance for phase.
                         // Do not apply 1/r amplitude loss here; this is a relative directivity display.
                         double phase = -k * r - omega * tau;
                         sum += System.Numerics.Complex.FromPolarCoordinates(gain, phase);
@@ -852,11 +852,7 @@ namespace Pachyderm_Acoustic
                 int contour_count = Contour_Levels.Length;
                 object merge_lock = new object();
 
-                Parallel.For(
-                    0,
-                    faces.Length,
-                    () => NewLocalContourStore(contour_count),
-                    (f, state, local_lines) =>
+                Parallel.For(0, faces.Length, () => NewLocalContourStore(contour_count), (f, state, local_lines) =>
                     {
                         FaceIndex face = faces[f];
 

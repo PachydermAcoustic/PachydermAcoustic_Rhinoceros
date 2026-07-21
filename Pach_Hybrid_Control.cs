@@ -1006,7 +1006,7 @@ namespace Pachyderm_Acoustic
                     {
                         if (ISBox.Checked.Value)
                         {
-                            if ((int)Image_Order.Value > 1)
+                            if ((int)Image_Order.Value > 1 || Specular_Trace.Checked == true)
                             {
                                 Eto.Forms.MessageBox.Show("You have started a simulation with higher order image source in a model with curves. This version of Pachyderm uses an experimental method for deterministic curved reflections. At this time, it is not possible to perform the operation on more than one reflection. Even when it is possible, it will be prohibitively processor intensive. This simulation will be canceled, but you can proceed with an image source order of 1, or by turning image source off altogether. As always, scrutinize the results carefully, and email ORASE (info@orase.org) with any questions or concerns.", "Temporary Alert");
                                 CancelCalc();

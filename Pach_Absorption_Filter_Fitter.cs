@@ -22,6 +22,7 @@ namespace Pachyderm_Acoustic
             private readonly List<Environment.Material> _materials;
             private readonly List<LayerFitRow> _rows;
 
+            private double _fitSampleFrequency = 44100.0;
             private readonly NumericStepper _filterOrder;
             private readonly NumericStepper _maxFrequency;
             private readonly NumericStepper _selectedLayerOrder;
@@ -362,7 +363,7 @@ namespace Pachyderm_Acoustic
                             : globalOrder;
 
                         LayerFitResult result;
-                        try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq); }
+                        try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
                         catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.Message }; }
 
                         Application.Instance.AsyncInvoke(() =>
@@ -425,7 +426,7 @@ namespace Pachyderm_Acoustic
                 LayerFitResult result = null;
                 await Task.Run(() =>
                 {
-                    try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq); }
+                    try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
                     catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.Message }; }
                 });
 
@@ -566,6 +567,7 @@ namespace Pachyderm_Acoustic
             {
                 _filterOrder.Value = filterOrder;
                 _maxFrequency.Value = maxFrequency;
+                _fitSampleFrequency = Math.Max(2.0 * maxFrequency, 1.0);
             }
 
             public async Task<bool> EnsureFitsAsync()
@@ -600,16 +602,16 @@ namespace Pachyderm_Acoustic
                 // Lock fitted coefficients into each material instance so the FDTD
                 // gets exactly these values regardless of its own call parameters.
                 for (int i = 0; i < _rows.Count; i++)
-                    _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _maxFrequency.Value);
+                    _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency.Value);
 
                 Accepted = true;
                 _status.Text = "Coefficients accepted and saved to materials.";
                 Close();
             }
 
-            private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq)
+            private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
             {
-                const double fs = 44100.0;
+                //const double fs = 44100.0;
                 Hare.Geometry.Vector normal = new Hare.Geometry.Vector(0, 0, 1);
                 Hare.Geometry.Vector incident = new Hare.Geometry.Vector(0, 0, 1);
 
