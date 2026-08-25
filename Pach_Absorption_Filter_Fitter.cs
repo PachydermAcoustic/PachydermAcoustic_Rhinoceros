@@ -346,6 +346,7 @@ namespace Pachyderm_Acoustic
                 _evaluateAll.Enabled = false;
                 _evaluateSelected.Enabled = false;
                 _accept.Enabled = false;
+                _grid.Enabled = false;
                 _status.Text = "Evaluating all layers...";
 
                 int globalOrder = (int)_filterOrder.Value;
@@ -364,7 +365,7 @@ namespace Pachyderm_Acoustic
 
                         LayerFitResult result;
                         try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
-                        catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.Message }; }
+                        catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.ToString() }; }
 
                         Application.Instance.AsyncInvoke(() =>
                         {
@@ -389,6 +390,8 @@ namespace Pachyderm_Acoustic
                 while (_runThread.IsAlive)
                     await Task.Delay(50);
 
+                _grid.Enabled = true;
+
                 if (myGeneration != _runGeneration) return;
 
                 _evaluateAll.Enabled = true;
@@ -398,7 +401,7 @@ namespace Pachyderm_Acoustic
                 // Refresh display for whatever row is currently selected
                 int sel = _grid.SelectedRow;
                 if (sel >= 0 && sel < _rows.Count && _rows[sel].Result != null)
-                    RefreshSelectedDisplay(sel);
+                    SafeRefreshSelectedDisplay(sel);
 
                 _status.Text = _accept.Enabled
                     ? "All layers fitted. Review plots, then Accept & Save to Materials."
@@ -416,19 +419,20 @@ namespace Pachyderm_Acoustic
 
                 _evaluateAll.Enabled = false;
                 _evaluateSelected.Enabled = false;
+                _grid.Enabled = false;
                 _status.Text = $"Evaluating {_rows[rowIndex].LayerName}...";
 
-                int effectiveOrder = _rows[rowIndex].PerLayerOrder >= 0
-                    ? _rows[rowIndex].PerLayerOrder
-                    : (int)_filterOrder.Value;
+                int effectiveOrder = _rows[rowIndex].PerLayerOrder >= 0 ? _rows[rowIndex].PerLayerOrder : (int)_filterOrder.Value;
                 double maxFreq = (double)_maxFrequency.Value;
 
                 LayerFitResult result = null;
                 await Task.Run(() =>
                 {
                     try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
-                    catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.Message }; }
+                    catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.ToString() }; }
                 });
+
+                _grid.Enabled = true;
 
                 if (myGeneration != _runGeneration) return;
 
@@ -440,7 +444,7 @@ namespace Pachyderm_Acoustic
                 _grid.ReloadData(rowIndex);
 
                 if (row.Result != null)
-                    RefreshSelectedDisplay(rowIndex);
+                    SafeRefreshSelectedDisplay(rowIndex);
 
                 _evaluateAll.Enabled = true;
                 _evaluateSelected.Enabled = true;
@@ -454,9 +458,41 @@ namespace Pachyderm_Acoustic
             {
                 LayerFitRow row = _rows[rowIndex];
                 if (row.Result == null) return;
+
+                if (!string.IsNullOrEmpty(row.Result.ErrorMessage))
+                {
+                    // Surface the full failure detail prominently instead of leaving
+                    // the coefficients/metrics panels blank — the grid's Status column
+                    // is too narrow to show a useful diagnostic message.
+                    ClearPlots();
+                    _coefficients.Text = $"FIT FAILED for '{row.LayerName}':\r\n\r\n{row.Result.ErrorMessage}";
+                    _metrics.Text = $"{row.LayerName} — fit failed. See details below.";
+                    return;
+                }
+
                 PopulatePlots(row.Result);
                 _coefficients.Text = row.Result.CoefficientText;
                 _metrics.Text = $"{row.LayerName}  |  Order: {row.Result.FittedOrder}  |  Mean |Δα| 125–4k: {row.Result.MeanAbsError:F4}   Max |Δα|: {row.Result.MaxAbsError:F4}";
+            }
+
+            /// <summary>
+            /// Failsafe wrapper: never let a plotting/UI refresh failure (e.g. triggered by
+            /// interacting with the grid or buttons before a fit run has fully settled)
+            /// escape to the Eto dispatcher and crash the host process. Any failure is
+            /// reported in the status label instead of terminating the application.
+            /// </summary>
+            private void SafeRefreshSelectedDisplay(int rowIndex)
+            {
+                try
+                {
+                    if (rowIndex < 0 || rowIndex >= _rows.Count) return;
+                    RefreshSelectedDisplay(rowIndex);
+                }
+                catch (Exception ex)
+                {
+                    _status.Text = $"Display refresh failed: {ex.Message}";
+                    try { ClearPlots(); } catch { /* best-effort only */ }
+                }
             }
 
             private void UpdateApplyState()
@@ -481,7 +517,7 @@ namespace Pachyderm_Acoustic
                 _evaluateSelected.Enabled = true;
 
                 if (row.Result != null)
-                    RefreshSelectedDisplay(rowIndex);
+                    SafeRefreshSelectedDisplay(rowIndex);
                 else
                 {
                     ClearPlots();
@@ -492,6 +528,14 @@ namespace Pachyderm_Acoustic
 
             private void PopulatePlots(LayerFitResult result)
             {
+                if (result?.LogFrequencies == null || result.LogFrequencies.Length == 0 ||
+                    result.TargetAlpha == null || result.FitAlpha == null ||
+                    result.OctaveCenters == null || result.OctaveTarget == null || result.OctaveFit == null)
+                {
+                    ClearPlots();
+                    return;
+                }
+
                 // Autoscale X to the actual data range
                 double xMin = result.LogFrequencies.First() - 0.3;
                 double xMax = result.LogFrequencies.Last() + 0.3;
@@ -581,7 +625,7 @@ namespace Pachyderm_Acoustic
                 {
                     // Force coefficients into materials even in headless path
                     for (int i = 0; i < _rows.Count; i++)
-                        _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _maxFrequency.Value);
+                        _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency.Value);
 
                     Accepted = true;
                     return true;
@@ -609,11 +653,159 @@ namespace Pachyderm_Acoustic
                 Close();
             }
 
+            //private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
+            //{
+            //    double[] frequencies;
+            //    (double[] a, double[] b) = material.Estimate_IIR_Coefficients(fs, maxFreq, out frequencies, order);
+
+            //    if (a == null || b == null || frequencies == null || frequencies.Length < 2)
+            //        return new LayerFitResult { ErrorMessage = "IIR coefficient estimation returned no data." };
+
+            //    int fittedOrder = Math.Max(a.Length, b.Length) - 1;
+
+            //    double[] octaveAbsorption = material.Coefficient_A_Broad();
+
+            //    double[] targetAlpha = new double[frequencies.Length];
+            //    for (int i = 0; i < frequencies.Length; i++)
+            //    {
+            //        double frequency = frequencies[i];
+
+            //        // Skip DC and very low frequencies
+            //        if (frequency < 62.5)
+            //        {
+            //            targetAlpha[i] = octaveAbsorption[0];
+            //            continue;
+            //        }
+
+            //        if (frequency >= 8000.0)
+            //        {
+            //            targetAlpha[i] = octaveAbsorption[octaveAbsorption.Length - 1];
+            //            continue;
+            //        }
+
+            //        Complex reflection = material.Reflection_Narrow(frequency);
+            //        double mag2 = reflection.Real * reflection.Real + reflection.Imaginary * reflection.Imaginary;
+            //        targetAlpha[i] = Math.Max(0, Math.Min(1, 1.0 - mag2));
+            //    }
+
+            //    // Evaluate fitted filter response
+            //    double[] fitAlpha = new double[frequencies.Length];
+            //    for (int i = 0; i < frequencies.Length; i++)
+            //    {
+            //        double frequency = frequencies[i];
+                    
+            //        // Skip DC - evaluate only from first meaningful bin onward
+            //        if (frequency < 1e-6)
+            //        {
+            //            fitAlpha[i] = 0.5; // neutral guess for DC
+            //            continue;
+            //        }
+
+            //        double omega = 2.0 * Math.PI * frequency / fs;
+            //        Complex z = Complex.Exp(-Complex.ImaginaryOne * omega);
+
+            //        // Evaluate Y(z) = B(z) / A(z) using positive powers of z
+            //        Complex numerator = Complex.Zero;
+            //        Complex denominator = Complex.Zero;
+            //        Complex zPower = Complex.One;
+
+            //        int maxLen = Math.Max(a.Length, b.Length);
+            //        for (int k = 0; k < maxLen; k++)
+            //        {
+            //            if (k < b.Length)
+            //                numerator += b[k] * zPower;
+            //            if (k < a.Length)
+            //                denominator += a[k] * zPower;
+            //            zPower *= z;
+            //        }
+
+            //        if (denominator.Magnitude < 1e-12) denominator = new Complex(1e-12, 0);
+
+            //        Complex fitY = numerator / denominator;
+
+            //        // Convert admittance to reflection: R = (1 - Y) / (1 + Y)
+            //        Complex denom = Complex.One + fitY;
+            //        if (denom.Magnitude < 1e-12)
+            //            denom = new Complex(1e-12, 0);
+            //        Complex fitR = (Complex.One - fitY) / denom;
+
+            //        double mag2 = fitR.Real * fitR.Real + fitR.Imaginary * fitR.Imaginary;
+            //        fitAlpha[i] = Math.Max(0, Math.Min(1, 1.0 - mag2));
+            //    }
+
+            //    int start = 0;
+            //    while (start < frequencies.Length && frequencies[start] < 1.0) start++;
+
+            //    double[] plotFreq = frequencies.Skip(start).ToArray();
+            //    double[] plotTarget = targetAlpha.Skip(start).ToArray();
+            //    double[] plotFit = fitAlpha.Skip(start).ToArray();
+            //    double[] plotLogFreq = plotFreq.Select(f => Math.Log(f / 7.8125, 2)).ToArray();
+
+            //    double[] octaveCenters = new double[8];
+            //    double[] octaveTarget = new double[8];
+            //    double[] octaveFit = new double[8];
+            //    double root2 = Math.Sqrt(2.0);
+
+            //    for (int oct = 0; oct < 8; oct++)
+            //    {
+            //        double center = 62.5 * Math.Pow(2, oct);
+            //        double fLo = center / root2;
+            //        double fHi = center * root2;
+            //        octaveCenters[oct] = Math.Log(center / 7.8125, 2);
+
+            //        List<double> tBand = new List<double>();
+            //        List<double> fBand = new List<double>();
+            //        for (int i = 0; i < frequencies.Length; i++)
+            //        {
+            //            if (frequencies[i] < fLo || frequencies[i] > fHi) continue;
+            //            tBand.Add(targetAlpha[i]);
+            //            fBand.Add(fitAlpha[i]);
+            //        }
+            //        octaveTarget[oct] = tBand.Count > 0 ? tBand.Average() : 0;
+            //        octaveFit[oct] = fBand.Count > 0 ? fBand.Average() : 0;
+            //    }
+
+            //    List<double> errBand = new List<double>();
+            //    for (int i = 0; i < plotFreq.Length; i++)
+            //    {
+            //        if (plotFreq[i] < 125 || plotFreq[i] > 4000) continue;
+            //        errBand.Add(Math.Abs(plotTarget[i] - plotFit[i]));
+            //    }
+
+            //    double meanAbsError = errBand.Count > 0 ? errBand.Average() : 0;
+            //    double maxAbsError = errBand.Count > 0 ? errBand.Max() : 0;
+
+            //    StringBuilder sb = new StringBuilder();
+            //    sb.AppendLine($"// Order: {fittedOrder}  (a: {a.Length} coeffs, b: {b.Length} coeffs)");
+            //    sb.AppendLine("// a (denominator)");
+            //    sb.AppendLine(string.Join(", ", a.Select(v => v.ToString("G8"))));
+            //    sb.AppendLine();
+            //    sb.AppendLine("// b (numerator)");
+            //    sb.AppendLine(string.Join(", ", b.Select(v => v.ToString("G8"))));
+
+            //    return new LayerFitResult
+            //    {
+            //        FittedOrder = fittedOrder,
+            //        Frequencies = plotFreq,
+            //        LogFrequencies = plotLogFreq,
+            //        TargetAlpha = plotTarget,
+            //        FitAlpha = plotFit,
+            //        OctaveCenters = octaveCenters,
+            //        OctaveTarget = octaveTarget,
+            //        OctaveFit = octaveFit,
+            //        MeanAbsError = meanAbsError,
+            //        MaxAbsError = maxAbsError,
+            //        CoefficientText = sb.ToString(),
+            //        A = a,
+            //        B = b
+            //    };
+            //}
+
             private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
             {
                 //const double fs = 44100.0;
                 Hare.Geometry.Vector normal = new Hare.Geometry.Vector(0, 0, 1);
-                Hare.Geometry.Vector incident = new Hare.Geometry.Vector(0, 0, 1);
+                Hare.Geometry.Vector incident = new Hare.Geometry.Vector(0, 0, -1);
 
                 double[] frequencies;
                 (double[] a, double[] b) = material.Estimate_IIR_Coefficients(fs, maxFreq, out frequencies, order);
