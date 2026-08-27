@@ -117,13 +117,14 @@ namespace Pachyderm_Acoustic
                         Trans = (trans == "" || trans == null) ? (Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
 
                         //TODO: Test that this works.
-                        if (Layer.GetUserString("Transmission") == "True")
+                        string TR = Layer.GetUserString("Transmission");
+                        if (TR != null && TR != "")
                         {
                             for (int oct = 0; oct < 8; oct++)
                             {
-                                double ret = Math.Pow(10, -Trans[oct] / 10);
-                                Trans[oct] = 1 - ret;
-                                //Abs[oct] *= ret;
+                                double tau = Math.Pow(10, -Trans[oct] / 10);
+                                Abs[oct] = Math.Max(0,Abs[oct] - tau);
+                                Trans[oct] = tau / (1 - Abs[oct]);
                             }
                         }
                         Mat_Layer.Add(new Environment.Basic_Material(Abs));
