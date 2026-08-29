@@ -2,6 +2,7 @@
 using Hare.Geometry;
 using Pachyderm_Acoustic.Audio;
 using Pachyderm_Acoustic.Environment;
+using Pachyderm_Acoustic.Utilities;
 using ScottPlot;
 using ScottPlot.Plottables;
 using ScottPlot.TickGenerators;
@@ -611,7 +612,7 @@ namespace Pachyderm_Acoustic
             {
                 _filterOrder.Value = filterOrder;
                 _maxFrequency.Value = maxFrequency;
-                _fitSampleFrequency = Math.Max(2.0 * maxFrequency, 1.0);
+                _fitSampleFrequency = Math.Max(maxFrequency / Math.Sqrt(2) * 10, 1.0);
             }
 
             public async Task<bool> EnsureFitsAsync()
@@ -645,6 +646,7 @@ namespace Pachyderm_Acoustic
 
                 // Lock fitted coefficients into each material instance so the FDTD
                 // gets exactly these values regardless of its own call parameters.
+                double rt2 = Math.Sqrt(2);
                 for (int i = 0; i < _rows.Count; i++)
                     _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency.Value);
 
@@ -1352,6 +1354,8 @@ namespace Pachyderm_Acoustic
 
             private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
             {
+                double rt2 = Math.Sqrt(2);
+
                 if (HasMeaningfulComplexReflection(material, maxFreq))
                     return EvaluatePhysicalReflectionMaterial(material, order, maxFreq, fs);
 
@@ -1379,106 +1383,6 @@ namespace Pachyderm_Acoustic
                 return false;
             }
 
-            //private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
-            //{
-            //    //const double fs = 44100.0;
-            //    Hare.Geometry.Vector normal = new Hare.Geometry.Vector(0, 0, 1);
-            //    Hare.Geometry.Vector incident = new Hare.Geometry.Vector(0, 0, -1);
-
-            //    double[] frequencies;
-            //    (double[] a, double[] b) = material.Estimate_IIR_Coefficients(fs, maxFreq, out frequencies, order);
-
-            //    if (a == null || b == null || frequencies == null || frequencies.Length < 2)
-            //        return new LayerFitResult { ErrorMessage = "IIR coefficient estimation returned no data." };
-
-            //    int fittedOrder = Math.Max(a.Length, b.Length) - 1;
-
-            //    double[] targetAlpha = new double[frequencies.Length];
-            //    for (int i = 0; i < frequencies.Length; i++)
-            //    {
-            //        Complex r = material.Reflection_Narrow(frequencies[i], incident, normal);
-            //        double mag2 = r.Real * r.Real + r.Imaginary * r.Imaginary;
-            //        targetAlpha[i] = Math.Max(0, Math.Min(1, 1.0 - mag2));
-            //    }
-
-            //    Complex[] fitY = Pach_SP.IIR_Design.AB_FreqResponse(new List<double>(b), new List<double>(a), frequencies, fs);
-            //    double[] fitAlpha = new double[frequencies.Length];
-            //    for (int i = 0; i < frequencies.Length; i++)
-            //    {
-            //        Complex denom = Complex.One + fitY[i];
-            //        if (denom.Magnitude < 1e-12) denom = new Complex(1e-12, 0);
-            //        Complex fitR = (Complex.One - fitY[i]) / denom;
-            //        double mag2 = fitR.Real * fitR.Real + fitR.Imaginary * fitR.Imaginary;
-            //        fitAlpha[i] = Math.Max(0, Math.Min(1, 1.0 - mag2));
-            //    }
-
-            //    int start = 0;
-            //    while (start < frequencies.Length && frequencies[start] < 1.0) start++;
-
-            //    double[] plotFreq = frequencies.Skip(start).ToArray();
-            //    double[] plotTarget = targetAlpha.Skip(start).ToArray();
-            //    double[] plotFit = fitAlpha.Skip(start).ToArray();
-            //    double[] plotLogFreq = plotFreq.Select(f => Math.Log(f / 7.8125, 2)).ToArray();
-
-            //    double[] octaveCenters = new double[8];
-            //    double[] octaveTarget = new double[8];
-            //    double[] octaveFit = new double[8];
-            //    double root2 = Math.Sqrt(2.0);
-
-            //    for (int oct = 0; oct < 8; oct++)
-            //    {
-            //        double center = 62.5 * Math.Pow(2, oct);
-            //        double fLo = center / root2;
-            //        double fHi = center * root2;
-            //        octaveCenters[oct] = Math.Log(center / 7.8125, 2);
-
-            //        List<double> tBand = new List<double>();
-            //        List<double> fBand = new List<double>();
-            //        for (int i = 0; i < frequencies.Length; i++)
-            //        {
-            //            if (frequencies[i] < fLo || frequencies[i] > fHi) continue;
-            //            tBand.Add(targetAlpha[i]);
-            //            fBand.Add(fitAlpha[i]);
-            //        }
-            //        octaveTarget[oct] = tBand.Count > 0 ? tBand.Average() : 0;
-            //        octaveFit[oct] = fBand.Count > 0 ? fBand.Average() : 0;
-            //    }
-
-            //    List<double> errBand = new List<double>();
-            //    for (int i = 0; i < plotFreq.Length; i++)
-            //    {
-            //        if (plotFreq[i] < 125 || plotFreq[i] > 4000) continue;
-            //        errBand.Add(Math.Abs(plotTarget[i] - plotFit[i]));
-            //    }
-
-            //    double meanAbsError = errBand.Count > 0 ? errBand.Average() : 0;
-            //    double maxAbsError = errBand.Count > 0 ? errBand.Max() : 0;
-
-            //    StringBuilder sb = new StringBuilder();
-            //    sb.AppendLine($"// Order: {fittedOrder}  (a: {a.Length} coeffs, b: {b.Length} coeffs)");
-            //    sb.AppendLine("// a (denominator)");
-            //    sb.AppendLine(string.Join(", ", a.Select(v => v.ToString("G8"))));
-            //    sb.AppendLine();
-            //    sb.AppendLine("// b (numerator)");
-            //    sb.AppendLine(string.Join(", ", b.Select(v => v.ToString("G8"))));
-
-            //    return new LayerFitResult
-            //    {
-            //        FittedOrder = fittedOrder,
-            //        Frequencies = plotFreq,
-            //        LogFrequencies = plotLogFreq,
-            //        TargetAlpha = plotTarget,
-            //        FitAlpha = plotFit,
-            //        OctaveCenters = octaveCenters,
-            //        OctaveTarget = octaveTarget,
-            //        OctaveFit = octaveFit,
-            //        MeanAbsError = meanAbsError,
-            //        MaxAbsError = maxAbsError,
-            //        CoefficientText = sb.ToString(),
-            //        A = a,
-            //        B = b
-            //    };
-            //}
 
             private sealed class LayerFitRow
             {
