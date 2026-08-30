@@ -24,20 +24,23 @@ namespace Pachyderm_Acoustic
             private readonly List<LayerFitRow> _rows;
 
             private double _fitSampleFrequency = 44100.0;
+            private double _maxFrequency = 10000.0;
+
             private readonly NumericStepper _filterOrder;
-            private readonly NumericStepper _maxFrequency;
             private readonly NumericStepper _selectedLayerOrder;
             private readonly Button _evaluateAll;
             private readonly Button _evaluateSelected;
             private readonly Button _accept;
             private readonly Button _close;
+            private readonly Eto.Forms.Label _fitRange;
             private readonly Eto.Forms.Label _status;
             private readonly Eto.Forms.Label _metrics;
             private readonly TextArea _coefficients;
             private readonly GridView _grid;
-            private readonly ScottPlot.Eto.EtoPlot _curvePlot;
-            private readonly ScottPlot.Eto.EtoPlot _octavePlot;
+            private readonly ScottPlot.Eto.EtoPlot _fitPlot;
             private readonly GroupBox _selectedLayerBox;
+            private readonly DropDown _selectedFitMethod;
+            private bool _updatingSelectedControls;
 
             private int _runGeneration;
             private CancellationTokenSource _runCts;
@@ -64,11 +67,12 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < _materials.Count; i++)
                 {
                     double[] broadband = _materials[i].Coefficient_A_Broad();
+
                     _rows.Add(new LayerFitRow
                     {
                         Index = i,
                         LayerName = string.IsNullOrWhiteSpace(layerNames[i]) ? $"Layer_{i + 1}" : layerNames[i],
-                        MaterialType = _materials[i].GetType().Name,
+                        MaterialType = _materials[i].GetType().Name.Replace("_", " "),
                         Status = "Pending",
                         IsCurrent = false,
                         Success = false,
@@ -78,7 +82,8 @@ namespace Pachyderm_Acoustic
                 }
 
                 Title = "Absorption Filter Fitter";
-                ClientSize = new Eto.Drawing.Size(1500, 1000);
+                ClientSize = new Eto.Drawing.Size(1220, 780);
+                MinimumSize = new Eto.Drawing.Size(1000, 650);
                 Resizable = true;
 
                 _filterOrder = new NumericStepper
@@ -88,17 +93,13 @@ namespace Pachyderm_Acoustic
                     Increment = 1,
                     DecimalPlaces = 0,
                     Value = 0,
-                    ToolTip = "Global filter order (0 = auto-select). Applied to all layers unless overridden per-layer."
+                    Width = 70,
+                    ToolTip = "Global filter order. 0 = automatically select the fit complexity."
                 };
 
-                _maxFrequency = new NumericStepper
+                _fitRange = new Eto.Forms.Label
                 {
-                    MinValue = 63,
-                    MaxValue = 20000,
-                    Increment = 125,
-                    DecimalPlaces = 0,
-                    Value = 10000,
-                    ToolTip = "Upper frequency limit for the IIR fit."
+                    Text = $"Fit range: ≤ {_maxFrequency:F0} Hz"
                 };
 
                 _selectedLayerOrder = new NumericStepper
@@ -108,40 +109,55 @@ namespace Pachyderm_Acoustic
                     Increment = 1,
                     DecimalPlaces = 0,
                     Value = -1,
-                    ToolTip = "Per-layer filter order override. -1 = use global order."
+                    Width = 70,
+                    ToolTip = "Per-layer filter order override. -1 = use the global order."
                 };
 
-                _evaluateAll = new Button { Text = "Evaluate All Layers" };
-                _evaluateSelected = new Button { Text = "Re-evaluate Selected", Enabled = false };
-                _accept = new Button { Text = "Accept && Save to Materials", Enabled = false };
+                _selectedFitMethod = new DropDown
+                {
+                    Width = 210,
+                    ToolTip = "Smart Materials may be fitted from their complex reflection response or from absorption coefficients only."
+                };
+
+                _selectedFitMethod.Items.Add("Physical Reflection (Botts)");
+                _selectedFitMethod.Items.Add("Absorption Coefficients Only");
+                _selectedFitMethod.SelectedIndex = 0;
+
+                _selectedFitMethod.SelectedIndexChanged += SelectedFitMethodChanged;
+
+                _evaluateAll = new Button { Text = "Evaluate All" };
+                _evaluateSelected = new Button { Text = "Re-fit Selected", Enabled = false };
+                _accept = new Button { Text = "Accept && Save", Enabled = false };
                 _close = new Button { Text = "Close" };
 
-                _status = new Eto.Forms.Label { Text = "Ready. Select a layer to inspect or evaluate individually." };
-                _metrics = new Eto.Forms.Label { Text = string.Empty };
+                _status = new Eto.Forms.Label
+                {
+                    Text = "Ready. Evaluate the materials, then select a layer to inspect its fit."
+                };
+
+                _metrics = new Eto.Forms.Label
+                {
+                    Text = "Select a material to inspect its fitted response."
+                };
 
                 _coefficients = new TextArea
                 {
                     ReadOnly = true,
                     Wrap = false,
-                    Size = new Eto.Drawing.Size(-1, 160)
+                    Height = 145
                 };
 
                 _grid = BuildGrid();
 
-                _curvePlot = new ScottPlot.Eto.EtoPlot();
-                _curvePlot.Size = new Eto.Drawing.Size(-1, 320);
-                _curvePlot.Plot.Title("Absorption Curve Comparison", 12);
-                _curvePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _curvePlot.Plot.YLabel("Absorption Coefficient", 10);
+                _fitPlot = new ScottPlot.Eto.EtoPlot
+                {
+                    Size = new Eto.Drawing.Size(-1, 430)
+                };
 
-                _octavePlot = new ScottPlot.Eto.EtoPlot();
-                _octavePlot.Size = new Eto.Drawing.Size(-1, 240);
-                _octavePlot.Plot.Title("Octave-Band Comparison", 12);
-                _octavePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _octavePlot.Plot.YLabel("Absorption Coefficient", 10);
-
-                InitPlotAxes(_curvePlot);
-                InitPlotAxes(_octavePlot);
+                _fitPlot.Plot.Title("Absorption Fit", 12);
+                _fitPlot.Plot.XLabel("Frequency (Hz.)", 10);
+                _fitPlot.Plot.YLabel("Absorption Coefficient", 10);
+                InitPlotAxes(_fitPlot);
 
                 _evaluateAll.Click += EvaluateAll_Click;
                 _evaluateSelected.Click += EvaluateSelected_Click;
@@ -149,46 +165,104 @@ namespace Pachyderm_Acoustic
                 _close.Click += (s, e) => Close();
 
                 _filterOrder.ValueChanged += SettingsChanged;
-                _maxFrequency.ValueChanged += SettingsChanged;
                 _selectedLayerOrder.ValueChanged += SelectedLayerOrderChanged;
                 _grid.SelectedRowsChanged += GridSelectionChanged;
 
-                DynamicLayout controls = new DynamicLayout();
-                controls.DefaultSpacing = new Eto.Drawing.Size(8, 8);
-                controls.Padding = 8;
-                controls.AddRow(
-                    new Eto.Forms.Label { Text = "Global Filter Order (0 = auto):" }, _filterOrder,
-                    new Eto.Forms.Label { Text = "Max Frequency (Hz.):" }, _maxFrequency,
-                    _evaluateAll, _accept, _close);
-                controls.AddRow(_status);
-                controls.AddRow(_metrics);
+                DynamicLayout top = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(8, 8),
+                    Padding = new Eto.Drawing.Padding(0)
+                };
 
-                DynamicLayout selectedControls = new DynamicLayout();
-                selectedControls.DefaultSpacing = new Eto.Drawing.Size(8, 8);
-                selectedControls.Padding = 4;
+                top.AddRow(
+                    new Eto.Forms.Label { Text = "Global Filter Order (0 = Auto):" },
+                    _filterOrder,
+                    _fitRange,
+                    null,
+                    _evaluateAll);
+
+                DynamicLayout selectedControls = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(8, 8),
+                    Padding = 6
+                };
+
                 selectedControls.AddRow(
-                    new Eto.Forms.Label { Text = "Layer Filter Order Override (-1 = global):" },
+                    new Eto.Forms.Label { Text = "Fit Method:" },
+                    _selectedFitMethod);
+
+                selectedControls.AddRow(
+                    new Eto.Forms.Label { Text = "Order Override (-1 = Global):" },
                     _selectedLayerOrder,
                     _evaluateSelected);
 
-                _selectedLayerBox = new GroupBox { Text = "Selected Layer Settings", Content = selectedControls };
-                _selectedLayerBox.Visible = false;
+                _selectedLayerBox = new GroupBox
+                {
+                    Text = "Selected Material",
+                    Content = selectedControls,
+                    Visible = false
+                };
 
-                GroupBox rowBox = new GroupBox { Text = "Layer Fit Status" };
-                rowBox.Content = _grid;
+                GroupBox materialsBox = new GroupBox
+                {
+                    Text = "Materials",
+                    Content = _grid
+                };
 
-                GroupBox coeffBox = new GroupBox { Text = "Selected Layer IIR Coefficients" };
-                coeffBox.Content = _coefficients;
+                DynamicLayout left = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(8, 8),
+                    Width = 460
+                };
 
-                DynamicLayout root = new DynamicLayout();
-                root.DefaultSpacing = new Eto.Drawing.Size(8, 8);
-                root.Padding = 8;
-                root.AddRow(controls);
-                root.AddRow(rowBox);
-                root.AddRow(_selectedLayerBox);
-                root.AddRow(_curvePlot);
-                root.AddRow(_octavePlot);
-                root.AddRow(coeffBox);
+                left.AddRow(materialsBox);
+                left.AddRow(_selectedLayerBox);
+                left.Add(null);
+
+                GroupBox plotBox = new GroupBox
+                {
+                    Text = "Selected Material Fit",
+                    Content = _fitPlot
+                };
+
+                GroupBox coeffBox = new GroupBox
+                {
+                    Text = "IIR Coefficients",
+                    Content = _coefficients
+                };
+
+                DynamicLayout right = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(8, 8)
+                };
+
+                right.AddRow(plotBox);
+                right.AddRow(_metrics);
+                right.AddRow(coeffBox);
+
+                DynamicLayout main = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(12, 8)
+                };
+
+                main.AddRow(left, right);
+
+                DynamicLayout footer = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(8, 8)
+                };
+
+                footer.AddRow(_status, null, _accept, _close);
+
+                DynamicLayout root = new DynamicLayout
+                {
+                    DefaultSpacing = new Eto.Drawing.Size(10, 10),
+                    Padding = 10
+                };
+
+                root.AddRow(top);
+                root.AddRow(main);
+                root.AddRow(footer);
 
                 Content = root;
             }
@@ -207,43 +281,32 @@ namespace Pachyderm_Acoustic
 
             private GridView BuildGrid()
             {
-                GridView g = new GridView();
-                g.AllowMultipleSelection = false;
-                g.Height = 200;
+                GridView g = new GridView
+                {
+                    AllowMultipleSelection = false,
+                    Height = 530
+                };
 
                 g.Columns.Add(new GridColumn
                 {
                     HeaderText = "Layer",
-                    DataCell = new TextBoxCell { Binding = Binding.Property<LayerFitRow, string>(r => r.LayerName) },
-                    AutoSize = true,
-                    Width = 200
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Property<LayerFitRow, string>(r => r.LayerName)
+                    },
+                    Width = 180
                 });
 
                 g.Columns.Add(new GridColumn
                 {
-                    HeaderText = "Material Type",
-                    DataCell = new TextBoxCell { Binding = Binding.Property<LayerFitRow, string>(r => r.MaterialType) },
-                    AutoSize = true
+                    HeaderText = "Type",
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Property<LayerFitRow, string>(r => r.MaterialType)
+                    },
+                    Width = 105
                 });
 
-                string[] octaveLabels = { "α 63", "α 125", "α 250", "α 500", "α 1k", "α 2k", "α 4k", "α 8k" };
-                for (int oct = 0; oct < 8; oct++)
-                {
-                    int octIdx = oct;
-                    g.Columns.Add(new GridColumn
-                    {
-                        HeaderText = octaveLabels[oct],
-                        DataCell = new TextBoxCell
-                        {
-                            Binding = Binding.Property<LayerFitRow, string>(r =>
-                                r.TargetOctaves != null && r.TargetOctaves.Length > octIdx
-                                    ? r.TargetOctaves[octIdx].ToString("F2") : "-")
-                        },
-                        Width = 52
-                    });
-                }
-
-                // Order: shows fitted order once evaluated, otherwise pending override or "auto"
                 g.Columns.Add(new GridColumn
                 {
                     HeaderText = "Order",
@@ -252,38 +315,45 @@ namespace Pachyderm_Acoustic
                         Binding = Binding.Property<LayerFitRow, string>(r =>
                             r.Result != null ? r.Result.FittedOrder.ToString() :
                             r.PerLayerOrder >= 0 ? r.PerLayerOrder.ToString() :
-                                                      "auto")
+                            "Auto")
                     },
-                    Width = 52
+                    Width = 55
                 });
 
                 g.Columns.Add(new GridColumn
                 {
                     HeaderText = "Status",
-                    DataCell = new TextBoxCell { Binding = Binding.Property<LayerFitRow, string>(r => r.Status) },
-                    AutoSize = true
+                    DataCell = new TextBoxCell
+                    {
+                        Binding = Binding.Property<LayerFitRow, string>(r => r.Status)
+                    },
+                    Width = 65
                 });
 
                 g.Columns.Add(new GridColumn
                 {
-                    HeaderText = "Mean |Δα| 125–4k",
+                    HeaderText = "Mean Δα",
                     DataCell = new TextBoxCell
                     {
                         Binding = Binding.Property<LayerFitRow, string>(r =>
-                            r.Result == null ? "-" : r.Result.MeanAbsError.ToString("F4"))
+                            r.Result == null || !string.IsNullOrEmpty(r.Result.ErrorMessage)
+                                ? "-"
+                                : r.Result.MeanAbsError.ToString("F3"))
                     },
-                    Width = 120
+                    Width = 70
                 });
 
                 g.Columns.Add(new GridColumn
                 {
-                    HeaderText = "Max |Δα|",
+                    HeaderText = "Max Δα",
                     DataCell = new TextBoxCell
                     {
                         Binding = Binding.Property<LayerFitRow, string>(r =>
-                            r.Result == null ? "-" : r.Result.MaxAbsError.ToString("F4"))
+                            r.Result == null || !string.IsNullOrEmpty(r.Result.ErrorMessage)
+                                ? "-"
+                                : r.Result.MaxAbsError.ToString("F3"))
                     },
-                    Width = 80
+                    Width = 65
                 });
 
                 g.DataStore = _rows;
@@ -304,37 +374,80 @@ namespace Pachyderm_Acoustic
                 _accept.Enabled = false;
                 _coefficients.Text = string.Empty;
                 _metrics.Text = string.Empty;
-                _status.Text = $"Settings changed (Global Order={(int)_filterOrder.Value}, MaxFreq={_maxFrequency.Value:F0} Hz). Re-evaluate layers.";
-                ClearPlots();
+                _status.Text = $"Settings changed (Global Order={(int)_filterOrder.Value}, Fit Range≤{_maxFrequency:F0} Hz). Re-evaluate layers."; ClearPlots();
             }
 
             private void SelectedLayerOrderChanged(object sender, EventArgs e)
             {
+                if (_updatingSelectedControls) return;
+
                 int rowIndex = _grid.SelectedRow;
                 if (rowIndex < 0 || rowIndex >= _rows.Count) return;
 
-                _rows[rowIndex].PerLayerOrder = (int)_selectedLayerOrder.Value;
+                LayerFitRow row = _rows[rowIndex];
+                int order = (int)_selectedLayerOrder.Value;
+
+                if (row.PerLayerOrder == order) return;
+
+                row.PerLayerOrder = order;
+                row.IsCurrent = false;
+                row.Success = false;
+                row.Result = null;
+                row.Status = "Pending";
+
                 _grid.ReloadData(rowIndex);
+
+                _accept.Enabled = false;
+                _coefficients.Text = string.Empty;
+                ClearPlots();
+
+                _metrics.Text = $"{row.LayerName} — filter order changed. Re-fit this material.";
+            }
+
+            private void SelectedFitMethodChanged(object sender, EventArgs e)
+            {
+                if (_updatingSelectedControls) return;
+
+                int rowIndex = _grid.SelectedRow;
+                if (rowIndex < 0 || rowIndex >= _rows.Count) return;
+                if (!(_materials[rowIndex] is Environment.Smart_Material)) return;
+
+                LayerFitRow row = _rows[rowIndex];
+                bool forceCoefficientFit = _selectedFitMethod.SelectedIndex == 1;
+
+                if (row.ForceCoefficientFit == forceCoefficientFit) return;
+
+                row.ForceCoefficientFit = forceCoefficientFit;
+                row.IsCurrent = false;
+                row.Success = false;
+                row.Result = null;
+                row.Status = "Pending";
+
+                _grid.ReloadData(rowIndex);
+
+                _accept.Enabled = false;
+                _coefficients.Text = string.Empty;
+                ClearPlots();
+
+                _metrics.Text = forceCoefficientFit
+                    ? $"{row.LayerName} — coefficient-only fitting selected. Phase will be synthesized."
+                    : $"{row.LayerName} — physical reflection fitting selected.";
+
+                _status.Text = $"{row.LayerName}: fit method changed. Re-fit this material.";
             }
 
             private void ClearPlots()
             {
-                double maxFreq = (double)_maxFrequency.Value;
-                double xMax = Math.Log(maxFreq / 7.8125, 2) + 0.3;
+                double xMax = Math.Log(_maxFrequency / 7.8125, 2) + 0.3;
 
-                _curvePlot.Plot.Clear();
-                _curvePlot.Plot.Title("Absorption Curve Comparison", 12);
-                _curvePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _curvePlot.Plot.YLabel("Absorption Coefficient", 10);
-                _curvePlot.Plot.Axes.SetLimits(2.5, xMax, 0, 1.05);
-                _curvePlot.Refresh();
+                _fitPlot.Plot.Clear();
+                _fitPlot.Plot.Title("Absorption Fit", 12);
+                _fitPlot.Plot.XLabel("Frequency (Hz.)", 10);
+                _fitPlot.Plot.YLabel("Absorption Coefficient", 10);
 
-                _octavePlot.Plot.Clear();
-                _octavePlot.Plot.Title("Octave-Band Comparison", 12);
-                _octavePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _octavePlot.Plot.YLabel("Absorption Coefficient", 10);
-                _octavePlot.Plot.Axes.SetLimits(2.5, xMax, 0, 1.05);
-                _octavePlot.Refresh();
+                InitPlotAxes(_fitPlot);
+                _fitPlot.Plot.Axes.SetLimits(2.5, xMax, 0, 1.05);
+                _fitPlot.Refresh();
             }
 
             private async void EvaluateAll_Click(object sender, EventArgs e)
@@ -351,7 +464,7 @@ namespace Pachyderm_Acoustic
                 _status.Text = "Evaluating all layers...";
 
                 int globalOrder = (int)_filterOrder.Value;
-                double maxFreq = (double)_maxFrequency.Value;
+                double maxFreq = _maxFrequency;
 
                 _runThread = new Thread(() =>
                 {
@@ -360,13 +473,22 @@ namespace Pachyderm_Acoustic
                         if (token.IsCancellationRequested) return;
 
                         int rowIndex = i;
-                        int effectiveOrder = _rows[rowIndex].PerLayerOrder >= 0
-                            ? _rows[rowIndex].PerLayerOrder
-                            : globalOrder;
+                        int effectiveOrder = _rows[rowIndex].PerLayerOrder >= 0 ? _rows[rowIndex].PerLayerOrder : globalOrder;
 
                         LayerFitResult result;
-                        try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
-                        catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.ToString() }; }
+                        try
+                        {
+                            result = EvaluateMaterial(
+                                _materials[rowIndex],
+                                effectiveOrder,
+                                maxFreq,
+                                _fitSampleFrequency,
+                                _rows[rowIndex].ForceCoefficientFit);
+                        }
+                        catch (Exception ex)
+                        {
+                            result = new LayerFitResult { ErrorMessage = ex.ToString() };
+                        }
 
                         Application.Instance.AsyncInvoke(() =>
                         {
@@ -376,7 +498,7 @@ namespace Pachyderm_Acoustic
                             row.IsCurrent = true;
                             row.Result = result;
                             row.Success = result != null && string.IsNullOrEmpty(result.ErrorMessage);
-                            row.Status = row.Success ? "OK" : $"Failed: {result?.ErrorMessage ?? "Unknown"}";
+                            row.Status = row.Success ? "OK" : $"Failed";
                             _grid.ReloadData(rowIndex);
 
                             UpdateApplyState();
@@ -424,13 +546,24 @@ namespace Pachyderm_Acoustic
                 _status.Text = $"Evaluating {_rows[rowIndex].LayerName}...";
 
                 int effectiveOrder = _rows[rowIndex].PerLayerOrder >= 0 ? _rows[rowIndex].PerLayerOrder : (int)_filterOrder.Value;
-                double maxFreq = (double)_maxFrequency.Value;
+                double maxFreq = _maxFrequency;
 
                 LayerFitResult result = null;
                 await Task.Run(() =>
                 {
-                    try { result = EvaluateMaterial(_materials[rowIndex], effectiveOrder, maxFreq, _fitSampleFrequency); }
-                    catch (Exception ex) { result = new LayerFitResult { ErrorMessage = ex.ToString() }; }
+                    try
+                    {
+                        result = EvaluateMaterial(
+                            _materials[rowIndex],
+                            effectiveOrder,
+                            maxFreq,
+                            _fitSampleFrequency,
+                            _rows[rowIndex].ForceCoefficientFit);
+                    }
+                    catch (Exception ex)
+                    {
+                        result = new LayerFitResult { ErrorMessage = ex.ToString() };
+                    }
                 });
 
                 _grid.Enabled = true;
@@ -441,7 +574,7 @@ namespace Pachyderm_Acoustic
                 row.IsCurrent = true;
                 row.Result = result;
                 row.Success = result != null && string.IsNullOrEmpty(result.ErrorMessage);
-                row.Status = row.Success ? "OK" : $"Failed: {result?.ErrorMessage ?? "Unknown"}";
+                row.Status = row.Success ? "OK" : $"Failed";
                 _grid.ReloadData(rowIndex);
 
                 if (row.Result != null)
@@ -512,7 +645,26 @@ namespace Pachyderm_Acoustic
                 }
 
                 LayerFitRow row = _rows[rowIndex];
+
+                _updatingSelectedControls = true;
+
                 _selectedLayerOrder.Value = row.PerLayerOrder;
+
+                bool isSmartMaterial = _materials[rowIndex] is Environment.Smart_Material;
+
+                if (isSmartMaterial)
+                {
+                    _selectedFitMethod.Enabled = true;
+                    _selectedFitMethod.SelectedIndex = row.ForceCoefficientFit ? 1 : 0;
+                }
+                else
+                {
+                    _selectedFitMethod.Enabled = false;
+                    _selectedFitMethod.SelectedIndex = 1;
+                }
+
+                _updatingSelectedControls = false;
+
                 _selectedLayerBox.Text = $"Selected Layer: {row.LayerName}  ({row.MaterialType})";
                 _selectedLayerBox.Visible = true;
                 _evaluateSelected.Enabled = true;
@@ -537,82 +689,83 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                // Autoscale X to the actual data range
                 double xMin = result.LogFrequencies.First() - 0.3;
                 double xMax = result.LogFrequencies.Last() + 0.3;
 
-                // Octave plot: only show the centers that fall within the fit range
-                double[] validCenters = result.OctaveCenters
-                    .Where(c => c >= xMin && c <= xMax).ToArray();
-                double oxMin = validCenters.Length > 0 ? validCenters.First() - 0.6 : xMin;
-                double oxMax = validCenters.Length > 0 ? validCenters.Last() + 0.6 : xMax;
+                _fitPlot.Plot.Clear();
+                _fitPlot.Plot.Title("Absorption Fit", 12);
+                _fitPlot.Plot.XLabel("Frequency (Hz.)", 10);
+                _fitPlot.Plot.YLabel("Absorption Coefficient", 10);
 
-                _curvePlot.Plot.Clear();
-                _curvePlot.Plot.Title("Absorption Curve Comparison", 12);
-                _curvePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _curvePlot.Plot.YLabel("Absorption Coefficient", 10);
+                _fitPlot.Plot.Add.Scatter(result.LogFrequencies, result.TargetAlpha, Colors.Blue);
+                Scatter targetCurve = _fitPlot.Plot.PlottableList.Last() as Scatter;
+                targetCurve.MarkerStyle = MarkerStyle.None;
 
-                _curvePlot.Plot.Add.Scatter(result.LogFrequencies, result.TargetAlpha, Colors.Blue);
-                (_curvePlot.Plot.PlottableList.Last() as Scatter).MarkerStyle = MarkerStyle.None;
+                _fitPlot.Plot.Add.Scatter(result.LogFrequencies, result.FitAlpha, Colors.Green);
+                Scatter fitCurve = _fitPlot.Plot.PlottableList.Last() as Scatter;
+                fitCurve.MarkerStyle = MarkerStyle.None;
 
-                _curvePlot.Plot.Add.Scatter(result.LogFrequencies, result.FitAlpha, Colors.Green);
-                (_curvePlot.Plot.PlottableList.Last() as Scatter).MarkerStyle = MarkerStyle.None;
+                _fitPlot.Plot.Add.Scatter(result.OctaveCenters, result.OctaveTarget, Colors.Red);
+                Scatter targetOctaves = _fitPlot.Plot.PlottableList.Last() as Scatter;
+                targetOctaves.MarkerStyle.Shape = MarkerShape.FilledCircle;
+                targetOctaves.MarkerStyle.Size = 7;
+                targetOctaves.LineStyle.Width = 0;
 
-                _curvePlot.Plot.Legend.ManualItems.Clear();
-                _curvePlot.Plot.Legend.ManualItems.Add(new LegendItem
+                _fitPlot.Plot.Add.Scatter(result.OctaveCenters, result.OctaveFit, Colors.Orange);
+                Scatter fitOctaves = _fitPlot.Plot.PlottableList.Last() as Scatter;
+                fitOctaves.MarkerStyle.Shape = MarkerShape.FilledSquare;
+                fitOctaves.MarkerStyle.Size = 7;
+                fitOctaves.LineStyle.Width = 0;
+
+                _fitPlot.Plot.Legend.ManualItems.Clear();
+
+                _fitPlot.Plot.Legend.ManualItems.Add(new LegendItem
                 {
-                    LabelText = "Target Absorption",
+                    LabelText = "Target",
                     LineStyle = new LineStyle(1, Colors.Blue, LinePattern.Solid),
                     MarkerStyle = MarkerStyle.None
                 });
-                _curvePlot.Plot.Legend.ManualItems.Add(new LegendItem
+
+                _fitPlot.Plot.Legend.ManualItems.Add(new LegendItem
                 {
                     LabelText = "IIR Fit",
                     LineStyle = new LineStyle(1, Colors.Green, LinePattern.Solid),
                     MarkerStyle = MarkerStyle.None
                 });
-                _curvePlot.Plot.Legend.IsVisible = true;
-                _curvePlot.Plot.Axes.SetLimits(xMin, xMax, 0, 1.05);
-                _curvePlot.Refresh();
 
-                _octavePlot.Plot.Clear();
-                _octavePlot.Plot.Title("Octave-Band Comparison", 12);
-                _octavePlot.Plot.XLabel("Frequency (Hz.)", 10);
-                _octavePlot.Plot.YLabel("Absorption Coefficient", 10);
-
-                _octavePlot.Plot.Add.Scatter(result.OctaveCenters, result.OctaveTarget, Colors.Red);
-                (_octavePlot.Plot.PlottableList.Last() as Scatter).MarkerStyle.Shape = MarkerShape.FilledCircle;
-                (_octavePlot.Plot.PlottableList.Last() as Scatter).LineStyle.Width = 0;
-
-                _octavePlot.Plot.Add.Scatter(result.OctaveCenters, result.OctaveFit, Colors.Orange);
-                (_octavePlot.Plot.PlottableList.Last() as Scatter).MarkerStyle.Shape = MarkerShape.FilledSquare;
-                (_octavePlot.Plot.PlottableList.Last() as Scatter).LineStyle.Width = 0;
-
-                _octavePlot.Plot.Legend.ManualItems.Clear();
-                _octavePlot.Plot.Legend.ManualItems.Add(new LegendItem
+                _fitPlot.Plot.Legend.ManualItems.Add(new LegendItem
                 {
-                    LabelText = "Target Octave Average",
-                    MarkerStyle = new MarkerStyle(MarkerShape.FilledCircle, 6, Colors.Red),
+                    LabelText = "Target Octaves",
+                    MarkerStyle = new MarkerStyle(MarkerShape.FilledCircle, 7, Colors.Red),
                     LineStyle = LineStyle.None
                 });
-                _octavePlot.Plot.Legend.ManualItems.Add(new LegendItem
+
+                _fitPlot.Plot.Legend.ManualItems.Add(new LegendItem
                 {
-                    LabelText = "IIR Octave Average",
-                    MarkerStyle = new MarkerStyle(MarkerShape.FilledSquare, 6, Colors.Orange),
+                    LabelText = "IIR Octaves",
+                    MarkerStyle = new MarkerStyle(MarkerShape.FilledSquare, 7, Colors.Orange),
                     LineStyle = LineStyle.None
                 });
-                _octavePlot.Plot.Legend.IsVisible = true;
-                _octavePlot.Plot.Axes.SetLimits(oxMin, oxMax, 0, 1.05);
-                _octavePlot.Refresh();
+
+                _fitPlot.Plot.Legend.IsVisible = true;
+
+                InitPlotAxes(_fitPlot);
+                _fitPlot.Plot.Axes.SetLimits(xMin, xMax, 0, 1.05);
+
+                _fitPlot.Refresh();
             }
 
             public bool Accepted { get; private set; }
 
             public void SetFitParameters(int filterOrder, double maxFrequency)
             {
-                _filterOrder.Value = filterOrder;
-                _maxFrequency.Value = maxFrequency;
+                _maxFrequency = maxFrequency;
                 _fitSampleFrequency = Math.Max(maxFrequency / Math.Sqrt(2) * 10, 1.0);
+                _fitRange.Text = $"Fit range: ≤ {_maxFrequency:F0} Hz";
+
+                _filterOrder.Value = filterOrder;
+
+                ClearPlots();
             }
 
             public async Task<bool> EnsureFitsAsync()
@@ -626,7 +779,7 @@ namespace Pachyderm_Acoustic
                 {
                     // Force coefficients into materials even in headless path
                     for (int i = 0; i < _rows.Count; i++)
-                        _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency.Value);
+                        _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency);
 
                     Accepted = true;
                     return true;
@@ -648,7 +801,7 @@ namespace Pachyderm_Acoustic
                 // gets exactly these values regardless of its own call parameters.
                 double rt2 = Math.Sqrt(2);
                 for (int i = 0; i < _rows.Count; i++)
-                    _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency.Value);
+                    _materials[i].ForceIIR(_rows[i].Result.A, _rows[i].Result.B, _fitSampleFrequency, _maxFrequency);
 
                 Accepted = true;
                 _status.Text = "Coefficients accepted and saved to materials.";
@@ -1171,7 +1324,7 @@ namespace Pachyderm_Acoustic
                     double[] bestB = null;
                     double[] bestA = null;
                     string bestLabel = null;
-                    double trialBestError = bestError;
+                    double trialBestError = section == 0 ? double.PositiveInfinity : bestError;
 
                     void TryCandidate(double[] bSec, double[] aSec, string label)
                     {
@@ -1228,7 +1381,7 @@ namespace Pachyderm_Acoustic
                         }
                     }
 
-                    if (bestB == null || bestA == null || trialBestError >= bestError * 0.995)
+                    if (bestB == null || bestA == null || (section > 0 && trialBestError >= bestError * 0.995))
                         break;
 
                     bReflection = bestB;
@@ -1352,11 +1505,9 @@ namespace Pachyderm_Acoustic
                 return x;
             }
 
-            private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs)
+            private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs, bool forceCoefficientFit)
             {
-                double rt2 = Math.Sqrt(2);
-
-                if (HasMeaningfulComplexReflection(material, maxFreq))
+                if (!forceCoefficientFit && HasMeaningfulComplexReflection(material, maxFreq))
                     return EvaluatePhysicalReflectionMaterial(material, order, maxFreq, fs);
 
                 return EvaluateAlphaOnlyMaterial(material, order, maxFreq, fs);
@@ -1386,15 +1537,16 @@ namespace Pachyderm_Acoustic
 
             private sealed class LayerFitRow
             {
-                public int Index;
-                public string LayerName;
-                public string MaterialType;
-                public string Status;
-                public bool IsCurrent;
-                public bool Success;
-                public double[] TargetOctaves;
-                public int PerLayerOrder;
-                public LayerFitResult Result;
+                public int Index { get; set; }
+                public string LayerName { get; set; }
+                public string MaterialType { get; set; }
+                public string Status { get; set; }
+                public bool IsCurrent { get; set; }
+                public bool Success { get; set; }
+                public double[] TargetOctaves { get; set; }
+                public int PerLayerOrder { get; set; }
+                public bool ForceCoefficientFit { get; set; }
+                public LayerFitResult Result { get; set; }
             }
 
             public sealed class LayerFitResult

@@ -1991,7 +1991,7 @@ namespace Pachyderm_Acoustic
                 settings.LockedObjects = true;
                 settings.NormalObjects = true;
                 settings.VisibleFilter = true;
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep & Rhino.DocObjects.ObjectType.Surface & Rhino.DocObjects.ObjectType.Extrusion;
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep | Rhino.DocObjects.ObjectType.Surface | Rhino.DocObjects.ObjectType.Extrusion;
 
                 // Map: Material reference → Rhino layer full-path name
                 Dictionary<Environment.Material, string> matToLayer = new Dictionary<Environment.Material, string>();
