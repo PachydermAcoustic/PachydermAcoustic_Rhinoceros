@@ -367,7 +367,10 @@ namespace Pachyderm_Acoustic
                 FreqCtrl.Spacing = new Eto.Drawing.Size(8, 8);
 
                 scatcolorlayout = new Color_Output_Control(FreqCtrl);
+                scatcolorlayout.setscale(-30, 0);
+
                 scatcolorlayout.On_Output_Changed += Scat_Output_Changed;
+                scatcolorlayout.Update += Scat_Output_Changed;
 
                 ScatLyt.AddRow(scatcolorlayout);
                 ScatLyt.Spacing = new Eto.Drawing.Size(8, 8);
@@ -573,7 +576,7 @@ namespace Pachyderm_Acoustic
                 if (P != null) P.Enabled = false;
             }
 
-            private void Calculate_Click(object sender, System.EventArgs e)
+            private async void Calculate_Click(object sender, System.EventArgs e)
             {
                 Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
                 if (Rm == null || !Rm.Complete) return;
@@ -603,6 +606,8 @@ namespace Pachyderm_Acoustic
 
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RCPachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
+
+                if (!await FitSceneMaterialsAsync(Rm, (double)Freq_Max.Value)) return;
 
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked.Value ? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked.Value);
                 M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
@@ -1228,7 +1233,7 @@ namespace Pachyderm_Acoustic
             System.IO.MemoryMappedFiles.MemoryMappedFile[] FE2;
             System.IO.MemoryMappedFiles.MemoryMappedFile[] FSFF;
 
-            private void CalculateScattering_Click(object sender, EventArgs e)
+            private async void CalculateScattering_Click(object sender, EventArgs e)
             {
                 //Chosenfreq = 0;
                 double radius = (double)ScatteringRadius.Value;
@@ -1287,6 +1292,9 @@ namespace Pachyderm_Acoustic
 
 
                     Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    if (Rm == null || !Rm.Complete) return;
+                    if (!await FitSceneMaterialsAsync(Rm, fs)) return;
+
                     Rm.partition();
                     Empty_Scene Rm_Ctrl = new Empty_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true, Rm.Min(), Rm.Max());
                     Rm_Ctrl.PointsInScene(new List<Hare.Geometry.Point> { Rm.Min(), Rm.Max() });
@@ -1335,8 +1343,10 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     }
 
-                    Freq_Trackbar1.MaxValue = (int)(samplefrequency / 10);
-                    Freq_Trackbar2.MaxValue = (int)(samplefrequency / 10);
+                    Freq_Trackbar1.MaxValue = (int)Math.Round(fs * 2.0);
+                    Freq_Trackbar2.MaxValue = (int)Math.Round(fs * 2.0);
+                    //Freq_Trackbar1.MaxValue = (int)(samplefrequency / 10);
+                    //Freq_Trackbar2.MaxValue = (int)(samplefrequency / 10);
 
                     System.Numerics.Complex[][] FCtrl = new System.Numerics.Complex[len][];
                     System.Numerics.Complex[][] FExp = new System.Numerics.Complex[len][];
@@ -1490,8 +1500,10 @@ namespace Pachyderm_Acoustic
                     }
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
-
                     Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    if (Rm == null || !Rm.Complete) return;
+                    if (!await FitSceneMaterialsAsync(Rm, fs)) return;
+
                     Rm.partition();
                     Polygon_Scene Rm_Ctrl = new Polygon_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true);
 
@@ -1590,11 +1602,24 @@ namespace Pachyderm_Acoustic
                     //    Array.Resize(ref result_signals[i], (int)(samplefrequency / 2));
                     //}
 
-                    Freq_Trackbar1.MaxValue = (int)(SPS.Vertices.Length / 60);
-                    Freq_Trackbar2.MaxValue = (int)(SPS.Vertices.Length / 60);
-                    Freq_Trackbar1.Value = (int)(Freq_Trackbar1.MaxValue * 0.4);
-                    Freq_Trackbar2.Value = (int)(Freq_Trackbar2.MaxValue * 0.8);
+                    ////Freq_Trackbar1.MaxValue = (int)(SPS.Vertices.Length / 60);
+                    ////Freq_Trackbar2.MaxValue = (int)(SPS.Vertices.Length / 60);
+                    ////Freq_Trackbar1.Value = (int)(Freq_Trackbar1.MaxValue * 0.4);
+                    ////Freq_Trackbar2.Value = (int)(Freq_Trackbar2.MaxValue * 0.8);
+                    double upperCenter = 62.5 * Math.Pow(2, ScatLimit.SelectedIndex);
+                    double lowerFrequency = upperCenter / Math.Sqrt(2.0);
+                    double upperFrequency = upperCenter * Math.Sqrt(2.0);
 
+                    int sliderMax = Math.Max(1, (int)Math.Ceiling(upperFrequency / d_f));
+
+                    Freq_Trackbar1.MinValue = 0;
+                    Freq_Trackbar2.MinValue = 0;
+
+                    Freq_Trackbar1.MaxValue = sliderMax;
+                    Freq_Trackbar2.MaxValue = sliderMax;
+
+                    Freq_Trackbar1.Value = Math.Max(0, Math.Min(sliderMax, (int)Math.Round(lowerFrequency / d_f)));
+                    Freq_Trackbar2.Value = Math.Max(0, Math.Min(sliderMax, (int)Math.Round(upperFrequency / d_f)));
                     //System.Numerics.Complex[][] FCtrl = new System.Numerics.Complex[len][];
                     //System.Numerics.Complex[][] FExp = new System.Numerics.Complex[len][];
 
@@ -1840,7 +1865,8 @@ namespace Pachyderm_Acoustic
                 System.Numerics.Complex[] SWC = new System.Numerics.Complex[FFTs.Length];
                 double[] SW = new double[FFTs.Length];
 
-                int[] F = new int[2] { (int)Math.Floor(Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency), (int)Math.Ceiling(Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency) };
+                //int[] F = new int[2] { (int)Math.Floor(Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency), (int)Math.Ceiling(Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) * Scattering.Length / samplefrequency) };
+                int[] F = new int[2] { (int)Math.Floor(Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value) /d_f), (int)Math.Ceiling(Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) / d_f) };
 
                 if (Scat_Param_Select.SelectedIndex == 0)
                 {
@@ -1858,6 +1884,12 @@ namespace Pachyderm_Acoustic
                         }
                         fftreader.Dispose();
                         SW[i] = Pachyderm_Acoustic.Utilities.AcousticalMath.SPL_Intensity(SWC[i].Magnitude / (F[1] - F[0]));
+                    }
+                    double maxSW = SW.Max();
+
+                    for (int i = 0; i < SW.Length; i++)
+                    {
+                        SW[i] -= maxSW;
                     }
                 }
                 else if (Scat_Param_Select.SelectedIndex == 1)
@@ -1943,13 +1975,20 @@ namespace Pachyderm_Acoustic
 
             private void Scat_Output_Changed(object sender, EventArgs e)
             {
+                scatterscale = scatcolorlayout.Scale;
+
+                if (SP != null) SP.SetColorScale(scatterscale);
+
                 Update_Scattering_Graph(null, null);
+
+                Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
             }
 
             private void Freq_Trackbar_Scroll(object sender, EventArgs e)
             {
-                Freq_Feedback.Text = "Frequency Selection: " + Math.Round(d_f * Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " to " + Math.Round(d_f * Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value)) + " Hz.";
+                Freq_Feedback.Text = "Frequency Selection: " + Math.Min(Freq_Trackbar1.Value, Freq_Trackbar2.Value) + " to " + Math.Max(Freq_Trackbar1.Value, Freq_Trackbar2.Value) + " Hz.";
                 Update_Scattering_Graph(null, null);
+                Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
             }
 
             #region Helpers
@@ -1971,6 +2010,24 @@ namespace Pachyderm_Acoustic
                     double[] fAxis;
                     mat.Estimate_IIR_Coefficients(sampleFrequency, maxFrequency, out fAxis, filterOrder);
                 }
+            }
+
+            private static async Task<bool> FitSceneMaterialsAsync(Environment.Scene scene, double maxFrequency)
+            {
+                List<Environment.Material> fitMaterials;
+                List<string> fitLayerNames;
+
+                BuildUniqueSceneMaterials(scene, out fitMaterials, out fitLayerNames);
+
+                if (fitMaterials.Count == 0) return true;
+                Pach_Absorption_Filter_Fitter fitter = new Pach_Absorption_Filter_Fitter(fitMaterials, fitLayerNames);
+                fitter.SetFitParameters(0, maxFrequency);
+
+                await fitter.ShowAsync();
+                if (fitter.Accepted) return true;
+
+                MessageBox.Show("IIR filter fitting was not accepted.\nSimulation cancelled.", "Absorption Filter Fitting", MessageBoxButtons.OK);
+                return false;
             }
 
             private static void BuildUniqueSceneMaterials(Environment.Scene scene, out List<Environment.Material> materials, out List<string> layerNames)
@@ -2005,9 +2062,7 @@ namespace Pachyderm_Acoustic
                         continue;
 
                     int layerIndex = obj.Attributes.LayerIndex;
-                    string layerName = (layerIndex >= 0 && layerIndex < Rhino.RhinoDoc.ActiveDoc.Layers.Count)
-                        ? Rhino.RhinoDoc.ActiveDoc.Layers[layerIndex].FullPath
-                        : $"Layer_{layerIndex}";
+                    string layerName = (layerIndex >= 0 && layerIndex < Rhino.RhinoDoc.ActiveDoc.Layers.Count) ? Rhino.RhinoDoc.ActiveDoc.Layers[layerIndex].FullPath : $"Layer_{layerIndex}";
 
                     // Determine how many polygons this object contributes.
                     // For Breps: one brep face → one or more mesh polygons.

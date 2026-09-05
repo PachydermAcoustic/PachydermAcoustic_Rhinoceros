@@ -359,7 +359,7 @@ namespace Pachyderm_Acoustic
                 if (!(_materials[rowIndex] is Environment.Smart_Material)) return;
 
                 LayerFitRow row = _rows[rowIndex];
-                bool forceCoefficientFit = _selectedFitMethod.SelectedIndex == 1;
+                bool forceCoefficientFit = _selectedFitMethod.SelectedIndex == 0;
 
                 if (row.ForceCoefficientFit == forceCoefficientFit) return;
 
@@ -587,7 +587,7 @@ namespace Pachyderm_Acoustic
                 if (isSmartMaterial)
                 {
                     _selectedFitMethod.Enabled = true;
-                    _selectedFitMethod.SelectedIndex = row.ForceCoefficientFit ? 1 : 0;
+                    _selectedFitMethod.SelectedIndex = row.ForceCoefficientFit ? 0 : 1;
                 }
                 else
                 {
@@ -851,46 +851,46 @@ namespace Pachyderm_Acoustic
                 };
             }
 
-            private static LayerFitResult EvaluateAlphaOnlyMaterial(Environment.Material material, int order, double maxFreq, double fs)
-            {
-                int requestedOrder =order > 0 ? order : 8;
+            //private static LayerFitResult EvaluateAlphaOnlyMaterial(Environment.Material material, int order, double maxFreq, double fs)
+            //{
+            //    int requestedOrder =order > 0 ? order : 8;
 
-                LayerFitResult best = null;
+            //    LayerFitResult best = null;
 
-                // Each dictionary section is a biquad.
-                int sectionCount = Math.Max(1, (requestedOrder + 1) / 2);
+            //    // Each dictionary section is a biquad.
+            //    int sectionCount = Math.Max(1, (requestedOrder + 1) / 2);
 
-                for (int section = 0; section < sectionCount; section++)
-                {
-                    LayerFitResult candidate = FitAlphaOnlyAtOrder(material, requestedOrder, maxFreq, fs, best);
+            //    for (int section = 0; section < sectionCount; section++)
+            //    {
+            //        LayerFitResult candidate = FitAlphaOnlyAtOrder(material, requestedOrder, maxFreq, fs, best);
 
-                    if (candidate == null || !string.IsNullOrEmpty(candidate.ErrorMessage))
-                    {
-                        if (best == null) return candidate;
-                        break;
-                    }
+            //        if (candidate == null || !string.IsNullOrEmpty(candidate.ErrorMessage))
+            //        {
+            //            if (best == null) return candidate;
+            //            break;
+            //        }
 
-                    // First successful result.
-                    if (best == null)
-                    {
-                        best = candidate;
-                        continue;
-                    }
+            //        // First successful result.
+            //        if (best == null)
+            //        {
+            //            best = candidate;
+            //            continue;
+            //        }
 
-                    // Since candidate inherits best, it should never be worse.
-                    // Keep this as an absolute safety check anyway.
-                    if (candidate.MeanAbsError <= best.MeanAbsError)
-                    {
-                        best = candidate;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+            //        // Since candidate inherits best, it should never be worse.
+            //        // Keep this as an absolute safety check anyway.
+            //        if (candidate.MeanAbsError <= best.MeanAbsError)
+            //        {
+            //            best = candidate;
+            //        }
+            //        else
+            //        {
+            //            break;
+            //        }
+            //    }
 
-                return best;
-            }
+            //    return best;
+            //}
 
             private static LayerFitResult FitAlphaOnlyAtOrder(Environment.Material material, int requestedOrder, double maxFreq, double fs, LayerFitResult previous)
             {
@@ -1069,7 +1069,7 @@ namespace Pachyderm_Acoustic
 
                     for (int i = 0; i < frequencies.Length; i++)
                     {
-                        Complex H = EvalDigital(bR,aR, frequencies[i]);
+                        Complex H = EvalDigital(bR, aR, frequencies[i]);
                         double mag = H.Magnitude;
                         if (double.IsNaN(mag) || double.IsInfinity(mag)) return double.PositiveInfinity;
 
@@ -1421,7 +1421,7 @@ namespace Pachyderm_Acoustic
                 };
             }
 
-            private static LayerFitResult EvaluateAlphaOnlyMaterialAuto(Environment.Material material, double maxFreq, double fs, int order = 0)
+            private static LayerFitResult EvaluateAlphaOnlyMaterial(Environment.Material material, int order, double maxFreq, double fs)
             {
                 double fMax = Math.Min(maxFreq, 0.48 * fs);
                 if (fMax < 20.0)
@@ -1432,7 +1432,7 @@ namespace Pachyderm_Acoustic
 
                 if (material is Environment.Smart_Material)
                 {
-                    double[] thirdCenters = Utilities.AcousticalMath.ThirdOctaveCenters();
+                    double[] thirdCenters = new double[] { 20, 31, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000 };
 
                     List<double> freq = new List<double>();
                     List<double> alpha = new List<double>();
@@ -1458,9 +1458,66 @@ namespace Pachyderm_Acoustic
                 }
                 else
                 {
+                    // The material supplies octave-band absorption coefficients,
+                    // but fit against an interpolated third-octave target.
                     double[] octaveAlpha = material.Coefficient_A_Broad();
-                    targetBandFreq = new double[]{62.5, 125, 250, 500, 1000, 2000, 4000, 8000};
-                    targetBandAlpha = octaveAlpha.Select(a => Math.Max(0.0, Math.Min(0.98, a))).ToArray();
+
+                    if (octaveAlpha == null || octaveAlpha.Length < 8)
+                        return new LayerFitResult
+                        {
+                            ErrorMessage = "Material did not return 8 octave-band absorption coefficients."
+                        };
+
+                    double[] octaveFreq = new double[]{ 62.5, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0 };
+
+                    double ClampOctaveAlpha(double a)
+                    {
+                        if (double.IsNaN(a) || double.IsInfinity(a)) return 0.0;
+                        return Math.Max(0.0, Math.Min(0.98, a));
+                    }
+
+                    double InterpolatedOctaveAlpha(double f)
+                    {
+                        // Do not invent additional low-frequency structure:
+                        // below 63 Hz, retain the 63-Hz value.
+                        if (f <= octaveFreq[0])
+                            return ClampOctaveAlpha(octaveAlpha[0]);
+
+                        if (f >= octaveFreq[octaveFreq.Length - 1])
+                            return ClampOctaveAlpha(octaveAlpha[octaveAlpha.Length - 1]);
+
+                        int hi = 1;
+
+                        while (hi < octaveFreq.Length && octaveFreq[hi] < f) hi++;
+
+                        int lo = hi - 1;
+
+                        // Interpolate linearly in log-frequency.
+                        double x0 = Math.Log(octaveFreq[lo]);
+                        double x1 = Math.Log(octaveFreq[hi]);
+                        double x = Math.Log(f);
+
+                        double t = (x - x0) / Math.Max(1e-12, x1 - x0);
+
+                        return ClampOctaveAlpha(octaveAlpha[lo] + t * (octaveAlpha[hi] - octaveAlpha[lo]));
+                    }
+
+                    double[] thirdCenters = Utilities.AcousticalMath.ThirdOctaveCenters();
+
+                    List<double> freq = new List<double>();
+                    List<double> alpha = new List<double>();
+
+                    for (int i = 0; i < thirdCenters.Length; i++)
+                    {
+                        double f = thirdCenters[i];
+                        if (f < 62.0 || f > fMax) continue;
+
+                        freq.Add(f);
+                        alpha.Add(InterpolatedOctaveAlpha(f));
+                    }
+
+                    targetBandFreq = freq.ToArray();
+                    targetBandAlpha = alpha.ToArray();
                 }
 
                 if (targetBandFreq.Length < 2) return new LayerFitResult { ErrorMessage = "Insufficient coefficient data within the fitting range." };
@@ -1612,21 +1669,15 @@ namespace Pachyderm_Acoustic
 
                 double ReflectionError(double[] bR, double[] aR)
                 {
-                    double error = 0.0;
-                    double weightSum = 0.0;
+                    double[] alphaFitDense = new double[frequencies.Length];
 
-                    double[] thirdOctaveCenters = Utilities.AcousticalMath.ThirdOctaveCenters();
-
-                    for (int i = 0; i < thirdOctaveCenters.Length; i++)
+                    for (int i = 0; i < frequencies.Length; i++)
                     {
-                        double f = thirdOctaveCenters[i];
-
-                        if (f < 31.5 || f > fMax)continue; 
-
-                        Complex H = EvalDigital(bR, aR, f);
+                        Complex H = EvalDigital(bR, aR, frequencies[i]);
                         double mag = H.Magnitude;
 
-                        if (double.IsNaN(mag) || double.IsInfinity(mag)) return double.PositiveInfinity;
+                        if (double.IsNaN(mag) || double.IsInfinity(mag))
+                            return double.PositiveInfinity;
 
                         if (mag > 0.9995)
                         {
@@ -1634,28 +1685,71 @@ namespace Pachyderm_Acoustic
                             return 1e9 + 1e6 * excess * excess;
                         }
 
-                        double alphaFit = Math.Max(0.0, Math.Min(1.0, 1.0 - mag * mag));
-
-                        // No thirdOctaveTarget array needed:
-                        double alphaTarget = AlphaAt(f);
-                        double weight = 1.0;
-
-                        // Extra weight at the original octave anchors.
-                        double log2f = Math.Log(f / 62.5, 2.0);
-                        double nearestOctave = Math.Round(log2f);
-
-                        if (Math.Abs(log2f - nearestOctave) < 0.02) weight = 4.0;
-
-                        double e = alphaFit - alphaTarget;
-
-                        error += weight * e * e;
-                        weightSum += weight;
-                        weightSum += weight;
+                        alphaFitDense[i] = Math.Max(0.0, Math.Min(1.0, 1.0 - mag * mag));
                     }
 
-                    return weightSum > 0.0
-                        ? error / weightSum
-                        : double.PositiveInfinity;
+                    // ---------------------------------------------------------
+                    // PRIMARY: match actual plotted band values
+                    // ---------------------------------------------------------
+                    double bandErr = 0.0;
+                    double bandWt = 0.0;
+
+                    double bwFactor = material is Environment.Smart_Material ? Math.Pow(2.0, 1.0 / 6.0) : Math.Sqrt(2.0);
+
+                    for (int band = 0; band < targetBandFreq.Length; band++)
+                    {
+                        double center = targetBandFreq[band];
+                        double fLo = center / bwFactor;
+                        double fHi = center * bwFactor;
+
+                        double sum = 0.0;
+                        int count = 0;
+
+                        for (int i = 0; i < frequencies.Length; i++)
+                        {
+                            if (frequencies[i] < fLo || frequencies[i] > fHi)
+                                continue;
+
+                            sum += alphaFitDense[i];
+                            count++;
+                        }
+
+                        if (count == 0)
+                            continue;
+
+                        double fitBand = sum / count;
+                        double targetBand = targetBandAlpha[band];
+                        double e = fitBand - targetBand;
+
+                        // Optional: slightly emphasize low-frequency bands
+                        // because that resonance is easy for the greedy search to ignore.
+                        double w = center <= 80.0 ? 2.0 : 1.0;
+
+                        bandErr += w * e * e;
+                        bandWt += w;
+                    }
+
+                    if (bandWt <= 0.0)
+                        return double.PositiveInfinity;
+
+                    bandErr /= bandWt;
+
+                    // ---------------------------------------------------------
+                    // SECONDARY: weak shape regularization
+                    // ---------------------------------------------------------
+                    double shapeErr = 0.0;
+                    double shapeWt = 0.0;
+
+                    for (int i = 0; i < frequencies.Length; i++)
+                    {
+                        double e = alphaFitDense[i] - targetAlpha[i];
+                        shapeErr += e * e;
+                        shapeWt += 1.0;
+                    }
+
+                    shapeErr /= Math.Max(1.0, shapeWt);
+
+                    return bandErr + 0.05 * shapeErr;
                 }
 
                 double avgLogR = 0.0;
@@ -1675,7 +1769,6 @@ namespace Pachyderm_Acoustic
                 int sectionBudget = Math.Max(1, (requestedOrder + 1) / 2);
 
                 double[] centers = targetBandFreq.Where(f => f < fMax * 1.05 && f < 0.45 * fs).ToArray();
-                //double[] centers = targetBandFreq.Where(f => f >= 20.0 && f < fMax * 1.05 && f < 0.45 * fs).ToArray();
                 double[] qs = new double[]{ 0.35, 0.5, 0.707, 1.0, 1.4, 2.0, 2.8, 4.0};
 
                 double[] cutDb = new double[] { -1.5, -3.0, -6.0, -9.0, -12.0, -18.0 };
@@ -1686,7 +1779,7 @@ namespace Pachyderm_Acoustic
                     double[] bestB = null;
                     double[] bestA = null;
                     string bestLabel = null;
-                    double trialBestError = section == 0 ? double.PositiveInfinity : bestError;
+                    double trialBestError = bestError;
 
                     void TryCandidate(double[] bSec, double[] aSec, string label)
                     {
@@ -1789,9 +1882,7 @@ namespace Pachyderm_Acoustic
                 double[] octaveTarget = new double[targetBandFreq.Length];
                 double[] octaveFit = new double[targetBandFreq.Length];
 
-                double bandwidthFactor = material is Environment.Smart_Material
-                    ? Math.Pow(2.0, 1.0 / 6.0)
-                    : Math.Sqrt(2.0);
+                double bandwidthFactor = Math.Pow(2.0, 1.0 / 6.0);
 
                 for (int band = 0; band < targetBandFreq.Length; band++)
                 {
@@ -1867,9 +1958,8 @@ namespace Pachyderm_Acoustic
 
             private static LayerFitResult EvaluateMaterial(Environment.Material material, int order, double maxFreq, double fs, bool forceCoefficientFit)
             {
-                if (!forceCoefficientFit && HasMeaningfulComplexReflection(material, maxFreq))
+                if (forceCoefficientFit && HasMeaningfulComplexReflection(material, maxFreq))
                     return EvaluatePhysicalReflectionMaterial(material, order, maxFreq, fs);
-
                 return EvaluateAlphaOnlyMaterial(material, order, maxFreq, fs);
             }
 
@@ -1893,7 +1983,6 @@ namespace Pachyderm_Acoustic
 
                 return false;
             }
-
 
             private sealed class LayerFitRow
             {
