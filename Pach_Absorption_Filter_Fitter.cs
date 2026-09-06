@@ -1841,6 +1841,37 @@ namespace Pachyderm_Acoustic
                     selectedSections.Add(bestLabel);
                 }
 
+                // If the target is essentially flat, the greedy dictionary may correctly
+                // decide that no peaking/shelf section improves the fit. That leaves a
+                // zero-order reflection filter:
+                //
+                //     R(z) = constant
+                //
+                // which converts to a zero-order admittance filter. The FVM boundary does
+                // not handle that case well, so pad the reflection filter with a stable
+                // first-order all-pass section. This preserves |R|, and therefore preserves
+                // the fitted absorption curve, while guaranteeing at least first-order
+                // admittance coefficients.
+                //
+                //     H_ap(z) = (p + z^-1) / (1 + p z^-1), |p| < 1
+                //
+                // |H_ap| = 1, so alpha = 1 - |R|^2 is unchanged.
+
+                if (Math.Max(aReflection.Length, bReflection.Length) < 2)
+                {
+                    const double p = 0.25;
+
+                    double[] bAllPass = new double[] { p, 1.0 };
+                    double[] aAllPass = new double[] { 1.0, p };
+
+                    bReflection = Conv(bReflection, bAllPass);
+                    aReflection = Conv(aReflection, aAllPass);
+
+                    NormalizeBA(ref bReflection, ref aReflection);
+
+                    selectedSections.Add($"Minimum first-order all-pass padding: p={p:F2}");
+                }
+
                 int n = Math.Max(aReflection.Length, bReflection.Length);
                 double[] aY = new double[n];
                 double[] bY = new double[n];
@@ -1857,6 +1888,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 NormalizeBA(ref bY, ref aY);
+                if (Math.Max(aY.Length, bY.Length) < 2) return new LayerFitResult { ErrorMessage = "Alpha-only fit produced a degenerate zero-order admittance filter." };
 
                 double[] fitAlpha = new double[frequencies.Length];
                 for (int i = 0; i < frequencies.Length; i++)
