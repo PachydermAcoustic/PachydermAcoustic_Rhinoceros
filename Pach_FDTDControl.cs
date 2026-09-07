@@ -1286,7 +1286,7 @@ namespace Pachyderm_Acoustic
                         //    }
                         //}
                         //Src = Srcs.ToArray();
-                        Src[i] = new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * 10 + new Hare.Geometry.Vector(0, 0, (double)Sample_Depth.Value), i, false);
+                        Src[i] = new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, new Hare.Geometry.Point(LabCenter.X, LabCenter.Y, LabCenter.Z) + new Hare.Geometry.Vector(Math.Sin(dir[i]), 0, Math.Cos(dir[i])) * 10, i, false);
                     }
                     List<Hare.Geometry.Point> Rec = new List<Hare.Geometry.Point>();
 
@@ -1305,7 +1305,8 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
 
                     Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value);
+                    double laboratoryheight = radius * 1.2;
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, laboratoryheight + Sample_Depth.Value, true);
                     long size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of first model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDS.RuntoCompletion();
@@ -1316,7 +1317,7 @@ namespace Pachyderm_Acoustic
 
                     Numeric.TimeDomain.Signal_Driver_Compact SDf = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse, fs, 1, Src);
                     Numeric.TimeDomain.Microphone_Compact Micf = new Numeric.TimeDomain.Microphone_Compact();
-                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, radius * 1.2 + (double)Sample_Depth.Value, true, (double)Sample_Depth.Value);
+                    Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.RPttoHPt(LabCenter), radius * 2.4, radius * 2.4, laboratoryheight + Sample_Depth.Value, true);
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of second model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
                     FDTDF.RuntoCompletion();
@@ -1833,12 +1834,12 @@ namespace Pachyderm_Acoustic
             }
 
             Rhino.Geometry.Point3d LabCenter;
-
+            bool LabCenterSet = false;
             private void Set_Origin_Click(object sender, EventArgs e)
             {
                 Rhino.Geometry.Point3d pt;
                 Rhino.Commands.Result rr = Rhino.Input.RhinoGet.GetPoint("Select the center point of the sample that you would like to analyze...", true, out pt);
-                if (rr == Rhino.Commands.Result.Success) LabCenter = pt;
+                if (rr == Rhino.Commands.Result.Success) { LabCenter = pt; LabCenterSet = true; }
             }
 
             private void Update_Scattering_Graph(object sender, EventArgs e)
