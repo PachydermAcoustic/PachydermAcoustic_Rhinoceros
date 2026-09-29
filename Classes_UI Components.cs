@@ -124,24 +124,29 @@ namespace Pachyderm_Acoustic
                 Update(this, EventArgs.Empty);
             }
 
+            private static T ResultAt<T>(T[] results, int index) where T : class
+            {
+                return results != null && index >= 0 && index < results.Length ? results[index] : null;
+            }
+
             private void ModifyPower_Click(object sender, System.EventArgs e)
             {
                 List<int> SrcID = SelectedSources();
 
                 if (SrcID.Count < 1) return;
-                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(Rec[SrcID[0]].SWL);
+                Pachyderm_Acoustic.SourcePowerMod mod = new SourcePowerMod(ResultAt(DS, SrcID[0])?.SWL ?? ResultAt(Rec, SrcID[0])?.SWL);
                 mod.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, this);
                 if (mod.accept)
                 {
                     foreach (int i in SrcID)
                     {
                         double[] factor = null;
-                        if (DS != null)
+                        if (ResultAt(DS, i) != null)
                         {
                             factor = DS[i].Set_Power(mod.Power);
-                            if (Rec[i].HasFilter()) DS[i].Create_Filter();
+                            // Set_Power rebuilds the direct-sound filter.
                         }
-                        if (Rec != null)
+                        if (ResultAt(Rec, i) != null)
                         {
                             if (factor == null) factor = Rec[i].PowerModFactor(mod.Power);
                             Rec[i].Set_Power(factor);
@@ -150,7 +155,7 @@ namespace Pachyderm_Acoustic
                             if (Rec[i].HasFilter()) Rec[i].Create_Filter(VB);
                             VB.Close();
                         }
-                        if(IS != null)
+                        if (ResultAt(IS, i) != null && factor != null)
                         {
                             Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);

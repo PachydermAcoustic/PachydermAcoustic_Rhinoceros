@@ -4720,7 +4720,7 @@ namespace Pachyderm_Acoustic
                     CutoffTime = Direct_Data[0].Cutoff_Time;
 
                     for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].Origin;
-                    SourceList.Populate(Direct_Data);
+                    SourceList.Populate(Direct_Data, IS_Data, Receiver);
 
                     for (int DDCT = 0; DDCT < Direct_Data.Length; DDCT++)
                     {
