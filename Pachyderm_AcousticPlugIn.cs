@@ -176,10 +176,36 @@ namespace Pachyderm_Acoustic
                 List<Environment.Source> S = new List<Environment.Source>();
                 Dictionary<String,List<Environment.Source>> s_dict = new Dictionary<String, List<Environment.Source>>();
 
+                // Group only registered point sources; legacy arrays default to individual elements.
+                var arrays = new Dictionary<string, List<Rhino.DocObjects.RhinoObject>>();
+                foreach (Guid sourceId in S_ID)
+                {
+                    var obj = Rhino.RhinoDoc.ActiveDoc.Objects.Find(sourceId);
+                    if (obj == null || obj.ObjectType != Rhino.DocObjects.ObjectType.Point) continue;
+                    string group = obj.Geometry.GetUserString("ArrayGroup");
+                    if (string.IsNullOrWhiteSpace(group)) continue;
+                    if (!arrays.ContainsKey(group)) arrays[group] = new List<Rhino.DocObjects.RhinoObject>();
+                    arrays[group].Add(obj);
+                }
+                var emittedArrays = new HashSet<string>();
+
                 for (int id = 0; id < S_ID.Length; id++)
                 {
                     if (S_ID[id] == System.Guid.Empty || S_ID[id] == System.Guid.NewGuid()) break;
                     Rhino.DocObjects.RhinoObject Origin = Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID[id]);
+
+                    if (Origin == null) continue;
+                    string arrayGroup = Origin.Geometry.GetUserString("ArrayGroup");
+                    if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Point &&
+                        !string.IsNullOrWhiteSpace(arrayGroup) &&
+                        arrays.TryGetValue(arrayGroup, out var elements) &&
+                        elements.TrueForAll(UI.ArraySimulationSettings.UseComposite))
+                    {
+                        if (emittedArrays.Add(arrayGroup))
+                            S.Add(new UI.CompositeArraySource(elements,
+                                UI.ArraySimulationSettings.ReferenceDistance(elements[0]), id));
+                        continue;
+                    }
 
                     if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Point)
                     {

@@ -1,4 +1,4 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)
+//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)
 //'
 //'This file is part of Pachyderm-Acoustic.
 //'
@@ -56,6 +56,57 @@ namespace Pachyderm_Acoustic
                 Boundary_Contours,
                 Sphere,
                 Sphere_And_Boundary_Contours
+            }
+
+            public enum DiagnosticPlane
+            {
+                XY,
+                XZ,
+                YZ
+            }
+
+            public bool Show_Array_Graph = false;
+            public bool Show_Array_Diagnostic_Slice = false;
+            public DiagnosticPlane Array_Diagnostic_Plane = DiagnosticPlane.XZ;
+            public double Array_Diagnostic_Angle = 0;
+
+            private Point3d Array_Center = Point3d.Unset;
+            private readonly List<Line> Array_Diagnostic_Slice_Lines = new List<Line>();
+            private ArrayPattern Array_Diagnostic_Pattern = null;
+            private double Array_Diagnostic_Max = double.NaN;
+
+            private const int Array_Diagnostic_Samples = 1440; // 0.25 degree
+
+            private static Vector3d DiagnosticDirection(DiagnosticPlane plane, double angle)
+            {
+                double c = Math.Cos(angle);
+                double s = Math.Sin(angle);
+
+                switch (plane)
+                {
+                    case DiagnosticPlane.XY:
+                        return new Vector3d(c, s, 0);
+
+                    case DiagnosticPlane.XZ:
+                        return new Vector3d(c, 0, s);
+
+                    case DiagnosticPlane.YZ:
+                        return new Vector3d(0, c, s);
+
+                    default:
+                        return new Vector3d(c, 0, s);
+                }
+            }
+
+            public double ArrayDiagnosticLevel(double angleDegrees)
+            {
+                if (Array_Diagnostic_Pattern == null || double.IsNaN(angleDegrees) || double.IsInfinity(angleDegrees))
+                    return double.NaN;
+
+                // Evaluate the requested angle directly so narrow nulls are not interpolated in dB.
+                Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, (angleDegrees % 360.0) * Math.PI / 180.0);
+                double magnitude = Array_Diagnostic_Pattern.Magnitude(direction);
+                return (magnitude <= 1E-12 ? -120.0 : 20.0 * Math.Log10(magnitude)) - Array_Diagnostic_Max;
             }
 
             private struct FaceIndex
@@ -140,19 +191,24 @@ namespace Pachyderm_Acoustic
 
                 Hare.Geometry.Vector local = new Hare.Geometry.Vector(world.X, world.Y, world.Z);
 
-                // Inverse of the normal Pachyderm aiming rotation.
-                local = Utilities.PachTools.Rotate_Vector(local, -azi, 0, true);
-                local = Utilities.PachTools.Rotate_Vector(local, 0, -alt, true);
+                // Undo Balloon.Update_Aim in reverse order: azimuth about Z,
+                // elevation about X, then axial rotation about Y.
+                double a = -azi * Math.PI / 180.0;
+                double x = local.dx, y = local.dy;
+                local.dx = x * Math.Cos(a) - y * Math.Sin(a);
+                local.dy = x * Math.Sin(a) + y * Math.Cos(a);
 
-                if (Math.Abs(axi) > 1E-9)
-                {
-                    double a = -axi * Math.PI / 180.0;
-                    double x = local.dx;
-                    double z = local.dz;
+                a = -alt * Math.PI / 180.0;
+                y = local.dy;
+                double z = local.dz;
+                local.dy = y * Math.Cos(a) - z * Math.Sin(a);
+                local.dz = y * Math.Sin(a) + z * Math.Cos(a);
 
-                    local.dx = x * Math.Cos(a) - z * Math.Sin(a);
-                    local.dz = x * Math.Sin(a) + z * Math.Cos(a);
-                }
+                a = -axi * Math.PI / 180.0;
+                x = local.dx;
+                z = local.dz;
+                local.dx = x * Math.Cos(a) - z * Math.Sin(a);
+                local.dz = x * Math.Sin(a) + z * Math.Cos(a);
 
                 local.Normalize();
                 return local;
@@ -489,6 +545,10 @@ namespace Pachyderm_Acoustic
                 }
 
                 Boundary_Contour_Labels.Clear();
+                Array_Center = Point3d.Unset;
+                Array_Diagnostic_Slice_Lines.Clear();
+                Array_Diagnostic_Pattern = null;
+                Array_Diagnostic_Max = double.NaN;
                 Enabled = false;
                 RhinoDoc.ActiveDoc?.Views.Redraw();
             }
@@ -500,6 +560,10 @@ namespace Pachyderm_Acoustic
 
                 Boundary_Contour_Labels.Clear();
                 Array_Balloon_Mesh = null;
+                Array_Center = Point3d.Unset;
+                Array_Diagnostic_Slice_Lines.Clear();
+                Array_Diagnostic_Pattern = null;
+                Array_Diagnostic_Max = double.NaN;
 
                 if (Mode == Display_Mode.Sphere)
                 {
@@ -558,161 +622,184 @@ namespace Pachyderm_Acoustic
                 RhinoDoc.ActiveDoc?.Views.Redraw();
             }
 
+            // Immutable snapshot shared by the composite simulation and aiming preview.
+            internal sealed class ArrayPattern
+            {
+                private readonly List<Point3d> elementOrigins = new List<Point3d>();
+                private readonly List<double> elementAlt = new List<double>();
+                private readonly List<double> elementAzi = new List<double>();
+                private readonly List<double> elementAxi = new List<double>();
+                private readonly List<DirectivityLookup> elementLookups = new List<DirectivityLookup>();
+                private readonly List<double> elementGainsDb = new List<double>();
+                private readonly List<double> elementDelaysMs = new List<double>();
+                private readonly double omega, k, referenceDistance;
+                private readonly double maxGainDb;
+                public readonly Point3d Center;
+                public readonly double PowerLevel;
+                private readonly double amplitudeBound;
+
+                public ArrayPattern(List<RhinoObject> sources, int octave, double distance)
+                {
+                    int oct = Math.Max(0, Math.Min(7, octave));
+                    omega = Utilities.Numerics.angularFrequency_Octave[oct];
+                    k = omega / 343.0;
+                    referenceDistance = Math.Max(0.1, distance);
+                    for (int i = 0; i < sources.Count; i++)
+                    {
+                        RhinoObject src = sources[i];
+
+                        if (src == null || src.Geometry == null) continue;
+
+                        DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct);
+                        if (lookup == null) continue;
+
+                        Point3d origin = SourcePoint(src);
+                        double alt, azi, axi;
+                        GetAiming(src, out alt, out azi, out axi);
+
+                        double gainDb = 0.0;
+                        string swl = src.Geometry.GetUserString("SWL");
+
+                        if (!string.IsNullOrWhiteSpace(swl))
+                        {
+                            try
+                            {
+                                double[] values = Utilities.PachTools.DecodeSourcePower(swl);
+
+                                if (values != null && values.Length > 0)
+                                {
+                                    int gainOct = Math.Max(0, Math.Min(oct, values.Length - 1));
+                                    gainDb = values[gainOct];
+                                }
+                            }
+                            catch
+                            {
+                                gainDb = 0.0;
+                            }
+                        }
+
+                        double delayMs = 0.0;
+                        string delayText = src.Geometry.GetUserString("Delay");
+
+                        if (!double.TryParse(
+                            delayText,
+                            NumberStyles.Float,
+                            CultureInfo.InvariantCulture,
+                            out delayMs))
+                        {
+                            double.TryParse(delayText, out delayMs);
+                        }
+
+                        string octaveDelayText = src.Geometry.GetUserString("ArrayDelayOctaveMs");
+
+                        if (!string.IsNullOrWhiteSpace(octaveDelayText))
+                        {
+                            string[] parts = octaveDelayText.Split(';');
+
+                            if (oct >= 0 && oct < parts.Length)
+                            {
+                                double bandDelay = 0.0;
+                                if (!double.TryParse(parts[oct], NumberStyles.Float, CultureInfo.InvariantCulture, out bandDelay))
+                                {
+                                    double.TryParse(parts[oct], out bandDelay);
+                                }
+                                delayMs += bandDelay;
+                            }
+                        }
+
+                        string arrayGainText = src.Geometry.GetUserString("ArrayGainOctaveDb");
+
+                        if (!string.IsNullOrWhiteSpace(arrayGainText))
+                        {
+                            double[] arrayGain = Utilities.PachTools.DecodeEight(arrayGainText);
+
+                            if (arrayGain != null && arrayGain.Length > 0)
+                            {
+                                int gainOct = Math.Max(0, Math.Min(oct, arrayGain.Length - 1));
+                                gainDb += arrayGain[gainOct];
+                            }
+                        }
+
+                        elementOrigins.Add(origin);
+                        elementAlt.Add(alt);
+                        elementAzi.Add(azi);
+                        elementAxi.Add(axi);
+                        elementLookups.Add(lookup);
+                        elementGainsDb.Add(gainDb);
+                        elementDelaysMs.Add(delayMs);
+                    }
+
+                    if (elementOrigins.Count == 0) throw new ArgumentException("An array requires at least one source.", nameof(sources));
+
+                    double cx = 0;
+                    double cy = 0;
+                    double cz = 0;
+
+                    for (int i = 0; i < elementOrigins.Count; i++)
+                    {
+                        cx += elementOrigins[i].X;
+                        cy += elementOrigins[i].Y;
+                        cz += elementOrigins[i].Z;
+                    }
+
+                    Center = new Point3d(cx / elementOrigins.Count, cy / elementOrigins.Count,cz / elementOrigins.Count);
+
+                    maxGainDb = double.NegativeInfinity;
+
+                    for (int i = 0; i < elementGainsDb.Count; i++)
+                    {
+                        if (elementGainsDb[i] > maxGainDb)
+                        {
+                            maxGainDb = elementGainsDb[i];
+                        }
+                    }
+
+                    if (double.IsNegativeInfinity(maxGainDb))
+                    {
+                        maxGainDb = 0.0;
+                    }
+
+                    amplitudeBound = elementGainsDb.Sum(g => Math.Pow(10.0, (g - maxGainDb) / 20.0));
+                    PowerLevel = maxGainDb + 20.0 * Math.Log10(amplitudeBound);
+                }
+
+                public double Magnitude(Vector3d direction)
+                {
+                    if (!direction.Unitize()) return 0;
+                    Point3d target = Center + direction * referenceDistance;
+                    System.Numerics.Complex sum = System.Numerics.Complex.Zero;
+                    for (int e = 0; e < elementOrigins.Count; e++)
+                    {
+                        Vector3d world = target - elementOrigins[e];
+                        double r = world.Length;
+                        if (r <= Rhino.RhinoMath.ZeroTolerance) continue;
+                        Hare.Geometry.Vector local = WorldToLocal(world, elementAlt[e], elementAzi[e], elementAxi[e]);
+                        double directivityDb = elementLookups[e].Evaluate(local) - elementLookups[e].Maximum;
+                        double gain = Math.Pow(10.0, (elementGainsDb[e] - maxGainDb + directivityDb) / 20.0);
+                        double phase = -k * r - omega * elementDelaysMs[e] / 1000.0;
+                        sum += System.Numerics.Complex.FromPolarCoordinates(gain, phase);
+                    }
+                    return sum.Magnitude;
+                }
+
+                public double RelativePower(Vector3d direction)
+                {
+                    double amplitude = Magnitude(direction) / amplitudeBound;
+                    return amplitude * amplitude;
+                }
+            }
+
             private void BuildBoundaryContoursArray(List<RhinoObject> sources, int octave)
             {
-                Rhino.Geometry.Mesh scene = ProjectionSceneMesh();
+                if (sources == null || sources.Count == 0) return;
 
-                if (scene == null || scene.Vertices.Count == 0 || scene.Faces.Count == 0)
-                {
-                    return;
-                }
-
-                int oct = Math.Max(0, Math.Min(7, octave));
-
-                double frequency;
-                switch (oct)
-                {
-                    case 0: frequency = 62.5; break;
-                    case 1: frequency = 125; break;
-                    case 2: frequency = 250; break;
-                    case 3: frequency = 500; break;
-                    case 4: frequency = 1000; break;
-                    case 5: frequency = 2000; break;
-                    case 6: frequency = 4000; break;
-                    case 7: frequency = 8000; break;
-                    default: frequency = 1000; break;
-                }
-
-                double omega = Utilities.Numerics.angularFrequency_Octave[oct];
-                double k = omega / 343.0;
-
-                List<Point3d> elementOrigins = new List<Point3d>();
-                List<double> elementAlt = new List<double>();
-                List<double> elementAzi = new List<double>();
-                List<double> elementAxi = new List<double>(); List<DirectivityLookup> elementLookups = new List<DirectivityLookup>();
-                List<double> elementGainsDb = new List<double>();
-                List<double> elementDelaysMs = new List<double>();
-
-                for (int i = 0; i < sources.Count; i++)
-                {
-                    RhinoObject src = sources[i];
-
-                    if (src == null || src.Geometry == null) continue;
-
-                    DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct);
-                    if (lookup == null) continue;
-
-                    Point3d origin = SourcePoint(src);
-                    double alt, azi, axi;
-                    GetAiming(src, out alt, out azi, out axi);
-
-                    double gainDb = 0.0;
-                    string swl = src.Geometry.GetUserString("SWL");
-
-                    if (!string.IsNullOrWhiteSpace(swl))
-                    {
-                        try
-                        {
-                            double[] values = Utilities.PachTools.DecodeSourcePower(swl);
-
-                            if (values != null && values.Length > 0)
-                            {
-                                int gainOct = Math.Max(0, Math.Min(oct, values.Length - 1));
-                                gainDb = values[gainOct];
-                            }
-                        }
-                        catch
-                        {
-                            gainDb = 0.0;
-                        }
-                    }
-
-                    double delayMs = 0.0;
-                    string delayText = src.Geometry.GetUserString("Delay");
-
-                    if (!double.TryParse(
-                        delayText,
-                        NumberStyles.Float,
-                        CultureInfo.InvariantCulture,
-                        out delayMs))
-                    {
-                        double.TryParse(delayText, out delayMs);
-                    }
-
-                    string octaveDelayText = src.Geometry.GetUserString("ArrayDelayOctaveMs");
-
-                    if (!string.IsNullOrWhiteSpace(octaveDelayText))
-                    {
-                        string[] parts = octaveDelayText.Split(';');
-
-                        if (oct >= 0 && oct < parts.Length)
-                        {
-                            double bandDelay = 0.0;
-                            if (!double.TryParse(parts[oct], NumberStyles.Float, CultureInfo.InvariantCulture, out bandDelay))
-                            {
-                                double.TryParse(parts[oct], out bandDelay);
-                            }
-                            delayMs += bandDelay;
-                        }
-                    }
-
-                    string arrayGainText = src.Geometry.GetUserString("ArrayGainOctaveDb");
-
-                    if (!string.IsNullOrWhiteSpace(arrayGainText))
-                    {
-                        double[] arrayGain = Utilities.PachTools.DecodeEight(arrayGainText);
-
-                        if (arrayGain != null && arrayGain.Length > 0)
-                        {
-                            int gainOct = Math.Max(0, Math.Min(oct, arrayGain.Length - 1));
-                            gainDb += arrayGain[gainOct];
-                        }
-                    }
-
-                    elementOrigins.Add(origin);
-                    elementAlt.Add(alt);
-                    elementAzi.Add(azi);
-                    elementAxi.Add(axi);
-                    elementLookups.Add(lookup);
-                    elementGainsDb.Add(gainDb);
-                    elementDelaysMs.Add(delayMs);
-                }
-
-                if (elementOrigins.Count == 0) return;
-
-                double cx = 0;
-                double cy = 0;
-                double cz = 0;
-
-                for (int i = 0; i < elementOrigins.Count; i++)
-                {
-                    cx += elementOrigins[i].X;
-                    cy += elementOrigins[i].Y;
-                    cz += elementOrigins[i].Z;
-                }
-
-                Point3d arrayCenter = new Point3d(cx / elementOrigins.Count, cy / elementOrigins.Count,cz / elementOrigins.Count);
-
-                double maxGainDb = double.NegativeInfinity;
-
-                for (int i = 0; i < elementGainsDb.Count; i++)
-                {
-                    if (elementGainsDb[i] > maxGainDb)
-                    {
-                        maxGainDb = elementGainsDb[i];
-                    }
-                }
-
-                if (double.IsNegativeInfinity(maxGainDb))
-                {
-                    maxGainDb = 0.0;
-                }
-
-                double c = 343.0;
+                ArrayPattern pattern = new ArrayPattern(sources, octave, Array_Reference_Distance);
+                Point3d arrayCenter = pattern.Center;
+                Array_Center = arrayCenter;
 
                 Array_Balloon_Mesh = null;
 
-                if (Show_Array_Balloon)
+                if (Show_Array_Balloon || Show_Array_Graph || Show_Array_Diagnostic_Slice)
                 {
                     Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(4).Model[0];
 
@@ -725,43 +812,26 @@ namespace Pachyderm_Acoustic
                         Vector3d patternDirection = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
 
                         if (!patternDirection.Unitize()) patternDirection = new Vector3d(0, 1, 0);
-                        Point3d virtualTarget = arrayCenter + patternDirection * Array_Reference_Distance;
-                        System.Numerics.Complex sum = System.Numerics.Complex.Zero;
-
-                        for (int e = 0; e < elementOrigins.Count; e++)
-                        {
-                            Vector3d worldDir = virtualTarget - elementOrigins[e];
-                            double r = worldDir.Length;
-
-                            if (r <= Rhino.RhinoMath.ZeroTolerance) continue;
-                            worldDir.Unitize();
-
-                            Hare.Geometry.Vector local = WorldToLocal(worldDir, elementAlt[e], elementAzi[e], elementAxi[e]);
-
-                            double directivityDb = elementLookups[e].Evaluate(local) - elementLookups[e].Maximum;
-                            double gain = Math.Pow(10.0, (elementGainsDb[e] - maxGainDb + directivityDb) / 20.0);
-                            double tau = elementDelaysMs[e] / 1000.0;
-                            double phase = -k * r - omega * tau;
-                            sum += System.Numerics.Complex.FromPolarCoordinates(gain, phase);
-                        }
-
-                        double mag = sum.Magnitude;
+                        double mag = pattern.Magnitude(patternDirection);
                         rawDb[i] = mag <= 1E-12 ? -120.0 : 20.0 * Math.Log10(mag);
                     }
 
                     double balloonMax = rawDb.Where(v => !double.IsNaN(v) && !double.IsInfinity(v)).DefaultIfEmpty(0.0).Max();
+                    // The slice and readout retain the balloon's spherical reference, even when it is hidden.
+                    Array_Diagnostic_Pattern = pattern;
+                    Array_Diagnostic_Max = balloonMax;
 
                     Pach_Graphics.HSV_colorscale c_scale = new Pach_Graphics.HSV_colorscale(1, 1, 0, 4.0 / 3.0, 1, 0, 1, 0, false, 24);
 
                     for (int i = 0; i < Array_Balloon_Mesh.Vertices.Count; i++)
                     {
                         double relDb = rawDb[i] - balloonMax;
-                        double displayDb = Math.Max(-30.0, relDb);
+                        double displayDb = Math.Max(-30.0, Math.Min(0.0, relDb));
 
                         Vector3d dir = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
 
                         if (!dir.Unitize()) dir = new Vector3d(0, 1, 0);
-                        double radius = Array_Balloon_Radius * Math.Pow(10.0, displayDb / 20.0);
+                        double radius = Array_Balloon_Radius * (displayDb + 30.0) / 30.0;
 
                         Array_Balloon_Mesh.Vertices.SetVertex(i, arrayCenter.X + radius * dir.X, arrayCenter.Y + radius * dir.Y, arrayCenter.Z + radius * dir.Z);
                         Eto.Drawing.Color color = c_scale.GetValue(relDb, -30.0, 0.0);
@@ -770,7 +840,27 @@ namespace Pachyderm_Acoustic
 
                     Array_Balloon_Mesh.Normals.ComputeNormals();
                     Array_Balloon_Mesh.Compact();
+                    if (!Show_Array_Balloon) Array_Balloon_Mesh = null;
                 }
+
+                if (Show_Array_Diagnostic_Slice)
+                {
+                    Point3d[] plot = new Point3d[Array_Diagnostic_Samples];
+                    for (int i = 0; i < plot.Length; i++)
+                    {
+                        double degrees = 360.0 * i / plot.Length;
+                        Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, degrees * Math.PI / 180.0);
+                        double radius = Array_Balloon_Radius * (Math.Max(-30.0, Math.Min(0.0, ArrayDiagnosticLevel(degrees))) + 30.0) / 30.0;
+                        plot[i] = arrayCenter + direction * radius;
+                    }
+                    for (int i = 0; i < plot.Length; i++)
+                        Array_Diagnostic_Slice_Lines.Add(new Line(plot[i], plot[(i + 1) % plot.Length]));
+                }
+
+                // Reference displays are also useful in a model containing only array elements.
+                Rhino.Geometry.Mesh scene = ProjectionSceneMesh();
+                if (scene == null || scene.Vertices.Count == 0 || scene.Faces.Count == 0) return;
+
                 Point3d[] points = new Point3d[scene.Vertices.Count];
 
                 for (int i = 0; i < scene.Vertices.Count; i++)
@@ -796,29 +886,7 @@ namespace Pachyderm_Acoustic
                         raw[i] = double.NaN;
                         return;
                     }
-                    Point3d virtualTarget = arrayCenter + patternDirection * Array_Reference_Distance;
-
-                    System.Numerics.Complex sum = System.Numerics.Complex.Zero;
-
-                    for (int e = 0; e < elementOrigins.Count; e++)
-                    {
-                        Vector3d worldDir = virtualTarget - elementOrigins[e];
-                        double r = worldDir.Length;
-
-                        if (r <= Rhino.RhinoMath.ZeroTolerance) continue;
-                        worldDir.Unitize();
-
-                        Hare.Geometry.Vector local = WorldToLocal(worldDir, elementAlt[e], elementAzi[e], elementAxi[e]); double directivityDb = elementLookups[e].Evaluate(local) - elementLookups[e].Maximum;
-
-                        double gain = Math.Pow(10.0, (elementGainsDb[e] - maxGainDb + directivityDb) / 20.0);
-                        double tau = elementDelaysMs[e] / 1000.0;
-
-                        // Do not apply 1/r amplitude loss here; this is a relative directivity display.
-                        double phase = -k * r - omega * tau;
-                        sum += System.Numerics.Complex.FromPolarCoordinates(gain, phase);
-                    }
-
-                    double mag = sum.Magnitude;
+                    double mag = pattern.Magnitude(patternDirection);
 
                     if (mag <= 1E-12)
                     {
@@ -899,12 +967,64 @@ namespace Pachyderm_Acoustic
                 }
             }
 
+
+            protected override void CalculateBoundingBox(CalculateBoundingBoxEventArgs e)
+            {
+                if (!Array_Center.IsValid) return;
+                Vector3d extent = new Vector3d(Array_Balloon_Radius, Array_Balloon_Radius, Array_Balloon_Radius);
+                e.IncludeBoundingBox(new BoundingBox(Array_Center - extent, Array_Center + extent));
+                if (Array_Balloon_Mesh != null) e.IncludeBoundingBox(Array_Balloon_Mesh.GetBoundingBox(false));
+                foreach (Line line in Array_Diagnostic_Slice_Lines) e.IncludeBoundingBox(line.BoundingBox);
+            }
+
             protected override void PostDrawObjects(DrawEventArgs e)
             {
                 if (Array_Balloon_Mesh != null && Array_Balloon_Mesh.Vertices.Count > 0 && Array_Balloon_Mesh.Faces.Count > 0)
                 {
                     e.Display.DrawMeshFalseColors(Array_Balloon_Mesh);
                     e.Display.DrawMeshWires(Array_Balloon_Mesh, SDColor.FromArgb(80, SDColor.Black));
+                }
+
+                if (Show_Array_Graph && Array_Center.IsValid)
+                {
+                    // Follow ReceiverSphereConduit's three orthogonal circle systems,
+                    // with equal radial spacing per dB: -30 dB at the center, 0 dB at the rim.
+                    for (int db = 0; db >= -30; db -= 6)
+                    {
+                        double radius = Array_Balloon_Radius * (db + 30.0) / 30.0;
+                        if (radius > 0)
+                        {
+                            e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, Array_Center, radius), SDColor.Black);
+                            e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, Array_Center, radius), SDColor.Black);
+                            e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, Array_Center, radius), SDColor.Black);
+                        }
+                        e.Display.DrawDot(Array_Center + Vector3d.XAxis * radius, db.ToString() + " dB", SDColor.Black, SDColor.White);
+                    }
+
+                    List<Line> ticks = new List<Line>();
+                    for (int plane = 0; plane < 3; plane++)
+                    {
+                        for (int degrees = 0; degrees < 360; degrees += 15)
+                        {
+                            Vector3d direction = DiagnosticDirection((DiagnosticPlane)plane, degrees * Math.PI / 180.0);
+                            double tick = Array_Balloon_Radius * (degrees % 30 == 0 ? 0.025 : 0.015);
+                            ticks.Add(new Line(Array_Center + direction * (Array_Balloon_Radius - tick), Array_Center + direction * Array_Balloon_Radius));
+                        }
+                    }
+                    e.Display.DrawLines(ticks, SDColor.Black, 1);
+                }
+
+                if (Show_Array_Diagnostic_Slice && Array_Diagnostic_Slice_Lines.Count > 0)
+                {
+                    e.Display.DrawLines(Array_Diagnostic_Slice_Lines, SDColor.Blue, 3);
+                    double db = ArrayDiagnosticLevel(Array_Diagnostic_Angle);
+                    if (!double.IsNaN(db) && !double.IsInfinity(db))
+                    {
+                        Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, Array_Diagnostic_Angle * Math.PI / 180.0);
+                        e.Display.DrawLine(new Line(Array_Center, Array_Center + direction * Array_Balloon_Radius), SDColor.Blue, 2);
+                        double radius = Array_Balloon_Radius * (Math.Max(-30.0, Math.Min(0.0, db)) + 30.0) / 30.0;
+                        e.Display.DrawDot(Array_Center + direction * radius, Array_Diagnostic_Angle.ToString("0.00") + "°   " + db.ToString("0.00") + " dB", SDColor.Blue, SDColor.White);
+                    }
                 }
 
                 if (Boundary_Contour_Lines == null) return;

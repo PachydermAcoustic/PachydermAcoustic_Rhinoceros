@@ -1,4 +1,4 @@
-﻿using Eto.Drawing;
+using Eto.Drawing;
 using Eto.Forms;
 using Pachyderm_Acoustic.Utilities;
 using Rhino.DocObjects;
@@ -23,11 +23,18 @@ namespace Pachyderm_Acoustic
             private CheckBox ShowPattern;
             private DropDown PatternOctave;
             private NumericStepper PatternReferenceDistance;
+            private CheckBox ShowArrayGraph;
+            private CheckBox ShowArraySlice;
+            private DropDown DiagnosticPlaneSelect;
+            private NumericStepper DiagnosticAngle;
+            private Label DiagnosticLevel;
 
             private SpeakerPatternConduit PatternConduit;
 
             public Pach_ArrayControl(List<RhinoObject> elements)
             {
+                if (elements == null || elements.Count == 0)
+                    throw new ArgumentException("Select at least one array element.", nameof(elements));
                 Elements = elements;
 
                 Title = "Pachyderm Speaker Array Control";
@@ -44,8 +51,7 @@ namespace Pachyderm_Acoustic
                 layout.Padding = 8;
                 layout.DefaultSpacing = new Size(6, 6);
 
-                string label = "";
-                if (Elements == null || Elements.Count == 0) label = "Steerable Array " + Elements[0].Geometry.GetUserString("ArrayGroupLabel");
+                string label = "Steerable Array " + Elements[0].Geometry.GetUserString("ArrayGroupLabel");
 
                 layout.AddRow(new Label { Text = label, Font = new Eto.Drawing.Font(SystemFont.Bold, 12)});
 
@@ -56,7 +62,7 @@ namespace Pachyderm_Acoustic
                 l.Padding = 8;
                 l.DefaultSpacing = new Size(4, 6);
 
-                ShowPattern = new CheckBox { Text = "Show resulting array contours on walls" };
+                ShowPattern = new CheckBox { Text = "Show array preview and wall contours" };
                 ShowPattern.Checked = true;
                 ShowPattern.CheckedChanged += (s, e) => UpdatePatternConduit();
 
@@ -76,8 +82,33 @@ namespace Pachyderm_Acoustic
                 PatternReferenceDistance.MinValue = 1;
                 PatternReferenceDistance.MaxValue = 200;
                 PatternReferenceDistance.DecimalPlaces = 2;
-                PatternReferenceDistance.Value = 10;
-                PatternReferenceDistance.ValueChanged += (s, e) => UpdatePatternConduit();
+                PatternReferenceDistance.Value = ArraySimulationSettings.ReferenceDistance(Elements[0]);
+                PatternReferenceDistance.ValueChanged += (s, e) =>
+                {
+                    foreach (RhinoObject element in Elements)
+                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey,
+                            PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                    UpdatePatternConduit();
+                };
+
+                DropDown simulationMode = new DropDown();
+                simulationMode.Items.Add("Individual source elements");
+                simulationMode.Items.Add("Composite balloon");
+                simulationMode.SelectedIndex = Elements.TrueForAll(ArraySimulationSettings.UseComposite) ? 1 : 0;
+                simulationMode.SelectedIndexChanged += (s, e) =>
+                {
+                    foreach (RhinoObject element in Elements)
+                    {
+                        element.Geometry.SetUserString(ArraySimulationSettings.ModeKey,
+                            simulationMode.SelectedIndex == 1 ? "Composite" : "Elements");
+                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey,
+                            PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                    }
+                };
+                DynamicLayout simulationLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                simulationLayout.AddRow(new Label { Text = "Simulation" }, simulationMode, null);
+                l.AddRow(simulationLayout);
+                l.AddRow(new Label { Text = "Composite balloon uses one source at the array center and the aiming reference distance." });
 
                 Button aimAtPoints = new Button();
                 aimAtPoints.Text = "Aim at Points";
@@ -87,13 +118,43 @@ namespace Pachyderm_Acoustic
                 optimizeAtPoints.Text = "Optimize";
                 optimizeAtPoints.Click += (s, e) => AimPhaseAtPoints(true);
 
-                l.AddRow(
-                    ShowPattern,
-                    new Label { Text = "Octave" },
-                    PatternOctave,
-                    new Label { Text = "Reference distance" },
-                    PatternReferenceDistance,
-                    aimAtPoints, optimizeAtPoints);
+                // Separate layouts prevent the explanatory text from widening the
+                // first column and pushing the steering buttons outside the form.
+                DynamicLayout previewLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                previewLayout.AddRow(ShowPattern, null);
+                previewLayout.AddRow(new Label { Text = "Octave" }, PatternOctave,
+                    new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
+                l.AddRow(previewLayout);
+
+                ShowArrayGraph = new CheckBox { Text = "3D graph", Checked = PatternConduit.Show_Array_Graph };
+                ShowArraySlice = new CheckBox { Text = "Polar slice", Checked = PatternConduit.Show_Array_Diagnostic_Slice };
+                DiagnosticPlaneSelect = new DropDown();
+                DiagnosticPlaneSelect.Items.Add("XY");
+                DiagnosticPlaneSelect.Items.Add("XZ");
+                DiagnosticPlaneSelect.Items.Add("YZ");
+                DiagnosticPlaneSelect.SelectedIndex = (int)PatternConduit.Array_Diagnostic_Plane;
+                DiagnosticAngle = new NumericStepper { MinValue = -180, MaxValue = 180, DecimalPlaces = 2, Increment = 0.25, Width = 80, Value = PatternConduit.Array_Diagnostic_Angle };
+                DiagnosticLevel = new Label { Text = "-- dB", Width = 90 };
+                DiagnosticAngle.ToolTip = "XY: +X toward +Y; XZ: +X toward +Z; YZ: +Y toward +Z. Level is relative to the sampled balloon maximum.";
+                ShowArrayGraph.CheckedChanged += (s, e) => UpdatePatternConduit();
+                ShowArraySlice.CheckedChanged += (s, e) => UpdatePatternConduit();
+                DiagnosticPlaneSelect.SelectedIndexChanged += (s, e) => UpdatePatternConduit();
+                DiagnosticAngle.ValueChanged += (s, e) =>
+                {
+                    PatternConduit.Array_Diagnostic_Angle = DiagnosticAngle.Value;
+                    double db = PatternConduit.ArrayDiagnosticLevel(DiagnosticAngle.Value);
+                    DiagnosticLevel.Text = double.IsNaN(db) ? "-- dB" : db.ToString("0.00") + " dB";
+                    Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
+                };
+                DynamicLayout diagnosticLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                diagnosticLayout.AddRow(ShowArrayGraph, ShowArraySlice, new Label { Text = "Plane" }, DiagnosticPlaneSelect,
+                    new Label { Text = "Angle (°)" }, DiagnosticAngle, DiagnosticLevel, null);
+                l.AddRow(diagnosticLayout);
+
+                DynamicLayout steeringLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                steeringLayout.AddRow(new Label { Text = "Automatic steering" },
+                    aimAtPoints, optimizeAtPoints, null);
+                l.AddRow(steeringLayout);
 
                 box.Content = l;
                 layout.AddRow(box);
@@ -103,7 +164,7 @@ namespace Pachyderm_Acoustic
                 Button close = new Button { Text = "Close" };
                 close.Click += (s, e) => Close();
 
-                layout.AddRow(null, close);
+                layout.AddRow(close);
 
                 Content = layout;
 
@@ -737,12 +798,18 @@ namespace Pachyderm_Acoustic
                     !ShowPattern.Checked.Value)
                 {
                     PatternConduit.Clear();
+                    if (DiagnosticLevel != null) DiagnosticLevel.Text = "-- dB";
                     return;
                 }
 
+                PatternConduit.Show_Array_Graph = ShowArrayGraph.Checked == true;
+                PatternConduit.Show_Array_Diagnostic_Slice = ShowArraySlice.Checked == true;
+                PatternConduit.Array_Diagnostic_Plane = (SpeakerPatternConduit.DiagnosticPlane)DiagnosticPlaneSelect.SelectedIndex;
+                PatternConduit.Array_Diagnostic_Angle = DiagnosticAngle.Value;
                 PatternConduit.Octave = PatternOctave.SelectedIndex;
                 PatternConduit.SetArrayElements(Elements, PatternReferenceDistance.Value);
-                
+                double db = PatternConduit.ArrayDiagnosticLevel(DiagnosticAngle.Value);
+                DiagnosticLevel.Text = double.IsNaN(db) ? "-- dB" : db.ToString("0.00") + " dB";
             }
         }
 

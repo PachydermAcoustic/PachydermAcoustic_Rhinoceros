@@ -387,7 +387,7 @@ namespace Pachyderm_Acoustic
 
                 // Important:
                 // Existing "Cluster" means collapsed/inSteerable SourceCluster.
-                // Steerable arrays must remain separate simulation sources.
+                // Steerable arrays default to separate sources; ArraySimulationMode can opt into a composite balloon.
                 obj.Geometry.SetUserString("Cluster", null);
 
                 if (string.IsNullOrWhiteSpace(obj.Geometry.GetUserString("ArrayPhaseOctaveDeg")))
@@ -1930,7 +1930,7 @@ namespace Pachyderm_Acoustic
                     if (SpeakerPatternConduit.Instance != null)
                     {
                         SpeakerPatternConduit.Instance.Mode = SpeakerPatternConduit.Display_Mode.Boundary_Contours;
-                        SpeakerPatternConduit.Instance.SetArrayElements(first.Value, 10.0);
+                        SpeakerPatternConduit.Instance.SetArrayElements(first.Value, ArraySimulationSettings.ReferenceDistance(first.Value[0]));
                         SpeakerPatternConduit.Instance.Enabled = true;
                     }
 
