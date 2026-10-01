@@ -18,6 +18,7 @@
 
 using Hare.Geometry;
 using MathNet.Numerics;
+using MathNet.Numerics.Integration;
 using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Utilities;
 using Rhino;
@@ -26,6 +27,7 @@ using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.DirectoryServices.ActiveDirectory;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -77,7 +79,7 @@ namespace Pachyderm_Acoustic
 
             private const int Array_Diagnostic_Samples = 1440; // 0.25 degree
 
-            private static Vector3d DiagnosticDirection(DiagnosticPlane plane, double angle)
+            private static Rhino.Geometry.Vector3d DiagnosticDirection(DiagnosticPlane plane, double angle)
             {
                 double c = Math.Cos(angle);
                 double s = Math.Sin(angle);
@@ -104,7 +106,7 @@ namespace Pachyderm_Acoustic
                     return double.NaN;
 
                 // Evaluate the requested angle directly so narrow nulls are not interpolated in dB.
-                Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, (angleDegrees % 360.0) * Math.PI / 180.0);
+                Rhino.Geometry.Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, (angleDegrees % 360.0) * Math.PI / 180.0);
                 double magnitude = Array_Diagnostic_Pattern.Magnitude(direction);
                 return (magnitude <= 1E-12 ? -120.0 : 20.0 * Math.Log10(magnitude)) - Array_Diagnostic_Max;
             }
@@ -182,14 +184,12 @@ namespace Pachyderm_Acoustic
                 if (A.Length > 2) axi = SafeParse(A[2]);
             }
 
-            private static Hare.Geometry.Vector WorldToLocal(Vector3d world, double alt, double azi, double axi)
+            private static Hare.Geometry.Vector WorldToLocal(Hare.Geometry.Vector world, double alt, double azi, double axi)
             {
-                if (!world.Unitize())
-                {
-                    return new Hare.Geometry.Vector(0, 1, 0);
-                }
+                world.Normalize();
+                if (double.IsNaN(world.dx) || double.IsInfinity(world.dx)) return new Hare.Geometry.Vector(0, 1, 0);
 
-                Hare.Geometry.Vector local = new Hare.Geometry.Vector(world.X, world.Y, world.Z);
+                Hare.Geometry.Vector local = new Hare.Geometry.Vector(world.dx, world.dy, world.dz);
 
                 // Undo Balloon.Update_Aim in reverse order: azimuth about Z,
                 // elevation about X, then axial rotation about Y.
@@ -625,7 +625,7 @@ namespace Pachyderm_Acoustic
             // Immutable snapshot shared by the composite simulation and aiming preview.
             internal sealed class ArrayPattern
             {
-                private readonly List<Point3d> elementOrigins = new List<Point3d>();
+                private readonly List<Hare.Geometry.Point> elementOrigins = new List<Hare.Geometry.Point>();
                 private readonly List<double> elementAlt = new List<double>();
                 private readonly List<double> elementAzi = new List<double>();
                 private readonly List<double> elementAxi = new List<double>();
@@ -634,7 +634,7 @@ namespace Pachyderm_Acoustic
                 private readonly List<double> elementDelaysMs = new List<double>();
                 private readonly double omega, k, referenceDistance;
                 private readonly double maxGainDb;
-                public readonly Point3d Center;
+                public readonly Hare.Geometry.Point Center;
                 public readonly double PowerLevel;
                 private readonly double amplitudeBound;
 
@@ -653,7 +653,7 @@ namespace Pachyderm_Acoustic
                         DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct);
                         if (lookup == null) continue;
 
-                        Point3d origin = SourcePoint(src);
+                        Hare.Geometry.Point origin = RCPachTools.RPttoHPt(SourcePoint(src));
                         double alt, azi, axi;
                         GetAiming(src, out alt, out azi, out axi);
 
@@ -731,19 +731,11 @@ namespace Pachyderm_Acoustic
 
                     if (elementOrigins.Count == 0) throw new ArgumentException("An array requires at least one source.", nameof(sources));
 
-                    double cx = 0;
-                    double cy = 0;
-                    double cz = 0;
+                    RhinoObject modeSource = sources.Find(s => s != null && s.Geometry != null);
 
-                    for (int i = 0; i < elementOrigins.Count; i++)
-                    {
-                        cx += elementOrigins[i].X;
-                        cy += elementOrigins[i].Y;
-                        cz += elementOrigins[i].Z;
-                    }
+                    Vector[] dirs = RCPachTools.SourceAimingVector(sources.ToArray());
 
-                    Center = new Point3d(cx / elementOrigins.Count, cy / elementOrigins.Count,cz / elementOrigins.Count);
-
+                    Center = Utilities.Geometry.ArrayCenter(elementOrigins, dirs.ToList(), ArraySimulationSettings.UseAimingCenter(modeSource));
                     maxGainDb = double.NegativeInfinity;
 
                     for (int i = 0; i < elementGainsDb.Count; i++)
@@ -766,12 +758,12 @@ namespace Pachyderm_Acoustic
                 public double Magnitude(Vector3d direction)
                 {
                     if (!direction.Unitize()) return 0;
-                    Point3d target = Center + direction * referenceDistance;
+                    Hare.Geometry.Point target = Center + RCPachTools.RPttoHPt(direction) * referenceDistance;
                     System.Numerics.Complex sum = System.Numerics.Complex.Zero;
                     for (int e = 0; e < elementOrigins.Count; e++)
                     {
-                        Vector3d world = target - elementOrigins[e];
-                        double r = world.Length;
+                        Hare.Geometry.Vector world = target - elementOrigins[e];
+                        double r = world.Length();
                         if (r <= Rhino.RhinoMath.ZeroTolerance) continue;
                         Hare.Geometry.Vector local = WorldToLocal(world, elementAlt[e], elementAzi[e], elementAxi[e]);
                         double directivityDb = elementLookups[e].Evaluate(local) - elementLookups[e].Maximum;
@@ -782,9 +774,9 @@ namespace Pachyderm_Acoustic
                     return sum.Magnitude;
                 }
 
-                public double RelativePower(Vector3d direction)
+                public double RelativePower(Hare.Geometry.Vector direction)
                 {
-                    double amplitude = Magnitude(direction) / amplitudeBound;
+                    double amplitude = Magnitude(RCPachTools.HPttoRPt(direction)) / amplitudeBound;
                     return amplitude * amplitude;
                 }
             }
@@ -794,8 +786,8 @@ namespace Pachyderm_Acoustic
                 if (sources == null || sources.Count == 0) return;
 
                 ArrayPattern pattern = new ArrayPattern(sources, octave, Array_Reference_Distance);
-                Point3d arrayCenter = pattern.Center;
-                Array_Center = arrayCenter;
+                Hare.Geometry.Point arrayCenter = pattern.Center;
+                Array_Center = RCPachTools.HPttoRPt(arrayCenter);
 
                 Array_Balloon_Mesh = null;
 
@@ -809,7 +801,7 @@ namespace Pachyderm_Acoustic
                     
                     for (int i = 0; i < Array_Balloon_Mesh.Vertices.Count; i++)
                     {
-                        Vector3d patternDirection = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
+                        Rhino.Geometry.Vector3d patternDirection = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
 
                         if (!patternDirection.Unitize()) patternDirection = new Vector3d(0, 1, 0);
                         double mag = pattern.Magnitude(patternDirection);
@@ -833,7 +825,7 @@ namespace Pachyderm_Acoustic
                         if (!dir.Unitize()) dir = new Vector3d(0, 1, 0);
                         double radius = Array_Balloon_Radius * (displayDb + 30.0) / 30.0;
 
-                        Array_Balloon_Mesh.Vertices.SetVertex(i, arrayCenter.X + radius * dir.X, arrayCenter.Y + radius * dir.Y, arrayCenter.Z + radius * dir.Z);
+                        Array_Balloon_Mesh.Vertices.SetVertex(i, arrayCenter.x + radius * dir.X, arrayCenter.y + radius * dir.Y, arrayCenter.z + radius * dir.Z);
                         Eto.Drawing.Color color = c_scale.GetValue(relDb, -30.0, 0.0);
                         Array_Balloon_Mesh.VertexColors.SetColor(i, color.Rb, color.Gb, color.Bb);
                     }
@@ -851,10 +843,9 @@ namespace Pachyderm_Acoustic
                         double degrees = 360.0 * i / plot.Length;
                         Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, degrees * Math.PI / 180.0);
                         double radius = Array_Balloon_Radius * (Math.Max(-30.0, Math.Min(0.0, ArrayDiagnosticLevel(degrees))) + 30.0) / 30.0;
-                        plot[i] = arrayCenter + direction * radius;
+                        plot[i] = RCPachTools.HPttoRPt(arrayCenter) + direction * radius;
                     }
-                    for (int i = 0; i < plot.Length; i++)
-                        Array_Diagnostic_Slice_Lines.Add(new Line(plot[i], plot[(i + 1) % plot.Length]));
+                    for (int i = 0; i < plot.Length; i++) Array_Diagnostic_Slice_Lines.Add(new Line(plot[i], plot[(i + 1) % plot.Length]));
                 }
 
                 // Reference displays are also useful in a model containing only array elements.
@@ -879,7 +870,7 @@ namespace Pachyderm_Acoustic
 
                 Parallel.For(0, points.Length, i =>
                 {
-                    Vector3d patternDirection = points[i] - arrayCenter;
+                    Vector3d patternDirection = points[i] - RCPachTools.HPttoRPt(arrayCenter);
 
                     if (!patternDirection.Unitize())
                     {
@@ -958,7 +949,7 @@ namespace Pachyderm_Acoustic
 
                 if (First_Surface_Only)
                 {
-                    CullContoursToFirstSurface(scene, arrayCenter);
+                    CullContoursToFirstSurface(scene, RCPachTools.HPttoRPt(arrayCenter));
                 }
 
                 if (Show_Contour_Labels)
@@ -966,7 +957,6 @@ namespace Pachyderm_Acoustic
                     BuildContourLabels();
                 }
             }
-
 
             protected override void CalculateBoundingBox(CalculateBoundingBoxEventArgs e)
             {
@@ -1073,9 +1063,9 @@ namespace Pachyderm_Acoustic
 
                 Parallel.For(0, points.Length, i =>
                 {
-                    Vector3d dir = points[i] - source;
-
-                    if (!dir.Unitize())
+                    Vector dir = RCPachTools.RPttoHPt(points[i] - source);
+                    dir.Normalize();
+                    if (double.IsNaN(dir.dx) || double.IsInfinity(dir.dx))
                     {
                         rel[i] = double.NaN;
                         return;
@@ -1184,8 +1174,6 @@ namespace Pachyderm_Acoustic
 
                         double tol = Math.Max(First_Surface_Tolerance, Contour_Mesh_Max_Edge * 0.02);
 
-                        // If something is appreciably closer than the contour segment midpoint, this contour is behind
-                        // another surface and should not be shown.
                         if (hit_dist >= target_dist - tol && hit_dist <= target_dist + tol)
                         {
                             kept.Add(src[j]);

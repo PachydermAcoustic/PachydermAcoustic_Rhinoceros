@@ -1,8 +1,10 @@
 using Eto.Drawing;
 using Eto.Forms;
+using MathNet.Numerics.LinearAlgebra;
 using Pachyderm_Acoustic.Utilities;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using ScottPlot.Triangulation;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -28,6 +30,7 @@ namespace Pachyderm_Acoustic
             private DropDown DiagnosticPlaneSelect;
             private NumericStepper DiagnosticAngle;
             private Label DiagnosticLevel;
+            private DropDown PatternCenterMode;
 
             private SpeakerPatternConduit PatternConduit;
 
@@ -91,6 +94,23 @@ namespace Pachyderm_Acoustic
                     UpdatePatternConduit();
                 };
 
+                PatternCenterMode = new DropDown();
+                PatternCenterMode.Items.Add("Geometric center");
+                PatternCenterMode.Items.Add("Aiming convergence");
+                PatternCenterMode.SelectedIndex = ArraySimulationSettings.UseAimingCenter(Elements[0]) ? 1 : 0;
+
+                PatternCenterMode.SelectedIndexChanged += (s, e) =>
+                {
+                    foreach (RhinoObject element in Elements)
+                    {
+                        if (element == null || element.Geometry == null) continue;
+
+                        element.Geometry.SetUserString(ArraySimulationSettings.CenterModeKey, PatternCenterMode.SelectedIndex == 1 ? "Aiming" : "Geometric");
+                    }
+
+                    UpdatePatternConduit();
+                };
+
                 DropDown simulationMode = new DropDown();
                 simulationMode.Items.Add("Individual source elements");
                 simulationMode.Items.Add("Composite balloon");
@@ -108,7 +128,7 @@ namespace Pachyderm_Acoustic
                 DynamicLayout simulationLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
                 simulationLayout.AddRow(new Label { Text = "Simulation" }, simulationMode, null);
                 l.AddRow(simulationLayout);
-                l.AddRow(new Label { Text = "Composite balloon uses one source at the array center and the aiming reference distance." });
+                l.AddRow(new Label { Text = "Composite balloon uses one source at the selected array center and the aiming reference distance." });
 
                 Button aimAtPoints = new Button();
                 aimAtPoints.Text = "Aim at Points";
@@ -122,8 +142,8 @@ namespace Pachyderm_Acoustic
                 // first column and pushing the steering buttons outside the form.
                 DynamicLayout previewLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
                 previewLayout.AddRow(ShowPattern, null);
-                previewLayout.AddRow(new Label { Text = "Octave" }, PatternOctave,
-                    new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
+                previewLayout.AddRow(new Label { Text = "Octave" }, PatternOctave, new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
+                previewLayout.AddRow(new Label { Text = "Array center" }, PatternCenterMode, null);
                 l.AddRow(previewLayout);
 
                 ShowArrayGraph = new CheckBox { Text = "3D graph", Checked = PatternConduit.Show_Array_Graph };
@@ -180,21 +200,18 @@ namespace Pachyderm_Acoustic
                 UpdatePatternConduit();
             }
 
-            private List<Rhino.Geometry.Point3d> GetTargetPoints()
+            private List<Hare.Geometry.Point> GetTargetPoints()
             {
-                List<Rhino.Geometry.Point3d> targets = new List<Rhino.Geometry.Point3d>();
+                List<Hare.Geometry.Point> targets = new List<Hare.Geometry.Point>();
 
                 while (true)
                 {
                     Rhino.Geometry.Point3d pt;
-                    Rhino.Commands.Result rc = Rhino.Input.RhinoGet.GetPoint(
-                        targets.Count == 0 ? "Select target point" : "Select another target point. Press Enter when done.",
-                        true,
-                        out pt);
+                    Rhino.Commands.Result rc = Rhino.Input.RhinoGet.GetPoint(targets.Count == 0 ? "Select target point" : "Select another target point. Press Enter when done.", true, out pt);
 
                     if (rc == Rhino.Commands.Result.Success)
                     {
-                        targets.Add(pt);
+                        targets.Add(Utilities.RCPachTools.RPttoHPt(pt));
                         continue;
                     }
 
@@ -217,7 +234,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Elements == null || Elements.Count == 0) return;
 
-                List<Rhino.Geometry.Point3d> targets = GetTargetPoints();
+                List<Hare.Geometry.Point> targets = GetTargetPoints();
                 if (targets.Count == 0) return;
 
                 double c = 343.0;
@@ -230,8 +247,8 @@ namespace Pachyderm_Acoustic
 
                     for (int i = 0; i < Elements.Count; i++)
                     {
-                        Rhino.Geometry.Point3d src = Elements[i].Geometry.GetBoundingBox(true).Min;
-                        r[i] = src.DistanceTo(targets[t]);
+                        Hare.Geometry.Point src = Utilities.RCPachTools.SourcePoint(Elements[i]); 
+                        r[i] = (src - targets[t]).Length();
                         if (r[i] > r_ref) r_ref = r[i];
                     }
 
@@ -307,7 +324,7 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
-            private double[] OptimizeDelaysAndGainsForCleanLobe(List<Rhino.Geometry.Point3d> targets, double[] seedDelayMs, int octave, out double[] gainDb)
+            private double[] OptimizeDelaysAndGainsForCleanLobe(List<Hare.Geometry.Point> targets, double[] seedDelayMs, int octave, out double[] gainDb)
             {
                 double[] bestDelay = new double[seedDelayMs.Length];
                 Array.Copy(seedDelayMs, bestDelay, seedDelayMs.Length);
@@ -449,7 +466,7 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private double ArrayPatternScore(List<Rhino.Geometry.Point3d> targets, double[] delay_ms, double[] gain_db, int octave)
+            private double ArrayPatternScore(List<Hare.Geometry.Point> targets, double[] delay_ms, double[] gain_db, int octave)
             {
                 List<double> targetDb = new List<double>();
 
@@ -529,107 +546,109 @@ namespace Pachyderm_Acoustic
                     - 0.25 * targetSpread - 0.02 * delaySmooth - 0.001 * gainUse - 0.005 * gainSmooth;
             }
 
-            private double ArrayPatternScore(List<Rhino.Geometry.Point3d> targets, double[] delay_ms, int octave)
-            {
-                double targetPower = 0;
+            //private double ArrayPatternScore(List<Hare.Geometry.Point> targets, double[] delay_ms, int octave)
+            //{
+            //    double targetPower = 0;
 
-                for (int i = 0; i < targets.Count; i++)
-                {
-                    double mag = ArrayMagnitudeAtPoint(targets[i], delay_ms, octave);
-                    targetPower += mag * mag;
-                }
+            //    for (int i = 0; i < targets.Count; i++)
+            //    {
+            //        double mag = ArrayMagnitudeAtPoint(targets[i], delay_ms, octave);
+            //        targetPower += mag * mag;
+            //    }
 
-                targetPower /= Math.Max(1, targets.Count);
+            //    targetPower /= Math.Max(1, targets.Count);
+            //    List<double> sidePowers = new List<double>();
 
-                List<double> sidePowers = new List<double>();
+            //    Hare.Geometry.Point Center = Utilities.Geometry.ArrayCenter(Elements,  ArraySimulationSettings.UseAimingCenter(Elements[0]));
+            //    //Point3d Center;
 
-                Point3d Center;
+            //    //if (Elements == null || Elements.Count == 0) Center = Rhino.Geometry.Point3d.Origin;
+            //    //else
+            //    //{
+            //    //    double x = 0;
+            //    //    double y = 0;
+            //    //    double z = 0;
+            //    //    int count = 0;
 
-                if (Elements == null || Elements.Count == 0) Center = Rhino.Geometry.Point3d.Origin;
-                else
-                {
-                    double x = 0;
-                    double y = 0;
-                    double z = 0;
-                    int count = 0;
+            //    //    for (int i = 0; i < Elements.Count; i++)
+            //    //    {
+            //    //        RhinoObject obj = Elements[i];
 
-                    for (int i = 0; i < Elements.Count; i++)
-                    {
-                        RhinoObject obj = Elements[i];
+            //    //        if (obj == null || obj.Geometry == null) continue;
 
-                        if (obj == null || obj.Geometry == null) continue;
+            //    //        Rhino.Geometry.Point3d pt = obj.Geometry.GetBoundingBox(true).Min;
 
-                        Rhino.Geometry.Point3d pt = obj.Geometry.GetBoundingBox(true).Min;
+            //    //        x += pt.X;
+            //    //        y += pt.Y;
+            //    //        z += pt.Z;
+            //    //        count++;
+            //    //    }
+            //    //    if (count == 0) Center = Rhino.Geometry.Point3d.Origin;
+            //    //    else Center = new Rhino.Geometry.Point3d(x / count, y / count, z / count);
+            //    //}
 
-                        x += pt.X;
-                        y += pt.Y;
-                        z += pt.Z;
-                        count++;
-                    }
-                    if (count == 0) Center = Rhino.Geometry.Point3d.Origin;
-                    else Center = new Rhino.Geometry.Point3d(x / count, y / count, z / count);
-                }
+            //    Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(2).Model[0];
+            //    Rhino.Geometry.Mesh mesh = Utilities.RCPachTools.HaretoRhinoMesh(sphere, true);
 
-                Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(2).Model[0];
-                Rhino.Geometry.Mesh mesh = Utilities.RCPachTools.HaretoRhinoMesh(sphere, true);
+            //    for (int i = 0; i < mesh.Vertices.Count; i++)
+            //    {
+            //        Hare.Geometry.Vector dir = new Hare.Geometry.Vector(mesh.Vertices[i].X, mesh.Vertices[i].Y, mesh.Vertices[i].Z);
 
-                for (int i = 0; i < mesh.Vertices.Count; i++)
-                {
-                    Rhino.Geometry.Vector3d dir = new Rhino.Geometry.Vector3d(mesh.Vertices[i].X, mesh.Vertices[i].Y, mesh.Vertices[i].Z);
+            //        dir.Normalize();
+            //        if (double.IsNaN(dir.dx) || double.IsInfinity(dir.dx)) continue;
+            //        double cosLimit = Math.Cos(12.0 * Math.PI / 180.0);
+            //        bool limit_exceeded = false;
 
-                    if (!dir.Unitize()) continue;
-                    double cosLimit = Math.Cos(12.0 * Math.PI / 180.0);
-                    bool limit_exceeded = false;
+            //        for (int j = 0; j < targets.Count; j++)
+            //        {
+            //            Hare.Geometry.Vector tdir = targets[j] - Center;
+            //            tdir.Normalize();
+            //            if (tdir.dx == double.NaN || double.IsInfinity(tdir.dx) ) continue;
+            //            if (Hare.Geometry.Hare_math.Dot(dir,tdir) >= cosLimit) limit_exceeded = true;
+            //        }
 
-                    for (int j = 0; j < targets.Count; j++)
-                    {
-                        Rhino.Geometry.Vector3d tdir = targets[j] - Center;
-                        if (!tdir.Unitize()) continue;
-                        if (dir * tdir >= cosLimit) limit_exceeded = true;
-                    }
+            //        if (limit_exceeded) continue;
+            //        Hare.Geometry.Point sample = Center + dir * PatternReferenceDistance.Value;
+            //        double mag = ArrayMagnitudeAtPoint(sample, delay_ms, octave);
+            //        sidePowers.Add(mag * mag);
+            //    }
 
-                    if (limit_exceeded) continue;
-                    Rhino.Geometry.Point3d sample = Center + dir * PatternReferenceDistance.Value;
-                    double mag = ArrayMagnitudeAtPoint(sample, delay_ms, octave);
-                    sidePowers.Add(mag * mag);
-                }
+            //    if (sidePowers.Count == 0)
+            //    {
+            //        return 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
+            //    }
 
-                if (sidePowers.Count == 0)
-                {
-                    return 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
-                }
+            //    sidePowers.Sort();
+            //    sidePowers.Reverse();
 
-                sidePowers.Sort();
-                sidePowers.Reverse();
+            //    double maxSide = sidePowers[0];
 
-                double maxSide = sidePowers[0];
+            //    int topCount = Math.Max(1, sidePowers.Count / 10);
+            //    double topSide = 0;
 
-                int topCount = Math.Max(1, sidePowers.Count / 10);
-                double topSide = 0;
+            //    for (int i = 0; i < topCount; i++)
+            //    {
+            //        topSide += sidePowers[i];
+            //    }
 
-                for (int i = 0; i < topCount; i++)
-                {
-                    topSide += sidePowers[i];
-                }
+            //    topSide /= topCount;
 
-                topSide /= topCount;
+            //    double targetDb = 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
+            //    double maxSideDb = 10.0 * Math.Log10(Math.Max(1E-12, maxSide));
+            //    double topSideDb = 10.0 * Math.Log10(Math.Max(1E-12, topSide));
 
-                double targetDb = 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
-                double maxSideDb = 10.0 * Math.Log10(Math.Max(1E-12, maxSide));
-                double topSideDb = 10.0 * Math.Log10(Math.Max(1E-12, topSide));
+            //    double smooth = 0;
 
-                double smooth = 0;
+            //    for (int i = 1; i < delay_ms.Length - 1; i++)
+            //    {
+            //        double d2 = delay_ms[i - 1] - 2.0 * delay_ms[i] + delay_ms[i + 1];
+            //        smooth += d2 * d2;
+            //    }
 
-                for (int i = 1; i < delay_ms.Length - 1; i++)
-                {
-                    double d2 = delay_ms[i - 1] - 2.0 * delay_ms[i] + delay_ms[i + 1];
-                    smooth += d2 * d2;
-                }
+            //    return targetDb - 0.75 * maxSideDb - 0.15 * topSideDb - 0.02 * smooth;
+            //}
 
-                return targetDb - 0.75 * maxSideDb - 0.15 * topSideDb - 0.02 * smooth;
-            }
-
-            private double ArrayMagnitudeAtPoint(Rhino.Geometry.Point3d target, double[] delay_ms, double[] gain_db, int octave)
+            private double ArrayMagnitudeAtPoint(Hare.Geometry.Point target, double[] delay_ms, double[] gain_db, int octave)
             {
                 if (Elements == null || Elements.Count == 0) return 0;
 
@@ -648,9 +667,9 @@ namespace Pachyderm_Acoustic
                     if (delay_ms == null || i >= delay_ms.Length) continue;
                     if (gain_db == null || i >= gain_db.Length) continue;
 
-                    Rhino.Geometry.Point3d src = obj.Geometry.GetBoundingBox(true).Min;
+                    Hare.Geometry.Point src = RCPachTools.RPttoHPt(obj.Geometry.GetBoundingBox(true).Min);
 
-                    double r = src.DistanceTo(target);
+                    double r = (target - src).Length();
 
                     if (r <= Rhino.RhinoMath.ZeroTolerance) continue;
 
@@ -709,47 +728,57 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private List<double> SampleSideLobes(List<Rhino.Geometry.Point3d> targets, double[] delay_ms, double[] gain_db, int octave)
+            private List<double> SampleSideLobes(List<Hare.Geometry.Point> targets, double[] delay_ms, double[] gain_db, int octave)
             {
                 List<double> powers = new List<double>();
 
-                double cx = 0;
-                double cy = 0;
-                double cz = 0;
-                int ct = 0;
-                for (int i = 0; i < this.Elements.Count; i++)
+                List<Hare.Geometry.Point> origins = new List<Hare.Geometry.Point>();
+                List<Hare.Geometry.Vector> directions = new List<Hare.Geometry.Vector>();
+
+                for (int i = 0; i < Elements.Count; i++)
                 {
-                    if (Elements[i].Geometry is Rhino.Geometry.Point pt)
+                    RhinoObject obj = Elements[i];
+
+                    if (obj == null || obj.Geometry == null) continue;
+
+                    Point3d pt;
+
+                    if (obj.Geometry is Rhino.Geometry.Point point)
                     {
-                        cx += pt.Location.X;
-                        cy += pt.Location.Y;
-                        cz += pt.Location.Z;
-                        ct++;
+                        pt = point.Location;
                     }
+                    else
+                    {
+                        pt = obj.Geometry.GetBoundingBox(true).Center;
+                    }
+
+                    origins.Add(Utilities.RCPachTools.RPttoHPt(pt));
+                    directions.Add(Utilities.RCPachTools.SourceAimingVector(obj));
                 }
 
-                Point3d center = new Point3d(cx/ct, cy/ct, cz/ct);
-
+                Hare.Geometry.Point center = Utilities.Geometry.ArrayCenter(origins, directions, ArraySimulationSettings.UseAimingCenter(Elements[0]));
                 Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(2).Model[0];
                 Rhino.Geometry.Mesh mesh = Utilities.RCPachTools.HaretoRhinoMesh(sphere, true);
 
                 for (int i = 0; i < mesh.Vertices.Count; i++)
                 {
-                    Rhino.Geometry.Vector3d dir = new Rhino.Geometry.Vector3d(mesh.Vertices[i].X, mesh.Vertices[i].Y, mesh.Vertices[i].Z);
-                    if (!dir.Unitize()) continue;
+                    Hare.Geometry.Vector dir = new Hare.Geometry.Vector(mesh.Vertices[i].X, mesh.Vertices[i].Y, mesh.Vertices[i].Z);
+                    dir.Normalize();
+                    if (double.IsNaN(dir.dx) || double.IsInfinity(dir.dx)) continue;
                     double cosLimit = Math.Cos(12.0 * Math.PI / 180.0);
                     bool limit_exceeded = false;
 
                     for (int j = 0; j < targets.Count; j++)
                     {
-                        Rhino.Geometry.Vector3d tdir = targets[j] - center;
-                        if (!tdir.Unitize()) continue;
-                        if (dir * tdir >= cosLimit) limit_exceeded = true;
+                        Hare.Geometry.Vector tdir = targets[j] - center;
+                        tdir.Normalize();
+                        if (double.IsNaN(tdir.dx) || double.IsInfinity(tdir.dx)) continue;
+                        if (Hare.Geometry.Hare_math.Dot(dir, tdir) >= cosLimit) limit_exceeded = true;
                     }
 
                     if (limit_exceeded) continue;
 
-                    Rhino.Geometry.Point3d sample = center + dir * PatternReferenceDistance.Value;
+                    Hare.Geometry.Point sample = center + dir * PatternReferenceDistance.Value;
 
                     double mag = ArrayMagnitudeAtPoint(sample, delay_ms, gain_db, octave);
 

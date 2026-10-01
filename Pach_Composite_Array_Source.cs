@@ -10,6 +10,7 @@ namespace Pachyderm_Acoustic.UI
     {
         internal const string ModeKey = "ArraySimulationMode";
         internal const string DistanceKey = "ArrayReferenceDistance";
+        internal const string CenterModeKey = "ArrayCenterMode";
 
         internal static bool UseComposite(RhinoObject obj)
         {
@@ -25,6 +26,11 @@ namespace Pachyderm_Acoustic.UI
                 return value;
             return 10;
         }
+
+        internal static bool UseAimingCenter(RhinoObject obj)
+        {
+            return obj != null && obj.Geometry != null && obj.Geometry.GetUserString(CenterModeKey) == "Aiming";
+        }
     }
 
     // One source at the array center, using the same fixed-distance coherent
@@ -37,7 +43,7 @@ namespace Pachyderm_Acoustic.UI
             : this(BuildPatterns(elements, distance), id) { }
 
         private CompositeArraySource(SpeakerPatternConduit.ArrayPattern[] patterns, int id)
-            : base(PowerLevels(patterns), Utilities.RCPachTools.RPttoHPt(patterns[0].Center), id, false)
+            : base(PowerLevels(patterns), patterns[0].Center, id, false)
         {
             this.patterns = patterns;
             type = "Directional";
@@ -61,7 +67,7 @@ namespace Pachyderm_Acoustic.UI
         public override double[] DirPower(int threadid, int random, Hare.Geometry.Vector direction)
         {
             var result = new double[8];
-            var world = new Vector3d(direction.dx, direction.dy, direction.dz);
+            var world = new Hare.Geometry.Vector(direction.dx, direction.dy, direction.dz);
             for (int oct = 0; oct < 8; oct++)
                 result[oct] = SourcePower[oct] * patterns[oct].RelativePower(world);
             return result;

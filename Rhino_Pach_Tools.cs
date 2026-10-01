@@ -1,11 +1,13 @@
 ﻿using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.UI;
 using Rhino.Commands;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -978,6 +980,116 @@ namespace Pachyderm_Acoustic
                     string t = (Math.Round(Values[i], decimals)).ToString();
                     Rhino.RhinoDoc.ActiveDoc.Objects.AddText(t, P, RecList[0].Rec_List[0].Radius, "Arial", true, false);
                 }
+            }
+            public static Hare.Geometry.Point SourcePoint(RhinoObject source)
+            {
+                if (source == null || source.Geometry == null) return Utilities.RCPachTools.RPttoHPt(Point3d.Unset);
+
+                if (source.Geometry is Rhino.Geometry.Point pt)
+                {
+                    return Utilities.RCPachTools.RPttoHPt(pt.Location);
+                }
+
+                return Utilities.RCPachTools.RPttoHPt(source.Geometry.GetBoundingBox(true).Center);
+            }
+
+            public static Vector3d SourceAimDirection(RhinoObject source)
+            {
+                if (source == null || source.Geometry == null) return Vector3d.YAxis;
+
+                double alt = 0;
+                double azi = 0;
+
+                string aiming = source.Geometry.GetUserString("Aiming");
+
+                if (!string.IsNullOrWhiteSpace(aiming))
+                {
+                    string[] A = aiming.Split(';');
+
+                    if (A.Length > 0)
+                    {
+                        if (!double.TryParse(A[0], NumberStyles.Float, CultureInfo.InvariantCulture, out alt))
+                            double.TryParse(A[0], out alt);
+                    }
+
+                    if (A.Length > 1)
+                    {
+                        if (!double.TryParse(A[1], NumberStyles.Float, CultureInfo.InvariantCulture, out azi))
+                            double.TryParse(A[1], out azi);
+                    }
+                }
+
+                double a = alt * Math.PI / 180.0;
+                double z = azi * Math.PI / 180.0;
+
+                // Local forward direction is +Y. Axial rotation is about Y,
+                // so it does not affect the loudspeaker's forward axis.
+                Vector3d direction = new Vector3d(
+                    -Math.Sin(z) * Math.Cos(a),
+                     Math.Cos(z) * Math.Cos(a),
+                     Math.Sin(a));
+
+                if (!direction.Unitize()) direction = Vector3d.YAxis;
+
+                return direction;
+            }
+
+            public static Hare.Geometry.Vector[] SourceAimingVector(Rhino.DocObjects.RhinoObject[] obj)
+            {
+                Hare.Geometry.Vector[] dirs = new Hare.Geometry.Vector[obj.Length];
+                
+                for(int i = 0; i < obj.Length; i++)
+                {
+                    dirs[i] = SourceAimingVector(obj[i]);
+                }
+
+                return dirs;
+            }
+
+            public static Hare.Geometry.Vector SourceAimingVector(Rhino.DocObjects.RhinoObject source)
+            {
+                double alt = 0;
+                double azi = 0;
+
+                if (source != null && source.Geometry != null)
+                {
+                    string aiming = source.Geometry.GetUserString("Aiming");
+
+                    if (!string.IsNullOrWhiteSpace(aiming))
+                    {
+                        string[] A = aiming.Split(';');
+
+                        if (A.Length > 0)
+                        {
+                            if (!double.TryParse(A[0], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out alt))
+                            {
+                                double.TryParse(A[0], out alt);
+                            }
+                        }
+
+                        if (A.Length > 1)
+                        {
+                            if (!double.TryParse(A[1], System.Globalization.NumberStyles.Float,
+                                System.Globalization.CultureInfo.InvariantCulture, out azi))
+                            {
+                                double.TryParse(A[1], out azi);
+                            }
+                        }
+                    }
+                }
+
+                alt *= Math.PI / 180.0;
+                azi *= Math.PI / 180.0;
+
+                Hare.Geometry.Vector direction = new Hare.Geometry.Vector(
+                    -Math.Sin(azi) * Math.Cos(alt),
+                     Math.Cos(azi) * Math.Cos(alt),
+                     Math.Sin(alt));
+
+                direction.Normalize();
+
+                return direction;
             }
         }
     }
