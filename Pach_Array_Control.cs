@@ -89,23 +89,32 @@ namespace Pachyderm_Acoustic
                 PatternReferenceDistance.ValueChanged += (s, e) =>
                 {
                     foreach (RhinoObject element in Elements)
-                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey,
-                            PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                    {
+                        if (element == null || element.Geometry == null) continue;
+                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey, PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                        element.CommitChanges();
+                    }
                     UpdatePatternConduit();
                 };
 
                 PatternCenterMode = new DropDown();
-                PatternCenterMode.Items.Add("Geometric center");
-                PatternCenterMode.Items.Add("Aiming convergence");
+                PatternCenterMode.Items.Add("Geometric Average");
+                PatternCenterMode.Items.Add("Driver Apparent Center");
                 PatternCenterMode.SelectedIndex = ArraySimulationSettings.UseAimingCenter(Elements[0]) ? 1 : 0;
 
                 PatternCenterMode.SelectedIndexChanged += (s, e) =>
                 {
+                    string mode = PatternCenterMode.SelectedIndex == 1 ? "Aiming" : "Geometric";
+
                     foreach (RhinoObject element in Elements)
                     {
                         if (element == null || element.Geometry == null) continue;
 
-                        element.Geometry.SetUserString(ArraySimulationSettings.CenterModeKey, PatternCenterMode.SelectedIndex == 1 ? "Aiming" : "Geometric");
+                        element.Geometry.SetUserString(
+                            ArraySimulationSettings.CenterModeKey,
+                            mode);
+
+                        element.CommitChanges();
                     }
 
                     UpdatePatternConduit();
@@ -119,12 +128,13 @@ namespace Pachyderm_Acoustic
                 {
                     foreach (RhinoObject element in Elements)
                     {
-                        element.Geometry.SetUserString(ArraySimulationSettings.ModeKey,
-                            simulationMode.SelectedIndex == 1 ? "Composite" : "Elements");
-                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey,
-                            PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                        if (element == null || element.Geometry == null) continue;
+                        element.Geometry.SetUserString(ArraySimulationSettings.ModeKey, simulationMode.SelectedIndex == 1 ? "Composite" : "Elements");
+                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey, PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
+                        element.CommitChanges();
                     }
                 };
+
                 DynamicLayout simulationLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
                 simulationLayout.AddRow(new Label { Text = "Simulation" }, simulationMode, null);
                 l.AddRow(simulationLayout);
@@ -314,6 +324,7 @@ namespace Pachyderm_Acoustic
                     obj.Geometry.SetUserString("ArrayPhaseOctaveDeg", PachTools.EncodeEight(phase_by_element[i]));
                     obj.Geometry.SetUserString("ArrayDelayOctaveMs", PachTools.EncodeEight(delay_by_element[i]));
                     obj.Geometry.SetUserString("ArrayGainOctaveDb", PachTools.EncodeEight(gain_by_element[i]));
+                    obj.CommitChanges();
 
                     EnsureSourceInConduit(obj);
                 }
@@ -545,109 +556,6 @@ namespace Pachyderm_Acoustic
                 return meanTarget + 0.35 * minTarget - 0.75 * maxSideDb - 0.15 * topSideDb
                     - 0.25 * targetSpread - 0.02 * delaySmooth - 0.001 * gainUse - 0.005 * gainSmooth;
             }
-
-            //private double ArrayPatternScore(List<Hare.Geometry.Point> targets, double[] delay_ms, int octave)
-            //{
-            //    double targetPower = 0;
-
-            //    for (int i = 0; i < targets.Count; i++)
-            //    {
-            //        double mag = ArrayMagnitudeAtPoint(targets[i], delay_ms, octave);
-            //        targetPower += mag * mag;
-            //    }
-
-            //    targetPower /= Math.Max(1, targets.Count);
-            //    List<double> sidePowers = new List<double>();
-
-            //    Hare.Geometry.Point Center = Utilities.Geometry.ArrayCenter(Elements,  ArraySimulationSettings.UseAimingCenter(Elements[0]));
-            //    //Point3d Center;
-
-            //    //if (Elements == null || Elements.Count == 0) Center = Rhino.Geometry.Point3d.Origin;
-            //    //else
-            //    //{
-            //    //    double x = 0;
-            //    //    double y = 0;
-            //    //    double z = 0;
-            //    //    int count = 0;
-
-            //    //    for (int i = 0; i < Elements.Count; i++)
-            //    //    {
-            //    //        RhinoObject obj = Elements[i];
-
-            //    //        if (obj == null || obj.Geometry == null) continue;
-
-            //    //        Rhino.Geometry.Point3d pt = obj.Geometry.GetBoundingBox(true).Min;
-
-            //    //        x += pt.X;
-            //    //        y += pt.Y;
-            //    //        z += pt.Z;
-            //    //        count++;
-            //    //    }
-            //    //    if (count == 0) Center = Rhino.Geometry.Point3d.Origin;
-            //    //    else Center = new Rhino.Geometry.Point3d(x / count, y / count, z / count);
-            //    //}
-
-            //    Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(2).Model[0];
-            //    Rhino.Geometry.Mesh mesh = Utilities.RCPachTools.HaretoRhinoMesh(sphere, true);
-
-            //    for (int i = 0; i < mesh.Vertices.Count; i++)
-            //    {
-            //        Hare.Geometry.Vector dir = new Hare.Geometry.Vector(mesh.Vertices[i].X, mesh.Vertices[i].Y, mesh.Vertices[i].Z);
-
-            //        dir.Normalize();
-            //        if (double.IsNaN(dir.dx) || double.IsInfinity(dir.dx)) continue;
-            //        double cosLimit = Math.Cos(12.0 * Math.PI / 180.0);
-            //        bool limit_exceeded = false;
-
-            //        for (int j = 0; j < targets.Count; j++)
-            //        {
-            //            Hare.Geometry.Vector tdir = targets[j] - Center;
-            //            tdir.Normalize();
-            //            if (tdir.dx == double.NaN || double.IsInfinity(tdir.dx) ) continue;
-            //            if (Hare.Geometry.Hare_math.Dot(dir,tdir) >= cosLimit) limit_exceeded = true;
-            //        }
-
-            //        if (limit_exceeded) continue;
-            //        Hare.Geometry.Point sample = Center + dir * PatternReferenceDistance.Value;
-            //        double mag = ArrayMagnitudeAtPoint(sample, delay_ms, octave);
-            //        sidePowers.Add(mag * mag);
-            //    }
-
-            //    if (sidePowers.Count == 0)
-            //    {
-            //        return 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
-            //    }
-
-            //    sidePowers.Sort();
-            //    sidePowers.Reverse();
-
-            //    double maxSide = sidePowers[0];
-
-            //    int topCount = Math.Max(1, sidePowers.Count / 10);
-            //    double topSide = 0;
-
-            //    for (int i = 0; i < topCount; i++)
-            //    {
-            //        topSide += sidePowers[i];
-            //    }
-
-            //    topSide /= topCount;
-
-            //    double targetDb = 10.0 * Math.Log10(Math.Max(1E-12, targetPower));
-            //    double maxSideDb = 10.0 * Math.Log10(Math.Max(1E-12, maxSide));
-            //    double topSideDb = 10.0 * Math.Log10(Math.Max(1E-12, topSide));
-
-            //    double smooth = 0;
-
-            //    for (int i = 1; i < delay_ms.Length - 1; i++)
-            //    {
-            //        double d2 = delay_ms[i - 1] - 2.0 * delay_ms[i] + delay_ms[i + 1];
-            //        smooth += d2 * d2;
-            //    }
-
-            //    return targetDb - 0.75 * maxSideDb - 0.15 * topSideDb - 0.02 * smooth;
-            //}
-
             private double ArrayMagnitudeAtPoint(Hare.Geometry.Point target, double[] delay_ms, double[] gain_db, int octave)
             {
                 if (Elements == null || Elements.Count == 0) return 0;
@@ -844,7 +752,7 @@ namespace Pachyderm_Acoustic
 
         public class ArrayElementEditor : GroupBox
         {
-            private readonly Rhino.DocObjects.RhinoObject Obj;
+            private readonly System.Guid ObjectId;
             private readonly Action<Rhino.DocObjects.RhinoObject> Changed;
 
             private NumericStepper Alt;
@@ -857,7 +765,8 @@ namespace Pachyderm_Acoustic
 
             public ArrayElementEditor(Rhino.DocObjects.RhinoObject obj, Action<Rhino.DocObjects.RhinoObject> changed)
             {
-                Obj = obj;
+                RhinoObject Obj = obj;
+                ObjectId = obj.Id;
                 Changed = changed;
 
                 if (obj == null || obj.Geometry == null) Text = "Array Element";
@@ -954,20 +863,21 @@ namespace Pachyderm_Acoustic
                 //Load From Object;
                 Loading = true;
 
-                double[] aim = PachTools.DecodeTriple(Obj.Geometry.GetUserString("Aiming"));
+                double[] aim = PachTools.DecodeTriple(obj.Geometry.GetUserString("Aiming"));
 
                 Alt.Value = aim[0];
                 Azi.Value = aim[1];
                 Axial.Value = aim[2];
 
-                double[] phase = PachTools.DecodeEight(Obj.Geometry.GetUserString("ArrayPhaseOctaveDeg"));
+                double[] phase = PachTools.DecodeEight(obj.Geometry.GetUserString("ArrayPhaseOctaveDeg"));
+
 
                 for (int i = 0; i < 8; i++)
                 {
                     OctPhaseDelay[i].Value = phase[i];
                 }
 
-                double[] gain = PachTools.DecodeEight(Obj.Geometry.GetUserString("ArrayGainOctaveDb"));
+                double[] gain = PachTools.DecodeEight(obj.Geometry.GetUserString("ArrayGainOctaveDb"));
 
                 for (int i = 0; i < 8; i++)
                 {
@@ -1007,7 +917,16 @@ namespace Pachyderm_Acoustic
 
             private void Commit()
             {
-                Obj.Geometry.SetUserString("Aiming", Alt.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" + Azi.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" + Axial.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                Rhino.DocObjects.RhinoObject obj =
+                    Rhino.RhinoDoc.ActiveDoc?.Objects.FindId(ObjectId);
+
+                if (obj == null || obj.Geometry == null) return;
+
+                obj.Geometry.SetUserString(
+                    "Aiming",
+                    Alt.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" +
+                    Azi.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" +
+                    Axial.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
                 double[] phase = new double[8];
                 double[] delay = new double[8];
@@ -1016,29 +935,47 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < 8; i++)
                 {
                     phase[i] = OctPhaseDelay[i].Value;
-                    delay[i] = phase[i] / 360.0 / (62.5 * Math.Pow(2,i)) * 1000.0; ;
+                    delay[i] = phase[i] / 360.0 / (62.5 * Math.Pow(2, i)) * 1000.0;
                     gain[i] = OctGainDb[i].Value;
                 }
 
-                Obj.Geometry.SetUserString("ArrayPhaseOctaveDeg", PachTools.EncodeEight(phase));
-                Obj.Geometry.SetUserString("ArrayDelayOctaveMs", PachTools.EncodeEight(delay));
-                Obj.Geometry.SetUserString("ArrayGainOctaveDb", PachTools.EncodeEight(gain));
+                obj.Geometry.SetUserString(
+                    "ArrayPhaseOctaveDeg",
+                    PachTools.EncodeEight(phase));
 
-                //Ensure the source is in the conduit
+                obj.Geometry.SetUserString(
+                    "ArrayDelayOctaveMs",
+                    PachTools.EncodeEight(delay));
+
+                obj.Geometry.SetUserString(
+                    "ArrayGainOctaveDb",
+                    PachTools.EncodeEight(gain));
+
+                if (!obj.CommitChanges()) return;
+
+                // Re-fetch after committing so everybody downstream gets
+                // the current document object rather than this edit wrapper.
+                obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(ObjectId);
+
+                if (obj == null) return;
+
                 bool found = false;
 
                 foreach (System.Guid id in SourceConduit.Instance.UUID)
                 {
-                    if (id == Obj.Id)
+                    if (id == obj.Id)
                     {
                         found = true;
                         break;
                     }
                 }
 
-                if (!found) SourceConduit.Instance.SetSource(Obj);
+                if (!found)
+                {
+                    SourceConduit.Instance.SetSource(obj);
+                }
 
-                Changed?.Invoke(Obj);
+                Changed?.Invoke(obj);
             }
         }
     }

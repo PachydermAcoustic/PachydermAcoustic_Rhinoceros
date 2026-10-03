@@ -32,7 +32,6 @@ namespace Pachyderm_Acoustic.UI
             return obj != null && obj.Geometry != null && obj.Geometry.GetUserString(CenterModeKey) == "Aiming";
         }
     }
-
     // One source at the array center, using the same fixed-distance coherent
     // pattern as the aiming balloon. Propagation loss is applied by the solver.
     internal sealed class CompositeArraySource : Environment.GeodesicSource

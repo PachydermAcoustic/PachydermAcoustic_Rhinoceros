@@ -373,7 +373,7 @@ namespace Pachyderm_Acoustic
                 return Result.Success;
             }
 
-            private static void AssignSteerableArrayMetadata(Rhino.DocObjects.RhinoObject obj, Guid arrayGroup, string groupLabel, int elementIndex)
+            internal static void AssignSteerableArrayMetadata(Rhino.DocObjects.RhinoObject obj, Guid arrayGroup, string groupLabel, int elementIndex)
             {
                 string suffix = AlphabeticSuffix(elementIndex);
                 string label = groupLabel + suffix;
