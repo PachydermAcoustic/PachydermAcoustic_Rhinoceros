@@ -2,6 +2,7 @@ using Eto.Drawing;
 using Eto.Forms;
 using MathNet.Numerics.LinearAlgebra;
 using Pachyderm_Acoustic.Utilities;
+using Rhino;
 using Rhino.DocObjects;
 using Rhino.Geometry;
 using ScottPlot.Triangulation;
@@ -243,6 +244,23 @@ namespace Pachyderm_Acoustic
             private void AimPhaseAtPoints(bool fineTune)
             {
                 if (Elements == null || Elements.Count == 0) return;
+
+                RhinoDoc doc = RhinoDoc.ActiveDoc;
+
+                if (doc == null) return;
+
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    if (Elements[i] == null) continue;
+
+                    RhinoObject current =
+                        doc.Objects.FindId(Elements[i].Id);
+
+                    if (current != null)
+                    {
+                        Elements[i] = current;
+                    }
+                }
 
                 List<Hare.Geometry.Point> targets = GetTargetPoints();
                 if (targets.Count == 0) return;
@@ -717,12 +735,17 @@ namespace Pachyderm_Acoustic
             private void OnElementChanged(RhinoObject obj)
             {
                 if (obj == null) return;
+                for (int i = 0; i < Elements.Count; i++)
+                {
+                    if (Elements[i] != null && Elements[i].Id == obj.Id)
+                    {
+                        Elements[i] = obj;
+                        break;
+                    }
+                }
 
                 EnsureSourceInConduit(obj);
-                Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
-
                 UpdatePatternConduit();
-
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
@@ -939,17 +962,9 @@ namespace Pachyderm_Acoustic
                     gain[i] = OctGainDb[i].Value;
                 }
 
-                obj.Geometry.SetUserString(
-                    "ArrayPhaseOctaveDeg",
-                    PachTools.EncodeEight(phase));
-
-                obj.Geometry.SetUserString(
-                    "ArrayDelayOctaveMs",
-                    PachTools.EncodeEight(delay));
-
-                obj.Geometry.SetUserString(
-                    "ArrayGainOctaveDb",
-                    PachTools.EncodeEight(gain));
+                obj.Geometry.SetUserString("ArrayPhaseOctaveDeg", PachTools.EncodeEight(phase));
+                obj.Geometry.SetUserString("ArrayDelayOctaveMs", PachTools.EncodeEight(delay));
+                obj.Geometry.SetUserString("ArrayGainOctaveDb", PachTools.EncodeEight(gain));
 
                 if (!obj.CommitChanges()) return;
 

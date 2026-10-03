@@ -1,4 +1,4 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)
+//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)
 //'
 //'This file is part of Pachyderm-Acoustic.
 //'
@@ -295,7 +295,6 @@ namespace Pachyderm_Acoustic
                     {
                         return Result.Cancel;
                     }
-
                     if (result == GetResult.Nothing)
                     {
                         break;
@@ -314,33 +313,21 @@ namespace Pachyderm_Acoustic
                     RhinoApp.WriteLine("Warning: element spacing is smaller than the effective driver diameter.");
                 }
 
-                /*
-                 * Cabinet height extends half a driver diameter beyond the center
-                 * of the first and last driver.
-                 */
+                //Cabinet height extends half a driver diameter beyond the center of the first and last driver.
                 double cabinetHeight_m = (elementCount - 1) * spacing_m + driverDiameter_m;
-
                 Rhino.Geometry.Point3d center;
-
                 Result rc = RhinoGet.GetPoint("Select center of column array", false, out center);
 
-                if (rc != Result.Success)
-                {
-                    return rc;
-                }
+                if (rc != Result.Success) return rc;
 
                 GetPoint getAim = new GetPoint();
                 getAim.SetCommandPrompt("Select forward direction of column array");
                 getAim.SetBasePoint(center, true);
                 getAim.DrawLineFromPoint(center, true);
 
-                if (getAim.Get() != GetResult.Point)
-                {
-                    return Result.Cancel;
-                }
+                if (getAim.Get() != GetResult.Point) return Result.Cancel;
 
                 Rhino.Geometry.Vector3d forward = getAim.Point() - center;
-
                 forward.Z = 0;
 
                 if (!forward.Unitize())
@@ -354,11 +341,7 @@ namespace Pachyderm_Acoustic
                 string groupLabel = "01";
 
                 rc = RhinoGet.GetString("Array label", true, ref groupLabel);
-
-                if (rc != Result.Success)
-                {
-                    return rc;
-                }
+                if (rc != Result.Success) return rc;
 
                 double modelUnitsPerMeter = RhinoMath.UnitScale(UnitSystem.Meters, doc.ModelUnitSystem);
                 double spacing = spacing_m * modelUnitsPerMeter;
@@ -370,7 +353,7 @@ namespace Pachyderm_Acoustic
 
                 List<RhinoObject> elements = new List<RhinoObject>();
                 int cabinetOwner = elementCount / 2;
-                RhinoApp.WriteLine("Generating BTMS cabinet directivity for {0} drivers...", elementCount);
+                RhinoApp.WriteLine("Generating DED cabinet directivity for {0} drivers...", elementCount);
 
                 for (int i = 0; i < elementCount; i++)
                 {
@@ -383,21 +366,13 @@ namespace Pachyderm_Acoustic
                     string[] balloon = cabinet.Driver_Balloon(localDriver, driverDiameter_m);
                     Guid id = doc.Objects.AddPoint(location);
 
-                    if (id == Guid.Empty)
-                    {
-                        continue;
-                    }
-
+                    if (id == Guid.Empty) continue;
                     RhinoObject obj = doc.Objects.FindId(id);
-
-                    if (obj == null || obj.Geometry == null)
-                    {
-                        continue;
-                    }
+                    if (obj == null || obj.Geometry == null) continue;
 
                     obj.Attributes.Name = "Acoustical Source";
                     obj.Geometry.SetUserString("SourceType", "3");
-                    obj.Geometry.SetUserString("Model", "Generic BTMS Column Driver");
+                    obj.Geometry.SetUserString("Model", "Generic DED Column Driver");
                     obj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(swl));
                     obj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
                     obj.Geometry.SetUserString("Aiming", aiming);
@@ -419,8 +394,8 @@ namespace Pachyderm_Acoustic
                     obj.Geometry.SetUserString("ArrayCabinetWidth_m", cabinetWidth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetHeight_m", cabinetHeight_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetDepth_m", cabinetDepth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    obj.Geometry.SetUserString("ArrayDriverDirectivityModel", "CircularPiston_BTMS_FrontBaffle");
-                    obj.Geometry.SetUserString("ArrayCabinetDiffraction", "BTMS_FirstOrderFrontEdges");
+                    obj.Geometry.SetUserString("ArrayDriverDirectivityModel", "CircularPiston_DED_FrontBaffle");
+                    obj.Geometry.SetUserString("ArrayCabinetDiffraction", "DED_FrontRearDepthEdges_SecondOrder");
 
                     if (i == cabinetOwner)
                     {
@@ -458,7 +433,10 @@ namespace Pachyderm_Acoustic
                     }
 
                     doc.Objects.ModifyAttributes(obj, obj.Attributes, true);
-                    obj.CommitChanges();
+                    if (!obj.CommitChanges()) continue;
+                    obj = doc.Objects.FindId(id);
+                    if (obj == null || obj.Geometry == null) continue;
+
                     bool found = false;
 
                     foreach (Guid sourceId in SourceConduit.Instance.UUID)
@@ -470,10 +448,7 @@ namespace Pachyderm_Acoustic
                         }
                     }
 
-                    if (!found)
-                    {
-                        SourceConduit.Instance.SetSource(obj);
-                    }
+                    if (!found) SourceConduit.Instance.SetSource(obj);
 
                     groupIds.Add(id);
                     elements.Add(obj);
