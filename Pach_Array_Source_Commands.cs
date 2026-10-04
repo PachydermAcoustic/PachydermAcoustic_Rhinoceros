@@ -258,7 +258,7 @@ namespace Pachyderm_Acoustic
         {
             public override string EnglishName
             {
-                get { return "Pach_Column_Array_Source"; }
+                get { return "Insert_Column_Array_Source"; }
             }
 
             protected override Result RunCommand(RhinoDoc doc, RunMode mode)
@@ -269,6 +269,7 @@ namespace Pachyderm_Acoustic
                 double cabinetWidth_m = 0.08;
                 double cabinetDepth_m = 0.10;
                 double elementSWL = 90.0;
+                int diffractionMethod = 0; //Keep Vanderkooy DED as the default.
 
                 OptionInteger elementCountOption = new OptionInteger(elementCount, 2, 256);
                 OptionDouble spacingOption = new OptionDouble(spacing_m, 0.005, 2.0);
@@ -285,11 +286,13 @@ namespace Pachyderm_Acoustic
                 getOptions.AddOptionDouble("CabinetWidth_m", ref cabinetWidthOption);
                 getOptions.AddOptionDouble("CabinetDepth_m", ref cabinetDepthOption);
                 getOptions.AddOptionDouble("ElementSWL", ref elementSWLOption);
+                int diffractionOption = getOptions.AddOptionList("Diffraction", new string[]{"Vanderkooy", "NumericalHybrid", "TrihedralExperimental"}, diffractionMethod);
                 getOptions.AcceptNothing(true);
 
                 while (true)
                 {
                     GetResult result = getOptions.Get();
+                    if (result == GetResult.Option && getOptions.Option().Index == diffractionOption) diffractionMethod = getOptions.Option().CurrentListOptionIndex;
 
                     if (result == GetResult.Cancel)
                     {
@@ -345,7 +348,36 @@ namespace Pachyderm_Acoustic
 
                 double modelUnitsPerMeter = RhinoMath.UnitScale(UnitSystem.Meters, doc.ModelUnitSystem);
                 double spacing = spacing_m * modelUnitsPerMeter;
-                Source_Constructions.Cabinet_Diffraction cabinet = new Source_Constructions.Cabinet_Diffraction(cabinetWidth_m, cabinetHeight_m, cabinetDepth_m);
+                Source_Constructions.ICabinet_Diffraction cabinet;
+                string diffractionLabel = diffractionMethod == 0 ? "Vanderkooy DED" : diffractionMethod == 1 ? "Numerical cabinet with DED continuation (experimental)" : "Trihedral front-corner correction (experimental)";
+                try
+                {
+                    cabinet = diffractionMethod == 0 ? (Source_Constructions.ICabinet_Diffraction)new Source_Constructions.Cabinet_Diffraction(cabinetWidth_m, cabinetHeight_m, cabinetDepth_m) : diffractionMethod == 1 ? (Source_Constructions.ICabinet_Diffraction)new Source_Constructions.Cabinet_Diffraction_Numerical(cabinetWidth_m, cabinetHeight_m, cabinetDepth_m) : new Source_Constructions.Cabinet_Diffraction_Trihedral(cabinetWidth_m, cabinetHeight_m, cabinetDepth_m);
+                }
+                catch (ArgumentException ex)
+                {
+                    RhinoApp.WriteLine("Cabinet diffraction: {0}", ex.Message);
+                    return Result.Failure;
+                }
+
+                if (diffractionMethod == 2) RhinoApp.WriteLine("Experimental: DED plus four front-corner residuals. Finite damping and smooth activation; rear-corner driving and DED endpoint matching are incomplete.");
+                //Calculate all balloons before adding document objects, so a failed numerical solve leaves no partial array.
+                string[][] balloons = new string[elementCount][];
+                RhinoApp.WriteLine("Generating {0} directivity for {1} drivers...", diffractionLabel, elementCount);
+                try
+                {
+                    for (int i = 0; i < elementCount; i++)
+                    {
+                        RhinoApp.WriteLine("Calculating driver {0} of {1}...", i + 1, elementCount);
+                        double offset_m = ((elementCount - 1) * 0.5 - i) * spacing_m;
+                        balloons[i] = cabinet.Driver_Balloon(new Hare.Geometry.Point(0, 0, offset_m), driverDiameter_m);
+                    }
+                }
+                catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException || ex is AggregateException)
+                {
+                    RhinoApp.WriteLine("Cabinet diffraction failed: {0}", ex.GetBaseException().Message);
+                    return Result.Failure;
+                }
 
                 double[] swl = new double[]{elementSWL, elementSWL, elementSWL, elementSWL, elementSWL, elementSWL, elementSWL, elementSWL};
                 Guid arrayGroup = Guid.NewGuid();
@@ -353,17 +385,14 @@ namespace Pachyderm_Acoustic
 
                 List<RhinoObject> elements = new List<RhinoObject>();
                 int cabinetOwner = elementCount / 2;
-                RhinoApp.WriteLine("Generating DED cabinet directivity for {0} drivers...", elementCount);
 
                 for (int i = 0; i < elementCount; i++)
                 {
                     double offset_m = ((elementCount - 1) * 0.5 - i) * spacing_m;
                     double offset = ((elementCount - 1) * 0.5 - i) * spacing;
                     Point3d location = center + Vector3d.ZAxis * offset;
-                    Hare.Geometry.Point localDriver = new Hare.Geometry.Point(0, 0, offset_m);
 
-                    RhinoApp.WriteLine("Calculating driver {0} of {1}...", i + 1, elementCount);
-                    string[] balloon = cabinet.Driver_Balloon(localDriver, driverDiameter_m);
+                    string[] balloon = balloons[i];
                     Guid id = doc.Objects.AddPoint(location);
 
                     if (id == Guid.Empty) continue;
@@ -372,7 +401,7 @@ namespace Pachyderm_Acoustic
 
                     obj.Attributes.Name = "Acoustical Source";
                     obj.Geometry.SetUserString("SourceType", "3");
-                    obj.Geometry.SetUserString("Model", "Generic DED Column Driver");
+                    obj.Geometry.SetUserString("Model", diffractionMethod == 0 ? "Generic DED Column Driver" : diffractionMethod == 1 ? "Generic Numerical Hybrid Column Driver" : "Generic Trihedral Experimental Column Driver");
                     obj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(swl));
                     obj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
                     obj.Geometry.SetUserString("Aiming", aiming);
@@ -394,8 +423,8 @@ namespace Pachyderm_Acoustic
                     obj.Geometry.SetUserString("ArrayCabinetWidth_m", cabinetWidth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetHeight_m", cabinetHeight_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetDepth_m", cabinetDepth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    obj.Geometry.SetUserString("ArrayDriverDirectivityModel", "CircularPiston_DED_FrontBaffle");
-                    obj.Geometry.SetUserString("ArrayCabinetDiffraction", "DED_FrontRearDepthEdges_SecondOrder");
+                    obj.Geometry.SetUserString("ArrayDriverDirectivityModel", diffractionMethod == 1 ? "FinitePiston_Neumann_Radiation" : "CircularPiston_DED_FrontBaffle");
+                    obj.Geometry.SetUserString("ArrayCabinetDiffraction", diffractionMethod == 0 ? "DED_FrontRearDepthEdges_FourthOrder" : diffractionMethod == 1 ? "MFS_DED_Hybrid_Experimental" : "DED_TrihedralFrontCorners_Abel075_Experimental");
 
                     if (i == cabinetOwner)
                     {

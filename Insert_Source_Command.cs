@@ -2286,7 +2286,7 @@ namespace Pachyderm_Acoustic
                 return new Hare.Geometry.Point(bbox.Min.X, bbox.Min.Y, bbox.Min.Z);
             }
 
-            private Rhino.Geometry.Mesh BuildRhinoCabinetMesh(Cabinet_Geometry cab)
+            internal static Rhino.Geometry.Mesh BuildRhinoCabinetMesh(Cabinet_Geometry cab)
             {
                 Rhino.Geometry.Mesh mesh = new Rhino.Geometry.Mesh();
 
