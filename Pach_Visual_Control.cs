@@ -364,7 +364,7 @@ namespace Pachyderm_Acoustic
                 Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
                 if (this.VisualizationSelect.SelectedIndex == 1)
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(((GeodesicMeshSource)Source[0]).T, true));
                 }
                 else
                 {
@@ -391,7 +391,7 @@ namespace Pachyderm_Acoustic
                 {
                     if (this.VisualizationSelect.SelectedIndex == 1)
                     {
-                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HaretoRhinoMesh(((GeodesicMeshSource)Source[0]).T, true));
+                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(((GeodesicMeshSource)Source[0]).T, true));
                     }
                     else
                     {
@@ -508,7 +508,7 @@ namespace Pachyderm_Acoustic
         {
             //private List<List<int>> Poly_ID = new List<List<int>>();
             private List<List<double>> Power = new List<List<double>>();
-            private List<Polyline> RayList = new List<Polyline>();
+            private List<Polyline> RayList = new List<Polyline>(); // Private simulation paths in meters.
             private List<Rhino.DocObjects.CurveObject> RhinoRays = new List<Rhino.DocObjects.CurveObject>();
             private double CutoffLength;
             private int RayCount;
@@ -542,7 +542,7 @@ namespace Pachyderm_Acoustic
                     List<int> code = new List<int> { 0 };
                     List<Hare.Geometry.Point> Start;
                     //List<int> IDs = new List<int>();
-                    Ray.Add(new Rhino.Geometry.Point3d(R.x, R.y, R.z));
+                    Ray.Add(RCPachTools.HPttoRPt(new Hare.Geometry.Point(R.x, R.y, R.z)));
                     List<double> P = new List<double> { R.Intensity };
                     do
                     {
@@ -588,7 +588,7 @@ namespace Pachyderm_Acoustic
                     while (SumLength < CutoffLength);
                     BroadRayPool.Instance.release();
 
-                    if (SumLength > CutoffLength) Ray.Add(new Rhino.Geometry.Point3d(R.x, R.y, R.z));
+                    if (SumLength > CutoffLength) Ray.Add(RCPachTools.HPttoRPt(new Hare.Geometry.Point(R.x, R.y, R.z)));
                     RayList.Add(Ray);
                     Power.Add(P);
                 }
@@ -612,8 +612,8 @@ namespace Pachyderm_Acoustic
                         //energy *= Math.Pow(10,-.1 * Room.Attenuation[oct] * u) / (4 * Math.PI * u * u);
                         Point3d Point = RayList[Index].PointAt(q + ((u - (S_Length - Modifier)) / Modifier));
                         energy = Power[Index][q] * Math.Pow(10, -.1 * Room.Attenuation(RCPachTools.RPttoHPt(Point))[oct] * (u - S_Length - Modifier) / Modifier);//  / (4*Math.PI * u * u);
-                        Next = RayList[Index][q + 1];
-                        Result = Point;
+                        Next = RCPachTools.HarePointToModel(RCPachTools.RPttoHPt(RayList[Index][q + 1]));
+                        Result = RCPachTools.HarePointToModel(RCPachTools.RPttoHPt(Point));
                         return true;
                     }
                     if (q >= RayList[Index].SegmentCount) break;

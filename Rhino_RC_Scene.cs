@@ -26,6 +26,7 @@ namespace Pachyderm_Acoustic
 {
     namespace Environment
     {
+        /// <summary>Copies document geometry to meters before meshing, curvature and edge calculations.</summary>
         public class RhCommon_PolygonScene : Polygon_Scene
         {
             List<Brep> BrepList = new List<Brep>();
@@ -206,6 +207,10 @@ namespace Pachyderm_Acoustic
                     throw new Exception("Issue with Layer Material Assignments. Make sure that your layer index is correct.");
                 }
 
+                // Normalize only the private copies; meshing, curvature and edge distances use meters.
+                Transform toMeters = Transform.Scale(Point3d.Origin, Utilities.RCPachTools.ModelToMetersScale);
+                foreach (GeometryBase geometry in BList) geometry.Transform(toMeters);
+
                 int id = -1;
 
                 MeshingParameters mp = new MeshingParameters();
@@ -303,13 +308,13 @@ namespace Pachyderm_Acoustic
                                 if (meshes[t].Faces[u].IsQuad)
                                 {
                                     P = new Hare.Geometry.Point[4];
-                                    Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
+                                    Point3d FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][0]);
                                     P[0] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
-                                    FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
+                                    FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][1]);
                                     P[1] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
-                                    FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
+                                    FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][2]);
                                     P[2] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
-                                    FP = meshes[t].Vertices[meshes[t].Faces[u][3]];
+                                    FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][3]);
                                     P[3] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     if (isDegenerate(ref P)) continue;
 
@@ -318,11 +323,11 @@ namespace Pachyderm_Acoustic
                                 else
                                 {
                                     P = new Hare.Geometry.Point[3];
-                                    Point3f FP = meshes[t].Vertices[meshes[t].Faces[u][0]];
+                                    Point3d FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][0]);
                                     P[0] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
-                                    FP = meshes[t].Vertices[meshes[t].Faces[u][1]];
+                                    FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][1]);
                                     P[1] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
-                                    FP = meshes[t].Vertices[meshes[t].Faces[u][2]];
+                                    FP = meshes[t].Vertices.Point3dAt(meshes[t].Faces[u][2]);
                                     P[2] = new Hare.Geometry.Point(Math.Round(FP.X, 10), Math.Round(FP.Y, 10), Math.Round(FP.Z, 10));
                                     Centroid = (P[0] + P[1] + P[2]) / 3;
 
@@ -923,6 +928,10 @@ namespace Pachyderm_Acoustic
             }
         }
 
+        /// <summary>
+        /// Constructor geometry is in document units. All stored geometry, Point3d method arguments,
+        /// returned geometry and distances are in meters, just like the Hare scene API.
+        /// </summary>
         [Serializable]
         public class RhCommon_Scene : Scene
         {
@@ -940,6 +949,7 @@ namespace Pachyderm_Acoustic
             public RhCommon_Scene(List<Rhino.DocObjects.RhinoObject> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic, List<Rhino.Geometry.GeometryBase> Additional_Geometry = null, List<int> Additional_Layers = null)
                 : base(Temp, hr, Pa, Air_Choice, EdgeCorrection, IsAcoustic)
             {
+                Transform toMeters = Transform.Scale(Point3d.Origin, Utilities.RCPachTools.ModelToMetersScale);
                 Vector3d NormalHolder = new Vector3d();
                 Rhino.Geometry.Plane PlaneHolder = new Rhino.Geometry.Plane();
                 Transform XHolder = new Transform();
@@ -953,12 +963,15 @@ namespace Pachyderm_Acoustic
                     Rhino.Geometry.Brep BObj;
                     if (ObjRef[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
                     {
-                        BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry;
+                        BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry.DuplicateBrep();
                     }
                     else
                     {
                         BObj = ((Rhino.DocObjects.ExtrusionObject)ObjRef[q]).ExtrusionGeometry.ToBrep();
                     }
+
+                    // All private scene geometry is in meters, including planes and mirror transforms.
+                    BObj.Transform(toMeters);
 
                     for (int j = 0; j < BObj.Faces.Count; j++)
                     {
@@ -1077,12 +1090,15 @@ namespace Pachyderm_Acoustic
                     Rhino.Geometry.Brep BObj;
                     if (Additional_Geometry[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
                     {
-                        BObj = (Rhino.Geometry.Brep)Additional_Geometry[q];
+                        BObj = ((Rhino.Geometry.Brep)Additional_Geometry[q]).DuplicateBrep();
                     }
                     else
                     {
                         BObj = ((Rhino.Geometry.Extrusion)Additional_Geometry[q]).ToBrep();
                     }
+
+                    // All private scene geometry is in meters, including planes and mirror transforms.
+                    BObj.Transform(toMeters);
 
                     for (int j = 0; j < BObj.Faces.Count; j++)
                     {

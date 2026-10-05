@@ -80,7 +80,7 @@ namespace Pachyderm_Acoustic.UI
                 Cabinet_Geometry cabinet = Cabinet_Geometry_Parser.Parse(obj.Geometry.GetUserString("CLF_CabinetPoints"), obj.Geometry.GetUserString("CLF_CabinetFaces"), obj.Geometry.GetUserString("CLF_CabinetLines"));
                 if (cabinet != null)
                 {
-                    // Reuse the source conduit's polygon-capable cabinet conversion.
+                    // Keep template coordinates in meters; Rebuild scales them to document units.
                     if (cabinet.HasMesh) Mesh = SourceConduit.BuildRhinoCabinetMesh(cabinet);
                     foreach (Hare.Geometry.Point p in cabinet.Vertices) Bounds.Union(Utilities.RCPachTools.HPttoRPt(p));
                     foreach (Cabinet_Line line in cabinet.Lines)
@@ -131,7 +131,7 @@ namespace Pachyderm_Acoustic.UI
         internal Pach_LineArrayBuilder(RhinoDoc doc, List<Guid> ids, Point3d top, Vector3d forward, Vector3d up)
         {
             Doc = doc; Top = top; Forward = forward; Up = up;
-            Units = RhinoMath.UnitScale(UnitSystem.Meters, doc.ModelUnitSystem);
+            Units = 1.0 / Utilities.RCPachTools.GetModelToMetersScale(doc);
             Title = "Pachyderm Line Array Builder";
             ClientSize = new Size(820, 700);
             MinimumSize = new Size(740, 600);
@@ -449,7 +449,7 @@ namespace Pachyderm_Acoustic.UI
         protected override void PostDrawObjects(Rhino.Display.DrawEventArgs e)
         {
             if (e.RhinoDoc == null || e.RhinoDoc.RuntimeSerialNumber != Document) return;
-            double units = RhinoMath.UnitScale(UnitSystem.Meters, e.RhinoDoc.ModelUnitSystem);
+            double units = 1.0 / Utilities.RCPachTools.GetModelToMetersScale(e.RhinoDoc);
             for (int i = 0; i < Items.Count; i++)
             {
                 Item item = Items[i];

@@ -2692,7 +2692,7 @@ namespace Pachyderm_Acoustic
                         foreach (Hare.Geometry.Point[] P in Path.Path)
                         {
                             List<Point3d> pts = new List<Point3d>();
-                            foreach (Hare.Geometry.Point p in P) pts.Add(Utilities.RCPachTools.HPttoRPt(p));
+                            foreach (Hare.Geometry.Point p in P) pts.Add(Utilities.RCPachTools.HarePointToModel(p));
                             ShownPaths.Add(Rhino.RhinoDoc.ActiveDoc.Objects.AddPolyline(new Polyline(pts)));
                         }
                     }
@@ -2928,7 +2928,7 @@ namespace Pachyderm_Acoustic
 
                         Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
 
-                        if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.dx, V.dy, V.dz));
+                        if (Receiver_Choice.SelectedIndex >= 0) ReceiverConduit.Instance.set_direction(Utilities.RCPachTools.HarePointToModel(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.dx, V.dy, V.dz));
                         Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
                     }
                     catch (Exception x)
@@ -3404,7 +3404,7 @@ namespace Pachyderm_Acoustic
                             List<Rhino.Geometry.Point3d> PTS = new List<Rhino.Geometry.Point3d>();
                             foreach (Hare.Geometry.Point hpt in P)
                             {
-                                PTS.Add(Utilities.RCPachTools.HPttoRPt(hpt));
+                                PTS.Add(Utilities.RCPachTools.HarePointToModel(hpt));
                             }
                             Lines.Add(new Polyline(PTS));
                         }
@@ -3419,7 +3419,7 @@ namespace Pachyderm_Acoustic
                         Dirs.Add(new Vector3d(-TempDir.dx, -TempDir.dy, -TempDir.dz));
                     }
                     AuralisationConduit.Instance.add_Speakers(pts, Dirs);
-                    AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
+                    AuralisationConduit.Instance.set_direction(Utilities.RCPachTools.HarePointToModel(Recs[Receiver_Choice.SelectedIndex]), Utilities.RCPachTools.HPttoRPt(Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(double)Alt_Choice.Value, true), -(double)Azi_Choice.Value, 0, true)));
                     Update_Rose(null, null);
                 }
                 if (Rhino.RhinoDoc.ActiveDoc.IsAvailable) Rhino.RhinoDoc.ActiveDoc.Views.ActiveView.Redraw();

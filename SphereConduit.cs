@@ -73,7 +73,7 @@ namespace Pachyderm_Acoustic
 
             public void Data_in(double[] magnitude, double[] bounds, double display_diameter)
             {
-                Mesh m = Utilities.RCPachTools.HaretoRhinoMesh(plot.Output(magnitude, bounds[0], bounds[1], display_diameter), true);
+                Mesh m = Utilities.RCPachTools.HareMeshToModel(plot.Output(magnitude, bounds[0], bounds[1], display_diameter), true);
                 for (int i = 0; i < magnitude.Length; i++)
                 {
                     Eto.Drawing.Color c = C.GetValue(magnitude[i], bounds[0], bounds[1]);
@@ -148,102 +148,111 @@ namespace Pachyderm_Acoustic
             {
                 if (Sphere != null)
                 {
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .1), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .1), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .1), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .2), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .2), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .2), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .3), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .3), System.Drawing.Color.Black);
-                    e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .3), System.Drawing.Color.Black);
+                    // Sphere, center and guides are private meter geometry.
+                    e.Display.PushModelTransform(Transform.Scale(Point3d.Origin, 1.0 / RCPachTools.GetModelToMetersScale(e.RhinoDoc)));
+                    try
+                    {
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .1), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .1), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .1), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .2), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .2), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .2), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldXY, center, .3), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldZX, center, .3), System.Drawing.Color.Black);
+                        e.Display.DrawCircle(new Circle(Rhino.Geometry.Plane.WorldYZ, center, .3), System.Drawing.Color.Black);
 
-                    List<Line> lines = new List<Line>();
-                    lines.Add(new Line(center, center + L00[0]));
-                    lines.Add(new Line(center, center + L30[0]));
-                    lines.Add(new Line(center, center + L60[0]));
-                    lines.Add(new Line(center, center + L90[0]));
-                    lines.Add(new Line(center, center + L00[1]));
-                    lines.Add(new Line(center, center + L30[1]));
-                    lines.Add(new Line(center, center + L60[1]));
-                    lines.Add(new Line(center, center + L90[1]));
-                    lines.Add(new Line(center, center + L00[2]));
-                    lines.Add(new Line(center, center + L30[2]));
-                    lines.Add(new Line(center, center + L60[2]));
-                    lines.Add(new Line(center, center + L90[2]));
-                    //lines.Add(new Line(center, center + new Point3d(0, 1, 0)));
-                    //lines.Add(new Line(center, center + new Point3d(0, .3 * Math.Cos(Math.PI * .33333), .3 * Math.Sin(Math.PI * .33333))));
-                    //lines.Add(new Line(center, center + new Point3d(0, .3 * Math.Cos(Math.PI * .66666), .3 * Math.Sin(Math.PI * .66666))));
-                    //lines.Add(new Line(center, center + new Point3d(0, 0, 1)));
-                    //lines.Add(new Line(center, center + new Point3d(.3 * Math.Cos(Math.PI * .33333), 0, .3 * Math.Sin(Math.PI * .33333))));
-                    //lines.Add(new Line(center, center + new Point3d(.3 * Math.Cos(Math.PI * .66666), 0, .3 * Math.Sin(Math.PI * .66666))));
+                        List<Line> lines = new List<Line>();
+                        lines.Add(new Line(center, center + L00[0]));
+                        lines.Add(new Line(center, center + L30[0]));
+                        lines.Add(new Line(center, center + L60[0]));
+                        lines.Add(new Line(center, center + L90[0]));
+                        lines.Add(new Line(center, center + L00[1]));
+                        lines.Add(new Line(center, center + L30[1]));
+                        lines.Add(new Line(center, center + L60[1]));
+                        lines.Add(new Line(center, center + L90[1]));
+                        lines.Add(new Line(center, center + L00[2]));
+                        lines.Add(new Line(center, center + L30[2]));
+                        lines.Add(new Line(center, center + L60[2]));
+                        lines.Add(new Line(center, center + L90[2]));
+                        //lines.Add(new Line(center, center + new Point3d(0, 1, 0)));
+                        //lines.Add(new Line(center, center + new Point3d(0, .3 * Math.Cos(Math.PI * .33333), .3 * Math.Sin(Math.PI * .33333))));
+                        //lines.Add(new Line(center, center + new Point3d(0, .3 * Math.Cos(Math.PI * .66666), .3 * Math.Sin(Math.PI * .66666))));
+                        //lines.Add(new Line(center, center + new Point3d(0, 0, 1)));
+                        //lines.Add(new Line(center, center + new Point3d(.3 * Math.Cos(Math.PI * .33333), 0, .3 * Math.Sin(Math.PI * .33333))));
+                        //lines.Add(new Line(center, center + new Point3d(.3 * Math.Cos(Math.PI * .66666), 0, .3 * Math.Sin(Math.PI * .66666))));
 
-                    e.Display.DrawLines(lines, System.Drawing.Color.Black);
-                    Point3d XYadjust = new Point3d(0, 0.015, 0);
-                    Rhino.Geometry.Plane p00 = Rhino.Geometry.Plane.WorldXY;
-                    p00.Origin = center + L00[0] + XYadjust;
-                    TE00.Plane = p00;
-                    e.Display.DrawText(TE00, System.Drawing.Color.Black);
-                    p00.Origin = center + L30[0] + XYadjust;
-                    TE30.Plane = p00;
-                    e.Display.DrawText(TE30, System.Drawing.Color.Black);
-                    p00.Origin = center + L60[0] + XYadjust;
-                    TE60.Plane = p00;
-                    e.Display.DrawText(TE60, System.Drawing.Color.Black);
-                    p00.Origin = center + L90[0] + XYadjust;
-                    TE90.Plane = p00;
-                    e.Display.DrawText(TE90, System.Drawing.Color.Black);
+                        e.Display.DrawLines(lines, System.Drawing.Color.Black);
+                        Point3d XYadjust = new Point3d(0, 0.015, 0);
+                        Rhino.Geometry.Plane p00 = Rhino.Geometry.Plane.WorldXY;
+                        p00.Origin = center + L00[0] + XYadjust;
+                        TE00.Plane = p00;
+                        e.Display.DrawText(TE00, System.Drawing.Color.Black);
+                        p00.Origin = center + L30[0] + XYadjust;
+                        TE30.Plane = p00;
+                        e.Display.DrawText(TE30, System.Drawing.Color.Black);
+                        p00.Origin = center + L60[0] + XYadjust;
+                        TE60.Plane = p00;
+                        e.Display.DrawText(TE60, System.Drawing.Color.Black);
+                        p00.Origin = center + L90[0] + XYadjust;
+                        TE90.Plane = p00;
+                        e.Display.DrawText(TE90, System.Drawing.Color.Black);
 
-                    p00 = Rhino.Geometry.Plane.WorldZX;
-                    p00.Origin = center + L00[1];
-                    TE00.Plane = p00;
-                    TE00.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
-                    e.Display.DrawText(TE00, System.Drawing.Color.Black);
-                    p00.Origin = center + L30[1];
-                    TE30.Plane = p00;
-                    TE30.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
-                    e.Display.DrawText(TE30, System.Drawing.Color.Black);
-                    p00.Origin = center + L60[1];
-                    TE60.Plane = p00;
-                    TE60.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
-                    e.Display.DrawText(TE60, System.Drawing.Color.Black);
-                    p00.Origin = center + L90[1];
-                    TE90.Plane = p00;
-                    TE90.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
-                    e.Display.DrawText(TE90, System.Drawing.Color.Black);
+                        p00 = Rhino.Geometry.Plane.WorldZX;
+                        p00.Origin = center + L00[1];
+                        TE00.Plane = p00;
+                        TE00.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
+                        e.Display.DrawText(TE00, System.Drawing.Color.Black);
+                        p00.Origin = center + L30[1];
+                        TE30.Plane = p00;
+                        TE30.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
+                        e.Display.DrawText(TE30, System.Drawing.Color.Black);
+                        p00.Origin = center + L60[1];
+                        TE60.Plane = p00;
+                        TE60.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
+                        e.Display.DrawText(TE60, System.Drawing.Color.Black);
+                        p00.Origin = center + L90[1];
+                        TE90.Plane = p00;
+                        TE90.Rotate(Math.PI / 2, new Vector3d(0, 1, 0), p00.Origin);
+                        e.Display.DrawText(TE90, System.Drawing.Color.Black);
 
-                    Point3d YZadjust = new Point3d(0, 0, 0.015);
-                    p00 = Rhino.Geometry.Plane.WorldYZ;
-                    p00.Origin = center + L00[2] + YZadjust;
-                    TE00.Plane = p00;
-                    e.Display.DrawText(TE00, System.Drawing.Color.Black);
-                    p00.Origin = center + L30[2] + YZadjust;
-                    TE30.Plane = p00;
-                    e.Display.DrawText(TE30, System.Drawing.Color.Black);
-                    p00.Origin = center + L60[2] + YZadjust;
-                    TE60.Plane = p00;
-                    e.Display.DrawText(TE60, System.Drawing.Color.Black);
-                    p00.Origin = center + L90[2] + YZadjust;
-                    TE90.Plane = p00;
-                    e.Display.DrawText(TE90, System.Drawing.Color.Black);
-                    
-                    Rhino.Geometry.Plane DBP = Rhino.Geometry.Plane.WorldXY;
-                    DBP.Rotate(Math.PI / 2, new Vector3d(0, 0, 1));
-                    DBP.Origin = center;
-                    DB30.Plane = DBP;
-                    DBP.OriginX -= 0.1;
-                    DB20.Plane = DBP;
-                    DBP.OriginX -= 0.1;
-                    DB10.Plane = DBP;
-                    DBP.OriginX -= 0.1;
-                    DB00.Plane = DBP;
+                        Point3d YZadjust = new Point3d(0, 0, 0.015);
+                        p00 = Rhino.Geometry.Plane.WorldYZ;
+                        p00.Origin = center + L00[2] + YZadjust;
+                        TE00.Plane = p00;
+                        e.Display.DrawText(TE00, System.Drawing.Color.Black);
+                        p00.Origin = center + L30[2] + YZadjust;
+                        TE30.Plane = p00;
+                        e.Display.DrawText(TE30, System.Drawing.Color.Black);
+                        p00.Origin = center + L60[2] + YZadjust;
+                        TE60.Plane = p00;
+                        e.Display.DrawText(TE60, System.Drawing.Color.Black);
+                        p00.Origin = center + L90[2] + YZadjust;
+                        TE90.Plane = p00;
+                        e.Display.DrawText(TE90, System.Drawing.Color.Black);
 
-                    e.Display.DrawText(DB00, System.Drawing.Color.Blue);
-                    e.Display.DrawText(DB10, System.Drawing.Color.Blue);
-                    e.Display.DrawText(DB20, System.Drawing.Color.Blue);
-                    e.Display.DrawText(DB30, System.Drawing.Color.Blue);
+                        Rhino.Geometry.Plane DBP = Rhino.Geometry.Plane.WorldXY;
+                        DBP.Rotate(Math.PI / 2, new Vector3d(0, 0, 1));
+                        DBP.Origin = center;
+                        DB30.Plane = DBP;
+                        DBP.OriginX -= 0.1;
+                        DB20.Plane = DBP;
+                        DBP.OriginX -= 0.1;
+                        DB10.Plane = DBP;
+                        DBP.OriginX -= 0.1;
+                        DB00.Plane = DBP;
 
-                    e.Display.DrawMeshWires(Sphere, System.Drawing.Color.Red);
+                        e.Display.DrawText(DB00, System.Drawing.Color.Blue);
+                        e.Display.DrawText(DB10, System.Drawing.Color.Blue);
+                        e.Display.DrawText(DB20, System.Drawing.Color.Blue);
+                        e.Display.DrawText(DB30, System.Drawing.Color.Blue);
+
+                        e.Display.DrawMeshWires(Sphere, System.Drawing.Color.Red);
+                    }
+                    finally
+                    {
+                        e.Display.PopModelTransform();
+                    }
                 }
             }
 

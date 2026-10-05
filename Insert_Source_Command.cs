@@ -1206,7 +1206,7 @@ namespace Pachyderm_Acoustic
                 var trackCurve = go.Object(0).Curve();
                 if (trackCurve == null) return Result.Failure;
 
-                double trackLength = trackCurve.GetLength();
+                double trackLength = Utilities.RCPachTools.ModelToMeters(trackCurve.GetLength());
                 RhinoApp.WriteLine($"Track length: {trackLength:F0} m ({trackLength / 1000.0:F2} km)");
 
                 // Options
@@ -1513,7 +1513,7 @@ namespace Pachyderm_Acoustic
                 var result = new TrackAnalysis();
 
                 // 1 sample per meter (you can relax this if you want)
-                double L = crv.GetLength();
+                double L = Utilities.RCPachTools.ModelToMeters(crv.GetLength());
                 int n = Math.Max(200, (int)Math.Round(L)); // at least 200 points
 
                 double[] t = new double[n];
@@ -1523,13 +1523,13 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < n; i++)
                 {
                     double s = (L * i) / (n - 1);
-                    if (!crv.LengthParameter(s, out double ti))
+                    if (!crv.LengthParameter(Utilities.RCPachTools.MetersToModel(s), out double ti))
                         ti = crv.Domain.ParameterAt((double)i / (n - 1));
 
                     t[i] = ti;
 
                     var kvec = crv.CurvatureAt(ti);
-                    kappa[i] = kvec.Length;
+                    kappa[i] = kvec.Length / Utilities.RCPachTools.ModelToMetersScale;
 
                     if (kappa[i] > 1e-9)
                     {
@@ -1831,7 +1831,7 @@ namespace Pachyderm_Acoustic
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             ft = rhino_object.Geometry.GetUserString("FileType");
-                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RCPachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RCPachTools.ModelPointToHare(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
                             L.CurrentAxi = float.Parse(A[2]);
@@ -1854,7 +1854,7 @@ namespace Pachyderm_Acoustic
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
                             SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
-                            Balloon L = new Balloon(strballoon, Utilities.RCPachTools.RPttoHPt(rhino_object.Geometry.GetBoundingBox(true).Min));
+                            Balloon L = new Balloon(strballoon, Utilities.RCPachTools.ModelPointToHare(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
                             L.CurrentAzi = float.Parse(A[1]);
                             L.CurrentAxi = float.Parse(A[2]);
@@ -1980,7 +1980,7 @@ namespace Pachyderm_Acoustic
                                     //Display the balloon for 1khz.
                                     //e.Display.DrawSprite(LS, pt, 0.25f, true);// screen_pt, 32.0f);
                                     DrawCabinetOrSprite(e, rhobj, index, LS, pt, 0.25f);
-                                    if (!suppress_element_balloon) e.Display.DrawMeshWires(Utilities.RCPachTools.HaretoRhinoMesh(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
+                                    if (!suppress_element_balloon) e.Display.DrawMeshWires(Utilities.RCPachTools.HareMeshToModel(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
                                     e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                                     double Theta = (m_Balloons[index].CurrentAlt + 270) * System.Math.PI / 180;
                                     double Phi = (m_Balloons[index].CurrentAzi - 90) * System.Math.PI / 180;
@@ -2237,12 +2237,7 @@ namespace Pachyderm_Acoustic
 
                 Cabinet_Geometry_Parser.ParseAiming( rhobj.Geometry.GetUserString("Aiming"), out alt, out azi, out axial);
 
-                double unitScale = 1.0;
-
-                if (Rhino.RhinoDoc.ActiveDoc != null)
-                {
-                    unitScale = Rhino.RhinoMath.UnitScale( Rhino.UnitSystem.Meters, Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem);
-                }
+                double unitScale = 1.0 / Utilities.RCPachTools.GetModelToMetersScale(rhobj.Document ?? Rhino.RhinoDoc.ActiveDoc);
 
                 Cabinet_Geometry cab = Cabinet_Geometry_Parser.ParseAndTransform( pointNotation, faceNotation, lineNotation, origin, alt, azi, axial, unitScale);
 
@@ -2272,6 +2267,7 @@ namespace Pachyderm_Acoustic
                 return display.HasGeometry ? display : null;
             }
 
+            // Cabinet placement uses document coordinates even though the parser accepts a Hare point.
             private Hare.Geometry.Point GetHareSourceOrigin(Rhino.DocObjects.RhinoObject rhobj)
             {
                 Rhino.Geometry.Point pt = rhobj.Geometry as Rhino.Geometry.Point;
@@ -2286,6 +2282,7 @@ namespace Pachyderm_Acoustic
                 return new Hare.Geometry.Point(bbox.Min.X, bbox.Min.Y, bbox.Min.Z);
             }
 
+            // Preserve caller units: unplaced templates are meters; placed cabinets are document geometry.
             internal static Rhino.Geometry.Mesh BuildRhinoCabinetMesh(Cabinet_Geometry cab)
             {
                 Rhino.Geometry.Mesh mesh = new Rhino.Geometry.Mesh();
@@ -2362,7 +2359,7 @@ namespace Pachyderm_Acoustic
             public void Update_Position(int ID, Rhino.Geometry.Point3d P)
             {
                 if (m_Balloons[ID] == null) return;
-                m_Balloons[ID].Update_Position(Utilities.RCPachTools.RPttoHPt(P));
+                m_Balloons[ID].Update_Position(Utilities.RCPachTools.ModelPointToHare(P));
             }
 
             public double[] SWL(int idx)

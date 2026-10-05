@@ -590,7 +590,7 @@ namespace Pachyderm_Acoustic
                                 Objects[i].Geometry.SetUserString("Balloon8000", L[11]);
                                 Objects[i].Geometry.SetUserString("Bands", L[12]);
 
-                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(new string[] { L[4], L[5], L[6], L[7], L[8], L[9], L[10], L[11] }, L[2], int.Parse(L[1]), Utilities.RCPachTools.ModelPointToHare(Objects[i].Geometry.GetBoundingBox(true).Min)));
                                 UpdatePattern = true;
                             }
                             else
@@ -623,7 +623,7 @@ namespace Pachyderm_Acoustic
                                 Objects[i].Geometry.SetUserString("SWLMax", Max);
                                 Objects[i].Geometry.SetUserString("Bands", L[28]);
 
-                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.RPttoHPt(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.ModelPointToHare(Objects[i].Geometry.GetBoundingBox(true).Min)));
                                 UpdatePattern = true;
                             }
 
@@ -691,7 +691,7 @@ namespace Pachyderm_Acoustic
                         SWLmax[oct] = double.Parse(maxcode[oct]);
                     }
 
-                    B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                    B = new Balloon(ballooncodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
                 }
                 else if (SourceType.SelectedIndex == 4)
                 {
@@ -714,7 +714,7 @@ namespace Pachyderm_Acoustic
                             SWLmax[oct] = double.Parse(maxcode[oct]);
                         }
 
-                        B = new Balloon(ballooncodes, Utilities.RCPachTools.RPttoHPt(Objects[0].Geometry.GetBoundingBox(true).Min));
+                        B = new Balloon(ballooncodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
                     }
                 }
                 else

@@ -62,12 +62,6 @@ namespace Pachyderm_Acoustic
                         }
                 }
 
-                if (Rhino.RhinoDoc.ActiveDoc.ModelUnitSystem != Rhino.UnitSystem.Meters)
-                {
-                    Eto.Forms.MessageBox.Show("At this point in development, Pachyderm supports documents in meters only. Please set the document units to meters, and run the calculation again.\n(A quick way to get to the document units control is to type 'units' into the command prompt.)");
-                    return null;
-                }
-
                 Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = false;
 
                 if (Sim != null)
@@ -192,12 +186,21 @@ namespace Pachyderm_Acoustic
 
             public static void PlotHareTopology(Hare.Geometry.Topology T)
             {
-                Mesh m_RhinoMesh = HaretoRhinoMesh(T, true);
+                Mesh m_RhinoMesh = HareMeshToModel(T, true);
                 m_RhinoMesh.FaceNormals.ComputeFaceNormals();
                 m_RhinoMesh.Normals.ComputeNormals();
                 Rhino.RhinoDoc.ActiveDoc.Objects.Add(m_RhinoMesh);
             }
 
+            /// <summary>Converts a simulation mesh in meters to document coordinates.</summary>
+            public static Mesh HareMeshToModel(Hare.Geometry.Topology T, bool welded)
+            {
+                Mesh model = HaretoRhinoMesh(T, welded);
+                model.Transform(Transform.Scale(Point3d.Origin, MetersToModelScale));
+                return model;
+            }
+
+            /// <summary>Changes mesh type only; coordinates and units are preserved.</summary>
             public static Hare.Geometry.Topology RhinotoHareMesh(Mesh M)
             {
                 Hare.Geometry.Point[][] polys = new Hare.Geometry.Point[M.Faces.Count][];
@@ -208,17 +211,17 @@ namespace Pachyderm_Acoustic
                     if (M.Faces[i].IsTriangle)
                     {
                         pts = new Hare.Geometry.Point[3];
-                        pts[0] = RPttoHPt(M.Vertices[M.Faces[i].A]);
-                        pts[1] = RPttoHPt(M.Vertices[M.Faces[i].B]);
-                        pts[2] = RPttoHPt(M.Vertices[M.Faces[i].C]);
+                        pts[0] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].A));
+                        pts[1] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].B));
+                        pts[2] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].C));
                     }
                     else
                     {
                         pts = new Hare.Geometry.Point[4];
-                        pts[0] = RPttoHPt(M.Vertices[M.Faces[i].A]);
-                        pts[1] = RPttoHPt(M.Vertices[M.Faces[i].B]);
-                        pts[2] = RPttoHPt(M.Vertices[M.Faces[i].C]);
-                        pts[3] = RPttoHPt(M.Vertices[M.Faces[i].D]);
+                        pts[0] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].A));
+                        pts[1] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].B));
+                        pts[2] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].C));
+                        pts[3] = RPttoHPt(M.Vertices.Point3dAt(M.Faces[i].D));
                     }
                     polys[i] = pts;
                 }
@@ -231,6 +234,7 @@ namespace Pachyderm_Acoustic
             public static Mesh HaretoRhinoMesh(Hare.Geometry.Topology T, bool welded)
             {
                 Mesh m_RhinoMesh = new Mesh();
+                m_RhinoMesh.Vertices.UseDoublePrecisionVertices = true;
                 int ct = 0;
 
                 if (welded)
@@ -263,7 +267,7 @@ namespace Pachyderm_Acoustic
                         int[] F = new int[T.Polys[i].VertextCT];
                         for (int j = 0; j < T.Polys[i].VertextCT; j++)
                         {
-                            m_RhinoMesh.Vertices.Add(new Point3d(Pt[j].x, Pt[j].y, Pt[j].z));
+                            m_RhinoMesh.Vertices.Add(HPttoRPt(Pt[j]));
                             F[j] = ct;
                             ct++;
                         }
@@ -286,7 +290,7 @@ namespace Pachyderm_Acoustic
             /// Shorthand tool for map mesh objects.
             /// </summary>
             /// <param name="Map_Srf">A NURBS surface to mesh.</param>
-            /// <param name="Increment">the maximum dimension between vertices.</param>
+            /// <param name="Increment">the maximum dimension between vertices, in document units.</param>
             /// <returns>the map mesh object.</returns>
             public static Mesh Create_Map_Mesh(IEnumerable<Brep> Map_Srf, double Increment)
             {
@@ -656,10 +660,56 @@ namespace Pachyderm_Acoustic
             }
 
             /// <summary>
-            /// Casts Rhino point to Hare point
+            /// Meters per model unit in the active document. Unitless documents retain the meter convention.
             /// </summary>
-            /// <param name="Point"></param>
-            /// <returns></returns>
+            public static double ModelToMetersScale => GetModelToMetersScale(Rhino.RhinoDoc.ActiveDoc);
+
+            public static double GetModelToMetersScale(Rhino.RhinoDoc doc)
+            {
+                if (doc == null || doc.ModelUnitSystem == Rhino.UnitSystem.None) return 1;
+                double scale;
+                if (doc.ModelUnitSystem == Rhino.UnitSystem.CustomUnits)
+                {
+                    if (!doc.GetCustomUnitSystem(true, out string _, out scale)) throw new InvalidOperationException("Unable to read the document's custom unit scale.");
+                }
+                else scale = Rhino.RhinoMath.UnitScale(doc.ModelUnitSystem, Rhino.UnitSystem.Meters);
+                if (scale <= 0 || double.IsNaN(scale) || double.IsInfinity(scale)) throw new InvalidOperationException("The document must have a valid model unit scale.");
+                return scale;
+            }
+
+            public static double MetersToModelScale => 1.0 / ModelToMetersScale;
+
+            public static double ModelToMeters(double value)
+            {
+                return value * ModelToMetersScale;
+            }
+
+            public static double MetersToModel(double value)
+            {
+                return value * MetersToModelScale;
+            }
+
+            /// <summary>
+            /// Converts document coordinates to simulation meters. Capture the scale before background work.
+            /// </summary>
+            public static Hare.Geometry.Point ModelPointToHare(Point3d Point, Rhino.RhinoDoc doc = null)
+            {
+                double scale = GetModelToMetersScale(doc ?? Rhino.RhinoDoc.ActiveDoc);
+                return new Hare.Geometry.Point(Point.X * scale, Point.Y * scale, Point.Z * scale);
+            }
+
+            /// <summary>
+            /// Converts simulation meters to coordinates in the destination document.
+            /// </summary>
+            public static Point3d HarePointToModel(Hare.Geometry.Point Point, Rhino.RhinoDoc doc = null)
+            {
+                double scale = 1.0 / GetModelToMetersScale(doc ?? Rhino.RhinoDoc.ActiveDoc);
+                return new Point3d(Point.x * scale, Point.y * scale, Point.z * scale);
+            }
+
+            /// <summary>
+            /// Changes geometry type only; coordinates and units are preserved.
+            /// </summary>
             public static Hare.Geometry.Point RPttoHPt(Point3d Point)
             {
                 return new Hare.Geometry.Point(Point.X, Point.Y, Point.Z);
@@ -671,10 +721,8 @@ namespace Pachyderm_Acoustic
             }
 
             /// <summary>
-            /// Casts Hare point to Rhino point
+            /// Changes geometry type only; coordinates and units are preserved.
             /// </summary>
-            /// <param name="Point"></param>
-            /// <returns></returns>
             public static Point3d HPttoRPt(Hare.Geometry.Point Point)
             {
                 return new Point3d(Point.x, Point.y, Point.z);
@@ -716,14 +764,15 @@ namespace Pachyderm_Acoustic
                 if (!Rec_List[0].Rec_Vertex)
                 {
                     Mesh MF = new Mesh();
+                    MF.Vertices.UseDoublePrecisionVertices = true;
                     for (int i = 0; i < MM.Faces.Count; i++)
                     {
                         if (MM.Faces[i].IsQuad)
                         {
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].A]);
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].B]);
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].D]);
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].A));
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].B));
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].C));
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].D));
                             int f = MF.Vertices.Count - 4;
                             MF.Faces.AddFace(f, f + 1, f + 2, f + 3);
                             MF.VertexColors.SetColor(f, C[i].Rb, C[i].Gb, C[i].Bb);
@@ -733,9 +782,9 @@ namespace Pachyderm_Acoustic
                         }
                         else
                         {
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].A]);
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].B]);
-                            MF.Vertices.Add(MM.Vertices[MM.Faces[i].C]);
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].A));
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].B));
+                            MF.Vertices.Add(MM.Vertices.Point3dAt(MM.Faces[i].C));
                             int f = MF.Vertices.Count - 3;
                             MF.Faces.AddFace(f, f + 1, f + 2);
                             MF.VertexColors.SetColor(f, C[i].Rb, C[i].Gb, C[i].Bb);
@@ -745,6 +794,7 @@ namespace Pachyderm_Acoustic
                     }
                     MF.CollapseFacesByArea(0.01, 1000);
                     //MF.CollapseFacesByByAspectRatio(.1);
+                    MF.Transform(Transform.Scale(Point3d.Origin, MetersToModelScale));
                     return MF;
                 }
                 else
@@ -752,6 +802,7 @@ namespace Pachyderm_Acoustic
                     List<System.Drawing.Color> colors = new List<System.Drawing.Color>();
                     foreach (Eto.Drawing.Color c in C) colors.Add(System.Drawing.Color.FromArgb(c.Ab, c.Rb, c.Gb, c.Bb));
                     MM.VertexColors.SetColors(colors.ToArray());
+                    MM.Transform(Transform.Scale(Point3d.Origin, MetersToModelScale));
                     return MM;
                 }
             }
@@ -769,7 +820,7 @@ namespace Pachyderm_Acoustic
                     throw new NotSupportedException(
                         "This combined mode is intended for per-face colors (Rec_Vertex == false).");
 
-                Mesh source = HaretoRhinoMesh(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
+                Mesh source = HareMeshToModel(Rec_List[0].Map_Mesh, Rec_List[0].Rec_Vertex);
 
                 int faceCount = source.Faces.Count;
                 if (C == null || C.Length < faceCount)
@@ -822,6 +873,7 @@ namespace Pachyderm_Acoustic
 
                 // Build output mesh with duplicated vertices per face.
                 Mesh mapped = new Mesh();
+                mapped.Vertices.UseDoublePrecisionVertices = true;
                 var vertexColors = new List<System.Drawing.Color>(faceCount * 4);
 
                 for (int i = 0; i < faceCount; i++)
@@ -847,10 +899,10 @@ namespace Pachyderm_Acoustic
 
                     if (f.IsQuad)
                     {
-                        mapped.Vertices.Add(source.Vertices[f.A]);
-                        mapped.Vertices.Add(source.Vertices[f.B]);
-                        mapped.Vertices.Add(source.Vertices[f.C]);
-                        mapped.Vertices.Add(source.Vertices[f.D]);
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.A));
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.B));
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.C));
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.D));
 
                         int vi = mapped.Vertices.Count - 4;
                         mapped.Faces.AddFace(vi, vi + 1, vi + 2, vi + 3);
@@ -869,9 +921,9 @@ namespace Pachyderm_Acoustic
                     }
                     else
                     {
-                        mapped.Vertices.Add(source.Vertices[f.A]);
-                        mapped.Vertices.Add(source.Vertices[f.B]);
-                        mapped.Vertices.Add(source.Vertices[f.C]);
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.A));
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.B));
+                        mapped.Vertices.Add(source.Vertices.Point3dAt(f.C));
 
                         int vi = mapped.Vertices.Count - 3;
                         mapped.Faces.AddFace(vi, vi + 1, vi + 2);
@@ -976,7 +1028,7 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < RecList[0].Rec_List.Length; i += step)
                 {
                     Plane P = Plane.WorldXY;
-                    P.Origin = HPttoRPt(RecList[0].Rec_List[i].Origin);
+                    P.Origin = HarePointToModel(RecList[0].Rec_List[i].Origin);
                     string t = (Math.Round(Values[i], decimals)).ToString();
                     Rhino.RhinoDoc.ActiveDoc.Objects.AddText(t, P, RecList[0].Rec_List[0].Radius, "Arial", true, false);
                 }
@@ -987,10 +1039,10 @@ namespace Pachyderm_Acoustic
 
                 if (source.Geometry is Rhino.Geometry.Point pt)
                 {
-                    return Utilities.RCPachTools.RPttoHPt(pt.Location);
+                    return Utilities.RCPachTools.ModelPointToHare(pt.Location, source.Document);
                 }
 
-                return Utilities.RCPachTools.RPttoHPt(source.Geometry.GetBoundingBox(true).Center);
+                return Utilities.RCPachTools.ModelPointToHare(source.Geometry.GetBoundingBox(true).Center, source.Document);
             }
 
             public static Vector3d SourceAimDirection(RhinoObject source)

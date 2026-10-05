@@ -704,7 +704,9 @@ namespace Pachyderm_Acoustic
                 for (int i = 0; i < Source.Length; i++)
                 {
                     Source[i].AppendPts(ref P);
-                    Mesh Map_Mesh = Utilities.RCPachTools.Create_Map_Mesh(Rec_Srfs, (double)Increment.Value * 0.01);
+                    Mesh Map_Mesh = Utilities.RCPachTools.Create_Map_Mesh(Rec_Srfs, Utilities.RCPachTools.MetersToModel((double)Increment.Value * 0.01));
+                    Map_Mesh.Vertices.UseDoublePrecisionVertices = true;
+                    Map_Mesh.Transform(Transform.Scale(Point3d.Origin, Utilities.RCPachTools.ModelToMetersScale));
                     Map[i] = new PachMapReceiver(Utilities.RCPachTools.RhinotoHareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (double)CO_TIME.Value, Sum_Time.Checked.Value, Disp_Audience.Checked, DirectionalToggle.Checked.Value, Rec_Vertex.Checked, Offset_Mesh.Checked.Value);
                 }
 
@@ -1068,7 +1070,7 @@ namespace Pachyderm_Acoustic
                         double cx = 0, cy = 0, cz = 0;
                         foreach (var hp in poly)
                         {
-                            pline.Add(new Rhino.Geometry.Point3d(hp.x, hp.y, hp.z));
+                            pline.Add(Utilities.RCPachTools.HarePointToModel(hp));
                             cx += hp.x; cy += hp.y; cz += hp.z;
                         }
 
@@ -1076,7 +1078,7 @@ namespace Pachyderm_Acoustic
                         {
                             Rhino.RhinoDoc.ActiveDoc.Objects.AddPolyline(pline);
                             double inv = 1.0 / poly.Count;
-                            Rhino.Geometry.Point3d center = new Rhino.Geometry.Point3d(cx * inv, cy * inv, cz * inv);
+                            Rhino.Geometry.Point3d center = Utilities.RCPachTools.HarePointToModel(new Hare.Geometry.Point(cx * inv, cy * inv, cz * inv));
                             Rhino.RhinoDoc.ActiveDoc.Objects.AddTextDot($"{level:0.###}", center);
                             added++;
                         }
@@ -2167,7 +2169,7 @@ namespace Pachyderm_Acoustic
                 if (SrcID.Count < 1) return;
 
                 ReceiverPointer.Enabled = true;
-                ReceiverPointer.setPoint(Utilities.RCPachTools.HPttoRPt(Map[(int)(SrcID[0])].Origin((int)Receiver_Selection.Value)));
+                ReceiverPointer.setPoint(Utilities.RCPachTools.HarePointToModel(Map[(int)(SrcID[0])].Origin((int)Receiver_Selection.Value)));
                 Update_Graph(sender, e);
             }
 

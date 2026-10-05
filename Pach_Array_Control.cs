@@ -222,7 +222,7 @@ namespace Pachyderm_Acoustic
 
                     if (rc == Rhino.Commands.Result.Success)
                     {
-                        targets.Add(Utilities.RCPachTools.RPttoHPt(pt));
+                        targets.Add(Utilities.RCPachTools.ModelPointToHare(pt));
                         continue;
                     }
 
@@ -593,7 +593,7 @@ namespace Pachyderm_Acoustic
                     if (delay_ms == null || i >= delay_ms.Length) continue;
                     if (gain_db == null || i >= gain_db.Length) continue;
 
-                    Hare.Geometry.Point src = RCPachTools.RPttoHPt(obj.Geometry.GetBoundingBox(true).Min);
+                    Hare.Geometry.Point src = RCPachTools.ModelPointToHare(obj.Geometry.GetBoundingBox(true).Min);
 
                     double r = (target - src).Length();
 
@@ -622,7 +622,7 @@ namespace Pachyderm_Acoustic
                     Rhino.Geometry.Point3d src =
                         Elements[i].Geometry.GetBoundingBox(true).Min;
 
-                    double r = src.DistanceTo(target);
+                    double r = Utilities.RCPachTools.ModelToMeters(src.DistanceTo(target));
                     double tau = delay_ms[i] / 1000.0;
 
                     double phase = -k * r - omega * tau;
@@ -678,7 +678,7 @@ namespace Pachyderm_Acoustic
                         pt = obj.Geometry.GetBoundingBox(true).Center;
                     }
 
-                    origins.Add(Utilities.RCPachTools.RPttoHPt(pt));
+                    origins.Add(Utilities.RCPachTools.ModelPointToHare(pt));
                     directions.Add(Utilities.RCPachTools.SourceAimingVector(obj));
                 }
 

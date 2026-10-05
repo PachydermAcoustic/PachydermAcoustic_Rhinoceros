@@ -15,7 +15,7 @@ namespace Pachyderm_Acoustic
                 {
                     Build_Mesh_Sections();
                     //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
-                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RCPachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
+                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RCPachTools.HarePointToModel(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
 
                 public Acoustic_Compact_FDTD_RC(Environment.Polygon_Scene Rm_in, ref Signal_Driver_Compact S_in, ref Microphone_Compact M_in, double fmax_in, double tmax_in, GridType GT, Hare.Geometry.Point SampleOrigin, double MindimX, double MindimY, double MindimZ, bool PML = true)
@@ -23,7 +23,7 @@ namespace Pachyderm_Acoustic
                 {
                     Build_Mesh_Sections();
                     //Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RC_PachTools.HPttoRPt(RDD_Location(SD.X[0], SD.Y[0], SD.Z[0])));
-                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RCPachTools.HPttoRPt(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
+                    if (Mic.X.Length > 0) Rhino.RhinoDoc.ActiveDoc.Objects.AddPoint(Utilities.RCPachTools.HarePointToModel(RDD_Location(Mic.X[0], Mic.Y[0], Mic.Z[0])));
                 }
 
                 public System.Threading.Semaphore Sem_custom_mesh = new System.Threading.Semaphore(1, 1);
@@ -35,6 +35,7 @@ namespace Pachyderm_Acoustic
                     Sem_custom_mesh.WaitOne();
                     int ct = 0;
                     m_templateC = new Rhino.Geometry.Mesh();
+                    m_templateC.Vertices.UseDoublePrecisionVertices = true;
                     m_referenceC = new System.Collections.Generic.List<Node>();
 
                     double rt2 = Math.Sqrt(2);
@@ -46,33 +47,24 @@ namespace Pachyderm_Acoustic
                         foreach (Rhino.Geometry.MeshFace mf in m.Faces)
                         {
                             //Find the centroid of the face...
-                            Rhino.Geometry.Point3f p = new Rhino.Geometry.Point3f(m.Vertices[mf.A].X + m.Vertices[mf.B].X + m.Vertices[mf.C].X, m.Vertices[mf.A].Y + m.Vertices[mf.B].Y + m.Vertices[mf.C].Y, m.Vertices[mf.A].Z + m.Vertices[mf.B].Z + m.Vertices[mf.C].Z);
-                            
-                            //Record this face as an individual entity.
-                            if (mf.IsQuad)
-                            {
-                                p = new Rhino.Geometry.Point3f((p.X + m.Vertices[mf.D].X) / 4, (p.Y + m.Vertices[mf.D].Y) / 4, (p.Z + m.Vertices[mf.D].Z) / 4);
-                            }
-                            else
-                            {
-                                p = new Rhino.Geometry.Point3f(p.X / 3, p.Y / 3, p.Z / 3);
-                            }
+                            Rhino.Geometry.Point3d p = m.Vertices.Point3dAt(mf.A) + m.Vertices.Point3dAt(mf.B) + m.Vertices.Point3dAt(mf.C);
+                            p = mf.IsQuad ? (p + m.Vertices.Point3dAt(mf.D)) / 4 : p / 3;
 
                             //Identify the corresponding cell...
-                            Hare.Geometry.Point hp = new Hare.Geometry.Point(p.X, p.Y, p.Z);
+                            Hare.Geometry.Point hp = Utilities.RCPachTools.ModelPointToHare(p);
                             int[] loc = RDD_Location(hp);
 
                             if (loc[0] < 0 || loc[0] >= this.PFrame.Length) continue;
                             if (loc[1] < 0 || loc[1] >= this.PFrame[loc[0]].Length) continue;
                             if (loc[2] < 0 || loc[2] >= this.PFrame[loc[0]][loc[1]].Length) continue;
 
-                            m_templateC.Vertices.Add(m.Vertices[mf.A]);
-                            m_templateC.Vertices.Add(m.Vertices[mf.B]);
-                            m_templateC.Vertices.Add(m.Vertices[mf.C]);
+                            m_templateC.Vertices.Add(m.Vertices.Point3dAt(mf.A));
+                            m_templateC.Vertices.Add(m.Vertices.Point3dAt(mf.B));
+                            m_templateC.Vertices.Add(m.Vertices.Point3dAt(mf.C));
 
                             if (mf.IsQuad)
                             {
-                                m_templateC.Vertices.Add(m.Vertices[mf.D]);
+                                m_templateC.Vertices.Add(m.Vertices.Point3dAt(mf.D));
                                 m_templateC.Faces.AddFace(ct, ct + 1, ct + 2, ct + 3);
                                 ct += 4;
                             }
@@ -104,7 +96,8 @@ namespace Pachyderm_Acoustic
 
                     double rt2 = Math.Sqrt(2);
 
-                    Hare.Geometry.Point min = RDD_Location(Bounds.Min_PT, 0, 0, 0, dx, dy, dz);
+                    Rhino.Geometry.Point3d min = Utilities.RCPachTools.HarePointToModel(RDD_Location(Bounds.Min_PT, 0, 0, 0, dx, dy, dz));
+                    double modelDx = Utilities.RCPachTools.MetersToModel(dx), modelDy = Utilities.RCPachTools.MetersToModel(dy), modelDz = Utilities.RCPachTools.MetersToModel(dz);
 
                     for (int i = 0; i < 2; i++)
                     {
@@ -114,12 +107,12 @@ namespace Pachyderm_Acoustic
                             for (int z = 0; z < PFrame[i][y].Length; z++)
                             {
                                 ct++;
-                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, i, y, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[0][0][0].Pt.x, PFrame[i][y][z].Pt.y, PFrame[i][y][z].Pt.z);
-                                pt.X = min.x;
-                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, dy, dz)));
-                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, dy, -dz)));
-                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, -dy, -dz)));
-                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, -dy, dz)));
+                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HarePointToModel(RDD_Location(Bounds.Min_PT, i, y, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[0][0][0].Pt.x, PFrame[i][y][z].Pt.y, PFrame[i][y][z].Pt.z);
+                                pt.X = min.X;
+                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, modelDy, modelDz)));
+                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, modelDy, -modelDz)));
+                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, -modelDy, -modelDz)));
+                                m_templateX[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, -modelDy, modelDz)));
                                 int ct4 = ct * 4;
                                 m_templateX[i].Faces.AddFace(ct4, ct4 + 1, ct4 + 2, ct4 + 3);
                             }
@@ -132,12 +125,12 @@ namespace Pachyderm_Acoustic
                             for (int z = 0; z < PFrame[x][i].Length; z++)
                             {
                                 ct++;
-                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, i, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][i][z].Pt.x, PFrame[0][0][0].Pt.y, PFrame[x][i][z].Pt.z);
-                                pt.Y = min.y;
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(dx, 0, 0)));
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, -dz)));
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(-dx, 0, 0)));
-                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, dz)));
+                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HarePointToModel(RDD_Location(Bounds.Min_PT, x, i, z, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][i][z].Pt.x, PFrame[0][0][0].Pt.y, PFrame[x][i][z].Pt.z);
+                                pt.Y = min.Y;
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(modelDx, 0, 0)));
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, -modelDz)));
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(-modelDx, 0, 0)));
+                                m_templateY[i].Vertices.Add((Rhino.Geometry.Point3d)(pt + new Rhino.Geometry.Point3d(0, 0, modelDz)));
                                 int ct4 = ct * 4;
                                 m_templateY[i].Faces.AddFace(ct4, ct4 + 1, ct4 + 2, ct4 + 3);
                             }
@@ -151,12 +144,12 @@ namespace Pachyderm_Acoustic
                             {
                                 ct++;
 
-                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HPttoRPt(RDD_Location(Bounds.Min_PT, x, y, i, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][y][i].Pt.x, PFrame[x][y][i].Pt.y, PFrame[0][0][0].Pt.z);
-                                pt.Z = min.z;
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(dx, 0, 0)));
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, -dy, 0)));
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(-dx, 0, 0)));
-                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, dy, 0)));
+                                Rhino.Geometry.Point3d pt = Utilities.RCPachTools.HarePointToModel(RDD_Location(Bounds.Min_PT, x, y, i, dx, dy, dz)); //new Rhino.Geometry.Point3d(PFrame[x][y][i].Pt.x, PFrame[x][y][i].Pt.y, PFrame[0][0][0].Pt.z);
+                                pt.Z = min.Z;
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(modelDx, 0, 0)));
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, -modelDy, 0)));
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(-modelDx, 0, 0)));
+                                m_templateZ[i].Vertices.Add((Rhino.Geometry.Point3d)(pt - new Rhino.Geometry.Point3d(0, modelDy, 0)));
                                 int ct4 = ct * 4;
                                 m_templateZ[i].Faces.AddFace(ct4, ct4 + 1, ct4 + 2, ct4 + 3);
                             }

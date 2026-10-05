@@ -50,7 +50,7 @@ namespace Pachyderm_Acoustic
             private double Array_Reference_Distance = 10.0;
             private Rhino.Geometry.Mesh Array_Balloon_Mesh = null;
             private bool Show_Array_Balloon = true;
-            private double Array_Balloon_Radius = 2.0;
+            private double Array_Balloon_Radius => RCPachTools.MetersToModel(2.0);
             public int Array_Balloon_Min_Rays = 800;
 
             public enum Display_Mode
@@ -471,7 +471,7 @@ namespace Pachyderm_Acoustic
             /// Mesh density used for meshing Breps before contouring.
             /// Larger values are faster but produce rougher contours.
             /// </summary>
-            public double Contour_Mesh_Max_Edge = 2.0;
+            public double Contour_Mesh_Max_Edge = 2.0; // Meters.
 
             public double[] Contour_Levels = new double[] {-1, -2, -3, -4, -5, -6, -12, -18 };
             public int Contour_Line_Thickness = 3;
@@ -486,7 +486,7 @@ namespace Pachyderm_Acoustic
             /// Tolerance, in Rhino model units, for matching a contour segment to the first mesh-ray hit.
             /// Increase this slightly if contours disappear on coarse meshes.
             /// </summary>
-            public double First_Surface_Tolerance = 0.05;
+            public double First_Surface_Tolerance = 0.05; // Meters.
 
             public bool Show_Contour_Labels = true;
             public int Labels_Per_Level = 1;
@@ -653,7 +653,7 @@ namespace Pachyderm_Acoustic
                         DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct);
                         if (lookup == null) continue;
 
-                        Hare.Geometry.Point origin = RCPachTools.RPttoHPt(SourcePoint(src));
+                        Hare.Geometry.Point origin = RCPachTools.ModelPointToHare(SourcePoint(src), src.Document);
                         double alt, azi, axi;
                         GetAiming(src, out alt, out azi, out axi);
 
@@ -787,7 +787,7 @@ namespace Pachyderm_Acoustic
 
                 ArrayPattern pattern = new ArrayPattern(sources, octave, Array_Reference_Distance);
                 Hare.Geometry.Point arrayCenter = pattern.Center;
-                Array_Center = RCPachTools.HPttoRPt(arrayCenter);
+                Array_Center = RCPachTools.HarePointToModel(arrayCenter);
 
                 Array_Balloon_Mesh = null;
 
@@ -825,7 +825,7 @@ namespace Pachyderm_Acoustic
                         if (!dir.Unitize()) dir = new Vector3d(0, 1, 0);
                         double radius = Array_Balloon_Radius * (displayDb + 30.0) / 30.0;
 
-                        Array_Balloon_Mesh.Vertices.SetVertex(i, arrayCenter.x + radius * dir.X, arrayCenter.y + radius * dir.Y, arrayCenter.z + radius * dir.Z);
+                        Array_Balloon_Mesh.Vertices.SetVertex(i, Array_Center.X + radius * dir.X, Array_Center.Y + radius * dir.Y, Array_Center.Z + radius * dir.Z);
                         Eto.Drawing.Color color = c_scale.GetValue(relDb, -30.0, 0.0);
                         Array_Balloon_Mesh.VertexColors.SetColor(i, color.Rb, color.Gb, color.Bb);
                     }
@@ -843,7 +843,7 @@ namespace Pachyderm_Acoustic
                         double degrees = 360.0 * i / plot.Length;
                         Vector3d direction = DiagnosticDirection(Array_Diagnostic_Plane, degrees * Math.PI / 180.0);
                         double radius = Array_Balloon_Radius * (Math.Max(-30.0, Math.Min(0.0, ArrayDiagnosticLevel(degrees))) + 30.0) / 30.0;
-                        plot[i] = RCPachTools.HPttoRPt(arrayCenter) + direction * radius;
+                        plot[i] = Array_Center + direction * radius;
                     }
                     for (int i = 0; i < plot.Length; i++) Array_Diagnostic_Slice_Lines.Add(new Line(plot[i], plot[(i + 1) % plot.Length]));
                 }
@@ -870,7 +870,7 @@ namespace Pachyderm_Acoustic
 
                 Parallel.For(0, points.Length, i =>
                 {
-                    Vector3d patternDirection = points[i] - RCPachTools.HPttoRPt(arrayCenter);
+                    Vector3d patternDirection = points[i] - Array_Center;
 
                     if (!patternDirection.Unitize())
                     {
@@ -949,7 +949,7 @@ namespace Pachyderm_Acoustic
 
                 if (First_Surface_Only)
                 {
-                    CullContoursToFirstSurface(scene, RCPachTools.HPttoRPt(arrayCenter));
+                    CullContoursToFirstSurface(scene, Array_Center);
                 }
 
                 if (Show_Contour_Labels)
@@ -1172,7 +1172,7 @@ namespace Pachyderm_Acoustic
 
                         if (hit_dist < 0 || double.IsNaN(hit_dist) || double.IsInfinity(hit_dist)) continue;
 
-                        double tol = Math.Max(First_Surface_Tolerance, Contour_Mesh_Max_Edge * 0.02);
+                        double tol = RCPachTools.MetersToModel(Math.Max(First_Surface_Tolerance, Contour_Mesh_Max_Edge * 0.02));
 
                         if (hit_dist >= target_dist - tol && hit_dist <= target_dist + tol)
                         {
@@ -1386,7 +1386,7 @@ namespace Pachyderm_Acoustic
                 if (Use_Cached_Geometry &&
                     Cached_Scene != null &&
                     Cached_Scene_Signature == signature &&
-                    Math.Abs(Cached_Mesh_Max_Edge - Contour_Mesh_Max_Edge) < 1e-9)
+                    Math.Abs(Cached_Mesh_Max_Edge - RCPachTools.MetersToModel(Contour_Mesh_Max_Edge)) < 1e-9)
                 {
                     return Cached_Scene;
                 }
@@ -1394,7 +1394,7 @@ namespace Pachyderm_Acoustic
                 Rhino.Geometry.Mesh scene = new Rhino.Geometry.Mesh();
 
                 MeshingParameters mp = new MeshingParameters();
-                mp.MaximumEdgeLength = Contour_Mesh_Max_Edge;
+                mp.MaximumEdgeLength = RCPachTools.MetersToModel(Contour_Mesh_Max_Edge);
                 mp.SimplePlanes = false;
                 mp.JaggedSeams = false;
 
@@ -1452,7 +1452,7 @@ namespace Pachyderm_Acoustic
 
                 Cached_Scene = scene;
                 Cached_Scene_Signature = signature;
-                Cached_Mesh_Max_Edge = Contour_Mesh_Max_Edge;
+                Cached_Mesh_Max_Edge = mp.MaximumEdgeLength;
 
                 return scene;
             }

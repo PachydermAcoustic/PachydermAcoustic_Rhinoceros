@@ -52,7 +52,7 @@ namespace Pachyderm_Acoustic
 
             public WaveConduit(Pach_Graphics.Colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.RCPachTools.HPttoRPt(S.Min());
+                min = Utilities.RCPachTools.HarePointToModel(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.dx);
                 ny = (int)System.Math.Ceiling(range.dy);
@@ -64,16 +64,16 @@ namespace Pachyderm_Acoustic
                         {
                             ptgrid[x, y, z] = new List<int>();
                         }
-                dx = range.dx / nx;
-                dy = range.dy / ny;
-                dz = range.dz / nz;
+                dx = Utilities.RCPachTools.MetersToModel(range.dx / nx);
+                dy = Utilities.RCPachTools.MetersToModel(range.dy / ny);
+                dz = Utilities.RCPachTools.MetersToModel(range.dz / nz);
                 C = C_in;
                 V_Bounds = V_Bounds_in;
             }
 
             public WaveConduit(ParticleRays[] PR_in, Pach_Graphics.Colorscale C_in, double[] V_Bounds_in, Scene S)
             {
-                min = Utilities.RCPachTools.HPttoRPt(S.Min());
+                min = Utilities.RCPachTools.HarePointToModel(S.Min());
                 Hare.Geometry.Vector range = S.Max() - S.Min();
                 nx = (int)System.Math.Ceiling(range.dx);
                 ny = (int)System.Math.Ceiling(range.dy);
@@ -85,9 +85,9 @@ namespace Pachyderm_Acoustic
                         {
                             ptgrid[x, y, z] = new List<int>();
                         }
-                dx = range.dx / nx;
-                dy = range.dy / ny;
-                dz = range.dz / nz;
+                dx = Utilities.RCPachTools.MetersToModel(range.dx / nx);
+                dy = Utilities.RCPachTools.MetersToModel(range.dy / ny);
+                dz = Utilities.RCPachTools.MetersToModel(range.dz / nz);
                 C = C_in;
                 V_Bounds = V_Bounds_in;
                 PR = PR_in;
@@ -266,6 +266,7 @@ namespace Pachyderm_Acoustic
 
             public void Populate(int[] X, int[] Y, int[] Z, Mesh C_mesh, double dx, List<List<double>> pressure, Mesh[][] M)
             {
+                dx = Utilities.RCPachTools.MetersToModel(dx);
                 DisplayMesh = new List<Mesh>();//[M.Length];    
                 Mesh_Vis = true;
                 Section_Vis = true;
@@ -438,7 +439,7 @@ namespace Pachyderm_Acoustic
             receivers.ClearPointValues();
             for (int i = 0; i < rec.Count; i++)
             {
-                receivers.Add(Utilities.RCPachTools.HPttoRPt(rec[i]));
+                receivers.Add(Utilities.RCPachTools.HarePointToModel(rec[i]));
             }
         }
     }

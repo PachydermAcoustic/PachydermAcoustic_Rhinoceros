@@ -346,7 +346,7 @@ namespace Pachyderm_Acoustic
                 rc = RhinoGet.GetString("Array label", true, ref groupLabel);
                 if (rc != Result.Success) return rc;
 
-                double modelUnitsPerMeter = RhinoMath.UnitScale(UnitSystem.Meters, doc.ModelUnitSystem);
+                double modelUnitsPerMeter = Utilities.RCPachTools.MetersToModelScale;
                 double spacing = spacing_m * modelUnitsPerMeter;
                 Source_Constructions.ICabinet_Diffraction cabinet;
                 string diffractionLabel = diffractionMethod == 0 ? "Vanderkooy DED" : diffractionMethod == 1 ? "Numerical cabinet with DED continuation (experimental)" : "Trihedral front-corner correction (experimental)";

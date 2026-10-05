@@ -159,7 +159,7 @@ namespace Pachyderm_Acoustic
                 {
                     System.Guid S_ID = SourceConduit.Instance.UUID[i];
                     if (S_ID == System.Guid.Empty || S_ID == System.Guid.NewGuid()) break;
-                    Points[i] = Utilities.RCPachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min);
+                    Points[i] = Utilities.RCPachTools.ModelPointToHare(Rhino.RhinoDoc.ActiveDoc.Objects.Find(S_ID).Geometry.GetBoundingBox(true).Min);
                 }
 
                 if (Points.Length > 0) return true;
@@ -247,10 +247,10 @@ namespace Pachyderm_Acoustic
                             case "":
                             case "0": 
                             case null:
-                                s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "1":
-                                s = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                s = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, false);
                                 break;
                             case "2":
                             case "3":
@@ -258,7 +258,7 @@ namespace Pachyderm_Acoustic
                                 string[] B;
                                 B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                s = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.RPttoHPt(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
+                                s = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
                                 break;
                         }
 
@@ -306,16 +306,16 @@ namespace Pachyderm_Acoustic
                             cluster = null;
                         }
 
-                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(1d / line_El_m);
+                        Rhino.Geometry.Point3d[] pts = (Origin.Geometry as Curve).DivideEquidistant(Utilities.RCPachTools.MetersToModel(1d / line_El_m));
                         if (pts == null || pts.Length < 2) pts = new Point3d[2] { (Origin.Geometry as Curve).PointAtStart, (Origin.Geometry as Curve).PointAtEnd };
                         Hare.Geometry.Point[] Samples = new Hare.Geometry.Point[pts.Length];
 
                         for (int i = 0; i < pts.Length; i++)
                         {
-                            Samples[i] = Utilities.RCPachTools.RPttoHPt(pts[i]);
+                            Samples[i] = Utilities.RCPachTools.ModelPointToHare(pts[i]);
                         }
 
-                        var lineSrc = new Environment.LineSource(Samples, (Origin.Geometry as Curve).GetLength(), SWL, line_El_m, id, false);
+                        var lineSrc = new Environment.LineSource(Samples, Utilities.RCPachTools.ModelToMeters((Origin.Geometry as Curve).GetLength()), SWL, line_El_m, id, false);
 
                         if (cluster == null) { S.Add(lineSrc); }
                         else { c_list.Add(lineSrc); }
@@ -346,7 +346,7 @@ namespace Pachyderm_Acoustic
                 {
                     System.Guid R_ID = ReceiverConduit.Instance.UUID[i];
                     if (R_ID == System.Guid.Empty || R_ID == System.Guid.NewGuid()) break;
-                    Point.Add(Utilities.RCPachTools.RPttoHPt(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
+                    Point.Add(Utilities.RCPachTools.ModelPointToHare(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
                 }
 
                 if (Point.Count > 0) return true;
