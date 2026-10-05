@@ -826,9 +826,11 @@ namespace Pachyderm_Acoustic
             {
                 //Get the receiver surfaces from the user 
                 Rhino.DocObjects.ObjRef[] refs;
-                Rhino.Input.RhinoGet.GetMultipleObjects("Select Mapping Surfaces", false, Rhino.DocObjects.ObjectType.Brep, out refs);
+                Rhino.Commands.Result rc = Rhino.Input.RhinoGet.GetMultipleObjects("Select Mapping Surfaces", false, Rhino.DocObjects.ObjectType.Brep, out refs);
+                if (rc != Rhino.Commands.Result.Success || refs == null || refs.Length == 0) return;
+
                 List<Brep> B_Temp = new List<Brep>();
-                
+
                 foreach (Rhino.DocObjects.ObjRef o in refs)
                 {
                     Rhino.DocObjects.ObjectType t = o.Geometry().ObjectType;

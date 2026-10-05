@@ -940,10 +940,7 @@ namespace Pachyderm_Acoustic
             private List<bool> PlaneBoolean = new List<bool>();
             private List<Vector3d> PlanarNormal = new List<Vector3d>();
             private List<Transform> Mirror = new List<Transform>();
-            private VoxelGridRC Voxels;
-            int XVoxel, YVoxel, ZVoxel;
-            private Point3d S_Origin;
-            List<int> SurfaceIndex;
+            private BoundingBox sceneBounds = BoundingBox.Empty;
             protected List<Rhino.DocObjects.ObjRef> ObjectList;
 
             public RhCommon_Scene(List<Rhino.DocObjects.RhinoObject> ObjRef, double Temp, double hr, double Pa, int Air_Choice, bool EdgeCorrection, bool IsAcoustic, List<Rhino.Geometry.GeometryBase> Additional_Geometry = null, List<int> Additional_Layers = null)
@@ -953,7 +950,6 @@ namespace Pachyderm_Acoustic
                 Vector3d NormalHolder = new Vector3d();
                 Rhino.Geometry.Plane PlaneHolder = new Rhino.Geometry.Plane();
                 Transform XHolder = new Transform();
-                Random RND = new Random();
                 ObjectList = new List<Rhino.DocObjects.ObjRef>();
 
                 for (int q = 0; q < ObjRef.Count; q++)
@@ -961,14 +957,14 @@ namespace Pachyderm_Acoustic
                     ObjectList.Add(new Rhino.DocObjects.ObjRef(ObjRef[q]));
 
                     Rhino.Geometry.Brep BObj;
-                    if (ObjRef[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
-                    {
-                        BObj = ((Rhino.DocObjects.BrepObject)ObjRef[q]).BrepGeometry.DuplicateBrep();
-                    }
+                    if (ObjRef[q].Geometry is Brep brep)
+                        BObj = brep.DuplicateBrep();
+                    else if (ObjRef[q].Geometry is Extrusion extrusion)
+                        BObj = extrusion.ToBrep();
+                    else if (ObjRef[q].Geometry is Surface surface)
+                        BObj = surface.ToBrep();
                     else
-                    {
-                        BObj = ((Rhino.DocObjects.ExtrusionObject)ObjRef[q]).ExtrusionGeometry.ToBrep();
-                    }
+                        continue;
 
                     // All private scene geometry is in meters, including planes and mirror transforms.
                     BObj.Transform(toMeters);
@@ -982,13 +978,13 @@ namespace Pachyderm_Acoustic
                         double[] Absorption = new double[8];
                         double[] Transparency = new double[8];
                         double[] Transmission = new double[8];
-                        Mode = BObj.GetUserString("Acoustics_User");
+                        Mode = ObjRef[q].Geometry.GetUserString("Acoustics_User");
                         double[] Scat = new double[8];
 
                         if (Mode == "yes")
                         {
-                            AcousticsData = BObj.GetUserString("Acoustics");
-                            if (AcousticsData != "")
+                            AcousticsData = ObjRef[q].Geometry.GetUserString("Acoustics");
+                            if (!string.IsNullOrEmpty(AcousticsData))
                             {
                                 Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
                                 AbsorptionData.Add(new Basic_Material(Absorption));
@@ -1001,6 +997,7 @@ namespace Pachyderm_Acoustic
                                     Complete = false;
                                     return;
                                 }
+                                AbsorptionData.Add(new Basic_Material(Absorption));
                             }
                         }
                         else
@@ -1009,37 +1006,24 @@ namespace Pachyderm_Acoustic
                             string Method = layer.GetUserString("ABSType");
                             AcousticsData = layer.GetUserString("Acoustics");
 
-                            if (Method == "Buildup")
-                            {
-                                //TODO - reconcile transmission with buildup materials... could be specified in smart material.
-                                List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                                string[] Buildup = layer.GetUserString("Buildup").Split(new char[]{';'}, StringSplitOptions.RemoveEmptyEntries);
-                                foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                                AbsorptionData.Add(new Smart_Material(false ,Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
-                            }
                             if (!string.IsNullOrEmpty(AcousticsData))
-                            {
-                                //New code for transmission loss incorporation...
                                 Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
-                                string trans = layer.GetUserString("Transmission");
-                                Transmission = trans == "" ? new double[] {0,0,0,0,0,0,0,0} : Utilities.PachTools.DecodeTransmissionLoss(trans);
-                                for (int oct = 0; oct < 8; oct++)
-                                {
-                                    double ret = Math.Pow(10, -Transmission[oct] / 10);
-                                    Transmission[oct] = 1 - ret;
-                                    //Absorption[oct] *= ret; 
-                                }
-                                AbsorptionData.Add(new Basic_Material(Absorption));
+                            else if (!Custom_Method)
+                            {
+                                Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
+                                Complete = false;
+                                return;
+                            }
+
+                            if (Method == "Buildup" || Method == "Buildup_Finite")
+                            {
+                                List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
+                                string[] Buildup = layer.GetUserString("BuildUp").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
+                                AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
                             }
                             else
-                            {
-                                if (!Custom_Method)
-                                {
-                                    Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
-                                    Complete = false;
-                                    return;
-                                }
-                            }
+                                AbsorptionData.Add(new Basic_Material(Absorption));
                         }
 
                         Area = new double[BrepList.Count];
@@ -1061,12 +1045,10 @@ namespace Pachyderm_Acoustic
 
                         if (PlaneBoolean[PlaneBoolean.Count - 1])
                         {
-                            Vector3d Normal = new Vector3d();
-                            Point3d Origin = new Point3d();
-                            //Transform MirrorSingle = new Transform();
-                            //Plane PlaneSingle = new Plane();
-                            Origin = BObj.Faces[j].PointAt(0, 0);
-                            Normal = BObj.Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
+                            BrepFace face = BObj.Faces[j];
+                            double uMid = face.Domain(0).Mid, vMid = face.Domain(1).Mid;
+                            Point3d Origin = face.PointAt(uMid, vMid);
+                            Vector3d Normal = face.NormalAt(uMid, vMid);
                             Mirror.Add(Transform.Mirror(Origin, Normal));
                             Plane.Add(new Rhino.Geometry.Plane(Origin, Normal));
                             PlanarNormal.Add(Normal);
@@ -1088,14 +1070,14 @@ namespace Pachyderm_Acoustic
                 for (int q = 0; q < Additional_Geometry.Count; q++)
                 {
                     Rhino.Geometry.Brep BObj;
-                    if (Additional_Geometry[q].ObjectType == Rhino.DocObjects.ObjectType.Brep)
-                    {
-                        BObj = ((Rhino.Geometry.Brep)Additional_Geometry[q]).DuplicateBrep();
-                    }
+                    if (Additional_Geometry[q] is Brep brep)
+                        BObj = brep.DuplicateBrep();
+                    else if (Additional_Geometry[q] is Extrusion extrusion)
+                        BObj = extrusion.ToBrep();
+                    else if (Additional_Geometry[q] is Surface surface)
+                        BObj = surface.ToBrep();
                     else
-                    {
-                        BObj = ((Rhino.Geometry.Extrusion)Additional_Geometry[q]).ToBrep();
-                    }
+                        continue;
 
                     // All private scene geometry is in meters, including planes and mirror transforms.
                     BObj.Transform(toMeters);
@@ -1113,28 +1095,25 @@ namespace Pachyderm_Acoustic
                         Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[Additional_Layers[q]];
                         string Method = layer.GetUserString("ABSType");
                         AcousticsData = layer.GetUserString("Acoustics");
-                        if (Method == "Buildup")
+                        if (!string.IsNullOrEmpty(AcousticsData))
+                            Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
+                        else if (!Custom_Method)
+                        {
+                            Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
+                            Complete = false;
+                            return;
+                        }
+
+                        if (Method == "Buildup" || Method == "Buildup_Finite")
                         {
                             List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                            string[] Buildup = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            string[] Buildup = layer.GetUserString("BuildUp").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
                             AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
                         }
-                        if (!string.IsNullOrEmpty(AcousticsData))
-                        {
-                            Utilities.PachTools.DecodeAcoustics(AcousticsData, ref Absorption, ref Scat, ref Transparency);
-                            AbsorptionData.Add(new Basic_Material(Absorption));
-                        }
                         else
-                        {
-                            if (!Custom_Method)
-                            {
-                                Eto.Forms.MessageBox.Show("A material is not specified correctly. Please assign absorption and scattering to all layers in the model.", "Materials Error", Eto.Forms.MessageBoxButtons.OK);
-                                Complete = false;
-                                return;
-                            }
-                        }
-                    
+                            AbsorptionData.Add(new Basic_Material(Absorption));
+
                         Area = new double[BrepList.Count];
                         for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
 
@@ -1159,10 +1138,10 @@ namespace Pachyderm_Acoustic
 
                         if (PlaneBoolean[PlaneBoolean.Count - 1])
                         {
-                            Vector3d Normal = new Vector3d();
-                            Point3d Origin = new Point3d();
-                            Origin = BObj.Faces[j].PointAt(0, 0);
-                            Normal = BObj.Faces[j].NormalAt(RND.NextDouble(), RND.NextDouble());
+                            BrepFace face = BObj.Faces[j];
+                            double uMid = face.Domain(0).Mid, vMid = face.Domain(1).Mid;
+                            Point3d Origin = face.PointAt(uMid, vMid);
+                            Vector3d Normal = face.NormalAt(uMid, vMid);
                             Mirror.Add(Transform.Mirror(Origin, Normal));
                             Plane.Add(new Rhino.Geometry.Plane(Origin, Normal));
                             PlanarNormal.Add(Normal);
@@ -1209,55 +1188,19 @@ namespace Pachyderm_Acoustic
 
             public override bool shoot(Ray R, out double u, out double v, out int Srf_ID, out Hare.Geometry.Point X_PT, out double t)
             {
-                S_Origin = new Rhino.Geometry.Point3d(R.x, R.y, R.z);
-                Srf_ID = 0;
-
-                while (true)
+                List<Point3d> points;
+                List<double> distances;
+                List<int> codes;
+                if (shoot(new Point3d(R.x, R.y, R.z), new Vector3d(R.dx, R.dy, R.dz), R.Ray_ID,
+                    out u, out v, out Srf_ID, out points, out distances, out codes))
                 {
-                    Point3d[] P = Rhino.Geometry.Intersect.Intersection.RayShoot(new Ray3d(S_Origin, new Vector3d(R.dx, R.dy, R.dz)), BrepList, 1);
-
-                    if (P == null) { X_PT = default(Hare.Geometry.Point); u = 0; v = 0; t = 0; return false; }
-
-                    Voxels.PointIsInVoxel(P[0], ref XVoxel, ref YVoxel, ref ZVoxel);
-                    try
-                    {
-                        SurfaceIndex = Voxels.VoxelList(XVoxel, YVoxel, ZVoxel);
-                    }
-                    catch (Exception)
-                    {
-                        //Rare floating point error on some computers... abandon the ray and start the next...
-                        //Explanation: This would never happen on my IBM T43P laptop, but happened 
-                        //consistently millions of function calls into the calculation on my 
-                        //ASUS K8N-DL based desktop computer. I believe it has something to do with some quirk of that system.
-                        //This try...catch statement is here in case this ever manifests on any user's computer. 
-                        //It is rare enough that this should not affect the accuracy of the calculation.
-                        t = 0.0f;
-                        X_PT = default(Hare.Geometry.Point);
-                        u = 0;
-                        v = 0;
-                        return false;
-                    }
-
-                    Point3d CP;
-                    Vector3d N;
-                    ComponentIndex CI;
-                    double MD = 0.0001;
-
-                    foreach (int index in SurfaceIndex)
-                    {
-                        if (BrepList[index].ClosestPoint(P[0], out CP, out CI, out u, out v, MD, out N) && (CI.ComponentIndexType == ComponentIndexType.BrepFace))
-                        {
-                            if ((Math.Abs(P[0].X - CP.X) < 0.0001) && (Math.Abs(P[0].Y - CP.Y) < 0.0001) && (Math.Abs(P[0].Z - CP.Z) < 0.0001))
-                            {
-                                Srf_ID = index;
-                                X_PT = new Hare.Geometry.Point(P[0].X, P[0].Y, P[0].Z);
-                                t = (double)(S_Origin.DistanceTo(P[0]));
-                                return true;
-                            }
-                        }
-                    }
-                    S_Origin = new Point3d(P[0]);
+                    X_PT = Utilities.RCPachTools.RPttoHPt(points[0]);
+                    t = distances[0];
+                    return true;
                 }
+                X_PT = default(Hare.Geometry.Point);
+                t = 0;
+                return false;
             }
 
             public override bool shoot(Ray R, out double u, out double v, out int Srf_ID, out List<Hare.Geometry.Point> X_PT, out List<double> t, out List<int> Code)
@@ -1291,74 +1234,92 @@ namespace Pachyderm_Acoustic
 
             public override bool shoot(Ray R, int topo, out X_Event Xpt, int srf_origin1, int srf_origin2 = -1)
             {
-                double u, v, t;
+                double u, v;
                 int id;
-                Hare.Geometry.Point Pt;
-                bool success = shoot(R, out u, out v, out id, out Pt, out t);
-                if (success)
-                {
-                    Xpt = new X_Event(Pt, u, v, t, id);
-                }
-                else
-                {
-                    Xpt = new X_Event();
-                }
+                List<Point3d> points;
+                List<double> distances;
+                List<int> codes;
+                bool success = shoot(new Point3d(R.x, R.y, R.z), new Vector3d(R.dx, R.dy, R.dz), R.Ray_ID,
+                    out u, out v, out id, out points, out distances, out codes, srf_origin1, srf_origin2);
+                Xpt = success ? new X_Event(Utilities.RCPachTools.RPttoHPt(points[0]), u, v, distances[0], id) : new X_Event();
                 return success;
             }
 
             public bool shoot(Point3d Start, Vector3d Dir, int Random, out double u, out double v, out int Srf_ID, out List<Point3d> X_PT, out List<double> t, out List<int> Code, int srf_origin1 = -1, int srf_origin2 = -1)
             {
-                S_Origin = new Point3d(Start);
+                u = v = 0;
                 Srf_ID = 0;
+                X_PT = new List<Point3d> { default(Point3d) };
+                t = new List<double> { 0 };
+                Code = new List<int> { 0 };
+                if (!Start.IsValid || !Dir.IsValid || !Dir.Unitize()) return false;
 
+                // Excluded faces must not hide a coincident eligible face. Keep original surface IDs.
+                List<Brep> geometry = BrepList;
+                List<int> surfaceIds = null;
+                if (srf_origin1 >= 0 || srf_origin2 >= 0)
+                {
+                    geometry = new List<Brep>();
+                    surfaceIds = new List<int>();
+                    for (int i = 0; i < BrepList.Count; i++)
+                    {
+                        if (i == srf_origin1 || i == srf_origin2) continue;
+                        geometry.Add(BrepList[i]);
+                        surfaceIds.Add(i);
+                    }
+                }
+                if (geometry.Count == 0) return false;
+
+                Point3d origin = Start;
+                List<Brep> candidates = geometry;
+                List<int> candidateIds = surfaceIds;
+                Point3d? rejectedPoint = null;
                 while (true)
                 {
-                    Point3d[] P = Rhino.Geometry.Intersect.Intersection.RayShoot(new Ray3d(S_Origin, Dir), BrepList, 1);
-
-                    if (P.Length == 0) { X_PT = new List<Point3d> { default(Point3d) }; u = 0; v = 0; t = new List<double> { 0 }; Code = new List<int> { 0 }; return false; }
-
-                    Voxels.PointIsInVoxel(P[0], ref XVoxel, ref YVoxel, ref ZVoxel);
-                    try
+                    var hits = candidates.Count == 0 ? null :
+                        Rhino.Geometry.Intersect.Intersection.RayShoot(candidates, new Ray3d(origin, Dir), 1);
+                    // Check every candidate at a rejected trim hit before stepping past that position.
+                    // Otherwise a hole in one face can hide a coincident, valid face.
+                    if (hits == null || hits.Length == 0 ||
+                        (rejectedPoint.HasValue && (hits[0].Point - rejectedPoint.Value) * Dir > 1E-7))
                     {
-                        SurfaceIndex = Voxels.VoxelList(XVoxel, YVoxel, ZVoxel);
+                        if (!rejectedPoint.HasValue) return false;
+                        Point3d next = rejectedPoint.Value + Dir * 1E-7;
+                        if (!next.IsValid || (next - origin) * Dir <= 0) return false;
+                        origin = next;
+                        candidates = geometry;
+                        candidateIds = surfaceIds;
+                        rejectedPoint = null;
+                        continue;
                     }
-                    catch (Exception)
+                    var hit = hits[0];
+                    if (hit.GeometryIndex < 0 || hit.GeometryIndex >= candidates.Count || !hit.Point.IsValid) return false;
+                    Brep brep = candidates[hit.GeometryIndex];
+                    if (hit.BrepFaceIndex < 0 || hit.BrepFaceIndex >= brep.Faces.Count) return false;
+                    BrepFace face = brep.Faces[hit.BrepFaceIndex];
+                    double hitU, hitV;
+                    if (face.ClosestPoint(hit.Point, out hitU, out hitV) &&
+                        face.IsPointOnFace(hitU, hitV) != PointFaceRelation.Exterior)
                     {
-                        //Rare floating point error on some computers... abandon the ray and start the next...
-                        //Explanation: This would never happen on my IBM T43P laptop, but happened 
-                        //consistently millions of function calls into the calculation on my 
-                        //ASUS K8N-DL based desktop computer. I believe it has something to do with some quirk of that system.
-                        //This try...catch statement is here in case this ever manifests on any user's computer. 
-                        //It is rare enough that this should not affect the accuracy of the calculation.
-                        t = new List<double> { 0.0f };
-                        X_PT = new List<Point3d> { default(Point3d) };
-                        u = 0;
-                        v = 0;
-                        Code = new List<int> { 0 };
-                        return false;
+                        u = hitU;
+                        v = hitV;
+                        Srf_ID = candidateIds == null ? hit.GeometryIndex : candidateIds[hit.GeometryIndex];
+                        X_PT[0] = hit.Point;
+                        // Rejected trim hits must not shorten the propagation distance.
+                        t[0] = Start.DistanceTo(hit.Point);
+                        return true;
                     }
 
-                    Point3d CP;
-                    Vector3d N;
-                    ComponentIndex CI;
-                    double MD = 0.0001;
-
-                    foreach (int index in SurfaceIndex)
+                    if (!rejectedPoint.HasValue)
                     {
-                        if (index == srf_origin1 || index == srf_origin2) continue;
-                        if (BrepList[index].ClosestPoint(P[0], out CP, out CI, out u, out v, MD, out N) && (CI.ComponentIndexType == ComponentIndexType.BrepFace))
-                        {
-                            if ((Math.Abs(P[0].X - CP.X) < 0.0001) && (Math.Abs(P[0].Y - CP.Y) < 0.0001) && (Math.Abs(P[0].Z - CP.Z) < 0.0001))
-                            {
-                                Srf_ID = index;
-                                X_PT = new List<Point3d> {P[0]};
-                                t = new List<double> {(double)(S_Origin.DistanceTo(X_PT[0]))};
-                                Code = new List<int>() { 0 };
-                                return true;
-                            }
-                        }
+                        rejectedPoint = hit.Point;
+                        candidates = new List<Brep>(geometry);
+                        candidateIds = new List<int>();
+                        for (int i = 0; i < geometry.Count; i++)
+                            candidateIds.Add(surfaceIds == null ? i : surfaceIds[i]);
                     }
-                    S_Origin = new Point3d(P[0]);
+                    candidates.RemoveAt(hit.GeometryIndex);
+                    candidateIds.RemoveAt(hit.GeometryIndex);
                 }
             }
 
@@ -1388,8 +1349,13 @@ namespace Pachyderm_Acoustic
 
             public void partition(List<Point3d> P, int SP_PARAM)
             {
+                // RayShoot provides surface IDs directly; partition only retains meter-space bounds.
+                BoundingBox bounds = BoundingBox.Empty;
+                foreach (Brep brep in BrepList) bounds.Union(brep.GetBoundingBox(true));
+                foreach (Point3d point in P) bounds.Union(point);
+                if (bounds.IsValid) bounds.Inflate(1); // Preserve the legacy one-meter margin.
+                sceneBounds = bounds;
                 Partitioned = true;
-                Voxels = new VoxelGridRC(this, P, SP_PARAM);
             }
 
             public override void partition(List<Hare.Geometry.Point> P, int SP_PARAM, int Max_Polys)
@@ -1400,7 +1366,7 @@ namespace Pachyderm_Acoustic
                 {
                     PTS.Add(new Point3d(PT.x, PT.y, PT.z));
                 }
-                Voxels = new VoxelGridRC(this, PTS, SP_PARAM);
+                partition(PTS, SP_PARAM);
             }
 
             public void partition(List<Hare.Geometry.Point> P)
@@ -1411,13 +1377,13 @@ namespace Pachyderm_Acoustic
                 {
                     PTS.Add(new Point3d(PT.x, PT.y, PT.z));
                 }
-                Voxels = new VoxelGridRC(this, PTS, UI.PachydermAc_PlugIn.VGDomain);
+                partition(PTS, 0);
             }
 
             public void partition(List<Point3d> P)
             {
                 Partitioned = true;
-                Voxels = new VoxelGridRC(this, P, UI.PachydermAc_PlugIn.VGDomain);
+                partition(P, 0);
             }
 
             public override string Scene_Type()
@@ -1448,8 +1414,9 @@ namespace Pachyderm_Acoustic
 
             public override bool PointsInScene(List<Hare.Geometry.Point> PTS)
             {
-                Point3d Max = Voxels.OverallBounds().Max;
-                Point3d Min = Voxels.OverallBounds().Min;
+                if (!Partitioned || !sceneBounds.IsValid) return false;
+                Point3d Max = sceneBounds.Max;
+                Point3d Min = sceneBounds.Min;
                 foreach (Hare.Geometry.Point P in PTS)
                 {
                     if (P.x < Min.X || P.x > Max.X || P.y < Min.Y || P.y > Max.Y || P.z < Min.Z || P.z > Max.Z) return false;
@@ -1556,14 +1523,14 @@ namespace Pachyderm_Acoustic
 
             public override Hare.Geometry.Point Max()
             {
-                if (this.Voxels == null) return null;
-                return Utilities.RCPachTools.RPttoHPt(Voxels.OverallBounds().Max);
+                if (!Partitioned || !sceneBounds.IsValid) return null;
+                return Utilities.RCPachTools.RPttoHPt(sceneBounds.Max);
             }
 
             public override Hare.Geometry.Point Min()
             {
-                if (this.Voxels == null) return null;
-                return Utilities.RCPachTools.RPttoHPt(Voxels.OverallBounds().Min);
+                if (!Partitioned || !sceneBounds.IsValid) return null;
+                return Utilities.RCPachTools.RPttoHPt(sceneBounds.Min);
             }
 
             public override double Sound_speed(Hare.Geometry.Point pt)

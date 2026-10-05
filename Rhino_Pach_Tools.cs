@@ -130,7 +130,7 @@ namespace Pachyderm_Acoustic
                 settings.LockedObjects = true;
                 settings.NormalObjects = true;
                 settings.VisibleFilter = true;
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep & Rhino.DocObjects.ObjectType.Surface & Rhino.DocObjects.ObjectType.Extrusion;
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep | Rhino.DocObjects.ObjectType.Surface | Rhino.DocObjects.ObjectType.Extrusion;
                 List<Rhino.DocObjects.RhinoObject> RC_List = new List<Rhino.DocObjects.RhinoObject>();
                 foreach (Rhino.DocObjects.RhinoObject RHobj in Rhino.RhinoDoc.ActiveDoc.Objects.GetObjectList(settings))
                 {
@@ -163,7 +163,7 @@ namespace Pachyderm_Acoustic
                 settings.LockedObjects = true;
                 settings.NormalObjects = true;
                 settings.VisibleFilter = true;
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep & Rhino.DocObjects.ObjectType.Surface & Rhino.DocObjects.ObjectType.Extrusion;
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep | Rhino.DocObjects.ObjectType.Surface | Rhino.DocObjects.ObjectType.Extrusion;
                 List<Rhino.DocObjects.RhinoObject> RC_List = new List<Rhino.DocObjects.RhinoObject>();
                 foreach (Rhino.DocObjects.RhinoObject RHobj in Rhino.RhinoDoc.ActiveDoc.Objects.GetObjectList(settings))
                 {

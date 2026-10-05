@@ -1140,7 +1140,7 @@ namespace Pachyderm_Acoustic
                 Scene Flex_Scene;
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0)
                 {
-                    RhCommon_Scene NScene = RCPachTools.GetNURBSScene(MediumProps.RelHumidity, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, EdgeFreq.Checked.Value);
+                    RhCommon_Scene NScene = RCPachTools.GetNURBSScene(MediumProps.RelHumidity, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, MediumProps.Edge_Frequency);
                     if (!NScene.Complete)
                     {
                         CancelCalc();
