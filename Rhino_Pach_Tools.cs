@@ -118,7 +118,7 @@ namespace Pachyderm_Acoustic
             /// </summary>
             /// <param nam``e="Rel_Humidity">in percent</param>
             /// <param name="AirTempC">in degrees C.</param>
-            /// <param name="AirPressurePa">in Pascals</param>
+            /// <param name="AirPressurePa">in hectopascals (hPa); parameter name retained for compatibility.</param>
             /// <param name="AirAttenMethod"></param>
             /// <param name="EdgeFreq">Use edge frequency correction?</param>
             /// <returns></returns>
@@ -151,7 +151,7 @@ namespace Pachyderm_Acoustic
             /// </summary>
             /// <param name="Rel_Humidity">in percent</param>
             /// <param name="AirTempC">in degrees C.</param>
-            /// <param name="AirPressurePa">in Pascals</param>
+            /// <param name="AirPressurePa">in hectopascals (hPa); parameter name retained for compatibility.</param>
             /// <param name="AirAttenMethod"></param>
             /// <param name="EdgeFreq">Use edge frequency correction?</param>
             /// <returns></returns>
