@@ -667,7 +667,7 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point> P = new List<Hare.Geometry.Point>();
                 P.AddRange(SPT);
 
-                Polygon_Scene PScene = Utilities.RCPachTools.Get_Poly_Scene(Env_Control.RelHumidity, false, Env_Control.Temp_Celsius, Env_Control.StaticPressure_kPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
+                Polygon_Scene PScene = Utilities.RCPachTools.Get_Poly_Scene(Env_Control.RelHumidity, false, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
 
                 if (PScene == null)
                 {
@@ -691,7 +691,11 @@ namespace Pachyderm_Acoustic
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0)
                 {
                     RhCommon_Scene NScene = Utilities.RCPachTools.GetNURBSScene(Env_Control.RelHumidity, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
-                    if (!NScene.Complete) return;
+                    if (NScene == null || !NScene.Complete)
+                    {
+                        Calculate.Enabled = true;
+                        return;
+                    }
                     NScene.partition(P, Pach_Properties.Instance.Spatial_Depth, Pach_Properties.Instance.Max_Polys_Per_Node);
                     Flex_Scene = NScene;
                 }
@@ -747,11 +751,10 @@ namespace Pachyderm_Acoustic
                     while (!RTA.IsCompleted) await Task.Delay(1500);
                     RT = RTA.GetResult() as SplitRayTracer;
 
-                    Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
-                    Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
-
                     if (RT != null)
                     {
+                        Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
+                        Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
                         Map[s_id] = (PachMapReceiver)RT.GetReceiver;
                     }
                     else
@@ -792,6 +795,13 @@ namespace Pachyderm_Acoustic
 
                 }
 
+                if (Map == null || Map.Length == 0)
+                {
+                    Receiver_Selection.MaxValue = 0;
+                    Calculate.Enabled = true;
+                    return;
+                }
+
                 if (Source != null)
                 {
                     SourceList.Populate(null, null, Map);
@@ -799,14 +809,7 @@ namespace Pachyderm_Acoustic
                     if (SavePath != null) Utilities.FileIO.Write_pachm(SavePath, Map);
                 }
 
-                if (Map != null)
-                {
-                    Create_Map(false);
-                }
-                else
-                {
-                    Receiver_Selection.MaxValue = Map[0].Count;
-                }
+                Create_Map(false);
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day!");
 
                 ///////
