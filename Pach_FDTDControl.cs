@@ -214,21 +214,6 @@ namespace Pachyderm_Acoustic
                 this.EigenFrequencies.SelectedIndexChanged += this.EigenFrequencies_SelectedIndexChanged;
                 DLE7.AddRow(label6, EigenFrequencies);
 
-                DynamicLayout DLE8 = new DynamicLayout();
-                Label label21 = new Label();
-                label21.Text = "Source SWL (dB, 63Hz-8kHz, comma sep.):";
-                this.SourceSWL_Input = new Eto.Forms.TextBox();
-                this.SourceSWL_Input.Text = "120,120,120,120,120,120,120,120";
-                this.CalcBandLoss = new Eto.Forms.Button();
-                this.CalcBandLoss.Text = "Calculate Band Loss";
-                this.CalcBandLoss.Click += this.CalcBandLoss_Click;
-                DLE8.AddRow(label21, SourceSWL_Input);
-                DLE8.AddRow(CalcBandLoss);
-                DLE8.Spacing = new Eto.Drawing.Size(8, 8);
-
-                this.BandLossResults = new Eto.Forms.ListBox();
-                this.BandLossResults.Height = 150;
-
                 DynamicLayout EigenLayout = new DynamicLayout();
                 EigenLayout.Spacing = new Eto.Drawing.Size(8, 8);
                 DLE1.Spacing = new Eto.Drawing.Size(8, 8);
@@ -242,7 +227,6 @@ namespace Pachyderm_Acoustic
                 EigenLayout.AddRow(Frequency_View);
                 DLE7.Spacing = new Eto.Drawing.Size(8, 8);
                 EigenLayout.AddRow(DLE7);
-                EigenLayout.AddRow(DLE8);
                 EigenLayout.AddRow(BandLossResults);
 
                 EigenTab.Content = EigenLayout;
@@ -1051,7 +1035,6 @@ namespace Pachyderm_Acoustic
                 Frequency_View.Plot.Add.VerticalLine(Chosenfreq, 3, ScottPlot.Colors.Black);
             }
 
-
             public void PopulateEigenFrequencies(Hare.Geometry.Point rec, double[] mag, double[] freq, string functiontype)
             {
                 MathNet.Numerics.Interpolation.CubicSpline CS = MathNet.Numerics.Interpolation.CubicSpline.InterpolateAkima(freq, mag);
@@ -1155,57 +1138,6 @@ namespace Pachyderm_Acoustic
                 Frequency_Selection.Value = Chosenfreq;
                 Freq_Max.Value = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
                 VisualPML.Checked = EigenPML.Checked;
-            }
-
-            private void CalcBandLoss_Click(object sender, EventArgs e)
-            {
-                if (result_signals == null || result_signals.Length == 0 || Receiver_Choice.SelectedIndex < 0)
-                {
-                    MessageBox.Show("Run a simulation first, and select a receiver.", "Band Loss", MessageBoxButtons.OK);
-                    return;
-                }
-
-                double[] SWL_Octave;
-                try
-                {
-                    SWL_Octave = SourceSWL_Input.Text.Split(',').Select(s => double.Parse(s.Trim())).ToArray();
-                }
-                catch
-                {
-                    MessageBox.Show("Enter 8 comma-separated octave band sound power levels (dB), e.g. 120,120,120,120,120,120,120,120.", "Band Loss", MessageBoxButtons.OK);
-                    return;
-                }
-
-                if (SWL_Octave.Length != 8)
-                {
-                    MessageBox.Show("Please enter exactly 8 values (one per octave band, 63 Hz to 8000 Hz).", "Band Loss", MessageBoxButtons.OK);
-                    return;
-                }
-
-                //Distribute octave-band power evenly across its 3 third-octave bands (energy sum, -10log10(3) per band)
-                //to give a matching reference spectrum for the 1/3-octave loss calculation.
-                double[] SWL_Third = new double[24];
-                for (int oct = 0; oct < 8; oct++)
-                {
-                    double perThird = SWL_Octave[oct] - 10 * Math.Log10(3);
-                    for (int third = 0; third < 3; third++) SWL_Third[oct * 3 + third] = perThird;
-                }
-
-                System.Numerics.Complex[] fdom = Audio.Pach_SP.FFT_General(result_signals[Receiver_Choice.SelectedIndex], 0);
-
-                double[] OctaveLoss = Utilities.AcousticalMath.Band_Loss(fdom, samplefrequency, SWL_Octave, false);
-                double[] ThirdOctaveLoss = Utilities.AcousticalMath.Band_Loss(fdom, samplefrequency, SWL_Third, true);
-
-                double[] octCenters = Utilities.AcousticalMath.OctaveCenters();
-                double[] thirdCenters = Utilities.AcousticalMath.ThirdOctaveCenters();
-
-                BandLossResults.Items.Clear();
-
-                for (int i = 0; i < OctaveLoss.Length; i++)
-                    BandLossResults.Items.Add(string.Format("Octave {0:0} Hz: Loss = {1:0.0} dB", octCenters[i], OctaveLoss[i]));
-
-                for (int i = 0; i < ThirdOctaveLoss.Length; i++)
-                    BandLossResults.Items.Add(string.Format("1/3 Octave {0:0} Hz: Loss = {1:0.0} dB", thirdCenters[i], ThirdOctaveLoss[i]));
             }
             #endregion
 
@@ -1993,25 +1925,6 @@ namespace Pachyderm_Acoustic
             }
 
             #region Helpers
-
-            private static void PrecomputeMaterialIIRFits(Environment.Scene scene, double sampleFrequency, double maxFrequency, int filterOrder)
-            {
-                if (scene == null) return;
-
-                HashSet<Environment.Material> seen = new HashSet<Environment.Material>();
-
-                foreach (Environment.Material mat in scene.AbsorptionValue)
-                {
-                    if (mat == null) continue;
-                    if (seen.Contains(mat)) continue;
-
-                    seen.Add(mat);
-
-                    // Warms rec_a/rec_b cache inside the material instance
-                    double[] fAxis;
-                    mat.Estimate_IIR_Coefficients(sampleFrequency, maxFrequency, out fAxis, filterOrder);
-                }
-            }
 
             private static async Task<bool> FitSceneMaterialsAsync(Environment.Scene scene, double maxFrequency)
             {
