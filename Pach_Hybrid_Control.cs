@@ -2639,7 +2639,7 @@ namespace Pachyderm_Acoustic
                     (int)(Math.Max(0, RR_tstart.Value) * 44.1),
                     (int)((Math.Max(0, RR_tstart.Value) + RR_Width.Value) * 44.1),
                     direct.ToArray(), images.ToArray(), rays.ToArray()).ToArray();
-                if (!levels.Any(level => level > 0 && !double.IsInfinity(level) && !double.IsNaN(level)))
+                if (!levels.Any(level => !double.IsInfinity(level) && !double.IsNaN(level)))
                 {
                     Hide_Receiver_Rose();
                     return;
