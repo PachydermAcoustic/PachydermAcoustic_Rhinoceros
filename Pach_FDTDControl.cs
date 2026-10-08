@@ -85,6 +85,18 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.CheckBox Scat_Dir_30;
             private Eto.Forms.CheckBox Scat_Dir_15;
             private Eto.Forms.CheckBox Scat_Dir_00;
+            private Eto.Forms.TabPage InsertionTab;
+            private Eto.Forms.NumericStepper IL_ChamberLength;
+            private Eto.Forms.NumericStepper IL_ChamberWidth;
+            private Eto.Forms.NumericStepper IL_ChamberHeight;
+            private Eto.Forms.NumericStepper IL_ApertureWidth;
+            private Eto.Forms.NumericStepper IL_ApertureHeight;
+            private Eto.Forms.NumericStepper IL_Time;
+            private Eto.Forms.DropDown IL_Limit;
+            private Eto.Forms.DropDown IL_Param_Select;
+            private Eto.Forms.Button CalculateInsertion;
+            private Eto.Forms.ListBox InsertionBandResults;
+            private ScottPlot.Eto.EtoPlot InsertionGraph;
             private Eto.Forms.CheckBox GroundPlane;
             private Eto.Forms.Button DeletePlane;
             private Eto.Forms.CheckBox EigenPML;
@@ -94,6 +106,10 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.TextBox SourceSWL_Input;
             private Eto.Forms.Button CalcBandLoss;
             private Eto.Forms.ListBox BandLossResults;
+
+            double[] IL_Frequency;
+            double[] IL_Direct;
+            double[] IL_Normalized;
 
             public PachTDNumericControl()
             {
@@ -127,6 +143,17 @@ namespace Pachyderm_Acoustic
                 this.Scat_Param_Select = new Eto.Forms.DropDown();
                 this.CalculateScattering = new Eto.Forms.Button();
                 this.ScatTab = new Eto.Forms.TabPage();
+                this.InsertionTab = new Eto.Forms.TabPage();
+                this.IL_ChamberLength = new Eto.Forms.NumericStepper();
+                this.IL_ChamberWidth = new Eto.Forms.NumericStepper();
+                this.IL_ChamberHeight = new Eto.Forms.NumericStepper();
+                this.IL_ApertureWidth = new Eto.Forms.NumericStepper();
+                this.IL_ApertureHeight = new Eto.Forms.NumericStepper();
+                this.IL_Time = new Eto.Forms.NumericStepper();
+                this.IL_Limit = new Eto.Forms.DropDown();
+                this.IL_Param_Select = new Eto.Forms.DropDown();
+                this.CalculateInsertion = new Eto.Forms.Button();
+                this.InsertionBandResults = new Eto.Forms.ListBox();
                 this.EdgeFreq = new Eto.Forms.CheckBox();
                 this.Freq_Max = new Eto.Forms.NumericStepper();
                 this.Frequency_Selection = new Eto.Forms.NumericStepper();
@@ -233,7 +260,7 @@ namespace Pachyderm_Acoustic
 
                 ////Scattering Tab
                 this.TabsPrime.Pages.Add(this.ScatTab);
-                this.TabsPrime.MouseUp += this.ScatteringLab_Focus;
+                this.TabsPrime.MouseUp += this.Lab_Focus;
                 this.ScatTab.Text = "Scattering Analysis";
                 this.DirBox.Text = "Direction";
 
@@ -359,6 +386,114 @@ namespace Pachyderm_Acoustic
                 ScatLyt.AddRow(scatcolorlayout);
                 ScatLyt.Spacing = new Eto.Drawing.Size(8, 8);
                 ScatTab.Content = ScatLyt;
+
+                ////Insertion Loss Tab
+                this.TabsPrime.Pages.Add(this.InsertionTab);
+                this.InsertionTab.Text = "Insertion Loss";
+
+                DynamicLayout ILCtrls = new DynamicLayout();
+                ILCtrls.Spacing = new Eto.Drawing.Size(8, 8);
+
+                Label ILWarning = new Label();
+                ILWarning.Text = "Geometric insertion loss (FVM). Material-based through-transmission is not implemented.";
+                ILWarning.TextColor = Eto.Drawing.Colors.Red;
+                ILCtrls.AddRow(ILWarning);
+
+                Label il1 = new Label();
+                il1.Text = "Chamber Length - each side (meters)";
+                IL_ChamberLength.DecimalPlaces = 2;
+                IL_ChamberLength.MinValue = 0.5;
+                IL_ChamberLength.MaxValue = 50;
+                IL_ChamberLength.Value = 3.5;
+                IL_ChamberLength.ValueChanged += InsertionGuideParametersChanged;
+                ILCtrls.AddRow(il1, null, IL_ChamberLength);
+
+                Label il2 = new Label();
+                il2.Text = "Chamber Width (meters)";
+                IL_ChamberWidth.DecimalPlaces = 2;
+                IL_ChamberWidth.MinValue = 0.5;
+                IL_ChamberWidth.MaxValue = 50;
+                IL_ChamberWidth.Value = 3.0;
+                IL_ChamberWidth.ValueChanged += InsertionGuideParametersChanged;
+                ILCtrls.AddRow(il2, null, IL_ChamberWidth);
+
+                Label il3 = new Label();
+                il3.Text = "Chamber Height (meters)";
+                IL_ChamberHeight.DecimalPlaces = 2;
+                IL_ChamberHeight.MinValue = 0.5;
+                IL_ChamberHeight.MaxValue = 50;
+                IL_ChamberHeight.Value = 2.5;
+                IL_ChamberHeight.ValueChanged += InsertionGuideParametersChanged;
+                ILCtrls.AddRow(il3, null, IL_ChamberHeight);
+
+                Label il4 = new Label();
+                il4.Text = "Aperture Width (meters)";
+                IL_ApertureWidth.DecimalPlaces = 2;
+                IL_ApertureWidth.MinValue = 0.1;
+                IL_ApertureWidth.MaxValue = 20;
+                IL_ApertureWidth.Value = 1.2;
+                IL_ApertureWidth.ValueChanged += InsertionGuideParametersChanged;
+                ILCtrls.AddRow(il4, null, IL_ApertureWidth);
+
+                Label il5 = new Label();
+                il5.Text = "Aperture Height (meters)";
+                IL_ApertureHeight.DecimalPlaces = 2;
+                IL_ApertureHeight.MinValue = 0.1;
+                IL_ApertureHeight.MaxValue = 20;
+                IL_ApertureHeight.Value = 1.2;
+                IL_ApertureHeight.ValueChanged += InsertionGuideParametersChanged;
+                ILCtrls.AddRow(il5, null, IL_ApertureHeight);
+
+                Label il6 = new Label();
+                il6.Text = "Calculation Time (ms)";
+                IL_Time.MinValue = 100;
+                IL_Time.MaxValue = 10000;
+                IL_Time.Value = 1500;
+                ILCtrls.AddRow(il6, null, IL_Time);
+
+                Label il7 = new Label();
+                il7.Text = "Calculate up to:";
+                IL_Limit.Items.Add("63 Hz. Octave Band");
+                IL_Limit.Items.Add("125 Hz. Octave Band");
+                IL_Limit.Items.Add("250 Hz. Octave Band");
+                IL_Limit.Items.Add("500 Hz. Octave Band");
+                IL_Limit.Items.Add("1000 Hz. Octave Band");
+                IL_Limit.Items.Add("2000 Hz. Octave Band");
+                IL_Limit.Items.Add("4000 Hz. Octave Band");
+                IL_Limit.Items.Add("8000 Hz. Octave Band");
+                IL_Limit.SelectedIndex = 3;
+                ILCtrls.AddRow(il7, null, IL_Limit);
+
+                Label il8 = new Label();
+                il8.Text = "Display";
+                IL_Param_Select.Items.Add("Insertion Loss");
+                IL_Param_Select.Items.Add("Normalized Transfer Loss");
+                IL_Param_Select.SelectedIndex = 0;
+                IL_Param_Select.SelectedIndexChanged += Insertion_Output_Changed;
+                ILCtrls.AddRow(il8, null, IL_Param_Select);
+
+                CalculateInsertion.Text = "Calculate";
+                CalculateInsertion.Width = 250;
+                CalculateInsertion.Click += CalculateInsertionLoss_Click;
+
+                DynamicLayout IL_Panel = new DynamicLayout();
+                IL_Panel.AddRow(ILCtrls);
+                IL_Panel.AddRow(CalculateInsertion);
+
+                InsertionGraph = new ScottPlot.Eto.EtoPlot();
+                InsertionGraph.Size = new Eto.Drawing.Size(-1, 250);
+                InsertionGraph.Plot.Title("Insertion Loss", 10);
+                InsertionGraph.Plot.XLabel("Frequency (Hz.)", 10);
+                InsertionGraph.Plot.YLabel("Insertion Loss (dB)", 10);
+
+                InsertionBandResults.Height = 180;
+
+                DynamicLayout ILLyt = new DynamicLayout();
+                ILLyt.Spacing = new Eto.Drawing.Size(8, 8);
+                ILLyt.AddRow(IL_Panel);
+                ILLyt.AddRow(InsertionGraph);
+                ILLyt.AddRow(InsertionBandResults);
+                InsertionTab.Content = ILLyt;
 
                 ////Visualization Tab
                 this.TabsPrime.Pages.Add(this.VisTab);
@@ -520,6 +655,18 @@ namespace Pachyderm_Acoustic
                 Scat_Dir_30.Dispose();
                 Scat_Dir_15.Dispose();
                 Scat_Dir_00.Dispose();
+                InsertionTab.Dispose();
+                IL_ChamberLength.Dispose();
+                IL_ChamberWidth.Dispose();
+                IL_ChamberHeight.Dispose();
+                IL_ApertureWidth.Dispose();
+                IL_ApertureHeight.Dispose();
+                IL_Time.Dispose();
+                IL_Limit.Dispose();
+                IL_Param_Select.Dispose();
+                CalculateInsertion.Dispose();
+                InsertionBandResults.Dispose();
+                InsertionGraph.Dispose();
                 GroundPlane.Dispose();
                 DeletePlane.Dispose();
                 EigenPML.Dispose();
@@ -1878,29 +2025,384 @@ namespace Pachyderm_Acoustic
                 ScatteringGraph.Invalidate();
             }
 
+            private async void CalculateInsertionLoss_Click(object sender, EventArgs e)
+            {
+                double length = (double)IL_ChamberLength.Value;
+                double width = (double)IL_ChamberWidth.Value;
+                double height = (double)IL_ChamberHeight.Value;
+                double apertureWidth = (double)IL_ApertureWidth.Value;
+                double apertureHeight = (double)IL_ApertureHeight.Value;
+                double tmax = (double)IL_Time.Value;
+
+                if (apertureWidth >= width || apertureHeight >= height)
+                {
+                    MessageBox.Show("The aperture must be smaller than the chamber wall in both dimensions.", "Insertion Loss", MessageBoxButtons.OK);
+                    return;
+                }
+
+                Polygon_Scene specimen = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+
+                if (specimen == null || !specimen.Complete)
+                {
+                    MessageBox.Show("No valid specimen geometry was found. Visible Pachyderm geometry should be positioned within the aperture around X = 0.", "Insertion Loss", MessageBoxButtons.OK);
+                    return;
+                }
+
+                double highestCenter = 62.5 * Math.Pow(2, IL_Limit.SelectedIndex);
+                double fmax = highestCenter * Utilities.Numerics.rt2;
+
+                if (!await FitSceneMaterialsAsync(specimen, fmax)) return;
+
+                CalculateInsertion.Enabled = false;
+
+                try
+                {
+                    Point source = new Point(-0.72 * length, -0.18 * width, 0.21 * height);
+
+                    Point[] sourceReceivers = new Point[]
+                    {
+            new Point(-0.20 * length, -0.27 * width, -0.23 * height),
+            new Point(-0.31 * length,  0.23 * width,  0.16 * height),
+            new Point(-0.42 * length, -0.07 * width,  0.30 * height),
+            new Point(-0.53 * length,  0.30 * width, -0.11 * height),
+            new Point(-0.64 * length, -0.24 * width,  0.04 * height),
+            new Point(-0.77 * length,  0.07 * width, -0.28 * height),
+            new Point(-0.36 * length,  0.04 * width, -0.04 * height),
+            new Point(-0.59 * length,  0.17 * width,  0.26 * height)
+                    };
+
+                    Point[] receivingReceivers = new Point[]
+                    {
+            new Point(0.22 * length,  0.25 * width, -0.20 * height),
+            new Point(0.33 * length, -0.21 * width,  0.19 * height),
+            new Point(0.44 * length,  0.08 * width,  0.31 * height),
+            new Point(0.55 * length, -0.29 * width, -0.13 * height),
+            new Point(0.66 * length,  0.23 * width,  0.06 * height),
+            new Point(0.76 * length, -0.06 * width, -0.27 * height),
+            new Point(0.38 * length, -0.04 * width, -0.03 * height),
+            new Point(0.61 * length, -0.16 * width,  0.25 * height)
+                    };
+
+                    Point[] receivers = sourceReceivers.Concat(receivingReceivers).ToArray();
+
+                    Polygon_Scene BuildLabScene(Polygon_Scene installed)
+                    {
+                        List<Point[][]> model = new List<Point[][]>();
+                        List<Environment.Material> materials = new List<Environment.Material>();
+                        List<Environment.Scattering> scattering = new List<Environment.Scattering>();
+                        List<double[]> transmission = new List<double[]>();
+                        List<bool> curved = new List<bool>();
+                        List<double[][]> kurvature = new List<double[][]>();
+                        List<Vector[][]> frames = new List<Vector[][]>();
+
+                        Environment.Material wallMaterial = new Environment.Basic_Material(new double[8] { 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02 });
+                        Environment.Scattering wallScattering = new Environment.Lambert_Scattering(new double[8]);
+                        double[] wallTransmission = new double[8];
+
+                        void AddFace(Point[] face, Environment.Material material, Environment.Scattering scat, double[] trans)
+                        {
+                            Vector axis0 = face[1] - face[0];
+                            axis0.Normalize();
+
+                            Vector normal = Hare.Geometry.Hare_math.Cross(axis0, face[2] - face[0]);
+                            normal.Normalize();
+
+                            Vector axis1 = Hare.Geometry.Hare_math.Cross(normal, axis0);
+                            axis1.Normalize();
+
+                            model.Add(new Point[][] { face });
+                            materials.Add(material);
+                            scattering.Add(scat);
+                            transmission.Add(trans);
+                            curved.Add(false);
+                            kurvature.Add(new double[][] { new double[2] });
+                            frames.Add(new Vector[][] { new Vector[] { axis0, axis1 } });
+                        }
+
+                        double hw = width / 2;
+                        double hh = height / 2;
+                        double haw = apertureWidth / 2;
+                        double hah = apertureHeight / 2;
+
+                        //Outer shell
+                        AddFace(new Point[] { new Point(-length, -hw, -hh), new Point(length, -hw, -hh), new Point(length, hw, -hh), new Point(-length, hw, -hh) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(-length, -hw, hh), new Point(-length, hw, hh), new Point(length, hw, hh), new Point(length, -hw, hh) }, wallMaterial, wallScattering, wallTransmission);
+
+                        AddFace(new Point[] { new Point(-length, -hw, -hh), new Point(-length, -hw, hh), new Point(length, -hw, hh), new Point(length, -hw, -hh) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(-length, hw, -hh), new Point(length, hw, -hh), new Point(length, hw, hh), new Point(-length, hw, hh) }, wallMaterial, wallScattering, wallTransmission);
+
+                        AddFace(new Point[] { new Point(-length, -hw, -hh), new Point(-length, hw, -hh), new Point(-length, hw, hh), new Point(-length, -hw, hh) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(length, -hw, -hh), new Point(length, -hw, hh), new Point(length, hw, hh), new Point(length, hw, -hh) }, wallMaterial, wallScattering, wallTransmission);
+
+                        //Vertical partition surrounding the aperture
+                        AddFace(new Point[] { new Point(0, -hw, -hh), new Point(0, -haw, -hh), new Point(0, -haw, hh), new Point(0, -hw, hh) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(0, haw, -hh), new Point(0, hw, -hh), new Point(0, hw, hh), new Point(0, haw, hh) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(0, -haw, -hh), new Point(0, haw, -hh), new Point(0, haw, -hah), new Point(0, -haw, -hah) }, wallMaterial, wallScattering, wallTransmission);
+                        AddFace(new Point[] { new Point(0, -haw, hah), new Point(0, haw, hah), new Point(0, haw, hh), new Point(0, -haw, hh) }, wallMaterial, wallScattering, wallTransmission);
+
+                        if (installed != null)
+                        {
+                            int polyCount = Math.Min(installed.Hare_Data.Polygon_Count, installed.AbsorptionValue.Count);
+
+                            for (int i = 0; i < polyCount; i++)
+                            {
+                                Hare.Geometry.Polygon poly = installed.Hare_Data.Polys[i];
+                                Point[] face = new Point[poly.VertextCT];
+
+                                for (int j = 0; j < face.Length; j++)
+                                    face[j] = new Point(poly.Points[j].x, poly.Points[j].y, poly.Points[j].z);
+
+                                AddFace(face, installed.AbsorptionValue[i], installed.ScatteringValue[i], installed.TransmissionValue[i]);
+                            }
+                        }
+
+                        Polygon_Scene scene = new Polygon_Scene(Medium.Temp_Celsius, Medium.RelHumidity, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency, true);
+                        scene.Construct(model.ToArray(), materials, scattering, transmission, curved.ToArray(), kurvature.ToArray(), frames.ToArray());
+                        return scene;
+                    }
+
+                    (double[][] recordings, double sampleFrequency) RunLab(Polygon_Scene scene)
+                    {
+                        Source[] src = new Source[]
+                        {
+                new GeodesicSource(new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 }, source, 0, false)
+                        };
+
+                        Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse, fmax, 1, src);
+                        Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(receivers);
+
+                        Numeric.TimeDomain.Acoustic_Compact_FDTD FVM = new Numeric.TimeDomain.Acoustic_Compact_FDTD(scene, ref SD, ref Mic, fmax, tmax, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, false);
+
+                        FVM.RuntoCompletion();
+                        Mic.reset();
+
+                        double[][] stored = Mic.Recordings()[0];
+                        double[][] copy = new double[stored.Length][];
+                        for (int i = 0; i < stored.Length; i++) copy[i] = stored[i].Clone() as double[];
+
+                        return (copy, FVM.SampleFrequency);
+                    }
+
+                    Rhino.RhinoApp.CommandPrompt = "Insertion Loss: calculating open aperture reference...";
+
+                    Polygon_Scene openScene = BuildLabScene(null);
+                    (double[][] openSignals, double fsOpen) = RunLab(openScene);
+
+                    openScene = null;
+
+                    //The FVM grid is large. Do not retain the open-reference grid while
+                    //constructing the installed case.
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+
+                    Rhino.RhinoApp.CommandPrompt = "Insertion Loss: calculating installed specimen...";
+
+                    Polygon_Scene installedScene = BuildLabScene(specimen);
+                    (double[][] installedSignals, double fsInstalled) = RunLab(installedScene);
+
+                    if (Math.Abs(fsOpen - fsInstalled) > fsOpen * 1E-6)
+                        throw new InvalidOperationException("Open and installed laboratory grids produced different sample frequencies.");
+
+                    int fftLength = 1;
+                    int signalLength = Math.Max(openSignals.Max(s => s.Length), installedSignals.Max(s => s.Length));
+                    while (fftLength < signalLength) fftLength <<= 1;
+
+                    int maxBin = Math.Min(fftLength / 2 - 1, (int)Math.Floor(fmax * fftLength / fsOpen));
+
+                    double[] sourceOpen = new double[maxBin + 1];
+                    double[] sourceInstalled = new double[maxBin + 1];
+                    double[] receiveOpen = new double[maxBin + 1];
+                    double[] receiveInstalled = new double[maxBin + 1];
+
+                    void AddEnergy(double[][] signals, double[] sourceEnergy, double[] receiveEnergy)
+                    {
+                        for (int m = 0; m < signals.Length; m++)
+                        {
+                            double[] signal = new double[fftLength];
+                            Array.Copy(signals[m], signal, signals[m].Length);
+
+                            System.Numerics.Complex[] spectrum = Audio.Pach_SP.FFT_General(signal, 0);
+
+                            for (int f = 1; f <= maxBin; f++)
+                            {
+                                double e_= spectrum[f].Magnitude * spectrum[f].Magnitude;
+
+                                if (m < sourceReceivers.Length) sourceEnergy[f] += e_;
+                                else receiveEnergy[f] += e_;
+                            }
+                        }
+
+                        for (int f = 1; f <= maxBin; f++)
+                        {
+                            sourceEnergy[f] /= sourceReceivers.Length;
+                            receiveEnergy[f] /= receivingReceivers.Length;
+                        }
+                    }
+
+                    AddEnergy(openSignals, sourceOpen, receiveOpen);
+                    AddEnergy(installedSignals, sourceInstalled, receiveInstalled);
+
+                    IL_Frequency = new double[maxBin];
+                    IL_Direct = new double[maxBin];
+                    IL_Normalized = new double[maxBin];
+
+                    const double floor = 1E-300;
+
+                    for (int f = 1; f <= maxBin; f++)
+                    {
+                        int i = f - 1;
+
+                        IL_Frequency[i] = f * fsOpen / fftLength;
+
+                        double ro = Math.Max(receiveOpen[f], floor);
+                        double ri = Math.Max(receiveInstalled[f], floor);
+                        double so = Math.Max(sourceOpen[f], floor);
+                        double si = Math.Max(sourceInstalled[f], floor);
+
+                        IL_Direct[i] = 10 * Math.Log10(ro / ri);
+                        IL_Normalized[i] = 10 * Math.Log10((ro * si) / (ri * so));
+                    }
+
+                    (double insertion, double normalized) BandResult(double center, double edgeFactor)
+                    {
+                        double low = center / edgeFactor;
+                        double high = center * edgeFactor;
+
+                        double ro = 0, ri = 0, so = 0, si = 0;
+
+                        for (int f = 1; f <= maxBin; f++)
+                        {
+                            double frequency = f * fsOpen / fftLength;
+                            if (frequency < low || frequency >= high) continue;
+
+                            ro += receiveOpen[f];
+                            ri += receiveInstalled[f];
+                            so += sourceOpen[f];
+                            si += sourceInstalled[f];
+                        }
+
+                        if (high > fmax * 1.001 || ro <= 0 || ri <= 0 || so <= 0 || si <= 0)
+                            return (double.NaN, double.NaN);
+
+                        return
+                        (
+                            10 * Math.Log10(ro / ri),
+                            10 * Math.Log10((ro * si) / (ri * so))
+                        );
+                    }
+
+                    InsertionBandResults.Items.Clear();
+
+                    double[] octaves = Utilities.AcousticalMath.OctaveCenters();
+                    for (int i = 0; i < octaves.Length; i++)
+                    {
+                        (double insertion, double normalized) result = BandResult(octaves[i], Math.Sqrt(2));
+                        if (double.IsNaN(result.insertion)) continue;
+
+                        InsertionBandResults.Items.Add(string.Format("Octave {0:0} Hz: IL = {1:0.0} dB   Transfer = {2:0.0} dB", octaves[i], result.insertion, result.normalized));
+                    }
+
+                    double thirdEdge = Math.Pow(2, 1.0 / 6.0);
+                    double[] thirds = Utilities.AcousticalMath.ThirdOctaveCenters();
+
+                    for (int i = 0; i < thirds.Length; i++)
+                    {
+                        (double insertion, double normalized) result = BandResult(thirds[i], thirdEdge);
+                        if (double.IsNaN(result.insertion)) continue;
+
+                        InsertionBandResults.Items.Add(string.Format("1/3 Octave {0:0} Hz: IL = {1:0.0} dB   Transfer = {2:0.0} dB", thirds[i], result.insertion, result.normalized));
+                    }
+
+                    Update_Insertion_Graph();
+                    Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
+                    Rhino.RhinoApp.CommandPrompt = "Insertion Loss calculation complete.";
+                }
+                catch (Exception ex)
+                {
+                    Rhino.RhinoApp.WriteLine(ex.ToString());
+                    MessageBox.Show("Insertion loss calculation failed:\n" + ex.Message, "Insertion Loss", MessageBoxButtons.OK);
+                }
+                finally
+                {
+                    CalculateInsertion.Enabled = true;
+                }
+            }
+
+            private void Insertion_Output_Changed(object sender, EventArgs e)
+            {
+                Update_Insertion_Graph();
+            }
+
+            private void Update_Insertion_Graph()
+            {
+                if (IL_Frequency == null || IL_Direct == null || IL_Frequency.Length == 0) return;
+
+                double[] values = IL_Param_Select.SelectedIndex == 1 ? IL_Normalized : IL_Direct;
+
+                InsertionGraph.Plot.Clear();
+                InsertionGraph.Plot.Title(IL_Param_Select.SelectedIndex == 1 ? "Normalized Transfer Loss" : "Insertion Loss", 10);
+                InsertionGraph.Plot.XLabel("Frequency (Hz.)", 10);
+                InsertionGraph.Plot.YLabel("Loss (dB)", 10);
+
+                ScottPlot.Plottables.Scatter curve = InsertionGraph.Plot.Add.Scatter(IL_Frequency, values, ScottPlot.Colors.Red);
+                curve.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
+
+                InsertionGraph.Plot.Axes.AutoScale();
+                InsertionGraph.Invalidate();
+            }
+
             private void Update_LabGuides()
             {
                 c.labguide = true;
                 c.hemianechoic = (Analysis_Technique.SelectedIndex == 0);
                 c.radius = (double)this.ScatteringRadius.Value;
                 c.depth = (double)this.Sample_Depth.Value;
+                c.insertionguide = false;
             }
 
-            private void ScatteringLab_Focus(object sender, EventArgs e)
+            private void Update_InsertionGuides()
+            {
+                c.labguide = false;
+                c.insertionguide = true;
+                c.chamberlength = (double)IL_ChamberLength.Value;
+                c.chamberwidth = (double)IL_ChamberWidth.Value;
+                c.chamberheight = (double)IL_ChamberHeight.Value;
+                c.aperturewidth = (double)IL_ApertureWidth.Value;
+                c.apertureheight = (double)IL_ApertureHeight.Value;
+            }
+
+            private void InsertionGuideParametersChanged(object sender, EventArgs e)
+            {
+                if (TabsPrime.SelectedPage != InsertionTab) return;
+                Update_InsertionGuides();
+                Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
+            }
+
+            private void Lab_Focus(object sender, EventArgs e)
             {
                 if (TabsPrime.SelectedPage == ScatTab)
                 {
                     c.Enabled = true;
                     c.labguide = true;
+                    c.insertionguide = false;
                     Update_LabGuides();
+                }
+                else if (TabsPrime.SelectedPage == InsertionTab)
+                {
+                    c.Enabled = true;
+                    c.labguide = false;
+                    c.insertionguide = true;
+                    Update_InsertionGuides();
                 }
                 else
                 {
                     c.Enabled = false;
                     c.labguide = false;
+                    c.insertionguide = false;
                 }
-            }
 
+                Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
+            }
             private void LabGuideParametersChanged(object sender, EventArgs e)
             {
                 Update_LabGuides();

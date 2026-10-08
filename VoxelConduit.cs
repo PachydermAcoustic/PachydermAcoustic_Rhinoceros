@@ -40,6 +40,13 @@ namespace Pachyderm_Acoustic
             public double depth = 0;
             static CellConduit instance = null;
 
+            public bool insertionguide = false;
+            public double chamberlength = 3.5;
+            public double chamberwidth = 3.0;
+            public double chamberheight = 2.5;
+            public double aperturewidth = 1.2;
+            public double apertureheight = 1.2;
+
             private CellConduit()
             {
                 DisplayMesh = new List<Mesh>();
@@ -83,6 +90,50 @@ namespace Pachyderm_Acoustic
                                     e.Display.DrawBox(new BoundingBox(new Point3d(-2 * radius, -2 * radius, 0), new Point3d(2 * radius, 2 * radius, 1.2 * radius + depth)), System.Drawing.Color.Blue, 2);
                                     e.Display.DrawBox(new BoundingBox(new Point3d(-2 * radius - 1, -2 * radius - 1, -1), new Point3d(2 * radius + 1, 2 * radius + 1, 1.2 * radius + 1 + depth)), System.Drawing.Color.Black, 2);
                                 }
+                            }
+                            finally
+                            {
+                                e.Display.PopModelTransform();
+                            }
+                        }
+
+                        if (insertionguide)
+                        {
+                            e.Display.PushModelTransform(Transform.Scale(Point3d.Origin, 1.0 / Utilities.RCPachTools.GetModelToMetersScale(e.RhinoDoc)));
+                            try
+                            {
+                                double l = chamberlength;
+                                double w = chamberwidth;
+                                double h = chamberheight;
+                                double aw = System.Math.Min(aperturewidth, w);
+                                double ah = System.Math.Min(apertureheight, h);
+
+                                double hw = w / 2;
+                                double hh = h / 2;
+                                double haw = aw / 2;
+                                double hah = ah / 2;
+
+                                e.Display.DrawBox(new BoundingBox(new Point3d(-l, -hw, -hh), new Point3d(0, hw, hh)), System.Drawing.Color.Blue, 2);
+                                e.Display.DrawBox(new BoundingBox(new Point3d(0, -hw, -hh), new Point3d(l, hw, hh)), System.Drawing.Color.Blue, 2);
+
+                                Point3d[] partition = new Point3d[] {new Point3d(0, -hw, -hh), new Point3d(0, hw, -hh), new Point3d(0, hw, hh), new Point3d(0, -hw, hh)};
+                                Point3d[] aperture = new Point3d[] {new Point3d(0, -haw, -hah), new Point3d(0, haw, -hah), new Point3d(0, haw, hah), new Point3d(0, -haw, hah)};
+
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    e.Display.DrawLine(partition[i], partition[(i + 1) % 4], System.Drawing.Color.Black, 2);
+                                    e.Display.DrawLine(aperture[i], aperture[(i + 1) % 4], System.Drawing.Color.Green, 4);
+                                }
+
+                                Point3d source = new Point3d(-0.72 * l, -0.18 * w, 0.21 * h);
+
+                                e.Display.DrawDot(source, "Source");
+                                e.Display.DrawArrow(new Line(source, source + new Vector3d(0.25 * l, 0, 0)), System.Drawing.Color.Red);
+
+                                e.Display.DrawDot(new Point3d(-0.5 * l, 0, 0), "Source Chamber");
+                                e.Display.DrawDot(new Point3d(0.5 * l, 0, 0), "Receiving Chamber");
+
+                                e.Display.DrawBox(new BoundingBox(new Point3d(0.15 * l, -0.35 * w, -0.35 * h), new Point3d(0.85 * l, 0.35 * w, 0.35 * h)), System.Drawing.Color.Green, 1);
                             }
                             finally
                             {
