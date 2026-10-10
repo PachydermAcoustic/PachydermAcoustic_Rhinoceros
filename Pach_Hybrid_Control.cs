@@ -1432,31 +1432,42 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoApp.WriteLine("Calculation has been completed. Have a nice day.");
             }
 
+            private bool updatingAnalysis;
+
             private void OpenAnalysis()
             {
-                bool third = Direct_Data != null && Direct_Data.Length > 0 && Direct_Data[0] != null && Direct_Data[0].ThirdOctave;
-                double[] centers = third ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
-                if (ReferencePressure != null && (Ref_Schroeder == null || Ref_Schroeder.Length != centers.Length + 1)) RebuildReference();
-                foreach (var selector in new DropDown[] { Graph_Octave, Graph_Aur_Octave })
+                bool wasUpdating = updatingAnalysis;
+                updatingAnalysis = true;
+                try
                 {
-                    if (selector.Items.Count == centers.Length + 1) continue;
-                    selector.Items.Clear();
-                    foreach (double center in centers) selector.Items.Add(center.ToString(System.Globalization.CultureInfo.InvariantCulture) + " Hz.");
-                    selector.Items.Add("Summation: All Bands");
-                    selector.SelectedIndex = centers.Length;
-                }
-
-                IS_Path_Box.Clear();
-
-                if (IS_Data != null)
-                {
-                    if (IS_Data != null && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
+                    bool third = Direct_Data != null && Direct_Data.Length > 0 && Direct_Data[0] != null && Direct_Data[0].ThirdOctave;
+                    double[] centers = third ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
+                    if (ReferencePressure != null && (Ref_Schroeder == null || Ref_Schroeder.Length != centers.Length + 1)) RebuildReference();
+                    foreach (var selector in new DropDown[] { Graph_Octave, Graph_Aur_Octave })
                     {
-                        List<int> srcs = SourceList.SelectedSources();
-                        if (srcs.Count == 0) return;
-                        IS_Path_Box.Populate(IS_Data, srcs, Receiver_Choice.SelectedIndex);
-                        PathCount.Text = string.Format("{0} Deterministic Reflections", IS_Path_Box.Count);
+                        if (selector.Items.Count == centers.Length + 1) continue;
+                        selector.Items.Clear();
+                        foreach (double center in centers) selector.Items.Add(center.ToString(System.Globalization.CultureInfo.InvariantCulture) + " Hz.");
+                        selector.Items.Add("Summation: All Bands");
+                        selector.SelectedIndex = centers.Length;
                     }
+
+                    IS_Path_Box.Clear();
+
+                    if (IS_Data != null)
+                    {
+                        if (IS_Data != null && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
+                        {
+                            List<int> srcs = SourceList.SelectedSources();
+                            if (srcs.Count == 0) return;
+                            IS_Path_Box.Populate(IS_Data, srcs, Receiver_Choice.SelectedIndex);
+                            PathCount.Text = string.Format("{0} Deterministic Reflections", IS_Path_Box.Count);
+                        }
+                    }
+                }
+                finally
+                {
+                    updatingAnalysis = wasUpdating;
                 }
             }
             #endregion
@@ -2356,6 +2367,7 @@ namespace Pachyderm_Acoustic
 
             private void Update_Graph(object sender, EventArgs e)
             {
+                if (updatingAnalysis) return;
                 // The compact parameter table also updates when another graph tab is selected.
                 Update_Parameters();
                 if (analysis_tabs.SelectedIndex == 0)
@@ -2369,6 +2381,7 @@ namespace Pachyderm_Acoustic
                         REC_ID = Receiver_Choice.SelectedIndex;
 
                         int OCT_ID = Graph_Octave.SelectedIndex;
+                        if (OCT_ID < 0) return;
                         Analysis_View.Plot.Title("Logarithmic Energy Time Curve");
                         Analysis_View.Plot.XLabel("Time (seconds)", 10);
                         Analysis_View.Plot.YLabel("Sound Pressure Level (dB)", 10);
@@ -2593,6 +2606,7 @@ namespace Pachyderm_Acoustic
                     }
                     catch (Exception x)
                     {
+                        Rhino.RhinoApp.WriteLine("Analysis graph update failed:\n" + x.ToString());
                         Eto.Forms.MessageBox.Show(x.Message);
                         return;
                     }
@@ -2610,6 +2624,7 @@ namespace Pachyderm_Acoustic
                         REC_ID = Receiver_Choice.SelectedIndex;
 
                         int OCT_ID = Graph_Aur_Octave.SelectedIndex;
+                        if (OCT_ID < 0) return;
                         Auralization_View.Plot.Title("Logarithmic Energy Time Curve");
                         Auralization_View.Plot.XLabel("Time (seconds)", 10);
                         Auralization_View.Plot.YLabel("Sound Pressure Level (dB)", 10);
