@@ -1031,6 +1031,8 @@ namespace Pachyderm_Acoustic
 
                         ScatteringData.Add(new Lambert_Scattering(Scat));
                         TransmissionData.Add(Transparency);
+                        TransmissionData_Octave.Add(TransmissionSpectrum(Transparency, false));
+                        TransmissionData_ThirdOctave.Add(TransmissionSpectrum(Transparency, true));
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
                         {
@@ -1124,6 +1126,8 @@ namespace Pachyderm_Acoustic
 
                         ScatteringData.Add(new Lambert_Scattering(Scat));
                         TransmissionData.Add(Transmission);
+                        TransmissionData_Octave.Add(TransmissionSpectrum(Transmission, false));
+                        TransmissionData_ThirdOctave.Add(TransmissionSpectrum(Transmission, true));
                         bool Trans = false;
                         for (int t_oct = 0; t_oct < 8; t_oct++)
                         {
@@ -1173,12 +1177,12 @@ namespace Pachyderm_Acoustic
 
             public override void Scatter_Late(ref OctaveRay Ray, ref Queue<OctaveRay> Rays, ref Random rand, double cos_theta, double u, double v, bool Transmission = false)
             {
-                ScatteringData[Ray.Surf_ID].Scatter_Late(ref Ray, ref Rays, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta);
+                ScatteringData[Ray.Surf_ID].Scatter_Late(ref Ray, ref Rays, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta, Transmission);
             }
 
             public override void Scatter_Simple(ref OctaveRay Ray, ref Random rand, double cos_theta, double u, double v, bool Transmission = false)
             {
-                ScatteringData[Ray.Surf_ID].Scatter_VeryLate(ref Ray, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta);
+                ScatteringData[Ray.Surf_ID].Scatter_VeryLate(ref Ray, ref rand, Normal(Ray.Surf_ID, u, v), cos_theta, Transmission);
             }
 
             public override void Register_Edges(IEnumerable<Hare.Geometry.Point> S, IEnumerable<Hare.Geometry.Point> R)

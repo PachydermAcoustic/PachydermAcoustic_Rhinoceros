@@ -63,6 +63,8 @@ namespace Pachyderm_Acoustic
             private CheckBox DirectionalToggle;
             private RadioButton Spec_Rays;
             private RadioButton DetailedConvergence;
+            private RadioButton SimulationOctave;
+            private RadioButton SimulationThirdOctave;
             private RadioButton Minimum_Convergence;
             private Label MapIncr;
             private NumericStepper Increment;
@@ -291,6 +293,16 @@ namespace Pachyderm_Acoustic
                 RS.Spacing = new Size(8, 8);
                 RS.AddRow(Rec_Disp, Rec_Orient);
                 Calc_Layout.AddRow(RS);
+                SimulationOctave = new RadioButton { Text = "Octave", Checked = true };
+                SimulationThirdOctave = new RadioButton(SimulationOctave) { Text = "Third octave" };
+                StackLayout bandSelection = new StackLayout
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 18,
+                    Padding = new Padding(4, 10, 4, 12),
+                    Items = { SimulationOctave, SimulationThirdOctave }
+                };
+                Calc_Layout.AddRow(new GroupBox { Text = "Simulation frequency bands", Content = bandSelection });
 
                 GroupBox Conv = new GroupBox();
                 Conv.Text = "Convergence:";
@@ -655,11 +667,13 @@ namespace Pachyderm_Acoustic
                 Map = null;
                 System.Threading.Thread.Sleep(500);
 
-                if (!p.Source(out Source, 4 / (Increment.Value * 0.01)) || Rec_Srfs == null)
+                if (!p.Source(out Source, SimulationThirdOctave.Checked, 4 / (Increment.Value * 0.01)) || Rec_Srfs == null)
                 {
                     Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
                     return;
                 }
+
+                foreach (Source source in Source) source.SetBandResolution(SimulationThirdOctave.Checked);
 
                 Hare.Geometry.Point[] SPT;
                 p.SourceOrigin(out SPT);
@@ -723,7 +737,7 @@ namespace Pachyderm_Acoustic
                     //double SEL = AcousticalMath.Est_SEL_from_Leq(Leq_dB, N_events, T);
                     //Lmax_from_SEL(SEL, r0_m, v_mps);
 
-                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, new int[8] { 0, 1, 2, 3, 4, 5, 6, 7 }, this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
+                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, Enumerable.Range(0, Map[s_id].Third_Oct ? 24 : 8).ToArray(), this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
                     TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
                     while (!TA.IsCompleted) await Task.Delay(1500);
                     DS = TA.GetResult() as Direct_Sound;
@@ -744,7 +758,7 @@ namespace Pachyderm_Acoustic
                     ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource(), 1000);
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
                     TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();
@@ -804,6 +818,7 @@ namespace Pachyderm_Acoustic
 
                 if (Source != null)
                 {
+                    UpdateResultBands();
                     SourceList.Populate(null, null, Map);
 
                     if (SavePath != null) Utilities.FileIO.Write_pachm(SavePath, Map);
@@ -950,14 +965,14 @@ namespace Pachyderm_Acoustic
                         int gSrc = srcIds[0];
                         int oct = color_control.Octave.SelectedIndex;
                         double SWL = 0;
-                        if (oct < 7)
+                        if (oct < Map[0].SWL.Length)
                         {
                             SWL = Map[gSrc].SWL[oct];
                         }
                         else
                         {
                             if (Map[gSrc].SWL == null) Map[gSrc].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
-                            for (int i = 0; i < 8; i++) SWL += Math.Pow(10, Map[gSrc].SWL[i] / 10);
+                            for (int i = 0; i < Map[0].SWL.Length; i++) SWL += Math.Pow(10, Map[gSrc].SWL[i] / 10);
                             SWL = 10 * Math.Log10(SWL);
                         }
                         values = PachMapReceiver.Get_G_Map(Map, oct, SWL, gSrc, Coherent.Checked);
@@ -1272,11 +1287,11 @@ namespace Pachyderm_Acoustic
                             int SrcID = SourceList.SelectedSources()[0];
                             int oct = color_control.Octave.SelectedIndex;
                             double SWL = 0;
-                            if (oct < 7) SWL = Map[SrcID].SWL[oct];
+                            if (oct < Map[0].SWL.Length) SWL = Map[SrcID].SWL[oct];
                             else
                             {
                                 if (Map[SrcID].SWL == null) Map[SrcID].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
-                                for (int i = 0; i < 8; i++) SWL += Math.Pow(10, Map[SrcID].SWL[i] / 10);
+                                for (int i = 0; i < Map[0].SWL.Length; i++) SWL += Math.Pow(10, Map[SrcID].SWL[i] / 10);
                                 SWL = 10 * Math.Log10(SWL);
                             }
                             double[] Values = PachMapReceiver.Get_G_Map(Map, oct, SWL, SrcID, Coherent.Checked);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
@@ -1542,11 +1557,11 @@ namespace Pachyderm_Acoustic
                             int SrcID = SourceList.SelectedSources()[0];
                             int oct = color_control.Octave.SelectedIndex;
                             double SWL = 0;
-                            if (oct < 7) SWL = Map[SrcID].SWL[oct];
+                            if (oct < Map[0].SWL.Length) SWL = Map[SrcID].SWL[oct];
                             else
                             {
                                 if (Map[SrcID].SWL == null) Map[SrcID].SWL = new double[8] { 120, 120, 120, 120, 120, 120, 120, 120 };
-                                for (int i = 0; i < 8; i++) SWL += Math.Pow(10, Map[SrcID].SWL[i] / 10);
+                                for (int i = 0; i < Map[0].SWL.Length; i++) SWL += Math.Pow(10, Map[SrcID].SWL[i] / 10);
                                 SWL = 10 * Math.Log10(SWL);
                             }
                             double[] Values = PachMapReceiver.Get_G_Map(Map, oct, SWL, SrcID, Coherent.Checked);//, G_Ref_Energy[PachTools.OctaveStr2Int(Octave.Text)]
@@ -1689,6 +1704,7 @@ namespace Pachyderm_Acoustic
                     SourceList.Clear();
                     //for (int i = 0; i < Map.Length; i++)
                     //{
+                    UpdateResultBands();
                     SourceList.Populate(null, null, Map);
                     //SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
                     //}
@@ -2056,6 +2072,26 @@ namespace Pachyderm_Acoustic
                 Min_Time_out.Text = t_lo.ToString();
                 Max_Time_out.Text = t_hi.ToString();
                 Step_Forward();
+            }
+
+            private void UpdateResultBands()
+            {
+                if (Map == null || Map.Length == 0 || Map[0] == null) return;
+                double[] centers = Map[0].Third_Oct ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
+                if (Octave.Items.Count != centers.Length + 1)
+                {
+                    Octave.Items.Clear();
+                    foreach (double center in centers) Octave.Items.Add(center.ToString(System.Globalization.CultureInfo.InvariantCulture) + " Hz.");
+                    Octave.Items.Add("Summation: All Bands");
+                    Octave.SelectedIndex = centers.Length;
+                }
+                if (color_control.Octave.Items.Count != centers.Length + 1)
+                {
+                    color_control.Octave.Items.Clear();
+                    foreach (double center in centers) color_control.Octave.Items.Add(center.ToString(System.Globalization.CultureInfo.InvariantCulture) + " Hz.");
+                    color_control.Octave.Items.Add("Summation: All Bands");
+                    color_control.Octave.SelectedIndex = centers.Length;
+                }
             }
 
             public bool Simulations_Ready()

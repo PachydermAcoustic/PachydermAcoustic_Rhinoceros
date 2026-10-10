@@ -172,6 +172,11 @@ namespace Pachyderm_Acoustic
 
             public bool Source(out Environment.Source[] Srcs, double line_El_m = 4)
             {
+                return Source(out Srcs, false, line_El_m);
+            }
+
+            public bool Source(out Environment.Source[] Srcs, bool thirdOctave, double line_El_m = 4)
+            {
                 System.Guid[] S_ID = SourceConduit.Instance.UUID.ToArray();
                 List<Environment.Source> S = new List<Environment.Source>();
                 Dictionary<String,List<Environment.Source>> s_dict = new Dictionary<String, List<Environment.Source>>();
@@ -204,6 +209,7 @@ namespace Pachyderm_Acoustic
                         if (emittedArrays.Add(arrayGroup))
                             S.Add(new UI.CompositeArraySource(elements,
                                 UI.ArraySimulationSettings.ReferenceDistance(elements[0]), id));
+                        if (thirdOctave && S.Count > 0) S[S.Count - 1].SetBandResolution(true);
                         continue;
                     }
 
@@ -247,10 +253,10 @@ namespace Pachyderm_Acoustic
                             case "":
                             case "0": 
                             case null:
-                                s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                s = new Environment.GeodesicSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, thirdOctave);
                                 break;
                             case "1":
-                                s = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, false);
+                                s = new Environment.RandomSource(SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), id, thirdOctave);
                                 break;
                             case "2":
                             case "3":
@@ -258,7 +264,7 @@ namespace Pachyderm_Acoustic
                                 string[] B;
                                 B = new string[2] { "0", "7" };
                                 SourceConduit SC = SourceConduit.Instance;
-                                s = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, false);
+                                s = new Environment.DirectionalSource(SC.m_Balloons[id], SWL_Values, Utilities.RCPachTools.ModelPointToHare(Origin.Geometry.GetBoundingBox(true).Min), new int[] { int.Parse(B[0]), int.Parse(B[1]) }, id, thirdOctave);
                                 break;
                         }
 
@@ -315,7 +321,7 @@ namespace Pachyderm_Acoustic
                             Samples[i] = Utilities.RCPachTools.ModelPointToHare(pts[i]);
                         }
 
-                        var lineSrc = new Environment.LineSource(Samples, Utilities.RCPachTools.ModelToMeters((Origin.Geometry as Curve).GetLength()), SWL, line_El_m, id, false);
+                        var lineSrc = new Environment.LineSource(Samples, Utilities.RCPachTools.ModelToMeters((Origin.Geometry as Curve).GetLength()), SWL, line_El_m, id, thirdOctave);
 
                         if (cluster == null) { S.Add(lineSrc); }
                         else { c_list.Add(lineSrc); }
@@ -325,7 +331,7 @@ namespace Pachyderm_Acoustic
                 foreach (KeyValuePair<string, List<Environment.Source>> kvp in s_dict)
                 {
                     List<Environment.Source> c_list = kvp.Value;
-                    Environment.SourceCluster cs = new Environment.SourceCluster(c_list,S.Count);
+                    Environment.SourceCluster cs = new Environment.SourceCluster(c_list,S.Count, thirdOctave);
                     S.Add(cs);
                 }
                 if (S.Count > 0)

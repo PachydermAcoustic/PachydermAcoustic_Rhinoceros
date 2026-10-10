@@ -65,17 +65,17 @@ namespace Pachyderm_Acoustic.UI
 
         public override double[] DirPower(int threadid, int random, Hare.Geometry.Vector direction)
         {
-            var result = new double[8];
+            var result = new double[BandCount];
             var world = new Hare.Geometry.Vector(direction.dx, direction.dy, direction.dz);
-            for (int oct = 0; oct < 8; oct++)
-                result[oct] = SourcePower[oct] * patterns[oct].RelativePower(world);
+            for (int oct = 0; oct < BandCount; oct++)
+                result[oct] = SourcePower[oct] * patterns[ThirdOctave ? oct / 3 : oct].RelativePower(world);
             return result;
         }
 
         public override double[] DirPressure(int threadid, int random, Hare.Geometry.Vector direction)
         {
             double[] result = DirPower(threadid, random, direction);
-            for (int oct = 0; oct < 8; oct++)
+            for (int oct = 0; oct < BandCount; oct++)
                 result[oct] = Utilities.AcousticalMath.Pressure_Intensity(result[oct], Rho_C);
             return result;
         }

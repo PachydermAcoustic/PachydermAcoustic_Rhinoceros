@@ -85,6 +85,7 @@ namespace Pachyderm_Acoustic
                 this.Content = SrcLayout;
             }
 
+
             public void Clear()
             {
                 SrcBoxes = new List<CheckBox>();
@@ -262,6 +263,7 @@ namespace Pachyderm_Acoustic
             {
                 Update(sender, e);
             }
+
 
             public void Clear()
             {
@@ -733,15 +735,39 @@ namespace Pachyderm_Acoustic
         public partial class FreqSlider : Panel
         {
             bands bandwidth;
+            readonly DynamicLayout sliderlayout = new DynamicLayout();
+            readonly StackLayout bandSelector = new StackLayout { Orientation = Orientation.Horizontal, Spacing = 18, Padding = new Padding(4, 10, 4, 12) };
+            readonly RadioButton octaveSelector = new RadioButton { Text = "Octave" };
+            readonly RadioButton thirdOctaveSelector;
+            bool settingBand;
+            bool updatingValues;
+            bool hasThirdOctaveValues;
+            readonly bool[] thirdOctaveEdited = new bool[24];
+            readonly System.Collections.Generic.List<Control> sliderRows = new System.Collections.Generic.List<Control>();
+            public event EventHandler BandChanged;
             System.Collections.Generic.List<Oct_Slider> sliders = new System.Collections.Generic.List<Oct_Slider>();
-            public FreqSlider(bands precision, bool decibels = false)
+            public FreqSlider(bands precision, bool decibels = false, bool allowBandSelection = false)
             {
+                thirdOctaveSelector = new RadioButton(octaveSelector) { Text = "Third-octave" };
+                bandSelector.Items.Add(octaveSelector);
+                bandSelector.Items.Add(thirdOctaveSelector);
+                bandSelector.Visible = allowBandSelection;
+                octaveSelector.CheckedChanged += BandSelectionChanged;
+                thirdOctaveSelector.CheckedChanged += BandSelectionChanged;
                 buildSliders(precision, decibels);
             }
 
+            private void BandSelectionChanged(object sender, EventArgs e)
+            {
+                if (settingBand || !((RadioButton)sender).Checked) return;
+                bands selected = sender == thirdOctaveSelector ? bands.Third_Octave : bands.Octave;
+                if (selected == bandwidth) return;
+                bandmode(selected);
+                BandChanged?.Invoke(this, EventArgs.Empty);
+            }
             private void buildSliders(bands precision, bool decibels = false)
             {
-                sliders.Add(new Oct_Slider("    40.0 Hz: ", decibels));
+                sliders.Add(new Oct_Slider("    50 Hz: ", decibels));
                 sliders.Add(new Oct_Slider("62.5 Hz: ", decibels));
                 sliders.Add(new Oct_Slider("    80 Hz: ", decibels));
                 sliders.Add(new Oct_Slider("    100 Hz: ", decibels));
@@ -767,51 +793,98 @@ namespace Pachyderm_Acoustic
                 sliders.Add(new Oct_Slider("    10 kHz: ", decibels));
                 sliders.Add(new Oct_Slider("Flatten", decibels));
 
+                for (int i = 0; i < 24; i++)
+                {
+                    int band = i;
+                    sliders[i].MouseUp += (sender, e) =>
+                    {
+                        if (!updatingValues && bandwidth == bands.Third_Octave)
+                            thirdOctaveEdited[band] = true;
+                    };
+                }
                 sliders[24].MouseUp += FlatAdjust;
+                // Convert each TableRow once: converting it again creates a second native
+                // parent for the same label/slider controls on WPF.
+                foreach (Oct_Slider slider in sliders) sliderRows.Add(slider);
 
-                DynamicLayout sliderlayout = new DynamicLayout();
-                foreach (Oct_Slider s in sliders) sliderlayout.AddRow(s);
-                //sliderlayout.Size = new Size(8, 4);
-
-                Content = sliderlayout;
                 bandmode(precision);
-
-                this.Invalidate();
+                // Keep the selector mounted while the frequency rows are rebuilt.
+                var layout = new DynamicLayout();
+                if (bandSelector.Visible) layout.AddRow(bandSelector);
+                layout.AddRow(sliderlayout);
+                layout.Create();
+                Content = layout;
             }
 
             public void bandmode(bands b)
             {
+                if (b != bands.Octave && b != bands.Third_Octave)
+                    throw new ArgumentOutOfRangeException(nameof(b));
+
+                if (b == bands.Third_Octave)
+                {
+                    InterpolateThirdOctaves();
+                    hasThirdOctaveValues = true;
+                }
                 bandwidth = b;
-                bool mode = b == bands.Third_Octave;
-                sliders[0].Visible = mode;
-                sliders[2].Visible = mode;
-                sliders[3].Visible = mode;
-                sliders[5].Visible = mode;
-                sliders[6].Visible = mode;
-                sliders[8].Visible = mode;
-                sliders[9].Visible = mode;
-                sliders[11].Visible = mode;
-                sliders[12].Visible = mode;
-                sliders[14].Visible = mode;
-                sliders[15].Visible = mode;
-                sliders[17].Visible = mode;
-                sliders[18].Visible = mode;
-                sliders[20].Visible = mode;
-                sliders[21].Visible = mode;
-                sliders[23].Visible = mode;
-                this.Invalidate();
+                settingBand = true;
+                try
+                {
+                    octaveSelector.Checked = b == bands.Octave;
+                    thirdOctaveSelector.Checked = b == bands.Third_Octave;
+                }
+                finally { settingBand = false; }
+
+                // Recreate the native layout after changing its rows.
+                sliderlayout.Clear();
+                for (int i = 0; i < 24; i++)
+                {
+                    bool visible = b == bands.Third_Octave || i % 3 == 1;
+                    sliders[i].Visible = visible;
+                    if (visible) sliderlayout.AddRow(sliderRows[i]);
+                }
+                sliderlayout.AddRow(sliderRows[24]);
+                sliderlayout.Create();
+                Invalidate();
             }
 
+            private void InterpolateThirdOctaves()
+            {
+                updatingValues = true;
+                try
+                {
+                    for (int i = 0; i < 24; i++)
+                    {
+                        if (i % 3 == 1 || thirdOctaveEdited[i]) continue;
+                        // Octave centers are three equally spaced steps apart in log frequency.
+                        // Clamp the outer bands rather than extrapolating outside measured data.
+                        double position = Math.Max(0, Math.Min(7, (i - 1) / 3.0));
+                        int lower = (int)Math.Floor(position);
+                        int upper = Math.Min(7, lower + 1);
+                        double fraction = position - lower;
+                        double value = sliders[3 * lower + 1].Value * (1 - fraction)
+                            + sliders[3 * upper + 1].Value * fraction;
+                        sliders[i].Value = Math.Round(value, 1);
+                    }
+                }
+                finally { updatingValues = false; }
+            }
+
+            // Storage retains third-octave detail even when the user displays octave centers.
+            public double[] MaterialValues
+            {
+                get
+                {
+                    if (!hasThirdOctaveValues) return Value;
+                    InterpolateThirdOctaves();
+                    double[] values = new double[24];
+                    for (int i = 0; i < values.Length; i++) values[i] = sliders[i].Value;
+                    return values;
+                }
+            }
             public void populate(double[] values)
             {
-                if (values.Length == 8 && sliders.Count != 8) buildSliders(bands.Octave);
-                else if (values.Length == 24 && sliders.Count != 24) buildSliders(bands.Third_Octave);
-                else if (values.Length != sliders.Count) throw new Exception("input to octave band sliders is not octave band or third-octave band, or is incomplete or in an unsupported format...");
-
-                for (int i = 0; i < sliders.Count; i++)
-                {
-                    sliders[i].Value = values[i];
-                }
+                Value = values;
             }
 
             public void Clear()
@@ -829,8 +902,8 @@ namespace Pachyderm_Acoustic
                     double[] values;
                     if (bandwidth == bands.Third_Octave)
                     {
-                        values = new double[sliders.Count];
-                        for (int i = 0; i < sliders.Count; i++)
+                        values = new double[24];
+                        for (int i = 0; i < values.Length; i++)
                         {
                             values[i] = sliders[i].Value;
                         }
@@ -851,33 +924,31 @@ namespace Pachyderm_Acoustic
                 }
                 set
                 {
-                    if (value.Length == 8)
+                    if (value == null) throw new ArgumentNullException(nameof(value));
+                    if (value.Length != 8 && value.Length != 24)
+                        throw new ArgumentException("Expected 8 octave or 24 third-octave values.", nameof(value));
+
+                    updatingValues = true;
+                    try
                     {
-                        bandmode(bands.Octave);
-                        sliders[1].Value = value[0];
-                        sliders[4].Value = value[1];
-                        sliders[7].Value = value[2];
-                        sliders[10].Value = value[3];
-                        sliders[13].Value = value[4];
-                        sliders[16].Value = value[5];
-                        sliders[19].Value = value[6];
-                        sliders[22].Value = value[7];
+                        hasThirdOctaveValues = value.Length == 24;
+                        for (int i = 0; i < 24; i++)
+                        {
+                            // A new material starts a new interpolation/edit history.
+                            thirdOctaveEdited[i] = value.Length == 24;
+                            sliders[i].Value = value.Length == 24 ? value[i] : value[i / 3];
+                        }
                     }
-                    else if (value.Length == 24)
-                    {
-                        bandmode(bands.Third_Octave);
-                        for (int i = 0; i < sliders.Count; i++) sliders[i].Value = value[i];
-                    }
-                    else
-                    { 
-                        throw new Exception("Incorrect number of bands...");
-                    }
+                    finally { updatingValues = false; }
+                    bandmode(value.Length == 8 ? bands.Octave : bands.Third_Octave);
                 }
             }
 
             public void FlatAdjust(object sender, EventArgs e)
             {
-                foreach (Oct_Slider s in sliders) s.Value = sliders[24].Value;
+                for (int i = 0; i < 24; i++)
+                    if (bandwidth == bands.Third_Octave || i % 3 == 1)
+                        sliders[i].Value = sliders[24].Value;
             }
 
             public enum bands

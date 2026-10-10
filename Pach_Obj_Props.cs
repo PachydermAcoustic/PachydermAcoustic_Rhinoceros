@@ -31,6 +31,7 @@ namespace Pachyderm_Acoustic
     {
         public partial class Pach_objProps : Panel, IPanel
         {
+            bool loadingMaterials;
             FreqSlider Absorption_Controls;
             FreqSlider Scattering_Controls;
             FreqSlider Transmission_Controls;
@@ -61,8 +62,9 @@ namespace Pachyderm_Acoustic
 
                 this.Abs_Label = new Label();
                 this.Abs_Label.Text = "Absorption Coefficient";
-                this.Absorption_Controls = new FreqSlider(FreqSlider.bands.Octave);
+                this.Absorption_Controls = new FreqSlider(FreqSlider.bands.Octave, allowBandSelection: true);
                 this.Absorption_Controls.MouseLeave += User_Materials_CheckedChanged;
+                this.Absorption_Controls.BandChanged += User_Materials_CheckedChanged;
                 this.Scat_Label = new Label();
                 this.Scat_Label.Text = "Scattering Coefficient";
                 this.Scattering_Controls = new FreqSlider(FreqSlider.bands.Octave);
@@ -88,6 +90,7 @@ namespace Pachyderm_Acoustic
 
             private void User_Materials_CheckedChanged(object sender, System.EventArgs e)
             {
+                if (loadingMaterials) return;
                 if (sender is RadioButton)
                 {
                     if ((sender as RadioButton).Text == "Manual Choice" && (sender as RadioButton).Checked) { User_Materials.Checked = true; this.Acoustics_Layer.Checked = false; }
@@ -134,7 +137,7 @@ namespace Pachyderm_Acoustic
                     Transmission_Controls.Visible = true;
                 }
 
-                double[] Abs = Absorption_Controls.Value;
+                double[] Abs = Absorption_Controls.MaterialValues;
                 double[] Sct = Scattering_Controls.Value;
                 double[] Trn = Transmission_Controls.Value;
 
@@ -169,93 +172,97 @@ namespace Pachyderm_Acoustic
                     }
                 }
                 Invalidate(true);
-                Load_Doc(Objects);
             }
 
             private List<RhinoObject> Objects = new List<RhinoObject>();
 
             public void Load_Doc(List<RhinoObject> Obj)
             {
-                Objects = Obj;
-
-                //Check to see if all objects have the same key values... 
-                if (Objects.Count != 0)
+                loadingMaterials = true;
+                try
                 {
-                    string Mode = Objects[0].Geometry.GetUserString("Acoustics_User");
-                    if (!string.IsNullOrEmpty(Mode))
-                    {
-                        //Check to see that all objects select materials the same way... 
-                        foreach (RhinoObject obj in Objects)
-                        {
-                            string Mode2 = null;
-                            Mode2 = obj.Geometry.GetUserString("Acoustics_User");
-                            if (!Mode.Equals(Mode2))
-                            {
-                                this.User_Materials.Checked = false;
-                                this.Acoustics_Layer.Checked = false;
-                                MaterialCode = null;
-                                return;
-                            }
-                        }
+                    Objects = Obj;
 
-                        if (Mode == "yes")
+                    //Check to see if all objects have the same key values...
+                    if (Objects.Count != 0)
+                    {
+                        string Mode = Objects[0].Geometry.GetUserString("Acoustics_User");
+                        if (!string.IsNullOrEmpty(Mode))
                         {
-                            //Check to see if materials are all the same... 
-                            string Code = Objects[0].Geometry.GetUserString("Acoustics");
-                            this.User_Materials.Checked = true;
-                            this.Acoustics_Layer.Checked = false;
-                            string Code2 = null;
+                            //Check to see that all objects select materials the same way...
                             foreach (RhinoObject obj in Objects)
                             {
-                                Code2 = obj.Geometry.GetUserString("Acoustics");
-                                if (!Code.Equals(Code2))
+                                string Mode2 = null;
+                                Mode2 = obj.Geometry.GetUserString("Acoustics_User");
+                                if (!Mode.Equals(Mode2))
                                 {
-                                    //If not the same... 
-                                    this.User_Materials.Checked = true;
+                                    this.User_Materials.Checked = false;
                                     this.Acoustics_Layer.Checked = false;
-                                    Clear();
+                                    MaterialCode = null;
                                     return;
                                 }
                             }
-                            //If they are the same... 
-                            double[] Absorption = new double[8];
-                            double[] Scattering = new double[8];
-                            double[] Transparency = new double[8]; //TODO: Finalize Transparency
-                            this.User_Materials.Checked = true;
-                            this.Acoustics_Layer.Checked = false;
-                            //And if there is a predefined value... 
-                            if (Code != null)
-                            {
-                                Utilities.RCPachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
-                                MaterialCode = Code;
 
-                                Absorption_Controls.populate(Absorption);
-                                Scattering_Controls.populate(Scattering);
-                                Transmission_Controls.populate(Transparency);
+                            if (Mode == "yes")
+                            {
+                                //Check to see if materials are all the same...
+                                string Code = Objects[0].Geometry.GetUserString("Acoustics");
+                                this.User_Materials.Checked = true;
+                                this.Acoustics_Layer.Checked = false;
+                                string Code2 = null;
+                                foreach (RhinoObject obj in Objects)
+                                {
+                                    Code2 = obj.Geometry.GetUserString("Acoustics");
+                                    if (!string.Equals(Code, Code2, StringComparison.Ordinal))
+                                    {
+                                        //If not the same...
+                                        this.User_Materials.Checked = true;
+                                        this.Acoustics_Layer.Checked = false;
+                                        Clear();
+                                        return;
+                                    }
+                                }
+                                //If they are the same...
+                                double[] Absorption = new double[8];
+                                double[] Scattering = new double[8];
+                                double[] Transparency = new double[8]; //TODO: Finalize Transparency
+                                this.User_Materials.Checked = true;
+                                this.Acoustics_Layer.Checked = false;
+                                //And if there is a predefined value...
+                                if (Code != null)
+                                {
+                                    Utilities.RCPachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
+                                    MaterialCode = Code;
+
+                                    Absorption_Controls.populate(Absorption.Select(v => v * 100).ToArray());
+                                    Scattering_Controls.populate(Scattering.Select(v => v * 100).ToArray());
+                                    Transmission_Controls.populate(Transparency.Select(v => v * 100).ToArray());
+                                }
+                                else
+                                {
+                                    Clear();
+                                }
                             }
                             else
                             {
+                                //If the common method is by Layer... (Default)
+                                this.User_Materials.Checked = false;
+                                this.Acoustics_Layer.Checked = true;
                                 Clear();
+                                return;
                             }
                         }
                         else
                         {
-                            //If the common method is by Layer... (Default) 
+                            //By Default, Acoustics will be designated by layer
                             this.User_Materials.Checked = false;
                             this.Acoustics_Layer.Checked = true;
                             Clear();
-                            return;
                         }
                     }
-                    else
-                    {
-                        //By Default, Acoustics will be designated by layer 
-                        this.User_Materials.Checked = false;
-                        this.Acoustics_Layer.Checked = true;
-                        Clear();
-                    }
+                    UpdateForm();
                 }
-                UpdateForm();
+                finally { loadingMaterials = false; }
             }
 
             public void Clear()
