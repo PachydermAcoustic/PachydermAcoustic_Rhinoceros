@@ -22,9 +22,17 @@ namespace Pachyderm_Acoustic
             private Scrollable ElementScroll;
 
             private bool LoadingGroup = false;
+            private DropDown ArrayControlMode;
+            private GroupBox ArrayOrientation;
+            private NumericStepper ArrayAlt, ArrayAzi, ArrayAxial;
+            private bool ColumnMode { get { return ArrayControlMode != null && ArrayControlMode.SelectedIndex == 1; } }
 
             private CheckBox ShowPattern;
             private DropDown PatternOctave;
+            private RadioButton ThirdBands;
+            private bool ThirdOctave { get { return ThirdBands != null && ThirdBands.Checked == true; } }
+            private double[] BandFrequencies { get { return ThirdOctave ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters(); } }
+            private string BandKey { get { return ThirdOctave ? "ThirdOctave" : "Octave"; } }
             private NumericStepper PatternReferenceDistance;
             private CheckBox ShowArrayGraph;
             private CheckBox ShowArraySlice;
@@ -42,8 +50,8 @@ namespace Pachyderm_Acoustic
                 Elements = elements;
 
                 Title = "Pachyderm Speaker Array Control";
-                Width = 900;
-                Height = 500;
+                ClientSize = new Size(900, 680);
+                MinimumSize = new Size(780, 580);
 
                 PatternConduit = SpeakerPatternConduit.Instance;
                 PatternConduit.Mode = SpeakerPatternConduit.Display_Mode.Boundary_Contours;
@@ -57,10 +65,53 @@ namespace Pachyderm_Acoustic
 
                 string label = "Steerable Array " + Elements[0].Geometry.GetUserString("ArrayGroupLabel");
 
-                layout.AddRow(new Label { Text = label, Font = new Eto.Drawing.Font(SystemFont.Bold, 12)});
+                ArrayControlMode = new DropDown { Width = 140 };
+                ArrayControlMode.Items.Add("Line array");
+                ArrayControlMode.Items.Add("Column array");
+                string controlMode = Elements[0].Geometry.GetUserString("ArrayControlMode") ?? Elements[0].Geometry.GetUserString("ArrayDeviceType");
+                ArrayControlMode.SelectedIndex = controlMode == "Column" ? 1 : 0;
+                layout.AddSeparateRow(new Label { Text = label, Font = new Eto.Drawing.Font(SystemFont.Bold, 12) },
+                    null, new Label { Text = "Array control" }, ArrayControlMode);
+
+                ArrayAlt = new NumericStepper { MinValue = -90, MaxValue = 90, DecimalPlaces = 1, Increment = 1, Width = 80 };
+                ArrayAzi = new NumericStepper { MinValue = -360, MaxValue = 360, DecimalPlaces = 1, Increment = 1, Width = 80 };
+                ArrayAxial = new NumericStepper { MinValue = -360, MaxValue = 360, DecimalPlaces = 1, Increment = 1, Width = 80 };
+                DynamicLayout orientation = new DynamicLayout { Padding = 8, DefaultSpacing = new Size(6, 6) };
+                DynamicLayout orientationAngles = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                orientationAngles.AddRow(new Label { Text = "Altitude" }, ArrayAlt, new Label { Text = "Azimuth" }, ArrayAzi,
+                    new Label { Text = "Axial rotation" }, ArrayAxial, null);
+                orientation.AddRow(orientationAngles);
+                orientation.AddRow(new Label { Text = "Rotates all elements together, preserving spacing and splay.", Wrap = WrapMode.Word });
+                ArrayOrientation = new GroupBox { Text = "Global array orientation", Content = orientation, ToolTip = "Angles use the first element as the orientation reference. Changing them rotates every element together. Column mode locks individual aiming." };
+                layout.AddRow(ArrayOrientation);
+                ArrayAlt.ValueChanged += OnArrayOrientationChanged;
+                ArrayAzi.ValueChanged += OnArrayOrientationChanged;
+                ArrayAxial.ValueChanged += OnArrayOrientationChanged;
+                ArrayControlMode.SelectedIndexChanged += (s, e) =>
+                {
+                    if (LoadingGroup) return;
+                    RhinoDoc doc = Elements[0].Document ?? RhinoDoc.ActiveDoc;
+                    if (doc == null) return;
+                    uint undo = doc.BeginUndoRecord("Change array control mode");
+                    try
+                    {
+                        for (int i = 0; i < Elements.Count; i++)
+                        {
+                            RhinoObject current = doc.Objects.FindId(Elements[i].Id);
+                            if (current == null || current.Geometry == null) continue;
+                            current.Geometry.SetUserString("ArrayControlMode", ColumnMode ? "Column" : "Line");
+                            current.CommitChanges();
+                            Elements[i] = doc.Objects.FindId(current.Id) ?? current;
+                        }
+                    }
+                    finally { if (undo != 0) doc.EndUndoRecord(undo); }
+                    RebuildElementEditors();
+                    UpdatePatternConduit();
+                    doc.Views.Redraw();
+                };
 
                 //Add Pattern Controls
-                GroupBox box = new GroupBox { Text = "Resulting Array Pattern" };
+                GroupBox box = new GroupBox { Text = "Array preview and steering" };
 
                 DynamicLayout l = new DynamicLayout();
                 l.Padding = 8;
@@ -70,22 +121,34 @@ namespace Pachyderm_Acoustic
                 ShowPattern.Checked = true;
                 ShowPattern.CheckedChanged += (s, e) => UpdatePatternConduit();
 
-                PatternOctave = new DropDown();
-                PatternOctave.Items.Add("63 Hz.");
-                PatternOctave.Items.Add("125 Hz.");
-                PatternOctave.Items.Add("250 Hz.");
-                PatternOctave.Items.Add("500 Hz.");
-                PatternOctave.Items.Add("1 kHz.");
-                PatternOctave.Items.Add("2 kHz.");
-                PatternOctave.Items.Add("4 kHz.");
-                PatternOctave.Items.Add("8 kHz.");
-                PatternOctave.SelectedIndex = 4;
+                PatternOctave = new DropDown { Width = 140 };
+                bool thirdOctave = Elements.Exists(obj => obj != null && obj.Geometry.GetUserString("ArrayBandResolution") == "ThirdOctave");
+                RadioButton octaveBands = new RadioButton { Text = "Octave", Checked = !thirdOctave };
+                ThirdBands = new RadioButton(octaveBands) { Text = "Third octave", Checked = thirdOctave };
+                foreach (double f in BandFrequencies) PatternOctave.Items.Add(f.ToString("0.##") + " Hz");
+                PatternOctave.SelectedIndex = ThirdOctave ? 13 : 4;
+                ThirdBands.CheckedChanged += (s, e) =>
+                {
+                    PatternOctave.Items.Clear();
+                    foreach (double f in BandFrequencies) PatternOctave.Items.Add(f.ToString("0.##") + " Hz");
+                    PatternOctave.SelectedIndex = ThirdOctave ? 13 : 4;
+                    foreach (RhinoObject element in Elements)
+                    {
+                        RhinoObject obj = RhinoDoc.ActiveDoc.Objects.FindId(element.Id);
+                        if (obj == null) continue;
+                        obj.Geometry.SetUserString("ArrayBandResolution", BandKey);
+                        obj.CommitChanges();
+                    }
+                    RebuildElementEditors();
+                    UpdatePatternConduit();
+                };
                 PatternOctave.SelectedIndexChanged += (s, e) => UpdatePatternConduit();
 
                 PatternReferenceDistance = new NumericStepper();
                 PatternReferenceDistance.MinValue = 1;
                 PatternReferenceDistance.MaxValue = 200;
                 PatternReferenceDistance.DecimalPlaces = 2;
+                PatternReferenceDistance.Width = 80;
                 PatternReferenceDistance.Value = ArraySimulationSettings.ReferenceDistance(Elements[0]);
                 PatternReferenceDistance.ValueChanged += (s, e) =>
                 {
@@ -98,7 +161,7 @@ namespace Pachyderm_Acoustic
                     UpdatePatternConduit();
                 };
 
-                PatternCenterMode = new DropDown();
+                PatternCenterMode = new DropDown { Width = 230 };
                 PatternCenterMode.Items.Add("Geometric Average");
                 PatternCenterMode.Items.Add("Driver Apparent Center");
                 PatternCenterMode.SelectedIndex = ArraySimulationSettings.UseAimingCenter(Elements[0]) ? 1 : 0;
@@ -121,7 +184,7 @@ namespace Pachyderm_Acoustic
                     UpdatePatternConduit();
                 };
 
-                DropDown simulationMode = new DropDown();
+                DropDown simulationMode = new DropDown { Width = 230 };
                 simulationMode.Items.Add("Individual source elements");
                 simulationMode.Items.Add("Composite balloon");
                 simulationMode.SelectedIndex = Elements.TrueForAll(ArraySimulationSettings.UseComposite) ? 1 : 0;
@@ -136,10 +199,12 @@ namespace Pachyderm_Acoustic
                     }
                 };
 
-                DynamicLayout simulationLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                DynamicLayout simulationLayout = new DynamicLayout { Padding = 8, DefaultSpacing = new Size(6, 6) };
                 simulationLayout.AddRow(new Label { Text = "Simulation" }, simulationMode, null);
-                l.AddRow(simulationLayout);
-                l.AddRow(new Label { Text = "Composite balloon uses one source at the selected array center and the aiming reference distance." });
+                simulationLayout.AddRow(new Label { Text = "Array center" }, PatternCenterMode, null);
+                simulationLayout.AddRow(new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
+                GroupBox simulationBox = new GroupBox { Text = "Simulation settings", Content = simulationLayout,
+                    ToolTip = "Composite balloon uses one source at the selected array center and the aiming reference distance." };
 
                 Button aimAtPoints = new Button();
                 aimAtPoints.Text = "Aim at Points";
@@ -149,17 +214,19 @@ namespace Pachyderm_Acoustic
                 optimizeAtPoints.Text = "Optimize";
                 optimizeAtPoints.Click += (s, e) => AimPhaseAtPoints(true);
 
-                // Separate layouts prevent the explanatory text from widening the
-                // first column and pushing the steering buttons outside the form.
-                DynamicLayout previewLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
-                previewLayout.AddRow(ShowPattern, null);
-                previewLayout.AddRow(new Label { Text = "Octave" }, PatternOctave, new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
-                previewLayout.AddRow(new Label { Text = "Array center" }, PatternCenterMode, null);
-                l.AddRow(previewLayout);
+                // Keep settings and preview rows in separate grids so their
+                // column widths do not push unrelated controls outside the form.
+                DynamicLayout bands = new DynamicLayout { Padding = 8, DefaultSpacing = new Size(6, 6) };
+                bands.AddSeparateRow(octaveBands, ThirdBands, null);
+                bands.AddSeparateRow(new Label { Text = "Preview frequency" }, PatternOctave, null);
+                bands.Add(null, yscale: true);
+                DynamicLayout settingsLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                settingsLayout.AddRow(simulationBox, new GroupBox { Text = "Frequency bands", Content = bands });
+                layout.AddRow(settingsLayout);
 
                 ShowArrayGraph = new CheckBox { Text = "3D graph", Checked = PatternConduit.Show_Array_Graph };
                 ShowArraySlice = new CheckBox { Text = "Polar slice", Checked = PatternConduit.Show_Array_Diagnostic_Slice };
-                DiagnosticPlaneSelect = new DropDown();
+                DiagnosticPlaneSelect = new DropDown { Width = 70 };
                 DiagnosticPlaneSelect.Items.Add("XY");
                 DiagnosticPlaneSelect.Items.Add("XZ");
                 DiagnosticPlaneSelect.Items.Add("YZ");
@@ -177,15 +244,11 @@ namespace Pachyderm_Acoustic
                     DiagnosticLevel.Text = double.IsNaN(db) ? "-- dB" : db.ToString("0.00") + " dB";
                     Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
                 };
-                DynamicLayout diagnosticLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
-                diagnosticLayout.AddRow(ShowArrayGraph, ShowArraySlice, new Label { Text = "Plane" }, DiagnosticPlaneSelect,
-                    new Label { Text = "Angle (°)" }, DiagnosticAngle, DiagnosticLevel, null);
-                l.AddRow(diagnosticLayout);
-
-                DynamicLayout steeringLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
-                steeringLayout.AddRow(new Label { Text = "Automatic steering" },
+                l.AddSeparateRow(ShowPattern, ShowArrayGraph, ShowArraySlice, null);
+                l.AddSeparateRow(new Label { Text = "Slice plane" }, DiagnosticPlaneSelect,
+                    new Label { Text = "Angle (°)" }, DiagnosticAngle, new Label { Text = "Level" }, DiagnosticLevel, null);
+                l.AddSeparateRow(new Label { Text = "Automatic steering" },
                     aimAtPoints, optimizeAtPoints, null);
-                l.AddRow(steeringLayout);
 
                 box.Content = l;
                 layout.AddRow(box);
@@ -195,7 +258,7 @@ namespace Pachyderm_Acoustic
                 Button close = new Button { Text = "Close" };
                 close.Click += (s, e) => Close();
 
-                layout.AddRow(close);
+                layout.AddSeparateRow(null, close);
 
                 Content = layout;
 
@@ -238,7 +301,7 @@ namespace Pachyderm_Acoustic
 
                 RebuildElementEditors();
 
-                layout.AddRow(ElementScroll);
+                layout.Add(ElementScroll, xscale: true, yscale: true);
             }
 
             private void AimPhaseAtPoints(bool fineTune)
@@ -299,12 +362,12 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Elements.Count; i++)
                 {
-                    delay_by_element[i] = new double[8];
-                    phase_by_element[i] = new double[8];
-                    gain_by_element[i] = new double[8];
+                    delay_by_element[i] = new double[BandFrequencies.Length];
+                    phase_by_element[i] = new double[BandFrequencies.Length];
+                    gain_by_element[i] = new double[BandFrequencies.Length];
                 }
 
-                for (int oct = 0; oct < 8; oct++)
+                for (int oct = 0; oct < BandFrequencies.Length; oct++)
                 {
                     double[] delay_ms = new double[seed_ms.Length];
                     Array.Copy(seed_ms, delay_ms, seed_ms.Length);
@@ -323,7 +386,7 @@ namespace Pachyderm_Acoustic
                     NormalizeDelays(delay_ms);
                     NormalizeGains(gain_db);
 
-                    double f = Utilities.Numerics.angularFrequency_Octave[oct] / Utilities.Numerics.PiX2;
+                    double f = BandFrequencies[oct];
 
                     for (int i = 0; i < Elements.Count; i++)
                     {
@@ -339,9 +402,9 @@ namespace Pachyderm_Acoustic
 
                     if (obj == null || obj.Geometry == null) continue;
 
-                    obj.Geometry.SetUserString("ArrayPhaseOctaveDeg", PachTools.EncodeEight(phase_by_element[i]));
-                    obj.Geometry.SetUserString("ArrayDelayOctaveMs", PachTools.EncodeEight(delay_by_element[i]));
-                    obj.Geometry.SetUserString("ArrayGainOctaveDb", PachTools.EncodeEight(gain_by_element[i]));
+                    obj.Geometry.SetUserString("ArrayPhase" + BandKey + "Deg", PachTools.EncodeSourcePower(phase_by_element[i]));
+                    obj.Geometry.SetUserString("ArrayDelay" + BandKey + "Ms", PachTools.EncodeSourcePower(delay_by_element[i]));
+                    obj.Geometry.SetUserString("ArrayGain" + BandKey + "Db", PachTools.EncodeSourcePower(gain_by_element[i]));
                     obj.CommitChanges();
 
                     EnsureSourceInConduit(obj);
@@ -363,7 +426,7 @@ namespace Pachyderm_Acoustic
                 NormalizeDelays(bestDelay);
                 NormalizeGains(gainDb);
 
-                double f = Utilities.Numerics.angularFrequency_Octave[octave] / Utilities.Numerics.PiX2;
+                double f = BandFrequencies[octave];
 
                 double delayStepMs = 45.0 / 360.0 / f * 1000.0; // 45 degrees
                 double gainStepDb = 1.0;
@@ -578,9 +641,9 @@ namespace Pachyderm_Acoustic
             {
                 if (Elements == null || Elements.Count == 0) return 0;
 
-                int oct = Math.Max(0, Math.Min(7, octave));
+                int oct = Math.Max(0, Math.Min(BandFrequencies.Length - 1, octave));
 
-                double omega = Utilities.Numerics.angularFrequency_Octave[oct];
+                double omega = BandFrequencies[oct] * Utilities.Numerics.PiX2;
                 double k = omega / 343.0;
 
                 System.Numerics.Complex sum = System.Numerics.Complex.Zero;
@@ -612,7 +675,7 @@ namespace Pachyderm_Acoustic
 
             private double ArrayMagnitudeAtPoint(Rhino.Geometry.Point3d target, double[] delay_ms, int octave)
             {
-                double omega = Utilities.Numerics.angularFrequency_Octave[octave];
+                double omega = BandFrequencies[octave] * Utilities.Numerics.PiX2;
                 double k = omega / 343.0;
 
                 System.Numerics.Complex sum = System.Numerics.Complex.Zero;
@@ -714,8 +777,155 @@ namespace Pachyderm_Acoustic
                 return powers;
             }
 
+            private void OnArrayOrientationChanged(object sender, EventArgs e)
+            {
+                if (LoadingGroup || Elements.Count == 0) return;
+                // Let the numeric control finish committing typed input before
+                // rotating the array and reloading its orientation values.
+                if (sender != null)
+                {
+                    Application.Instance.AsyncInvoke(() => OnArrayOrientationChanged(null, e));
+                    return;
+                }
+                RhinoDoc doc = Elements[0].Document ?? RhinoDoc.ActiveDoc;
+                if (doc == null) return;
+                List<RhinoObject> current = new List<RhinoObject>();
+                List<Guid> currentIds = new List<Guid>();
+                foreach (RhinoObject element in Elements)
+                {
+                    RhinoObject obj = doc.Objects.FindId(element.Id);
+                    if (obj == null || obj.Geometry == null)
+                    {
+                        RhinoApp.WriteLine("The array contains a missing element. Reopen the array control.");
+                        return;
+                    }
+                    current.Add(obj);
+                    currentIds.Add(obj.Id);
+                }
+
+                Point3d center = Point3d.Origin;
+                foreach (RhinoObject obj in current)
+                {
+                    Point3d point = obj.Geometry.GetBoundingBox(true).Center;
+                    center += new Vector3d(point.X, point.Y, point.Z) / current.Count;
+                }
+                double[] previous = PachTools.DecodeTriple(current[0].Geometry.GetUserString("Aiming"));
+                if (Math.Abs(previous[0] - ArrayAlt.Value) < 1e-8 &&
+                    Math.Abs(previous[1] - ArrayAzi.Value) < 1e-8 &&
+                    Math.Abs(previous[2] - ArrayAxial.Value) < 1e-8) return;
+                // Reuse the cabinet transform so group rotation follows the same axial/altitude/azimuth convention as the balloons.
+                Environment.Cabinet_Geometry axes = new Environment.Cabinet_Geometry();
+                axes.Vertices.Add(new Hare.Geometry.Point(1, 0, 0));
+                axes.Vertices.Add(new Hare.Geometry.Point(0, 1, 0));
+                axes.Vertices.Add(new Hare.Geometry.Point(0, 0, 1));
+                Environment.Cabinet_Geometry oldFrame = axes.Transform(new Hare.Geometry.Point(0, 0, 0), previous[0], previous[1], previous[2], 1);
+                Environment.Cabinet_Geometry newFrame = axes.Transform(new Hare.Geometry.Point(0, 0, 0), ArrayAlt.Value, ArrayAzi.Value, ArrayAxial.Value, 1);
+                Plane from = new Plane(center, new Vector3d(oldFrame.Vertices[0].x, oldFrame.Vertices[0].y, oldFrame.Vertices[0].z),
+                    new Vector3d(oldFrame.Vertices[1].x, oldFrame.Vertices[1].y, oldFrame.Vertices[1].z));
+                Plane to = new Plane(center, new Vector3d(newFrame.Vertices[0].x, newFrame.Vertices[0].y, newFrame.Vertices[0].z),
+                    new Vector3d(newFrame.Vertices[1].x, newFrame.Vertices[1].y, newFrame.Vertices[1].z));
+                Transform rotation = Transform.PlaneToPlane(from, to);
+                List<GeometryBase> originals = new List<GeometryBase>();
+                List<GeometryBase> rotated = new List<GeometryBase>();
+                foreach (RhinoObject obj in current)
+                {
+                    double[] aim = PachTools.DecodeTriple(obj.Geometry.GetUserString("Aiming"));
+                    Environment.Cabinet_Geometry frame = axes.Transform(new Hare.Geometry.Point(0, 0, 0), aim[0], aim[1], aim[2], 1);
+                    Vector3d forward = new Vector3d(frame.Vertices[1].x, frame.Vertices[1].y, frame.Vertices[1].z);
+                    Vector3d up = new Vector3d(frame.Vertices[2].x, frame.Vertices[2].y, frame.Vertices[2].z);
+                    forward.Transform(rotation);
+                    up.Transform(rotation);
+                    originals.Add(obj.Geometry.Duplicate());
+                    GeometryBase geometry = obj.Geometry.Duplicate();
+                    if (!geometry.Transform(rotation))
+                    {
+                        geometry.Dispose();
+                        foreach (GeometryBase original in originals) original.Dispose();
+                        foreach (GeometryBase transformed in rotated) transformed.Dispose();
+                        RhinoApp.WriteLine("Unable to rotate an array element.");
+                        RebuildElementEditors();
+                        return;
+                    }
+                    geometry.SetUserString("Aiming", ArraySourceConstruction.AimingString(forward, up));
+                    geometry.SetUserString("ArrayControlMode", ColumnMode ? "Column" : "Line");
+                    rotated.Add(geometry);
+                }
+
+                uint undo = doc.BeginUndoRecord("Rotate array");
+                int replaced = 0;
+                bool previewEnabled = PatternConduit.Enabled;
+                LoadingGroup = true;
+                PatternConduit.Enabled = false;
+                try
+                {
+                    for (int i = 0; i < current.Count; i++)
+                    {
+                        string aiming = rotated[i].GetUserString("Aiming");
+                        string controlMode = rotated[i].GetUserString("ArrayControlMode");
+                        if (!doc.Objects.Replace(currentIds[i], rotated[i], false)) throw new InvalidOperationException("Unable to replace an array element.");
+                        replaced++;
+                        RhinoObject obj = doc.Objects.FindId(currentIds[i]);
+                        if (obj == null || obj.Geometry == null) throw new InvalidOperationException("Unable to find a rotated array element.");
+                        obj.Geometry.SetUserString("Aiming", aiming);
+                        obj.Geometry.SetUserString("ArrayControlMode", controlMode);
+                        obj.CommitChanges();
+                        obj = doc.Objects.FindId(currentIds[i]);
+                        if (obj == null || obj.Geometry == null || obj.Geometry.GetUserString("Aiming") != aiming)
+                            throw new InvalidOperationException("Rhino did not save the array orientation.");
+                    }
+                }
+                catch (Exception error)
+                {
+                    for (int i = 0; i < replaced; i++)
+                    {
+                        string aiming = originals[i].GetUserString("Aiming");
+                        string controlMode = originals[i].GetUserString("ArrayControlMode");
+                        doc.Objects.Replace(currentIds[i], originals[i], false);
+                        RhinoObject obj = doc.Objects.FindId(currentIds[i]);
+                        if (obj == null || obj.Geometry == null) continue;
+                        obj.Geometry.SetUserString("Aiming", aiming);
+                        obj.Geometry.SetUserString("ArrayControlMode", controlMode);
+                        obj.CommitChanges();
+                    }
+                    RhinoApp.WriteLine(error.Message);
+                }
+                finally
+                {
+                    if (undo != 0) doc.EndUndoRecord(undo);
+                    for (int i = 0; i < current.Count; i++)
+                    {
+                        RhinoObject obj = doc.Objects.FindId(currentIds[i]);
+                        if (obj != null)
+                        {
+                            Elements[i] = obj;
+                            OnElementChanged(obj);
+                        }
+                    }
+                    LoadingGroup = false;
+                    PatternConduit.Enabled = previewEnabled;
+                    RebuildElementEditors();
+                    UpdatePatternConduit();
+                    doc.Views.Redraw();
+                    foreach (GeometryBase geometry in originals) geometry.Dispose();
+                    foreach (GeometryBase geometry in rotated) geometry.Dispose();
+                }
+            }
+
             private void RebuildElementEditors()
             {
+                bool wasLoading = LoadingGroup;
+                LoadingGroup = true;
+                try
+                {
+                    RhinoDoc doc = Elements[0].Document ?? RhinoDoc.ActiveDoc;
+                    if (doc != null)
+                        for (int i = 0; i < Elements.Count; i++) Elements[i] = doc.Objects.FindId(Elements[i].Id) ?? Elements[i];
+                    double[] aim = PachTools.DecodeTriple(Elements[0].Geometry.GetUserString("Aiming"));
+                    ArrayAlt.Value = aim[0];
+                    ArrayAzi.Value = aim[1];
+                    ArrayAxial.Value = aim[2];
+                }
+                finally { LoadingGroup = wasLoading; }
                 ElementLayout = new DynamicLayout();
                 ElementLayout.Padding = 2;
                 ElementLayout.DefaultSpacing = new Eto.Drawing.Size(4, 4);
@@ -724,7 +934,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < Elements.Count; i++)
                 {
-                    row.Add(new ArrayElementEditor(Elements[i], OnElementChanged));
+                    row.Add(new ArrayElementEditor(Elements[i], OnElementChanged, ThirdOctave));
                 }
 
                 ElementLayout.AddRow(row.ToArray());
@@ -745,8 +955,23 @@ namespace Pachyderm_Acoustic
                 }
 
                 EnsureSourceInConduit(obj);
+                double[] aim = PachTools.DecodeTriple(obj.Geometry.GetUserString("Aiming"));
+                SourceConduit.Instance.Update_Aiming(obj.Id, (float)aim[0], (float)aim[1], (float)aim[2]);
+                if (LoadingGroup) return;
+                if (Elements.Count > 0 && Elements[0].Id == obj.Id)
+                {
+                    LoadingGroup = true;
+                    try
+                    {
+                        ArrayAlt.Value = aim[0];
+                        ArrayAzi.Value = aim[1];
+                        ArrayAxial.Value = aim[2];
+                    }
+                    finally { LoadingGroup = false; }
+                }
                 UpdatePatternConduit();
-                Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                RhinoDoc doc = obj.Document ?? RhinoDoc.ActiveDoc;
+                if (doc != null) doc.Views.Redraw();
             }
 
             private void UpdatePatternConduit()
@@ -766,6 +991,7 @@ namespace Pachyderm_Acoustic
                 PatternConduit.Show_Array_Diagnostic_Slice = ShowArraySlice.Checked == true;
                 PatternConduit.Array_Diagnostic_Plane = (SpeakerPatternConduit.DiagnosticPlane)DiagnosticPlaneSelect.SelectedIndex;
                 PatternConduit.Array_Diagnostic_Angle = DiagnosticAngle.Value;
+                PatternConduit.ThirdOctave = ThirdOctave;
                 PatternConduit.Octave = PatternOctave.SelectedIndex;
                 PatternConduit.SetArrayElements(Elements, PatternReferenceDistance.Value);
                 double db = PatternConduit.ArrayDiagnosticLevel(DiagnosticAngle.Value);
@@ -781,14 +1007,22 @@ namespace Pachyderm_Acoustic
             private NumericStepper Alt;
             private NumericStepper Azi;
             private NumericStepper Axial;
-            private NumericStepper[] OctPhaseDelay = new NumericStepper[8];
-            private NumericStepper[] OctGainDb = new NumericStepper[8];
+            private NumericStepper[] OctPhaseDelay;
+            private readonly bool ThirdOctave;
+            private readonly double[] Frequencies;
+            private string BandKey { get { return ThirdOctave ? "ThirdOctave" : "Octave"; } }
+            private NumericStepper[] OctGainDb;
 
             private bool Loading = false;
 
-            public ArrayElementEditor(Rhino.DocObjects.RhinoObject obj, Action<Rhino.DocObjects.RhinoObject> changed)
+            public ArrayElementEditor(Rhino.DocObjects.RhinoObject obj, Action<Rhino.DocObjects.RhinoObject> changed) : this(obj, changed, false) { }
+
+            public ArrayElementEditor(Rhino.DocObjects.RhinoObject obj, Action<Rhino.DocObjects.RhinoObject> changed, bool thirdOctave)
             {
-                RhinoObject Obj = obj;
+                ThirdOctave = thirdOctave;
+                Frequencies = thirdOctave ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
+                OctPhaseDelay = new NumericStepper[Frequencies.Length];
+                OctGainDb = new NumericStepper[Frequencies.Length];
                 ObjectId = obj.Id;
                 Changed = changed;
 
@@ -819,15 +1053,17 @@ namespace Pachyderm_Acoustic
                 Alt = NewAngleStepper(-90, 90);
                 Azi = NewAngleStepper(-360, 360);
                 Axial = NewAngleStepper(-360, 360);
+                string controlMode = obj.Geometry.GetUserString("ArrayControlMode") ?? obj.Geometry.GetUserString("ArrayDeviceType");
+                Alt.Enabled = Azi.Enabled = Axial.Enabled = controlMode != "Column";
 
                 Alt.ValueChanged += ValueChanged;
                 Azi.ValueChanged += ValueChanged;
                 Axial.ValueChanged += ValueChanged;
 
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < Frequencies.Length; i++)
                 {
                     OctPhaseDelay[i] = new NumericStepper();
-                    OctPhaseDelay[i].DecimalPlaces = 0;
+                    OctPhaseDelay[i].DecimalPlaces = ThirdOctave ? 2 : 0;
                     OctPhaseDelay[i].MinValue = -36000;
                     OctPhaseDelay[i].MaxValue = 36000;
                     OctPhaseDelay[i].Increment = 5;
@@ -842,27 +1078,20 @@ namespace Pachyderm_Acoustic
                 layout.AddRow(new Label { Text = "Azi", Width = 28 }, Azi);
                 layout.AddRow(new Label { Text = "Ax", Width = 28 }, Axial);
 
-                layout.AddRow(new Label { Text = "Oct", Width = 28 }, new Label { Text = "Phase°" }, new Label { Text = "Gain" });
-
-                layout.AddRow(new Label { Text = "63", Width = 28 }, OctPhaseDelay[0], OctGainDb[0]);
-                layout.AddRow(new Label { Text = "125", Width = 28 }, OctPhaseDelay[1], OctGainDb[1]);
-                layout.AddRow(new Label { Text = "250", Width = 28 }, OctPhaseDelay[2], OctGainDb[2]);
-                layout.AddRow(new Label { Text = "500", Width = 28 }, OctPhaseDelay[3], OctGainDb[3]);
-                layout.AddRow(new Label { Text = "1k", Width = 28 }, OctPhaseDelay[4], OctGainDb[4]);
-                layout.AddRow(new Label { Text = "2k", Width = 28 }, OctPhaseDelay[5], OctGainDb[5]);
-                layout.AddRow(new Label { Text = "4k", Width = 28 }, OctPhaseDelay[6], OctGainDb[6]);
-                layout.AddRow(new Label { Text = "8k", Width = 28 }, OctPhaseDelay[7], OctGainDb[7]);
+                layout.AddRow(new Label { Text = "Hz", Width = 28 }, new Label { Text = "Phase°" }, new Label { Text = "Gain" });
+                for (int i = 0; i < Frequencies.Length; i++) layout.AddRow(new Label { Text = Frequencies[i].ToString("0.##"), Width = 42 }, OctPhaseDelay[i], OctGainDb[i]);
 
                 Button zeroDelays = new Button();
                 zeroDelays.Text = "Zero Phase";
                 zeroDelays.Width = 58;
                 zeroDelays.Click += (s, e) =>
                 {
-                    for (int i = 0; i < 8; i++)
+                    Loading = true;
+                    for (int i = 0; i < Frequencies.Length; i++)
                     {
                         OctPhaseDelay[i].Value = 0;
                     }
-
+                    Loading = false;
                     Commit();
                 };
 
@@ -871,11 +1100,12 @@ namespace Pachyderm_Acoustic
                 zeroGain.Width = 76;
                 zeroGain.Click += (s, e) =>
                 {
-                    for (int i = 0; i < 8; i++)
+                    Loading = true;
+                    for (int i = 0; i < Frequencies.Length; i++)
                     {
                         OctGainDb[i].Value = 0;
                     }
-
+                    Loading = false;
                     Commit();
                 };
 
@@ -892,18 +1122,11 @@ namespace Pachyderm_Acoustic
                 Azi.Value = aim[1];
                 Axial.Value = aim[2];
 
-                double[] phase = PachTools.DecodeEight(obj.Geometry.GetUserString("ArrayPhaseOctaveDeg"));
-
-
-                for (int i = 0; i < 8; i++)
+                double[] delay = ArraySimulationSettings.BandValues(obj, "Delay", ThirdOctave);
+                double[] gain = ArraySimulationSettings.BandValues(obj, "Gain", ThirdOctave);
+                for (int i = 0; i < Frequencies.Length; i++)
                 {
-                    OctPhaseDelay[i].Value = phase[i];
-                }
-
-                double[] gain = PachTools.DecodeEight(obj.Geometry.GetUserString("ArrayGainOctaveDb"));
-
-                for (int i = 0; i < 8; i++)
-                {
+                    OctPhaseDelay[i].Value = delay[i] * Frequencies[i] * 360 / 1000;
                     OctGainDb[i].Value = gain[i];
                 }
 
@@ -945,26 +1168,27 @@ namespace Pachyderm_Acoustic
 
                 if (obj == null || obj.Geometry == null) return;
 
-                obj.Geometry.SetUserString(
+                string controlMode = obj.Geometry.GetUserString("ArrayControlMode") ?? obj.Geometry.GetUserString("ArrayDeviceType");
+                if (controlMode != "Column") obj.Geometry.SetUserString(
                     "Aiming",
                     Alt.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" +
                     Azi.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + ";" +
                     Axial.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
-                double[] phase = new double[8];
-                double[] delay = new double[8];
-                double[] gain = new double[8];
+                double[] phase = new double[Frequencies.Length];
+                double[] delay = new double[Frequencies.Length];
+                double[] gain = new double[Frequencies.Length];
 
-                for (int i = 0; i < 8; i++)
+                for (int i = 0; i < Frequencies.Length; i++)
                 {
                     phase[i] = OctPhaseDelay[i].Value;
-                    delay[i] = phase[i] / 360.0 / (62.5 * Math.Pow(2, i)) * 1000.0;
+                    delay[i] = phase[i] / 360.0 / Frequencies[i] * 1000.0;
                     gain[i] = OctGainDb[i].Value;
                 }
 
-                obj.Geometry.SetUserString("ArrayPhaseOctaveDeg", PachTools.EncodeEight(phase));
-                obj.Geometry.SetUserString("ArrayDelayOctaveMs", PachTools.EncodeEight(delay));
-                obj.Geometry.SetUserString("ArrayGainOctaveDb", PachTools.EncodeEight(gain));
+                obj.Geometry.SetUserString("ArrayPhase" + BandKey + "Deg", PachTools.EncodeSourcePower(phase));
+                obj.Geometry.SetUserString("ArrayDelay" + BandKey + "Ms", PachTools.EncodeSourcePower(delay));
+                obj.Geometry.SetUserString("ArrayGain" + BandKey + "Db", PachTools.EncodeSourcePower(gain));
 
                 if (!obj.CommitChanges()) return;
 

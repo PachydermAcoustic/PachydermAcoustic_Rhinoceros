@@ -19,6 +19,7 @@
 using Rhino.DocObjects;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Pachyderm_Acoustic.UI;
 using Rhino.UI;
 using Eto.Drawing;
@@ -38,6 +39,8 @@ namespace Pachyderm_Acoustic
             private GroupBox PatternDisplayBox;
             private CheckBox ShowPatternDisplay;
             private DropDown PatternOctave;
+            private CheckBox PatternThird;
+            private bool LoadingSource;
             private bool UpdatingPatternControls = false;
             private bool SourceControlVisible = false;
 
@@ -241,6 +244,27 @@ namespace Pachyderm_Acoustic
                 PowerTable.AddRow(H2k, SWL5, SPL5);
                 PowerTable.AddRow(H4k, SWL6, SPL6);
                 PowerTable.AddRow(H8k, SWL7, SPL7);
+                Button thirdPower = new Button { Text = "Edit third-octave power..." };
+                thirdPower.Click += (sender, e) =>
+                {
+                    if (Objects.Count == 0) return;
+                    double[] levels = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(Objects[0].Geometry.GetUserString("SWL")).Select(v => Math.Pow(10, v / 10)).ToArray(), true).Select(v => 10 * Math.Log10(v)).ToArray();
+                    using (SourcePowerMod editor = new SourcePowerMod(levels))
+                    {
+                        editor.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
+                        if (!editor.accept) return;
+                        for (int i = 0; i < Objects.Count; i++)
+                        {
+                            RhinoObject obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(Objects[i].Id);
+                            if (obj == null) continue;
+                            obj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(editor.Power));
+                            if (obj.CommitChanges()) Objects[i] = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(obj.Id);
+                        }
+                        Load_Doc(Objects);
+                    }
+                };
+                PowerTable.AddRow(thirdPower);
+
 
                 Layout.AddRow(PowerTable);
 
@@ -298,22 +322,25 @@ namespace Pachyderm_Acoustic
                 ShowPatternDisplay.CheckedChanged += PatternDisplay_CheckedChanged;
 
                 PatternOctave = new DropDown();
-                PatternOctave.Items.Add("63 Hz.");
-                PatternOctave.Items.Add("125 Hz.");
-                PatternOctave.Items.Add("250 Hz.");
-                PatternOctave.Items.Add("500 Hz.");
-                PatternOctave.Items.Add("1 kHz.");
-                PatternOctave.Items.Add("2 kHz.");
-                PatternOctave.Items.Add("4 kHz.");
-                PatternOctave.Items.Add("8 kHz.");
+                foreach (double f in Utilities.AcousticalMath.OctaveCenters()) PatternOctave.Items.Add(f.ToString("0.##") + " Hz");
                 PatternOctave.SelectedIndex = 4;
+                PatternThird = new CheckBox { Text = "Third-octave bands" };
+                PatternThird.CheckedChanged += (sender, e) =>
+                {
+                    SpeakerPattern.ThirdOctave = PatternThird.Checked == true;
+                    PatternOctave.Items.Clear();
+                    double[] centers = SpeakerPattern.ThirdOctave ? Utilities.AcousticalMath.ThirdOctaveCenters() : Utilities.AcousticalMath.OctaveCenters();
+                    foreach (double f in centers) PatternOctave.Items.Add(f.ToString("0.##") + " Hz");
+                    PatternOctave.SelectedIndex = SpeakerPattern.ThirdOctave ? 13 : 4;
+                    UpdateSpeakerPatternConduit();
+                };
                 PatternOctave.SelectedIndexChanged += PatternOctave_SelectedIndexChanged;
 
                 DynamicLayout PDL = new DynamicLayout();
                 PDL.Padding = 8;
                 PDL.DefaultSpacing = new Size(4, 8);
                 PDL.AddRow(ShowPatternDisplay);
-                PDL.AddRow(new Label { Text = "Octave Band:" }, PatternOctave);
+                PDL.AddRow(PatternThird, PatternOctave);
 
                 PatternDisplayBox.Content = PDL;
                 Directional_Controls.AddRow(PatternDisplayBox);
@@ -360,6 +387,10 @@ namespace Pachyderm_Acoustic
 
             public void Load_Doc(List<Rhino.DocObjects.RhinoObject> Obj)
             {
+                bool wasLoading = LoadingSource;
+                LoadingSource = true;
+                try
+                {
                 Objects = Obj;
 
                 if (Objects == null || Objects.Count == 0)
@@ -410,15 +441,15 @@ namespace Pachyderm_Acoustic
 
                         SourceType.SelectedIndex = int.Parse(Mode);
                         string Power = Objects[0].Geometry.GetUserString("SWL");
-                        double[] SWL = Utilities.PachTools.DecodeSourcePower(Power);
-                        SWL0.Value = (double)SWL[0];
-                        SWL1.Value = (double)SWL[1];
-                        SWL2.Value = (double)SWL[2];
-                        SWL3.Value = (double)SWL[3];
-                        SWL4.Value = (double)SWL[4];
-                        SWL5.Value = (double)SWL[5];
-                        SWL6.Value = (double)SWL[6];
-                        SWL7.Value = (double)SWL[7];
+                        double[] SWL = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(Power).Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray();
+                        SWL0.Value = double.IsInfinity(SWL[0]) || double.IsNaN(SWL[0]) ? SWL0.MinValue : SWL[0];
+                        SWL1.Value = double.IsInfinity(SWL[1]) || double.IsNaN(SWL[1]) ? SWL1.MinValue : SWL[1];
+                        SWL2.Value = double.IsInfinity(SWL[2]) || double.IsNaN(SWL[2]) ? SWL2.MinValue : SWL[2];
+                        SWL3.Value = double.IsInfinity(SWL[3]) || double.IsNaN(SWL[3]) ? SWL3.MinValue : SWL[3];
+                        SWL4.Value = double.IsInfinity(SWL[4]) || double.IsNaN(SWL[4]) ? SWL4.MinValue : SWL[4];
+                        SWL5.Value = double.IsInfinity(SWL[5]) || double.IsNaN(SWL[5]) ? SWL5.MinValue : SWL[5];
+                        SWL6.Value = double.IsInfinity(SWL[6]) || double.IsNaN(SWL[6]) ? SWL6.MinValue : SWL[6];
+                        SWL7.Value = double.IsInfinity(SWL[7]) || double.IsNaN(SWL[7]) ? SWL7.MinValue : SWL[7];
 
                         string Aim = Objects[0].Geometry.GetUserString("Aiming");
                         if (!string.IsNullOrEmpty(Aim))
@@ -462,6 +493,8 @@ namespace Pachyderm_Acoustic
                 UpdatePatternControlState();
                 UpdateSpeakerPatternConduit();
 
+                            }
+                finally { LoadingSource = wasLoading; }
             }
 
             private void Commit()
@@ -472,7 +505,15 @@ namespace Pachyderm_Acoustic
                     foreach (RhinoObject OBJ in Objects)
                     {
                         OBJ.Geometry.SetUserString("SourceType", SourceType.SelectedIndex.ToString());
-                        OBJ.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(new double[] { (double)SWL0.Value, (double)SWL1.Value, (double)SWL2.Value, (double)SWL3.Value, (double)SWL4.Value, (double)SWL5.Value, (double)SWL6.Value, (double)SWL7.Value }));
+                        double[] levels = new double[] { SWL0.Value, SWL1.Value, SWL2.Value, SWL3.Value, SWL4.Value, SWL5.Value, SWL6.Value, SWL7.Value };
+                        double[] native = Utilities.PachTools.DecodeSourcePower(OBJ.Geometry.GetUserString("SWL"));
+                        if (native.Length == 24)
+                        {
+                            double[] octave = Utilities.AcousticalMath.ConvertBandEnergy(native.Select(v => Math.Pow(10, v / 10)).ToArray(), false);
+                            for (int band = 0; band < 24; band++) native[band] = octave[band / 3] > 0 ? native[band] + levels[band / 3] - 10 * Math.Log10(octave[band / 3]) : levels[band / 3] - 10 * Math.Log10(3);
+                            levels = native;
+                        }
+                        OBJ.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(levels));
                     }
                 }
                 Load_Doc(Objects);
@@ -497,7 +538,7 @@ namespace Pachyderm_Acoustic
                 SPL6.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
                 SourcePower = System.Math.Round(1E-12 * System.Math.Pow(10, .1 * (double)SWL7.Value), 12);
                 SPL7.Text = Math.Round((10 * System.Math.Log10(SourcePower / (4 * System.Math.PI * 1E-12))), 2).ToString();
-                Commit();
+                if (!LoadingSource) Commit();
             }
 
             Eto.Forms.OpenFileDialog OF;
@@ -509,6 +550,10 @@ namespace Pachyderm_Acoustic
 
             private void Select_Type()
             {
+                bool wasLoading = LoadingSource;
+                LoadingSource = true;
+                try
+                {
                 bool UpdatePattern = false;
 
                 if (SourceType.SelectedIndex != 2 && SourceType.SelectedIndex != 3)
@@ -572,7 +617,12 @@ namespace Pachyderm_Acoustic
                             Objects[i].Geometry.SetUserString("CLF_CabinetFaces", string.IsNullOrEmpty(CabFaces) ? "F|" : CabFaces);
                             Objects[i].Geometry.SetUserString("CLF_CabinetLines", string.IsNullOrEmpty(CabLines) ? "L|" : CabLines);
 
-                            if (L.Length == 16)
+                            // Clear native patterns when replacing a third-octave CLF with octave data.
+                            foreach (double f in Utilities.AcousticalMath.ThirdOctaveCenters()) Objects[i].Geometry.SetUserString("BalloonThird" + f.ToString(System.Globalization.CultureInfo.InvariantCulture), null);
+                            Objects[i].Geometry.SetUserString("SensitivityThird", null);
+                            Objects[i].Geometry.SetUserString("SWLMaxThird", null);
+
+                            if (DataLength == 16)
                             {
                                 Sens = L[2];
                                 Max = L[3];
@@ -596,34 +646,22 @@ namespace Pachyderm_Acoustic
                             else
                             {
 
-                                string[] SP = L[2].Split(';');
-                                string[] MP = L[3].Split(';');
-
-                                string[] balloon = new string[8];
-
-                                for (int oct = 0; oct < 8; oct++)
-                                {
-                                    balloon[oct] = "";
-                                    int idx = (oct * 3) + 4;
-
-                                    Sens += (10 * (Math.Log10(Math.Pow(10, double.Parse(SP[idx - 4]) / 10) + Math.Pow(10, double.Parse(SP[idx - 3]) / 10) + Math.Pow(10, double.Parse(SP[idx - 2]) / 10)))).ToString() + ";";
-                                    Max += (10 * (Math.Log10(Math.Pow(10, double.Parse(MP[idx - 4]) / 10) + Math.Pow(10, double.Parse(MP[idx - 3]) / 10) + Math.Pow(10, double.Parse(MP[idx - 2]) / 10)))).ToString() + ";";
-
-                                    string[] balloon0 = L[idx].Split(';');
-                                    string[] balloon1 = L[idx + 1].Split(';');
-                                    string[] balloon2 = L[idx + 2].Split(';');
-                                    for (int r = 0; r < balloon0.Length - 1; r++)
-                                    {
-                                        balloon[oct] += (10 * (Math.Log10(Math.Pow(10, double.Parse(balloon0[r]) / 10) + Math.Pow(10, double.Parse(balloon1[r]) / 10) + Math.Pow(10, double.Parse(balloon2[r]) / 10)))).ToString() + ";";
-                                    }
-                                    Objects[i].Geometry.SetUserString("Balloon" + Math.Ceiling(62.5 * Math.Pow(2, oct)).ToString(), balloon[oct]);
-                                }
-
+                                string[] native = L.Skip(4).Take(24).ToArray();
+                                double[] centers = Utilities.AcousticalMath.ThirdOctaveCenters();
+                                for (int band = 0; band < 24; band++) Objects[i].Geometry.SetUserString("BalloonThird" + centers[band].ToString(System.Globalization.CultureInfo.InvariantCulture), native[band]);
+                                Objects[i].Geometry.SetUserString("SensitivityThird", L[2]);
+                                Objects[i].Geometry.SetUserString("SWLMaxThird", L[3]);
+                                double[] sensitivity = Utilities.PachTools.DecodeSourcePower(L[2]);
+                                double[] maximum = Utilities.PachTools.DecodeSourcePower(L[3]);
+                                Sens = Utilities.PachTools.EncodeSourcePower(Utilities.AcousticalMath.ConvertBandEnergy(sensitivity.Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray());
+                                Max = Utilities.PachTools.EncodeSourcePower(Utilities.AcousticalMath.ConvertBandEnergy(maximum.Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray());
+                                string[] balloon = Utilities.AcousticalMath.ConvertBandEnergy(native, false, false, sensitivity);
+                                for (int oct = 0; oct < 8; oct++) Objects[i].Geometry.SetUserString("Balloon" + Math.Ceiling(62.5 * Math.Pow(2, oct)).ToString(), balloon[oct]);
                                 Objects[i].Geometry.SetUserString("Sensitivity", Sens);
                                 Objects[i].Geometry.SetUserString("SWLMax", Max);
-                                Objects[i].Geometry.SetUserString("Bands", L[28]);
-
-                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(balloon, Sens, int.Parse(L[1]), Utilities.RCPachTools.ModelPointToHare(Objects[i].Geometry.GetBoundingBox(true).Min)));
+                                // Bands is kept in octave units for legacy source-range consumers.
+                                Objects[i].Geometry.SetUserString("Bands", "0;7");
+                                SC.AddBalloon(Objects[i].Attributes.ObjectId, new Speaker_Balloon(native, L[2], int.Parse(L[1]), Utilities.RCPachTools.ModelPointToHare(Objects[i].Geometry.GetBoundingBox(true).Min)));
                                 UpdatePattern = true;
                             }
 
@@ -663,6 +701,7 @@ namespace Pachyderm_Acoustic
                             SWL5.Value = (double)SenSwl[5];
                             SWL6.Value = (double)SenSwl[6];
                             SWL7.Value = (double)SenSwl[7];
+                            if (DataLength != 16) Objects[i].Geometry.SetUserString("SWL", L[2]);
 
                             Commit();
                         }
@@ -681,17 +720,12 @@ namespace Pachyderm_Acoustic
 
                     CODES = Balloon.Read_Generic(OF.FileName);
 
-                    string[] nomcode = CODES[8].Split(';');
-                    string[] maxcode = CODES[9].Split(';');
-
-                    for (int oct = 0; oct < 8; oct++)
-                    {
-                        ballooncodes[oct] = CODES[oct];
-                        SWLnom[oct] = double.Parse(nomcode[oct]);
-                        SWLmax[oct] = double.Parse(maxcode[oct]);
-                    }
-
-                    B = new Balloon(ballooncodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
+                    int bandCount = CODES.Length - 2;
+                    string[] nativeCodes = CODES.Take(bandCount).ToArray();
+                    ballooncodes = Utilities.AcousticalMath.ConvertBandEnergy(nativeCodes, false, true, Utilities.PachTools.DecodeSourcePower(CODES[bandCount]));
+                    SWLnom = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(CODES[bandCount]).Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray();
+                    SWLmax = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(CODES[bandCount + 1]).Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray();
+                    B = new Balloon(nativeCodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
                 }
                 else if (SourceType.SelectedIndex == 4)
                 {
@@ -705,16 +739,12 @@ namespace Pachyderm_Acoustic
                     {
                         CODES = Balloon.Read_Generic(OF.FileName);
 
-                        string[] nomcode = CODES[8].Split(';');
-                        string[] maxcode = CODES[9].Split(';');
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            ballooncodes[oct] = CODES[oct];
-                            SWLnom[oct] = double.Parse(nomcode[oct]);
-                            SWLmax[oct] = double.Parse(maxcode[oct]);
-                        }
-
-                        B = new Balloon(ballooncodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
+                    int bandCount = CODES.Length - 2;
+                    string[] nativeCodes = CODES.Take(bandCount).ToArray();
+                    ballooncodes = Utilities.AcousticalMath.ConvertBandEnergy(nativeCodes, false, true, Utilities.PachTools.DecodeSourcePower(CODES[bandCount]));
+                    SWLnom = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(CODES[bandCount]).Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray();
+                    SWLmax = Utilities.AcousticalMath.ConvertBandEnergy(Utilities.PachTools.DecodeSourcePower(CODES[bandCount + 1]).Select(v => Math.Pow(10, v / 10)).ToArray(), false).Select(v => 10 * Math.Log10(v)).ToArray();
+                    B = new Balloon(nativeCodes, Utilities.RCPachTools.ModelPointToHare(Objects[0].Geometry.GetBoundingBox(true).Min));
                     }
                 }
                 else
@@ -726,8 +756,13 @@ namespace Pachyderm_Acoustic
                 {
                     for (int i = 0; i < Objects.Count; i++)
                     {
-                        Objects[i].Geometry.SetUserString("Sensitivity", CODES[8]);
-                        Objects[i].Geometry.SetUserString("SWLMax", CODES[9]);
+                        Objects[i].Geometry.SetUserString("Sensitivity", Utilities.PachTools.EncodeSourcePower(SWLnom));
+                        Objects[i].Geometry.SetUserString("SWLMax", Utilities.PachTools.EncodeSourcePower(SWLmax));
+
+                        double[] centers = Utilities.AcousticalMath.ThirdOctaveCenters();
+                        for (int band = 0; band < 24; band++) Objects[i].Geometry.SetUserString("BalloonThird" + centers[band].ToString(System.Globalization.CultureInfo.InvariantCulture), CODES.Length == 26 ? CODES[band] : null);
+                        Objects[i].Geometry.SetUserString("SensitivityThird", CODES.Length == 26 ? CODES[24] : null);
+                        Objects[i].Geometry.SetUserString("SWLMaxThird", CODES.Length == 26 ? CODES[25] : null);
 
                         Objects[i].Geometry.SetUserString("Balloon63", ballooncodes[0]);
                         Objects[i].Geometry.SetUserString("Balloon125", ballooncodes[1]);
@@ -767,6 +802,7 @@ namespace Pachyderm_Acoustic
                         SWL7.Value = (double)SWLnom[7];
 
                         ClearCabinetGeometryUserStrings(Objects[i]);
+                        if (CODES.Length == 26) Objects[i].Geometry.SetUserString("SWL", CODES[24]);
 
                         Commit();
                     }
@@ -781,6 +817,8 @@ namespace Pachyderm_Acoustic
                 {
                     ClearSpeakerPatternConduit();
                 }
+                            }
+                finally { LoadingSource = wasLoading; }
             }
 
             private static void ExtractCabinetGeometryStrings(string[] L, out int dataLength, out string cabinetPoints, out string cabinetFaces, out string cabinetLines)
@@ -870,9 +908,31 @@ namespace Pachyderm_Acoustic
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
             }
 
+            private bool SetNativeSpeakerPower(string key)
+            {
+                if (!Objects.Any(obj => !string.IsNullOrWhiteSpace(obj.Geometry.GetUserString(key + "Third")))) return false;
+                double[][] levels = Objects.Select(obj =>
+                {
+                    string native = obj.Geometry.GetUserString(key + "Third");
+                    double[] values = Utilities.PachTools.DecodeSourcePower(native ?? obj.Geometry.GetUserString(key));
+                    return Utilities.AcousticalMath.ConvertBandEnergy(values.Select(v => Math.Pow(10, v / 10)).ToArray(), true).Select(v => 10 * Math.Log10(v)).ToArray();
+                }).ToArray();
+                double[] selected = Enumerable.Range(0, 24).Select(b => levels.Min(v => v[b])).ToArray();
+                for (int i = 0; i < Objects.Count; i++)
+                {
+                    RhinoObject obj = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(Objects[i].Id);
+                    if (obj == null) continue;
+                    obj.Geometry.SetUserString("SWL", Utilities.PachTools.EncodeSourcePower(selected));
+                    if (obj.CommitChanges()) Objects[i] = Rhino.RhinoDoc.ActiveDoc.Objects.FindId(obj.Id);
+                }
+                Load_Doc(Objects);
+                return true;
+            }
+
             private void Sensitivity_Click(object sender, System.EventArgs e)
             {
                 if (Objects.Count == 0) return;
+                if (SetNativeSpeakerPower("Sensitivity")) return;
                 //Get Max levels of all sources... 
                 double[][] levels = new double[Objects.Count][];
 
@@ -906,6 +966,7 @@ namespace Pachyderm_Acoustic
             {
 
                 if (Objects.Count == 0) return;
+                if (SetNativeSpeakerPower("SWLMax")) return;
                 //Get Max levels of all sources... 
                 double[][] levels = new double[Objects.Count][];
 
@@ -970,6 +1031,7 @@ namespace Pachyderm_Acoustic
 
                 if (SpeakerPattern != null && PatternOctave != null && PatternOctave.SelectedIndex >= 0)
                 {
+                    SpeakerPattern.ThirdOctave = PatternThird.Checked == true;
                     SpeakerPattern.Octave = PatternOctave.SelectedIndex;
                 }
 
@@ -1043,6 +1105,7 @@ namespace Pachyderm_Acoustic
 
                 if (PatternOctave != null && PatternOctave.SelectedIndex >= 0)
                 {
+                    SpeakerPattern.ThirdOctave = PatternThird.Checked == true;
                     SpeakerPattern.Octave = PatternOctave.SelectedIndex;
                 }
 

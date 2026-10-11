@@ -1,5 +1,6 @@
 ﻿using Eto.Forms;
 using System;
+using System.Linq;
 
 namespace Pachyderm_Acoustic
 {
@@ -7,9 +8,28 @@ namespace Pachyderm_Acoustic
     {
         public double[] Power;
         public bool accept = false;
+        private NumericStepper[] ThirdPower;
 
         public SourcePowerMod(double[] initpower)
         {
+            if (initpower != null && initpower.Length == 24)
+            {
+                Title = "Third-octave sound power";
+                Padding = 10;
+                ThirdPower = new NumericStepper[24];
+                double[] centers = Utilities.AcousticalMath.ThirdOctaveCenters();
+                DynamicLayout table = new DynamicLayout { DefaultSpacing = new Eto.Drawing.Size(6, 4) };
+                for (int band = 0; band < 24; band++) ThirdPower[band] = new NumericStepper { DecimalPlaces = 2, MinValue = -120, MaxValue = 200, Value = double.IsInfinity(initpower[band]) ? -120 : initpower[band] };
+                for (int oct = 0; oct < 8; oct++) table.AddRow(new Label { Text = centers[3 * oct] + " Hz" }, ThirdPower[3 * oct], new Label { Text = centers[3 * oct + 1] + " Hz" }, ThirdPower[3 * oct + 1], new Label { Text = centers[3 * oct + 2] + " Hz" }, ThirdPower[3 * oct + 2]);
+                OK.Text = "Apply";
+                Cancel.Text = "Cancel";
+                OK.Click += OK_Click;
+                Cancel.Click += Cancel_Click;
+                table.AddRow(null, OK, Cancel);
+                Content = table;
+                return;
+            }
+
 
             DynamicLayout layout = new DynamicLayout();
             Label OCT = new Eto.Forms.Label();
@@ -170,6 +190,12 @@ namespace Pachyderm_Acoustic
 
         protected override void OnClosed(EventArgs e)
         {
+            if (ThirdPower != null)
+            {
+                Power = ThirdPower.Select(c => c.Value).ToArray();
+                base.OnClosed(e);
+                return;
+            }
             Power = new double[8];
             Power[0] = (double)SWL0.Value;
             Power[1] = (double)SWL1.Value;

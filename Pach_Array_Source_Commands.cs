@@ -39,6 +39,7 @@ namespace Pachyderm_Acoustic
                 obj.Geometry.SetUserString("ArrayGroup", arrayGroup.ToString());
                 obj.Geometry.SetUserString("ArrayMode", "Steerable");
                 obj.Geometry.SetUserString("ArrayDeviceType", deviceType);
+                obj.Geometry.SetUserString("ArrayControlMode", deviceType == "Column" ? "Column" : "Line");
                 obj.Geometry.SetUserString("ArrayGroupLabel", groupLabel);
                 obj.Geometry.SetUserString("ArrayElementIndex", elementIndex.ToString(CultureInfo.InvariantCulture));
                 obj.Geometry.SetUserString("ArrayElementSuffix", suffix);
@@ -108,17 +109,16 @@ namespace Pachyderm_Acoustic
                     (axial * 180.0 / Math.PI).ToString("0.########", CultureInfo.InvariantCulture);
             }
 
-            internal static string[] CircularPistonBalloon(double effectiveDiameter_m)
+            internal static string[] CircularPistonBalloon(double effectiveDiameter_m, bool thirdOctave = false)
             {
-                double[] frequency =
-                    new double[] { 62.5, 125, 250, 500, 1000, 2000, 4000, 8000 };
+                double[] frequency = thirdOctave ? Utilities.AcousticalMath.ThirdOctaveCenters() : Utilities.AcousticalMath.OctaveCenters();
 
-                string[] result = new string[8];
+                string[] result = new string[frequency.Length];
 
                 double radius = Math.Max(0.001, effectiveDiameter_m * 0.5);
                 const double c = 343.0;
 
-                for (int oct = 0; oct < 8; oct++)
+                for (int oct = 0; oct < frequency.Length; oct++)
                 {
                     double k = 2.0 * Math.PI * frequency[oct] / c;
                     StringBuilder code = new StringBuilder();
@@ -269,6 +269,7 @@ namespace Pachyderm_Acoustic
                 double cabinetWidth_m = 0.08;
                 double cabinetDepth_m = 0.10;
                 double elementSWL = 90.0;
+                OptionToggle thirdBands = new OptionToggle(false, "Octave", "ThirdOctave");
                 int diffractionMethod = 0; //Keep Vanderkooy DED as the default.
 
                 OptionInteger elementCountOption = new OptionInteger(elementCount, 2, 256);
@@ -286,6 +287,7 @@ namespace Pachyderm_Acoustic
                 getOptions.AddOptionDouble("CabinetWidth_m", ref cabinetWidthOption);
                 getOptions.AddOptionDouble("CabinetDepth_m", ref cabinetDepthOption);
                 getOptions.AddOptionDouble("ElementSWL", ref elementSWLOption);
+                getOptions.AddOptionToggle("Bands", ref thirdBands);
                 int diffractionOption = getOptions.AddOptionList("Diffraction", new string[]{"Vanderkooy", "NumericalHybrid", "TrihedralExperimental"}, diffractionMethod);
                 getOptions.AcceptNothing(true);
 
@@ -360,6 +362,9 @@ namespace Pachyderm_Acoustic
                     return Result.Failure;
                 }
 
+                if (cabinet is Source_Constructions.Cabinet_Diffraction ded) ded.ThirdOctave = thirdBands.CurrentValue;
+                else if (cabinet is Source_Constructions.Cabinet_Diffraction_Numerical numerical) numerical.ThirdOctave = thirdBands.CurrentValue;
+                else if (cabinet is Source_Constructions.Cabinet_Diffraction_Trihedral trihedral) trihedral.ThirdOctave = thirdBands.CurrentValue;
                 if (diffractionMethod == 2) RhinoApp.WriteLine("Experimental: DED plus four front-corner residuals. Finite damping and smooth activation; rear-corner driving and DED endpoint matching are incomplete.");
                 //Calculate all balloons before adding document objects, so a failed numerical solve leaves no partial array.
                 string[][] balloons = new string[elementCount][];
@@ -392,7 +397,8 @@ namespace Pachyderm_Acoustic
                     double offset = ((elementCount - 1) * 0.5 - i) * spacing;
                     Point3d location = center + Vector3d.ZAxis * offset;
 
-                    string[] balloon = balloons[i];
+                    string[] nativeBalloon = balloons[i];
+                    string[] balloon = Utilities.AcousticalMath.ConvertBandEnergy(nativeBalloon, false, true);
                     Guid id = doc.Objects.AddPoint(location);
 
                     if (id == Guid.Empty) continue;
@@ -415,9 +421,17 @@ namespace Pachyderm_Acoustic
                     obj.Geometry.SetUserString("Balloon4000", balloon[6]);
                     obj.Geometry.SetUserString("Balloon8000", balloon[7]);
 
+                    if (thirdBands.CurrentValue)
+                    {
+                        double[] centers = Utilities.AcousticalMath.ThirdOctaveCenters();
+                        for (int band = 0; band < 24; band++) obj.Geometry.SetUserString("BalloonThird" + centers[band].ToString(CultureInfo.InvariantCulture), nativeBalloon[band]);
+                        obj.Geometry.SetUserString("ArrayBandResolution", "ThirdOctave");
+                    }
+
                     PachSteerableArraySourceCommand.AssignSteerableArrayMetadata(obj, arrayGroup, groupLabel, i);
 
                     obj.Geometry.SetUserString("ArrayDeviceType", "Column");
+                    obj.Geometry.SetUserString("ArrayControlMode", "Column");
                     obj.Geometry.SetUserString("ArrayElementSpacing_m", spacing_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayDriverDiameter_m", driverDiameter_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetWidth_m", cabinetWidth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));

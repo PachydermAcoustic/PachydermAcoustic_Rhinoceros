@@ -380,6 +380,7 @@ namespace Pachyderm_Acoustic
 
                 obj.Geometry.SetUserString("ArrayGroup", arrayGroup.ToString());
                 obj.Geometry.SetUserString("ArrayMode", "Steerable");
+                obj.Geometry.SetUserString("ArrayControlMode", "Line");
                 obj.Geometry.SetUserString("ArrayGroupLabel", groupLabel);
                 obj.Geometry.SetUserString("ArrayElementIndex", elementIndex.ToString());
                 obj.Geometry.SetUserString("ArrayElementSuffix", suffix);
@@ -1627,6 +1628,7 @@ namespace Pachyderm_Acoustic
             public List<Balloon> m_Balloons = new List<Balloon>();
             private List<RhinoCabinetDisplay> m_Cabinets = new List<RhinoCabinetDisplay>();
             private string m_last_selected_array_preview = ""; 
+            private bool m_array_preview_pending = false;
             public Dodec d = new Dodec(0.18);
             DisplayBitmap SS;
             DisplayBitmap SU;
@@ -1696,6 +1698,10 @@ namespace Pachyderm_Acoustic
 
             private void ClearConduit(object sender, EventArgs e)
             {
+                Rhino.RhinoApp.Idle -= UpdateArrayPreview;
+                m_array_preview_pending = false;
+                if (!string.IsNullOrWhiteSpace(m_last_selected_array_preview)) SpeakerPatternConduit.Instance.Clear();
+                m_last_selected_array_preview = "";
                 m_id_list.Clear();
                 m_Balloons.Clear();
                 m_Cabinets.Clear();
@@ -1710,14 +1716,6 @@ namespace Pachyderm_Acoustic
 
                 try
                 {
-                    if (e.NewRhinoObject != null && e.NewRhinoObject.Geometry != null && e.NewRhinoObject.Geometry.GetUserString("ArrayMode") == "Steerable" && !string.IsNullOrWhiteSpace(e.NewRhinoObject.Geometry.GetUserString("ArrayGroup")))
-                    {
-                        if (SpeakerPatternConduit.Instance != null && SpeakerPatternConduit.Instance.Enabled)
-                        {
-                            SpeakerPatternConduit.Instance.Rebuild();
-                        }
-                    }
-
                     string typ = "";
                     typ = e.OldRhinoObject.Geometry.GetUserString("SourceType");
                     if (typ != "2" && typ != "3") return;
@@ -1813,22 +1811,22 @@ namespace Pachyderm_Acoustic
                     typ = rhino_object.Geometry.GetUserString("SourceType");
                     if (rhino_object.ObjectType == Rhino.DocObjects.ObjectType.Point)
                     {
+                        string[] strballoon = null;
+                        if (typ == "2" || typ == "3")
+                        {
+                            strballoon = Utilities.AcousticalMath.ThirdOctaveCenters().Select(f =>
+                                rhino_object.Geometry.GetUserString("BalloonThird" + f.ToString(System.Globalization.CultureInfo.InvariantCulture))).ToArray();
+                            if (!strballoon.Any(c => !string.IsNullOrWhiteSpace(c)))
+                                strballoon = Utilities.AcousticalMath.OctaveCenters().Select(f =>
+                                    rhino_object.Geometry.GetUserString("Balloon" + Math.Ceiling(f).ToString(System.Globalization.CultureInfo.InvariantCulture))).ToArray();
+                        }
                         if (typ == "2")
                         {
-                            string[] strballoon = new string[8];
                             string Aim = "";
                             string ft = "";
                             string SWLMax = "";
-                            strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
-                            strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
-                            strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
-                            strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
-                            strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
-                            strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
-                            strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
-                            strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
-                            SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
+                            SWLMax = strballoon.Length == 24 ? rhino_object.Geometry.GetUserString("SWLMaxThird") : rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             ft = rhino_object.Geometry.GetUserString("FileType");
                             Speaker_Balloon L = new Speaker_Balloon(strballoon, SWLMax, int.Parse(ft), Utilities.RCPachTools.ModelPointToHare(rhino_object.Geometry.GetBoundingBox(true).Min));
@@ -1840,19 +1838,10 @@ namespace Pachyderm_Acoustic
                         }
                         else if (typ == "3")
                         {
-                            string[] strballoon = new string[8];
                             string Aim = "";
                             string SWLMax = "";
-                            strballoon[0] = rhino_object.Geometry.GetUserString("Balloon63");
-                            strballoon[1] = rhino_object.Geometry.GetUserString("Balloon125");
-                            strballoon[2] = rhino_object.Geometry.GetUserString("Balloon250");
-                            strballoon[3] = rhino_object.Geometry.GetUserString("Balloon500");
-                            strballoon[4] = rhino_object.Geometry.GetUserString("Balloon1000");
-                            strballoon[5] = rhino_object.Geometry.GetUserString("Balloon2000");
-                            strballoon[6] = rhino_object.Geometry.GetUserString("Balloon4000");
-                            strballoon[7] = rhino_object.Geometry.GetUserString("Balloon8000");
                             Aim = rhino_object.Geometry.GetUserString("Aiming");
-                            SWLMax = rhino_object.Geometry.GetUserString("SWLMax");
+                            SWLMax = strballoon.Length == 24 ? rhino_object.Geometry.GetUserString("SWLMaxThird") : rhino_object.Geometry.GetUserString("SWLMax");
                             string[] A = Aim.Split(';');
                             Balloon L = new Balloon(strballoon, Utilities.RCPachTools.ModelPointToHare(rhino_object.Geometry.GetBoundingBox(true).Min));
                             L.CurrentAlt = float.Parse(A[0]);
@@ -1918,10 +1907,12 @@ namespace Pachyderm_Acoustic
                 return arrays;
             }
 
-            protected override void DrawForeground(DrawEventArgs e)
+            private void UpdateArrayPreview(object sender, EventArgs e)
             {
+                Rhino.RhinoApp.Idle -= UpdateArrayPreview;
+                m_array_preview_pending = false;
+                if (!Enabled || RhinoDoc.ActiveDoc == null) return;
                 Dictionary<string, List<RhinoObject>> selected_arrays = SelectedSteerableArrays();
-                HashSet<string> selected_array_groups = new HashSet<string>(selected_arrays.Keys);
 
                 if (selected_arrays.Count > 0)
                 {
@@ -1944,6 +1935,17 @@ namespace Pachyderm_Acoustic
                     }
 
                     m_last_selected_array_preview = "";
+                }
+            }
+
+            protected override void DrawForeground(DrawEventArgs e)
+            {
+                Dictionary<string, List<RhinoObject>> selected_arrays = SelectedSteerableArrays();
+                HashSet<string> selected_array_groups = new HashSet<string>(selected_arrays.Keys);
+                if ((selected_arrays.Count > 0 || !string.IsNullOrWhiteSpace(m_last_selected_array_preview)) && !m_array_preview_pending)
+                {
+                    m_array_preview_pending = true;
+                    Rhino.RhinoApp.Idle += UpdateArrayPreview;
                 }
 
                 int index = 0;
@@ -2183,6 +2185,9 @@ namespace Pachyderm_Acoustic
                     DrawCabinet(e, cab);
                     return;
                 }
+
+                if (rhobj.Geometry.GetUserString("ArrayMode") == "Steerable" &&
+                    !string.IsNullOrWhiteSpace(rhobj.Geometry.GetUserString("ArrayGroup"))) return;
 
                 e.Display.DrawSprite(fallbackSprite, pt, spriteScale, true);
             }

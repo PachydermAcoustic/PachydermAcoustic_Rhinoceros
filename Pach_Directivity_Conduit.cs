@@ -49,6 +49,12 @@ namespace Pachyderm_Acoustic
             private bool Use_Array_Mode = false;
             private double Array_Reference_Distance = 10.0;
             private Rhino.Geometry.Mesh Array_Balloon_Mesh = null;
+            private Rhino.Geometry.Mesh Cached_Array_Sphere = null;
+            private string Array_Preview_Signature = null;
+            private bool Array_Preview_Pending = false;
+            private uint Scene_Revision = 0;
+            private static readonly string[] Array_Preview_Keys = { "ArrayElementIndex", "SourceType", "Aiming", "SWL", "SensitivityThird",
+                "ArrayGainOctaveDb", "ArrayGainThirdOctaveDb", "ArrayDelayOctaveMs", "ArrayDelayThirdOctaveMs", "ArrayCenterMode" };
             private bool Show_Array_Balloon = true;
             private double Array_Balloon_Radius => RCPachTools.MetersToModel(2.0);
             public int Array_Balloon_Min_Rays = 800;
@@ -145,6 +151,32 @@ namespace Pachyderm_Acoustic
 
             public void SetArrayElements(List<RhinoObject> objects, double referenceDistance)
             {
+                // Document events invalidate replacements and scene edits. Include
+                // control metadata here as those values can also be edited in place.
+                StringBuilder signature = new StringBuilder();
+                RhinoDoc doc = RhinoDoc.ActiveDoc;
+                signature.Append(doc?.RuntimeSerialNumber).Append('|').Append(doc?.ModelUnitSystem).Append('|').Append(Scene_Revision);
+                signature.Append('|').Append(Math.Max(0.1, referenceDistance).ToString("R", CultureInfo.InvariantCulture));
+                signature.Append('|').Append(Octave).Append('|').Append(ThirdOctave).Append('|').Append(Mode);
+                signature.Append('|').Append(Show_Array_Balloon).Append('|').Append(Show_Array_Graph).Append('|').Append(Show_Array_Diagnostic_Slice);
+                signature.Append('|').Append(Array_Diagnostic_Plane).Append('|').Append(Use_Cached_Geometry);
+                signature.Append('|').Append(Contour_Mesh_Max_Edge.ToString("R", CultureInfo.InvariantCulture)).Append('|').Append(First_Surface_Only);
+                signature.Append('|').Append(First_Surface_Tolerance.ToString("R", CultureInfo.InvariantCulture)).Append('|').Append(Show_Contour_Labels);
+                signature.Append('|').Append(Labels_Per_Level).Append('|').Append(Min_Label_Separation.ToString("R", CultureInfo.InvariantCulture));
+                if (Contour_Levels != null)
+                    foreach (double level in Contour_Levels) signature.Append('|').Append(level.ToString("R", CultureInfo.InvariantCulture));
+                if (objects != null)
+                    foreach (RhinoObject obj in objects)
+                    {
+                        if (obj == null || obj.Geometry == null) continue;
+                        signature.Append('|').Append(obj.Id).Append('|').Append(obj.RuntimeSerialNumber).Append('|').Append(obj.Geometry.DataCRC(0));
+                        foreach (string key in Array_Preview_Keys) signature.Append('|').Append(obj.Geometry.GetUserString(key));
+                    }
+                string currentSignature = signature.ToString();
+                if (Use_Array_Mode && Enabled && currentSignature == Array_Preview_Signature) return;
+
+                RhinoApp.Idle -= RebuildArrayPreviewOnIdle;
+                Array_Preview_Pending = false;
                 Array_Object_IDs = new List<Guid>();
 
                 if (objects != null)
@@ -164,6 +196,7 @@ namespace Pachyderm_Acoustic
                 Source_Object = null;
 
                 Rebuild();
+                Array_Preview_Signature = currentSignature;
             }
 
             private static void GetAiming(RhinoObject source, out double alt, out double azi, out double axi)
@@ -230,7 +263,7 @@ namespace Pachyderm_Acoustic
                     Maximum = maximum;
                 }
 
-                public static DirectivityLookup FromSource(RhinoObject source, int octave)
+                public static DirectivityLookup FromSource(RhinoObject source, int octave, bool thirdOctave = false)
                 {
                     if (source == null || source.Geometry == null)
                     {
@@ -243,20 +276,16 @@ namespace Pachyderm_Acoustic
                         return Omni();
                     }
 
-                    string code;
-
-                    switch (octave)
-                    {
-                        case 0: code = source.Geometry.GetUserString("Balloon63"); break;
-                        case 1: code = source.Geometry.GetUserString("Balloon125"); break;
-                        case 2: code = source.Geometry.GetUserString("Balloon250"); break;
-                        case 3: code = source.Geometry.GetUserString("Balloon500"); break;
-                        case 4: code = source.Geometry.GetUserString("Balloon1000"); break;
-                        case 5: code = source.Geometry.GetUserString("Balloon2000"); break;
-                        case 6: code = source.Geometry.GetUserString("Balloon4000"); break;
-                        case 7: code = source.Geometry.GetUserString("Balloon8000"); break;
-                        default: code = source.Geometry.GetUserString("Balloon500"); break;
-                    }
+                    string spectrum = source.Geometry.GetUserString("SWL");
+                    if (string.IsNullOrWhiteSpace(spectrum)) spectrum = source.Geometry.GetUserString("SensitivityThird");
+                    double[] referenceLevels = string.IsNullOrWhiteSpace(spectrum) ? null : Utilities.PachTools.DecodeSourcePower(spectrum);
+                    string[] codes = Utilities.AcousticalMath.ThirdOctaveCenters().Select(f =>
+                        source.Geometry.GetUserString("BalloonThird" + f.ToString(CultureInfo.InvariantCulture))).ToArray();
+                    if (!codes.Any(c => !string.IsNullOrWhiteSpace(c)))
+                        codes = Utilities.AcousticalMath.OctaveCenters().Select(f =>
+                            source.Geometry.GetUserString("Balloon" + Math.Ceiling(f).ToString(CultureInfo.InvariantCulture))).ToArray();
+                    codes = Utilities.AcousticalMath.ConvertBandEnergy(codes, thirdOctave, source_type == "3", referenceLevels);
+                    string code = codes[Math.Max(0, Math.Min(codes.Length - 1, octave))];
 
                     if (string.IsNullOrEmpty(code))
                     {
@@ -267,6 +296,10 @@ namespace Pachyderm_Acoustic
                     {
                         return Omni();
                     }
+
+                    if (source_type == "3")
+                        for (int v = 0; v < vmax; v++)
+                            for (int u = 0; u < umax; u++) table[u, v] = -table[u, v];
 
                     double max = double.NegativeInfinity;
 
@@ -423,35 +456,8 @@ namespace Pachyderm_Acoustic
                         }
                     }
 
-                    //Convert Stored Balloon To Directivity
-                    double min = double.PositiveInfinity;
-                    double max = double.NegativeInfinity;
-
-                    for (int v = 0; v < vmax; v++)
-                    {
-                        for (int u = 0; u < umax; u++)
-                        {
-                            double val = table[u, v];
-
-                            if (double.IsNaN(val) || double.IsInfinity(val)) continue;
-
-                            min = Math.Min(min, val);
-                            max = Math.Max(max, val);
-                        }
-                    }
-
-                    bool values_are_attenuation = min >= 0 && max <= 70;
-
-                    if (values_are_attenuation)
-                    {
-                        for (int v = 0; v < vmax; v++)
-                        {
-                            for (int u = 0; u < umax; u++)
-                            {
-                                table[u, v] = -table[u, v];
-                            }
-                        }
-                    }
+                    // FromSource converts attenuation to gain using SourceType.
+                    // Preserve the stored signs here so that conversion happens once.
                     return true;
                 }
             }
@@ -466,6 +472,7 @@ namespace Pachyderm_Acoustic
             private double Cached_Mesh_Max_Edge = double.NaN;
 
             public int Octave = 4;
+            public bool ThirdOctave = false;
 
             /// <summary>
             /// Mesh density used for meshing Breps before contouring.
@@ -509,12 +516,49 @@ namespace Pachyderm_Acoustic
             private SpeakerPatternConduit()
             {
                 EnsureContourStorage();
+                RhinoDoc.AddRhinoObject += OnSceneChanged;
+                RhinoDoc.DeleteRhinoObject += OnSceneChanged;
+                RhinoDoc.UndeleteRhinoObject += OnSceneChanged;
+                RhinoDoc.ReplaceRhinoObject += OnSceneChanged;
+                RhinoDoc.ModifyObjectAttributes += OnSceneChanged;
+            }
+
+            private void OnSceneChanged(object sender, EventArgs e)
+            {
+                RhinoObject obj = (e as RhinoObjectEventArgs)?.TheObject ??
+                    (e as RhinoReplaceObjectEventArgs)?.OldRhinoObject ??
+                    (e as RhinoModifyObjectAttributesEventArgs)?.RhinoObject;
+                RhinoDoc doc = (e as RhinoReplaceObjectEventArgs)?.Document ??
+                    (e as RhinoModifyObjectAttributesEventArgs)?.Document ?? obj?.Document ?? sender as RhinoDoc;
+                if (doc != null && (RhinoDoc.ActiveDoc == null || doc.RuntimeSerialNumber != RhinoDoc.ActiveDoc.RuntimeSerialNumber)) return;
+                string name = obj?.Attributes.Name;
+                string oldName = (e as RhinoModifyObjectAttributesEventArgs)?.OldAttributes.Name;
+                if ((name != "Acoustical Source" && name != "Acoustical Receiver") ||
+                    (oldName != null && oldName != name)) InvalidateScene();
+                else Array_Preview_Signature = null;
+                if (Use_Array_Mode && Enabled && !Array_Preview_Pending)
+                {
+                    Array_Preview_Pending = true;
+                    RhinoApp.Idle += RebuildArrayPreviewOnIdle;
+                }
+            }
+
+            private void RebuildArrayPreviewOnIdle(object sender, EventArgs e)
+            {
+                RhinoApp.Idle -= RebuildArrayPreviewOnIdle;
+                Array_Preview_Pending = false;
+                if (!Use_Array_Mode || !Enabled || RhinoDoc.ActiveDoc == null || Array_Object_IDs == null) return;
+                List<RhinoObject> objects = Array_Object_IDs.Select(id => RhinoDoc.ActiveDoc.Objects.FindId(id))
+                    .Where(obj => obj != null && obj.Geometry != null).ToList();
+                SetArrayElements(objects, Array_Reference_Distance);
             }
 
             public void SetSource(RhinoObject Obj)
             {
                 Array_Object_IDs = null;
                 Use_Array_Mode = false;
+                Array_Preview_Signature = null;
+                Array_Balloon_Mesh?.Dispose();
                 Array_Balloon_Mesh = null;
 
                 Source_Object = Obj;
@@ -524,6 +568,9 @@ namespace Pachyderm_Acoustic
 
             public void InvalidateScene()
             {
+                Scene_Revision++;
+                Array_Preview_Signature = null;
+                Cached_Scene?.Dispose();
                 Cached_Scene = null;
                 Cached_Scene_Signature = null;
                 Cached_Mesh_Max_Edge = double.NaN;
@@ -531,9 +578,13 @@ namespace Pachyderm_Acoustic
 
             public void Clear()
             {
+                RhinoApp.Idle -= RebuildArrayPreviewOnIdle;
+                Array_Preview_Pending = false;
+                Array_Preview_Signature = null;
                 Source_Object = null;
                 Array_Object_IDs = null;
                 Use_Array_Mode = false;
+                Array_Balloon_Mesh?.Dispose();
                 Array_Balloon_Mesh = null;
 
                 if (Boundary_Contour_Lines != null)
@@ -555,10 +606,12 @@ namespace Pachyderm_Acoustic
 
             public void Rebuild()
             {
+                Array_Preview_Signature = null;
                 EnsureContourStorage();
                 if (Boundary_Contour_Lines != null) for (int i = 0; i < Boundary_Contour_Lines.Length; i++) Boundary_Contour_Lines[i]?.Clear();
 
                 Boundary_Contour_Labels.Clear();
+                Array_Balloon_Mesh?.Dispose();
                 Array_Balloon_Mesh = null;
                 Array_Center = Point3d.Unset;
                 Array_Diagnostic_Slice_Lines.Clear();
@@ -607,7 +660,7 @@ namespace Pachyderm_Acoustic
                     if (Source_Object == null) return;
                     if (Source_Object.Geometry == null) return;
 
-                    DirectivityLookup lookup = DirectivityLookup.FromSource(Source_Object, Octave);
+                    DirectivityLookup lookup = DirectivityLookup.FromSource(Source_Object, Octave, ThirdOctave);
                     if (lookup == null) return;
 
                     Point3d source_pt = SourcePoint(Source_Object);
@@ -637,11 +690,34 @@ namespace Pachyderm_Acoustic
                 public readonly Hare.Geometry.Point Center;
                 public readonly double PowerLevel;
                 private readonly double amplitudeBound;
+                private readonly ArrayPattern[] subBands;
+                private readonly double[] subBandWeights;
 
-                public ArrayPattern(List<RhinoObject> sources, int octave, double distance)
+                // Octave patterns sum energies after coherent interference at the three third-band frequencies.
+                private ArrayPattern(ArrayPattern[] subBands)
                 {
-                    int oct = Math.Max(0, Math.Min(7, octave));
-                    omega = Utilities.Numerics.angularFrequency_Octave[oct];
+                    if (subBands == null) return;
+                    if (subBands.Length != 3) throw new ArgumentException("An octave requires three third-band patterns.", nameof(subBands));
+                    this.subBands = subBands;
+                    Center = subBands[0].Center;
+                    maxGainDb = subBands.Max(p => p.PowerLevel);
+                    if (double.IsNegativeInfinity(maxGainDb)) maxGainDb = 0;
+                    subBandWeights = subBands.Select(p => Math.Pow(10, (p.PowerLevel - maxGainDb) / 10)).ToArray();
+                    double energyBound = subBandWeights.Sum();
+                    amplitudeBound = Math.Sqrt(energyBound);
+                    PowerLevel = maxGainDb + 10 * Math.Log10(energyBound);
+                }
+
+                internal ArrayPattern(ArrayPattern[] thirdBands, int octave)
+                    : this(thirdBands.Skip(3 * octave).Take(3).ToArray()) { }
+
+                public ArrayPattern(List<RhinoObject> sources, int octave, double distance, bool thirdOctave = false)
+                    : this(thirdOctave ? null : Enumerable.Range(0, 3).Select(t =>
+                        new ArrayPattern(sources, 3 * Math.Max(0, Math.Min(7, octave)) + t, distance, true)).ToArray())
+                {
+                    if (!thirdOctave) return;
+                    int oct = Math.Max(0, Math.Min(thirdOctave ? 23 : 7, octave));
+                    omega = (thirdOctave ? Utilities.AcousticalMath.ThirdOctaveCenters()[oct] : Utilities.AcousticalMath.OctaveCenters()[oct]) * Utilities.Numerics.PiX2;
                     k = omega / 343.0;
                     referenceDistance = Math.Max(0.1, distance);
                     for (int i = 0; i < sources.Count; i++)
@@ -650,7 +726,7 @@ namespace Pachyderm_Acoustic
 
                         if (src == null || src.Geometry == null) continue;
 
-                        DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct);
+                        DirectivityLookup lookup = DirectivityLookup.FromSource(src, oct, thirdOctave);
                         if (lookup == null) continue;
 
                         Hare.Geometry.Point origin = RCPachTools.ModelPointToHare(SourcePoint(src), src.Document);
@@ -668,8 +744,8 @@ namespace Pachyderm_Acoustic
 
                                 if (values != null && values.Length > 0)
                                 {
-                                    int gainOct = Math.Max(0, Math.Min(oct, values.Length - 1));
-                                    gainDb = values[gainOct];
+                                    double[] energies = Utilities.AcousticalMath.ConvertBandEnergy(values.Select(v => Math.Pow(10, v / 10)).ToArray(), thirdOctave);
+                                    gainDb = 10 * Math.Log10(energies[oct]);
                                 }
                             }
                             catch
@@ -690,35 +766,10 @@ namespace Pachyderm_Acoustic
                             double.TryParse(delayText, out delayMs);
                         }
 
-                        string octaveDelayText = src.Geometry.GetUserString("ArrayDelayOctaveMs");
-
-                        if (!string.IsNullOrWhiteSpace(octaveDelayText))
-                        {
-                            string[] parts = octaveDelayText.Split(';');
-
-                            if (oct >= 0 && oct < parts.Length)
-                            {
-                                double bandDelay = 0.0;
-                                if (!double.TryParse(parts[oct], NumberStyles.Float, CultureInfo.InvariantCulture, out bandDelay))
-                                {
-                                    double.TryParse(parts[oct], out bandDelay);
-                                }
-                                delayMs += bandDelay;
-                            }
-                        }
-
-                        string arrayGainText = src.Geometry.GetUserString("ArrayGainOctaveDb");
-
-                        if (!string.IsNullOrWhiteSpace(arrayGainText))
-                        {
-                            double[] arrayGain = Utilities.PachTools.DecodeEight(arrayGainText);
-
-                            if (arrayGain != null && arrayGain.Length > 0)
-                            {
-                                int gainOct = Math.Max(0, Math.Min(oct, arrayGain.Length - 1));
-                                gainDb += arrayGain[gainOct];
-                            }
-                        }
+                        double[] delays = ArraySimulationSettings.BandValues(src, "Delay", thirdOctave);
+                        double[] gains = ArraySimulationSettings.BandValues(src, "Gain", thirdOctave);
+                        delayMs += delays[oct];
+                        gainDb += gains[oct];
 
                         elementOrigins.Add(origin);
                         elementAlt.Add(alt);
@@ -758,6 +809,13 @@ namespace Pachyderm_Acoustic
                 public double Magnitude(Vector3d direction)
                 {
                     if (!direction.Unitize()) return 0;
+                    if (subBands != null)
+                    {
+                        Hare.Geometry.Vector world = RCPachTools.RPttoHPt(direction);
+                        double energy = 0;
+                        for (int t = 0; t < 3; t++) energy += subBandWeights[t] * subBands[t].RelativePower(world);
+                        return Math.Sqrt(Math.Max(0, energy));
+                    }
                     Hare.Geometry.Point target = Center + RCPachTools.RPttoHPt(direction) * referenceDistance;
                     System.Numerics.Complex sum = System.Numerics.Complex.Zero;
                     for (int e = 0; e < elementOrigins.Count; e++)
@@ -776,6 +834,7 @@ namespace Pachyderm_Acoustic
 
                 public double RelativePower(Hare.Geometry.Vector direction)
                 {
+                    if (amplitudeBound <= 0) return 0;
                     double amplitude = Magnitude(RCPachTools.HPttoRPt(direction)) / amplitudeBound;
                     return amplitude * amplitude;
                 }
@@ -785,7 +844,7 @@ namespace Pachyderm_Acoustic
             {
                 if (sources == null || sources.Count == 0) return;
 
-                ArrayPattern pattern = new ArrayPattern(sources, octave, Array_Reference_Distance);
+                ArrayPattern pattern = new ArrayPattern(sources, octave, Array_Reference_Distance, ThirdOctave);
                 Hare.Geometry.Point arrayCenter = pattern.Center;
                 Array_Center = RCPachTools.HarePointToModel(arrayCenter);
 
@@ -793,20 +852,23 @@ namespace Pachyderm_Acoustic
 
                 if (Show_Array_Balloon || Show_Array_Graph || Show_Array_Diagnostic_Slice)
                 {
-                    Hare.Geometry.Topology sphere = Utilities.Geometry.GeoSphere(4).Model[0];
-
-                    Array_Balloon_Mesh = Utilities.RCPachTools.HaretoRhinoMesh(sphere, true);
+                    if (Cached_Array_Sphere == null)
+                        Cached_Array_Sphere = Utilities.RCPachTools.HaretoRhinoMesh(Utilities.Geometry.GeoSphere(4).Model[0], true);
+                    Array_Balloon_Mesh = Cached_Array_Sphere.DuplicateMesh();
 
                     double[] rawDb = new double[Array_Balloon_Mesh.Vertices.Count];
-                    
+                    Vector3d[] directions = new Vector3d[rawDb.Length];
                     for (int i = 0; i < Array_Balloon_Mesh.Vertices.Count; i++)
                     {
                         Rhino.Geometry.Vector3d patternDirection = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
-
                         if (!patternDirection.Unitize()) patternDirection = new Vector3d(0, 1, 0);
-                        double mag = pattern.Magnitude(patternDirection);
-                        rawDb[i] = mag <= 1E-12 ? -120.0 : 20.0 * Math.Log10(mag);
+                        directions[i] = patternDirection;
                     }
+                    Parallel.For(0, rawDb.Length, i =>
+                    {
+                        double mag = pattern.Magnitude(directions[i]);
+                        rawDb[i] = mag <= 1E-12 ? -120.0 : 20.0 * Math.Log10(mag);
+                    });
 
                     double balloonMax = rawDb.Where(v => !double.IsNaN(v) && !double.IsInfinity(v)).DefaultIfEmpty(0.0).Max();
                     // The slice and readout retain the balloon's spherical reference, even when it is hidden.
@@ -820,9 +882,7 @@ namespace Pachyderm_Acoustic
                         double relDb = rawDb[i] - balloonMax;
                         double displayDb = Math.Max(-30.0, Math.Min(0.0, relDb));
 
-                        Vector3d dir = new Vector3d(Array_Balloon_Mesh.Vertices[i].X, Array_Balloon_Mesh.Vertices[i].Y, Array_Balloon_Mesh.Vertices[i].Z);
-
-                        if (!dir.Unitize()) dir = new Vector3d(0, 1, 0);
+                        Vector3d dir = directions[i];
                         double radius = Array_Balloon_Radius * (displayDb + 30.0) / 30.0;
 
                         Array_Balloon_Mesh.Vertices.SetVertex(i, Array_Center.X + radius * dir.X, Array_Center.Y + radius * dir.Y, Array_Center.Z + radius * dir.Z);
@@ -832,7 +892,11 @@ namespace Pachyderm_Acoustic
 
                     Array_Balloon_Mesh.Normals.ComputeNormals();
                     Array_Balloon_Mesh.Compact();
-                    if (!Show_Array_Balloon) Array_Balloon_Mesh = null;
+                    if (!Show_Array_Balloon)
+                    {
+                        Array_Balloon_Mesh.Dispose();
+                        Array_Balloon_Mesh = null;
+                    }
                 }
 
                 if (Show_Array_Diagnostic_Slice)
@@ -1450,6 +1514,7 @@ namespace Pachyderm_Acoustic
                 scene.Normals.ComputeNormals();
                 scene.Compact();
 
+                Cached_Scene?.Dispose();
                 Cached_Scene = scene;
                 Cached_Scene_Signature = signature;
                 Cached_Mesh_Max_Edge = mp.MaximumEdgeLength;

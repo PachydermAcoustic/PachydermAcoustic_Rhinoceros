@@ -19,6 +19,7 @@
 using Rhino.PlugIns;
 using Rhino.Geometry;
 using System.Collections.Generic;
+using System.Linq;
 using System;
 using Rhino.UI;
 using Rhino.Runtime;
@@ -246,6 +247,14 @@ namespace Pachyderm_Acoustic
                         //}
 
                         double[] SWL_Values = Utilities.PachTools.DecodeSourcePower(SWL);
+                        if (!string.IsNullOrWhiteSpace(arrayGroup))
+                        {
+                            // Retain native third levels for directional weighting even in octave simulations.
+                            bool retainThird = SWL_Values.Length == 24 || thirdOctave;
+                            double[] energies = Utilities.AcousticalMath.ConvertBandEnergy(SWL_Values.Select(v => Math.Pow(10, v / 10)).ToArray(), retainThird);
+                            double[] gains = ArraySimulationSettings.BandValues(Origin, "Gain", thirdOctave);
+                            SWL_Values = energies.Select((v, band) => 10 * Math.Log10(v) + gains[retainThird && !thirdOctave ? band / 3 : band]).ToArray();
+                        }
                         Pachyderm_Acoustic.Environment.Source s = null;
 
                         switch (S_Type)
