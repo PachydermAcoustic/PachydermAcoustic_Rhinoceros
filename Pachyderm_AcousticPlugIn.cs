@@ -182,18 +182,19 @@ namespace Pachyderm_Acoustic
                 List<Environment.Source> S = new List<Environment.Source>();
                 Dictionary<String,List<Environment.Source>> s_dict = new Dictionary<String, List<Environment.Source>>();
 
-                // Group only registered point sources; legacy arrays default to individual elements.
+                // Keep physical emitters in one logical group; speaker groups also
+                // receive an aggregate balloon for stochastic ray emission.
                 var arrays = new Dictionary<string, List<Rhino.DocObjects.RhinoObject>>();
                 foreach (Guid sourceId in S_ID)
                 {
                     var obj = Rhino.RhinoDoc.ActiveDoc.Objects.Find(sourceId);
                     if (obj == null || obj.ObjectType != Rhino.DocObjects.ObjectType.Point) continue;
                     string group = obj.Geometry.GetUserString("ArrayGroup");
+                    if (string.IsNullOrWhiteSpace(group)) group = obj.Geometry.GetUserString("Cluster");
                     if (string.IsNullOrWhiteSpace(group)) continue;
                     if (!arrays.ContainsKey(group)) arrays[group] = new List<Rhino.DocObjects.RhinoObject>();
                     arrays[group].Add(obj);
                 }
-                var emittedArrays = new HashSet<string>();
 
                 for (int id = 0; id < S_ID.Length; id++)
                 {
@@ -202,17 +203,6 @@ namespace Pachyderm_Acoustic
 
                     if (Origin == null) continue;
                     string arrayGroup = Origin.Geometry.GetUserString("ArrayGroup");
-                    if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Point &&
-                        !string.IsNullOrWhiteSpace(arrayGroup) &&
-                        arrays.TryGetValue(arrayGroup, out var elements) &&
-                        elements.TrueForAll(UI.ArraySimulationSettings.UseComposite))
-                    {
-                        if (emittedArrays.Add(arrayGroup))
-                            S.Add(new UI.CompositeArraySource(elements,
-                                UI.ArraySimulationSettings.ReferenceDistance(elements[0]), id));
-                        if (thirdOctave && S.Count > 0) S[S.Count - 1].SetBandResolution(true);
-                        continue;
-                    }
 
                     if (Origin.ObjectType == Rhino.DocObjects.ObjectType.Point)
                     {
@@ -221,6 +211,7 @@ namespace Pachyderm_Acoustic
                         string D = Origin.Geometry.GetUserString("Delay");
                         double delay; if (D != "" && D != null) delay = double.Parse(D) / 1000; else delay = 0;
                         string cluster = Origin.Geometry.GetUserString("Cluster");
+                        if (!string.IsNullOrWhiteSpace(arrayGroup)) cluster = arrayGroup;
 
                         List<Environment.Source> c_list = new List<Environment.Source>();
 
@@ -247,13 +238,19 @@ namespace Pachyderm_Acoustic
                         //}
 
                         double[] SWL_Values = Utilities.PachTools.DecodeSourcePower(SWL);
-                        if (!string.IsNullOrWhiteSpace(arrayGroup))
+                        if ((S_Type == "2" || S_Type == "3") && ArraySimulationSettings.PerElementPower(Origin))
+                        {
+                            string storedPower = Origin.Geometry.GetUserString(ArraySimulationSettings.PowerKey);
+                            bool nativePower = !string.IsNullOrWhiteSpace(storedPower) && Utilities.PachTools.DecodeSourcePower(storedPower).Length == 24;
+                            SWL_Values = ArraySimulationSettings.ElementPower(Origin, SWL_Values.Length == 24 || thirdOctave || nativePower);
+                        }
+                        if (!string.IsNullOrWhiteSpace(arrayGroup) || ((S_Type == "2" || S_Type == "3") && !string.IsNullOrWhiteSpace(cluster)))
                         {
                             // Retain native third levels for directional weighting even in octave simulations.
-                            bool retainThird = SWL_Values.Length == 24 || thirdOctave;
+                            bool retainThird = SWL_Values.Length == 24 || thirdOctave || !string.IsNullOrWhiteSpace(Origin.Geometry.GetUserString("ArrayGainThirdOctaveDb"));
                             double[] energies = Utilities.AcousticalMath.ConvertBandEnergy(SWL_Values.Select(v => Math.Pow(10, v / 10)).ToArray(), retainThird);
-                            double[] gains = ArraySimulationSettings.BandValues(Origin, "Gain", thirdOctave);
-                            SWL_Values = energies.Select((v, band) => 10 * Math.Log10(v) + gains[retainThird && !thirdOctave ? band / 3 : band]).ToArray();
+                            double[] gains = ArraySimulationSettings.BandValues(Origin, "Gain", retainThird);
+                            SWL_Values = energies.Select((v, band) => 10 * Math.Log10(v) + gains[band]).ToArray();
                         }
                         Pachyderm_Acoustic.Environment.Source s = null;
 
@@ -277,6 +274,12 @@ namespace Pachyderm_Acoustic
                                 break;
                         }
 
+                        if (s != null && (S_Type == "2" || S_Type == "3"))
+                        {
+                            s.IsSpeaker = true;
+                            double[] steering = ArraySimulationSettings.BandValues(Origin, "Delay", true);
+                            s.SpeakerDelaySeconds = steering.Select(value => value / 1000.0 + delay).ToArray();
+                        }
                         if (cluster == null) { S.Add(s); }
                         else { c_list.Add(s); }
                     }
@@ -341,6 +344,17 @@ namespace Pachyderm_Acoustic
                 {
                     List<Environment.Source> c_list = kvp.Value;
                     Environment.SourceCluster cs = new Environment.SourceCluster(c_list,S.Count, thirdOctave);
+                    if (cs.CoherentSpeakers && arrays.TryGetValue(kvp.Key, out var members))
+                    {
+                        var speakers = members.Where(obj => obj.Geometry.GetUserString("SourceType") == "2" || obj.Geometry.GetUserString("SourceType") == "3").ToList();
+                        if (speakers.Count > 0)
+                        {
+                            cs.SpeakerRaySource = new UI.CompositeArraySource(speakers, UI.ArraySimulationSettings.ReferenceDistance(speakers[0]), S.Count);
+                            cs.SpeakerRaySource.SetBandResolution(thirdOctave);
+                            double[] target = UI.ArraySimulationSettings.TargetPower(speakers[0], thirdOctave);
+                            if (target != null && !UI.ArraySimulationSettings.PerElementPower(speakers[0])) cs.NormalizeSpeakerPower(target);
+                        }
+                    }
                     S.Add(cs);
                 }
                 if (S.Count > 0)

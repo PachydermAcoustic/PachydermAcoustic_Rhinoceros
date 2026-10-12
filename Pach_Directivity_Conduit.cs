@@ -54,7 +54,7 @@ namespace Pachyderm_Acoustic
             private bool Array_Preview_Pending = false;
             private uint Scene_Revision = 0;
             private static readonly string[] Array_Preview_Keys = { "ArrayElementIndex", "SourceType", "Aiming", "SWL", "SensitivityThird",
-                "ArrayGainOctaveDb", "ArrayGainThirdOctaveDb", "ArrayDelayOctaveMs", "ArrayDelayThirdOctaveMs", "ArrayCenterMode" };
+                "ArrayGainOctaveDb", "ArrayGainThirdOctaveDb", "ArrayDelayOctaveMs", "ArrayDelayThirdOctaveMs", "ArrayCenterMode", "ArraySoundPowerBandsDb", "ArraySoundPowerEnabled", "ArraySoundPowerMode" };
             private bool Show_Array_Balloon = true;
             private double Array_Balloon_Radius => RCPachTools.MetersToModel(2.0);
             public int Array_Balloon_Min_Rays = 800;
@@ -740,7 +740,7 @@ namespace Pachyderm_Acoustic
                         {
                             try
                             {
-                                double[] values = Utilities.PachTools.DecodeSourcePower(swl);
+                                    double[] values = ArraySimulationSettings.ElementPower(src, thirdOctave);
 
                                 if (values != null && values.Length > 0)
                                 {

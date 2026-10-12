@@ -778,7 +778,22 @@ namespace Pachyderm_Acoustic
                         Calculate.Enabled = true;
                         break;
                     }
+                    double[] energyBeforeDirect = Direct_Data.CoherentSpeakers
+                        ? Enumerable.Range(0, Direct_Data.BandCount).Select(band => Map[s_id].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum())).ToArray()
+                        : null;
                     Map[s_id].AddDirect(Direct_Data, Source[s_id]);
+                    if (energyBeforeDirect != null)
+                    {
+                        Rhino.RhinoApp.WriteLine(string.Format("Array direct sound diagnostics, source {0}: {1} receivers, {2} bands, histogram rate {3} Hz, SPL Only {4}.", s_id, Direct_Data.Io.Length, Direct_Data.BandCount, Map[s_id].SampleRate, Direct_Data.SPL_Only));
+                        Rhino.RhinoApp.WriteLine("Universal assembly: {0}", typeof(Direct_Sound).Assembly.Location);
+                        double[] centers = Direct_Data.ThirdOctave ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
+                        for (int band = 0; band < Direct_Data.BandCount; band++)
+                        {
+                            double[] energy = Direct_Data.Io.Select(receiver => receiver[band].Sum()).ToArray();
+                            double mapped = Map[s_id].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum()) - energyBeforeDirect[band];
+                            Rhino.RhinoApp.WriteLine(string.Format("  {0} Hz: direct energy {1:E6}, map addition {2:E6}, receivers with energy {3}/{4}, SWL {5:F2} dB.", centers[band], energy.Sum(), mapped, energy.Count(value => value > 0), energy.Length, Direct_Data.SWL[band]));
+                        }
+                    }
                     Source[s_id].Lighten();
 
                     // Capture SEL and Lmax deltas for FHWA traffic line sources (hourly Leq → SEL)
@@ -1331,7 +1346,15 @@ namespace Pachyderm_Acoustic
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
+                            if (PlotNumbers)
+                            {
+                                List<int> selectedSources = SourceList.SelectedSources();
+                                int band = color_control.Octave.SelectedIndex;
+                                double storedEnergy = selectedSources.Sum(source => Map[source].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum()));
+                                Rhino.RhinoApp.WriteLine(string.Format("Mapping SPL diagnostics: band index {0} ({1}), sources [{2}], time {3} to {4} ms, coherent {5}, zero at direct {6}.", band, color_control.Octave.SelectedValue, string.Join(",", selectedSources), Start_Time_Control.Value, End_Time_Control.Value, Coherent.Checked, ZeroAtDirect.Checked));
+                                Rhino.RhinoApp.WriteLine(string.Format("  Stored band energy {0:E6}; plotted SPL range {1} to {2} dB; positive finite levels {3}/{4}.", storedEnergy, Values.Min(), Values.Max(), Values.Count(value => !double.IsNaN(value) && !double.IsInfinity(value) && value > 0), Values.Length));
+                                Utilities.RCPachTools.PlotMapValues(Map, Values);
+                            }
                         }
                         break;
                     case "Sound Pressure Level (A-weighted)":

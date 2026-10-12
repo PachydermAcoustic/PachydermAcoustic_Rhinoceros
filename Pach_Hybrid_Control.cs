@@ -1200,7 +1200,7 @@ namespace Pachyderm_Acoustic
                     if (DS != null)
                     {
                         Direct_Data[s] = DS;
-                        Direct_Data[s].Create_Filter();
+                        if (!Direct_Data[s].CoherentSpeakers) Direct_Data[s].Create_Filter();
                     }
                     else
                     {

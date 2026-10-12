@@ -41,6 +41,7 @@ namespace Pachyderm_Acoustic
             private DropDown PatternOctave;
             private CheckBox PatternThird;
             private bool LoadingSource;
+            private readonly Panel ArrayPowerPanel = new Panel { Visible = false };
             private bool UpdatingPatternControls = false;
             private bool SourceControlVisible = false;
 
@@ -266,6 +267,7 @@ namespace Pachyderm_Acoustic
                 PowerTable.AddRow(thirdPower);
 
 
+                Layout.AddRow(ArrayPowerPanel);
                 Layout.AddRow(PowerTable);
 
                 this.label7.Text = "Delay (ms.)";
@@ -273,7 +275,7 @@ namespace Pachyderm_Acoustic
                 this.Delay_ms.MaxValue = 360;
                 this.Delay_ms.ValueChanged += this.Delay_ms_ValueChanged;
 
-                PowerTable.AddRow(label7, Delay_ms);
+                Layout.AddRow(label7, Delay_ms);
 
                 Directional_Controls = new DynamicLayout();
                 Directional_Controls.Padding = 8;
@@ -392,6 +394,17 @@ namespace Pachyderm_Acoustic
                 try
                 {
                 Objects = Obj;
+                List<RhinoObject> speakers = ArraySimulationSettings.SpeakerCluster(Objects);
+                ArrayPowerPanel.Visible = speakers.Count > 0;
+                PowerTable.Visible = speakers.Count == 0;
+                if (speakers.Count > 0)
+                {
+                    bool third = speakers[0].Geometry.GetUserString("ArrayBandResolution") == "ThirdOctave";
+                    ArrayPowerControl power = new ArrayPowerControl(speakers, third, true);
+                    power.Changed += (sender, args) => UpdateSpeakerPatternConduit();
+                    ArrayPowerPanel.Content = new GroupBox { Text = "Array band sound power", Content = new Scrollable { Content = power, Height = 320 } };
+                }
+                else ArrayPowerPanel.Content = null;
 
                 if (Objects == null || Objects.Count == 0)
                 {
@@ -424,7 +437,8 @@ namespace Pachyderm_Acoustic
                             {
                                 SourceType.Text = "";
                                 ClearSpeakerPatternConduit();
-                                UpdatePatternControlState(false);
+                                UpdatePatternControlState(speakers.Count > 0);
+                                if (speakers.Count > 0) UpdateSpeakerPatternConduit();
                                 return;
                             }
                         }
@@ -1077,7 +1091,7 @@ namespace Pachyderm_Acoustic
 
             private void UpdatePatternControlState()
             {
-                UpdatePatternControlState(ViewingSingleSpeakerSource());
+                UpdatePatternControlState(ViewingSingleSpeakerSource() || ArraySimulationSettings.SpeakerCluster(Objects).Count > 0);
             }
 
             private void UpdatePatternControlState(bool showPatternControls)
@@ -1088,6 +1102,9 @@ namespace Pachyderm_Acoustic
                 {
                     PatternDisplayBox.Visible = showPatternControls;
                     PatternDisplayBox.Enabled = showPatternControls;
+                    bool array = ArraySimulationSettings.SpeakerCluster(Objects).Count > 0;
+                    PatternDisplayBox.Text = array ? "Array pattern display" : "Pattern Display";
+                    ShowPatternDisplay.Text = array ? "Show array balloon and contours" : "Show Pattern Contours";
                 }
 
                 UpdatingPatternControls = false;
@@ -1096,8 +1113,9 @@ namespace Pachyderm_Acoustic
             private void UpdateSpeakerPatternConduit()
             {
                 if (SpeakerPattern == null) return;
+                List<RhinoObject> array = ArraySimulationSettings.SpeakerCluster(Objects);
 
-                if (!SourceControlVisible || !PatternDisplayEnabled() || !ViewingSingleSpeakerSource())
+                if (!SourceControlVisible || !PatternDisplayEnabled() || (array.Count == 0 && !ViewingSingleSpeakerSource()))
                 {
                     SpeakerPattern.Clear();
                     return;
@@ -1109,7 +1127,11 @@ namespace Pachyderm_Acoustic
                     SpeakerPattern.Octave = PatternOctave.SelectedIndex;
                 }
 
-                SpeakerPattern.SetSource(Objects[0]);
+                if (array.Count > 0)
+                {
+                    SpeakerPattern.SetArrayElements(array, ArraySimulationSettings.ReferenceDistance(array[0]));
+                }
+                else SpeakerPattern.SetSource(Objects[0]);
             }
 
             public void ClearSpeakerPatternConduit()

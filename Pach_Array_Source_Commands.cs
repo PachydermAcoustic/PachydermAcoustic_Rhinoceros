@@ -432,6 +432,8 @@ namespace Pachyderm_Acoustic
 
                     obj.Geometry.SetUserString("ArrayDeviceType", "Column");
                     obj.Geometry.SetUserString("ArrayControlMode", "Column");
+                    obj.Geometry.SetUserString(ArraySimulationSettings.PowerKey, Utilities.PachTools.EncodeSourcePower(swl));
+                    obj.Geometry.SetUserString(ArraySimulationSettings.PowerEnabledKey, "True");
                     obj.Geometry.SetUserString("ArrayElementSpacing_m", spacing_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayDriverDiameter_m", driverDiameter_m.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     obj.Geometry.SetUserString("ArrayCabinetWidth_m", cabinetWidth_m.ToString(System.Globalization.CultureInfo.InvariantCulture));

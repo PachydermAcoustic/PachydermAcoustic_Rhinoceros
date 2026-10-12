@@ -1869,18 +1869,18 @@ namespace Pachyderm_Acoustic
             private Dictionary<string, List<RhinoObject>> SelectedSteerableArrays()
             {
                 Dictionary<string, List<RhinoObject>> arrays = new Dictionary<string, List<RhinoObject>>();
+                HashSet<string> selectedGroups = new HashSet<string>();
 
                 for (int i = 0; i < m_id_list.Count; i++)
                 {
                     RhinoObject obj = RhinoDoc.ActiveDoc.Objects.FindId(m_id_list[i]);
                     if (obj == null || obj.Geometry == null) continue;
-                    if (obj.IsSelected(false) == 0) continue;
-
-                    string mode = obj.Geometry.GetUserString("ArrayMode");
+                    string mode = obj.Geometry.GetUserString("SourceType");
                     string group = obj.Geometry.GetUserString("ArrayGroup");
-
-                    if (mode != "Steerable") continue;
+                    if (string.IsNullOrWhiteSpace(group)) group = obj.Geometry.GetUserString("Cluster");
+                    if (mode != "2" && mode != "3") continue;
                     if (string.IsNullOrWhiteSpace(group)) continue;
+                    if (obj.IsSelected(false) != 0) selectedGroups.Add(group);
 
                     if (!arrays.ContainsKey(group))
                     {
@@ -1889,6 +1889,8 @@ namespace Pachyderm_Acoustic
 
                     arrays[group].Add(obj);
                 }
+
+                foreach (string group in arrays.Keys.Where(group => !selectedGroups.Contains(group)).ToArray()) arrays.Remove(group);
 
                 foreach (KeyValuePair<string, List<RhinoObject>> kvp in arrays)
                 {
@@ -1970,10 +1972,10 @@ namespace Pachyderm_Acoustic
                             // this is a point object so the bounding box will be wee sized 
                             Rhino.Geometry.Point2d screen_pt = e.Display.Viewport.WorldToClient(pt);
 
-                            string array_mode = rhobj.Geometry.GetUserString("ArrayMode");
                             string array_group = rhobj.Geometry.GetUserString("ArrayGroup");
+                            if (string.IsNullOrWhiteSpace(array_group)) array_group = rhobj.Geometry.GetUserString("Cluster");
 
-                            bool suppress_element_balloon = array_mode == "Steerable" && !string.IsNullOrWhiteSpace(array_group) && selected_array_groups.Contains(array_group);
+                            bool suppress_element_balloon = !string.IsNullOrWhiteSpace(array_group) && selected_array_groups.Contains(array_group);
                             
                             if ((mode == "2" || mode == "3") && m_Balloons[index] != null)
                             {

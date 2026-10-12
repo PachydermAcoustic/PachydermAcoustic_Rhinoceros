@@ -21,8 +21,8 @@ namespace Pachyderm_Acoustic
                 DynamicLayout table = new DynamicLayout { DefaultSpacing = new Eto.Drawing.Size(6, 4) };
                 for (int band = 0; band < 24; band++) ThirdPower[band] = new NumericStepper { DecimalPlaces = 2, MinValue = -120, MaxValue = 200, Value = double.IsInfinity(initpower[band]) ? -120 : initpower[band] };
                 for (int oct = 0; oct < 8; oct++) table.AddRow(new Label { Text = centers[3 * oct] + " Hz" }, ThirdPower[3 * oct], new Label { Text = centers[3 * oct + 1] + " Hz" }, ThirdPower[3 * oct + 1], new Label { Text = centers[3 * oct + 2] + " Hz" }, ThirdPower[3 * oct + 2]);
-                OK.Text = "Apply";
-                Cancel.Text = "Cancel";
+                OK = new Button { Text = "Apply" };
+                Cancel = new Button { Text = "Cancel" };
                 OK.Click += OK_Click;
                 Cancel.Click += Cancel_Click;
                 table.AddRow(null, OK, Cancel);
@@ -297,6 +297,14 @@ namespace Pachyderm_Acoustic
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
+            if (!disposing) return;
+            if (ThirdPower != null)
+            {
+                foreach (NumericStepper control in ThirdPower) control.Dispose();
+                Cancel.Dispose();
+                OK.Dispose();
+                return;
+            }
             SWL0.Dispose();
             SWL1.Dispose();
             SWL2.Dispose();

@@ -9,6 +9,8 @@ using ScottPlot.Triangulation;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using Rhino.UI;
 
 namespace Pachyderm_Acoustic
 {
@@ -20,6 +22,7 @@ namespace Pachyderm_Acoustic
 
             private DynamicLayout ElementLayout;
             private Scrollable ElementScroll;
+            private ArrayPowerControl ArrayPower;
 
             private bool LoadingGroup = false;
             private DropDown ArrayControlMode;
@@ -106,6 +109,7 @@ namespace Pachyderm_Acoustic
                     }
                     finally { if (undo != 0) doc.EndUndoRecord(undo); }
                     RebuildElementEditors();
+                    ArrayPower?.SetBandResolution(ThirdOctave, true);
                     UpdatePatternConduit();
                     doc.Views.Redraw();
                 };
@@ -140,6 +144,7 @@ namespace Pachyderm_Acoustic
                         obj.CommitChanges();
                     }
                     RebuildElementEditors();
+                    ArrayPower?.SetBandResolution(ThirdOctave);
                     UpdatePatternConduit();
                 };
                 PatternOctave.SelectedIndexChanged += (s, e) => UpdatePatternConduit();
@@ -184,27 +189,12 @@ namespace Pachyderm_Acoustic
                     UpdatePatternConduit();
                 };
 
-                DropDown simulationMode = new DropDown { Width = 230 };
-                simulationMode.Items.Add("Individual source elements");
-                simulationMode.Items.Add("Composite balloon");
-                simulationMode.SelectedIndex = Elements.TrueForAll(ArraySimulationSettings.UseComposite) ? 1 : 0;
-                simulationMode.SelectedIndexChanged += (s, e) =>
-                {
-                    foreach (RhinoObject element in Elements)
-                    {
-                        if (element == null || element.Geometry == null) continue;
-                        element.Geometry.SetUserString(ArraySimulationSettings.ModeKey, simulationMode.SelectedIndex == 1 ? "Composite" : "Elements");
-                        element.Geometry.SetUserString(ArraySimulationSettings.DistanceKey, PatternReferenceDistance.Value.ToString(CultureInfo.InvariantCulture));
-                        element.CommitChanges();
-                    }
-                };
-
                 DynamicLayout simulationLayout = new DynamicLayout { Padding = 8, DefaultSpacing = new Size(6, 6) };
-                simulationLayout.AddRow(new Label { Text = "Simulation" }, simulationMode, null);
+                simulationLayout.AddRow(new Label { Text = "Simulation" }, new Label { Text = "Hybrid array" }, null);
                 simulationLayout.AddRow(new Label { Text = "Array center" }, PatternCenterMode, null);
                 simulationLayout.AddRow(new Label { Text = "Reference distance" }, PatternReferenceDistance, null);
                 GroupBox simulationBox = new GroupBox { Text = "Simulation settings", Content = simulationLayout,
-                    ToolTip = "Composite balloon uses one source at the selected array center and the aiming reference distance." };
+                    ToolTip = "Direct sound and image sources use coherent element paths. Ray tracing uses the array balloon at the selected center and reference distance." };
 
                 Button aimAtPoints = new Button();
                 aimAtPoints.Text = "Aim at Points";
@@ -298,10 +288,15 @@ namespace Pachyderm_Acoustic
             private void AddElementControls(DynamicLayout layout)
             {
                 ElementScroll = new Scrollable();
+                ElementScroll.Width = 500;
 
                 RebuildElementEditors();
-
-                layout.Add(ElementScroll, xscale: true, yscale: true);
+                ArrayPower = new ArrayPowerControl(Elements, ThirdOctave);
+                ArrayPower.Changed += (sender, args) => UpdatePatternConduit();
+                Scrollable powerScroll = new Scrollable { Content = ArrayPower, Width = 320 };
+                DynamicLayout body = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                body.AddRow(new GroupBox { Text = "Overall band levels", Content = powerScroll }, ElementScroll);
+                layout.Add(body, xscale: true, yscale: true);
             }
 
             private void AimPhaseAtPoints(bool fineTune)

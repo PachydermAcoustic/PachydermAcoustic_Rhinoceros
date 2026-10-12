@@ -732,6 +732,110 @@ namespace Pachyderm_Acoustic
 
         }
 
+        internal sealed class ArrayPowerControl : DynamicLayout
+        {
+            readonly List<Rhino.DocObjects.RhinoObject> elements;
+            readonly CheckBox enabledPower;
+            readonly DropDown powerMode;
+            readonly FreqSlider spectrum;
+            double[] levels;
+            bool loading;
+            bool thirdOctave;
+            public event EventHandler Changed;
+
+            internal ArrayPowerControl(List<Rhino.DocObjects.RhinoObject> elements, bool thirdOctave, bool selectBands = false)
+            {
+                this.elements = elements;
+                this.thirdOctave = thirdOctave;
+                Padding = 8;
+                DefaultSpacing = new Size(4, 6);
+                loading = true;
+                double[] target = ArraySimulationSettings.TargetPower(elements[0], thirdOctave);
+                string stored = elements[0].Geometry.GetUserString(ArraySimulationSettings.PowerKey);
+                levels = !string.IsNullOrWhiteSpace(stored) ? Utilities.PachTools.DecodeSourcePower(stored)
+                    : target ?? Utilities.PachTools.DecodeSourcePower(elements[0].Geometry.GetUserString("SWL"));
+                enabledPower = new CheckBox { Text = "Control band power", Checked = target != null };
+                powerMode = new DropDown();
+                powerMode.Items.Add("Total array power");
+                powerMode.Items.Add("Power per element");
+                powerMode.ToolTip = "Total mode specifies array radiation after gain shading. Per-element mode specifies nominal driver power before gain shading.";
+                powerMode.SelectedIndex = ArraySimulationSettings.PerElementPower(elements[0]) ? 1 : 0;
+                spectrum = new FreqSlider(thirdOctave ? FreqSlider.bands.Third_Octave : FreqSlider.bands.Octave, true, selectBands);
+                spectrum.SetRange(-120, 200);
+                AddRow(enabledPower);
+                AddRow(powerMode);
+                AddRow(new Label { Text = "Band sound power, dB re 1 pW" });
+                Add(spectrum, xscale: true);
+                SetBandResolution(thirdOctave);
+                powerMode.Enabled = spectrum.Enabled = target != null;
+                loading = false;
+                enabledPower.CheckedChanged += (sender, args) => SavePower();
+                powerMode.SelectedIndexChanged += (sender, args) => SavePower();
+                spectrum.ValueChanged += (sender, args) =>
+                {
+                    if (loading) return;
+                    double[] edited = spectrum.Value;
+                    if (!this.thirdOctave && levels.Length == 24)
+                    {
+                        double[] previous = Utilities.AcousticalMath.ConvertBandEnergy(levels.Select(value => Math.Pow(10, value / 10)).ToArray(), false);
+                        levels = levels.Select((value, band) => value + edited[band / 3] - 10 * Math.Log10(previous[band / 3])).ToArray();
+                    }
+                    else levels = edited;
+                    SavePower();
+                };
+                spectrum.BandChanged += (sender, args) => SetBandResolution(spectrum.Value.Length == 24);
+            }
+
+            internal void SetBandResolution(bool third, bool reloadSettings = false)
+            {
+                bool wasLoading = loading;
+                loading = true;
+                try
+                {
+                    thirdOctave = third;
+                    if (reloadSettings)
+                    {
+                        var current = Rhino.RhinoDoc.ActiveDoc?.Objects.FindId(elements[0].Id) ?? elements[0];
+                        double[] target = ArraySimulationSettings.TargetPower(current, third);
+                        string stored = current.Geometry.GetUserString(ArraySimulationSettings.PowerKey);
+                        levels = !string.IsNullOrWhiteSpace(stored) ? Utilities.PachTools.DecodeSourcePower(stored)
+                            : target ?? Utilities.PachTools.DecodeSourcePower(current.Geometry.GetUserString("SWL"));
+                        enabledPower.Checked = target != null;
+                        powerMode.SelectedIndex = ArraySimulationSettings.PerElementPower(current) ? 1 : 0;
+                        powerMode.Enabled = spectrum.Enabled = target != null;
+                    }
+                    spectrum.Value = Utilities.AcousticalMath.ConvertBandEnergy(levels.Select(value => Math.Pow(10, value / 10)).ToArray(), third).Select(value => 10 * Math.Log10(value)).ToArray();
+                }
+                finally { loading = wasLoading; }
+            }
+
+            void SavePower()
+            {
+                if (loading) return;
+                bool enabled = enabledPower.Checked == true;
+                powerMode.Enabled = spectrum.Enabled = enabled;
+                Rhino.RhinoDoc doc = Rhino.RhinoDoc.ActiveDoc;
+                if (doc == null) return;
+                uint undo = doc.BeginUndoRecord("Array band sound power");
+                try
+                {
+                    foreach (Rhino.DocObjects.RhinoObject element in elements)
+                    {
+                        var current = doc.Objects.FindId(element.Id);
+                        if (current == null) continue;
+                        current.Geometry.SetUserString(ArraySimulationSettings.PowerKey, Utilities.PachTools.EncodeSourcePower(levels));
+                        current.Geometry.SetUserString(ArraySimulationSettings.PowerEnabledKey, enabled ? "True" : "False");
+                        current.Geometry.SetUserString(ArraySimulationSettings.PowerModeKey, powerMode.SelectedIndex == 1 ? "Element" : "Total");
+                        current.Geometry.SetUserString("ArraySoundPowerDba", null);
+                        current.CommitChanges();
+                    }
+                }
+                finally { if (undo != 0) doc.EndUndoRecord(undo); }
+                Changed?.Invoke(this, EventArgs.Empty);
+                doc.Views.Redraw();
+            }
+        }
+
         public partial class FreqSlider : Panel
         {
             bands bandwidth;
@@ -745,6 +849,7 @@ namespace Pachyderm_Acoustic
             readonly bool[] thirdOctaveEdited = new bool[24];
             readonly System.Collections.Generic.List<Control> sliderRows = new System.Collections.Generic.List<Control>();
             public event EventHandler BandChanged;
+            public event EventHandler ValueChanged;
             System.Collections.Generic.List<Oct_Slider> sliders = new System.Collections.Generic.List<Oct_Slider>();
             public FreqSlider(bands precision, bool decibels = false, bool allowBandSelection = false)
             {
@@ -762,7 +867,9 @@ namespace Pachyderm_Acoustic
                 if (settingBand || !((RadioButton)sender).Checked) return;
                 bands selected = sender == thirdOctaveSelector ? bands.Third_Octave : bands.Octave;
                 if (selected == bandwidth) return;
-                bandmode(selected);
+                updatingValues = true;
+                try { bandmode(selected); }
+                finally { updatingValues = false; }
                 BandChanged?.Invoke(this, EventArgs.Empty);
             }
             private void buildSliders(bands precision, bool decibels = false)
@@ -800,6 +907,7 @@ namespace Pachyderm_Acoustic
                     {
                         if (!updatingValues && bandwidth == bands.Third_Octave)
                             thirdOctaveEdited[band] = true;
+                        if (!updatingValues && !settingBand) ValueChanged?.Invoke(this, EventArgs.Empty);
                     };
                 }
                 sliders[24].MouseUp += FlatAdjust;
@@ -946,9 +1054,15 @@ namespace Pachyderm_Acoustic
 
             public void FlatAdjust(object sender, EventArgs e)
             {
+                updatingValues = true;
+                try
+                {
                 for (int i = 0; i < 24; i++)
                     if (bandwidth == bands.Third_Octave || i % 3 == 1)
                         sliders[i].Value = sliders[24].Value;
+                }
+                finally { updatingValues = false; }
+                ValueChanged?.Invoke(this, EventArgs.Empty);
             }
 
             public enum bands
@@ -962,6 +1076,15 @@ namespace Pachyderm_Acoustic
                 foreach (Oct_Slider slider in sliders)
                 {
                     slider.resize(width);
+                }
+            }
+
+            public void SetRange(double minimum, double maximum)
+            {
+                foreach (Oct_Slider slider in sliders)
+                {
+                    slider.MinValue = minimum;
+                    slider.MaxValue = maximum;
                 }
             }
         }
@@ -1303,6 +1426,18 @@ namespace Pachyderm_Acoustic
             {
                 get { return (double)oct_Slider.Value / 10; }
                 set { oct_Slider.Value = (int)(value * 10); }
+            }
+
+            public double MinValue
+            {
+                get { return oct_Slider.MinValue / 10.0; }
+                set { oct_Slider.MinValue = (int)(value * 10); }
+            }
+
+            public double MaxValue
+            {
+                get { return oct_Slider.MaxValue / 10.0; }
+                set { oct_Slider.MaxValue = (int)(value * 10); }
             }
 
             public void resize(int width)
