@@ -1192,7 +1192,9 @@ namespace Pachyderm_Acoustic
                 for (int s = 0; s < Source.Length; s++)
                 {
                     Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), Source[s], PScene, SampleRate, CutoffTime, T, SimulationThirdOctave.Checked);
-                    Direct_Sound DS = new Direct_Sound(Source[s], Rec, PScene, Enumerable.Range(0, Rec.Third_Oct ? 24 : 8).ToArray());
+                    var sourceWaveforms = Source[s] is SourceCluster cluster && cluster.CoherentSpeakers
+                        ? await Task.Run(() => new Coherent_Source_Waveforms(cluster, Rec.Third_Oct)) : null;
+                    Direct_Sound DS = new Direct_Sound(Source[s], Rec, PScene, Enumerable.Range(0, Rec.Third_Oct ? 24 : 8).ToArray()) { SourceWaveforms = sourceWaveforms };
                     TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
                     while (!TA.IsCompleted) await Task.Delay(1500);
                     DS = TA.GetResult() as Direct_Sound;
@@ -1210,7 +1212,7 @@ namespace Pachyderm_Acoustic
 
                     if (ISBox.Checked.Value)
                     {
-                        ImageSourceData IS = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, Rec.Third_Oct ? 23 : 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s);
+                        ImageSourceData IS = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, Rec.Third_Oct ? 23 : 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s) { SourceWaveforms = sourceWaveforms };
                         TaskAwaiter<Simulation_Type> TISA = RCPachTools.RunSimulation(IS).GetAwaiter();
                         while (!TISA.IsCompleted) await Task.Delay(1500);
                         IS = TISA.GetResult() as ImageSourceData;

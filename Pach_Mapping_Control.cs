@@ -378,6 +378,7 @@ namespace Pachyderm_Acoustic
                 srclbl.TextAlignment = TextAlignment.Left;
                 this.SourceList.Height = 80;
                 this.SourceList.Update += Update_Graph;
+                this.SourceList.Update += Update_Map_Preview;
                 AnalysisLayout.AddRow(srclbl);
                 AnalysisLayout.AddRow(SourceList);
                 TabOutputModes = new TabControl();
@@ -392,6 +393,7 @@ namespace Pachyderm_Acoustic
 
                 this.Parameter_Selection.Items.Add("Sound Pressure Level");
                 this.Parameter_Selection.Items.Add("Sound Pressure Level (A-weighted)");
+                this.Parameter_Selection.Items.Add("Sound Pressure Level (C-weighted)");
                 this.Parameter_Selection.Items.Add("Directionality");
                 this.Parameter_Selection.Items.Add("Reverberation Time (T-15)");
                 this.Parameter_Selection.Items.Add("Reverberation Time (T-30)");
@@ -409,6 +411,7 @@ namespace Pachyderm_Acoustic
                 color_control = new Color_Output_Control(true, "Parameter Selection", Parameter_Selection);
                 color_control.Update += Parameter_Selection_SelectedIndexChanged;
                 color_control.On_Output_Changed += Parameter_Selection_SelectedIndexChanged;
+                color_control.Octave.SelectedIndexChanged += Update_Map_Preview;
                 OL.AddRow(color_control);
 
                 DynamicLayout Output_Times = new DynamicLayout();
@@ -424,6 +427,8 @@ namespace Pachyderm_Acoustic
                 this.Start_Time_Control.MaxValue = 10000;
                 this.End_Time_Control.MaxValue = 10000;
                 this.End_Time_Control.Value = 50;
+                this.Start_Time_Control.ValueChanged += Update_Map_Preview;
+                this.End_Time_Control.ValueChanged += Update_Map_Preview;
                 DL.AddRow(ETlbl, null, End_Time_Control);
                 this.IntervalControl.Content = DL;
 
@@ -646,6 +651,7 @@ namespace Pachyderm_Acoustic
             double[] velocity_mps;
             PachMapReceiver[] Map;
             WaveConduit WC;
+            private bool mapPreviewUpdatePending;
 
             public void Toggle_Conduits_On(object sender, System.EventArgs e)
             {
@@ -748,7 +754,20 @@ namespace Pachyderm_Acoustic
                     //double SEL = AcousticalMath.Est_SEL_from_Leq(Leq_dB, N_events, T);
                     //Lmax_from_SEL(SEL, r0_m, v_mps);
 
-                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, Enumerable.Range(0, Map[s_id].Third_Oct ? 24 : 8).ToArray(), this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value);
+                    Coherent_Source_Waveforms sourceWaveforms = null;
+                    try
+                    {
+                        if (Source[s_id] is SourceCluster cluster && cluster.CoherentSpeakers)
+                            sourceWaveforms = await Task.Run(() => new Coherent_Source_Waveforms(cluster, Map[s_id].Third_Oct));
+                    }
+                    catch (Exception error)
+                    {
+                        Rhino.RhinoApp.WriteLine("Preparing coherent source waveforms failed: {0}", error);
+                        Calculate.Enabled = true;
+                        return;
+                    }
+                    var sourceWaveformLifetime = sourceWaveforms;
+                    Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, Enumerable.Range(0, Map[s_id].Third_Oct ? 24 : 8).ToArray(), this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value) { SourceWaveforms = sourceWaveforms };
                     TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
                     while (!TA.IsCompleted) await Task.Delay(1500);
                     DS = TA.GetResult() as Direct_Sound;
@@ -771,7 +790,7 @@ namespace Pachyderm_Acoustic
                     {
                         try
                         {
-                            images = new ImageSourceData(Source[s_id], Map[s_id], Direct_Data, PScene, new int[] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, false, s_id);
+                            images = new ImageSourceData(Source[s_id], Map[s_id], Direct_Data, PScene, new int[] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, false, s_id) { SourceWaveforms = sourceWaveforms };
                             images = await RCPachTools.RunSimulation(images) as ImageSourceData;
                         }
                         catch (Exception error)
@@ -931,6 +950,8 @@ namespace Pachyderm_Acoustic
             double Current_SPLMax = 131;
             double Current_SPLAMin = 0;
             double Current_SPLAMax = 120;
+            double Current_SPLCMin = 0;
+            double Current_SPLCMax = 120;
             double Current_STI1Min = 0;
             double Current_STI1Max = 1;
             double Current_STI2Min = 0;
@@ -983,6 +1004,10 @@ namespace Pachyderm_Acoustic
                     case "Sound Pressure Level (A-weighted)":
                         values = PachMapReceiver.Get_SPLA_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, srcIds, Coherent.Checked);
                         min = Current_SPLAMin; max = Current_SPLAMax;
+                        break;
+                    case "Sound Pressure Level (C-weighted)":
+                        values = PachMapReceiver.Get_SPLC_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, srcIds, Coherent.Checked);
+                        min = Current_SPLCMin; max = Current_SPLCMax;
                         break;
                     case "Sound Exposure Level":
                         values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked, ZeroAtDirect.Checked, deltaSEL);
@@ -1173,9 +1198,16 @@ namespace Pachyderm_Acoustic
 
             public void Show_Conduit_Map(bool PlotNumbers)
             {
+                if (Map == null || Map.Length == 0) return;
+                if (WC == null) WC = new WaveConduit(color_control.Scale, new double[] { color_control.Min, color_control.Max });
+                Commit_Param_Bounds();
                 List<int> srclist = SourceList.SelectedSources();
 
-                if (srclist.Count == 0) return;
+                if (srclist.Count == 0)
+                {
+                    WC.Populate(new Mesh());
+                    return;
+                }
                 Mesh Mesh_Map = new Mesh();
                 switch (Parameter_Selection.SelectedKey as string)
                 {
@@ -1192,6 +1224,14 @@ namespace Pachyderm_Acoustic
                         {
                             double[] Values = PachMapReceiver.Get_SPLA_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLAMin, Current_SPLAMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                        }
+                        break;
+                    case "Sound Pressure Level (C-weighted)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_SPLC_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, SourceList.SelectedSources(), Coherent.Checked);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLCMin, Current_SPLCMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                         }
                         break;
@@ -1212,7 +1252,7 @@ namespace Pachyderm_Acoustic
                         }
                         break;
                     case "Directionality":
-                        return;
+                        break;
                     case "Early Decay Time (EDT)":
                         if (Map != null)
                         {
@@ -1395,6 +1435,16 @@ namespace Pachyderm_Acoustic
                         {
                             double[] Values = PachMapReceiver.Get_SPLA_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLAMin, Current_SPLAMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                            if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
+                        }
+                        break;
+                    case "Sound Pressure Level (C-weighted)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_SPLC_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, SourceList.SelectedSources(), Coherent.Checked);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLCMin, Current_SPLCMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
                             if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
@@ -1656,6 +1706,10 @@ namespace Pachyderm_Acoustic
                         Current_SPLAMin = (double)this.color_control.Min;
                         Current_SPLAMax = (double)this.color_control.Max;
                         break;
+                    case "Sound Pressure Level (C-weighted)":
+                        Current_SPLCMin = (double)this.color_control.Min;
+                        Current_SPLCMax = (double)this.color_control.Max;
+                        break;
                     case "Early Decay Time (T-15)":
                         Current_EDTMin = (double)this.color_control.Min;
                         Current_EDTMax = (double)this.color_control.Max;
@@ -1706,8 +1760,22 @@ namespace Pachyderm_Acoustic
 
             private void Preview_Map_Click(object sender, EventArgs e)
             {
-                Show_Conduit_Map(false);
+                if (WC != null && WC.Enabled) WC.Enabled = false;
+                else Show_Conduit_Map(false);
                 Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+            }
+
+            private void Update_Map_Preview(object sender, EventArgs e)
+            {
+                if (WC == null || !WC.Enabled || Map == null || mapPreviewUpdatePending) return;
+                mapPreviewUpdatePending = true;
+                Application.Instance.AsyncInvoke(() =>
+                {
+                    mapPreviewUpdatePending = false;
+                    if (WC == null || !WC.Enabled || Map == null || color_control.Octave.SelectedIndex < 0) return;
+                    Show_Conduit_Map(false);
+                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
+                });
             }
 
             private void Calculate_Map_Click(object sender, EventArgs e)
@@ -1781,6 +1849,9 @@ namespace Pachyderm_Acoustic
                         case "Sound Pressure Level (A-weighted)":
                             color_control.setscale(Current_SPLAMin, Current_SPLAMax);
                             break;
+                        case "Sound Pressure Level (C-weighted)":
+                            color_control.setscale(Current_SPLCMin, Current_SPLCMax);
+                            break;
                         case "Early Decay Time (EDT)":
                             color_control.setscale(Current_EDTMin, Current_EDTMax);
                             break;
@@ -1819,6 +1890,7 @@ namespace Pachyderm_Acoustic
 
                 Commit_Param_Bounds();
                 UpdateContourStepLabel();
+                Update_Map_Preview(sender, e);
             }
 
             private void UpdateContourStepLabel()
@@ -1828,6 +1900,7 @@ namespace Pachyderm_Acoustic
                 {
                     case "Sound Pressure Level": min = Current_SPLMin; max = Current_SPLMax; break;
                     case "Sound Pressure Level (A-weighted)": min = Current_SPLAMin; max = Current_SPLAMax; break;
+                    case "Sound Pressure Level (C-weighted)": min = Current_SPLCMin; max = Current_SPLCMax; break;
                     case "Reverberation Time (T-15)": min = Current_RTMin; max = Current_RTMax; break;
                     case "Reverberation Time (T-30)": min = Current_RTMin; max = Current_RTMax; break;
                     case "Early Decay Time (EDT)": min = Current_EDTMin; max = Current_EDTMax; break;
@@ -2217,6 +2290,7 @@ namespace Pachyderm_Acoustic
                 {
                     Coherent.Checked = false;
                 }
+                Update_Map_Preview(sender, e);
             }
 
             private Eto.Forms.SelectFolderDialog FileLocation = new SelectFolderDialog();
@@ -2322,6 +2396,7 @@ namespace Pachyderm_Acoustic
             {
                 if (sender == ZeroAtDirect) { ZeroAtSource.Checked = false; }
                 else { ZeroAtDirect.Checked = false;}
+                Update_Map_Preview(sender, e);
             }
 
             protected override void Dispose(bool disposing)

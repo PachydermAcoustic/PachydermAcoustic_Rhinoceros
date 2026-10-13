@@ -64,43 +64,49 @@ namespace Pachyderm_Acoustic
 
                 Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = false;
 
-                if (Sim != null)
+                try
                 {
-                    Sim.Begin();
-                    Rhino.RhinoApp.SetCommandPrompt(string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
-                    do
+                    if (Sim != null)
                     {
-                        //if (CancelCalc)
-                        //{
-                        //    //Sim.Abort_Calculation();
-                        //    CommandResult = Result.Cancel;
-                        //    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
-                        //    return CommandResult;
-                        //}
-                        if (!needfeedback) System.Threading.Thread.Sleep(3000);
-                        else
+                        Sim.Begin();
+                        Rhino.RhinoApp.SetCommandPrompt(string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
+                        do
                         {
-                            await Task.Delay(3000);
-                            Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
-                        }
-                    } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
+                            //if (CancelCalc)
+                            //{
+                            //    //Sim.Abort_Calculation();
+                            //    CommandResult = Result.Cancel;
+                            //    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
+                            //    return CommandResult;
+                            //}
+                            if (!needfeedback) System.Threading.Thread.Sleep(3000);
+                            else
+                            {
+                                await Task.Delay(3000);
+                                Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                            }
+                        } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
 
-                    Sim.Combine_ThreadLocal_Results();
-                    do
-                    {
-                        System.Threading.Thread.Sleep(3000);
-                        if (Sim.ThreadState() != System.Threading.ThreadState.Running)
+                        Sim.Combine_ThreadLocal_Results();
+                        do
                         {
-                            break;
-                        }
-                        if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
-                    } while (true);
+                            System.Threading.Thread.Sleep(3000);
+                            if (Sim.ThreadState() != System.Threading.ThreadState.Running)
+                            {
+                                break;
+                            }
+                            if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                        } while (true);
+                    }
+
+                    return Sim;
                 }
-
-                Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
-                Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
-                P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
-                return Sim;
+                finally
+                {
+                    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
+                    Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
+                    P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
+                }
             }
 
             /// <summary>
