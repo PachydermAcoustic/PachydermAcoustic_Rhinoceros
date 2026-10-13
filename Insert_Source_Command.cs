@@ -324,7 +324,7 @@ namespace Pachyderm_Acoustic
                     return Result.Cancel;
                 }
 
-                string groupLabel = NextArrayLabel(sources);
+                string groupLabel = ArraySourceConstruction.NextArrayLabel(doc);
                 rc = Rhino.Input.RhinoGet.GetString("Array label", true, ref groupLabel);
 
                 if (rc != Result.Success) return rc;
@@ -388,7 +388,7 @@ namespace Pachyderm_Acoustic
 
                 // Important:
                 // Existing "Cluster" means collapsed/inSteerable SourceCluster.
-                // Steerable arrays default to separate sources; ArraySimulationMode can opt into a composite balloon.
+                // Speaker arrays use coherent element paths and a composite ray-tracing balloon.
                 obj.Geometry.SetUserString("Cluster", null);
 
                 if (string.IsNullOrWhiteSpace(obj.Geometry.GetUserString("ArrayPhaseOctaveDeg")))
@@ -441,11 +441,6 @@ namespace Pachyderm_Acoustic
                 return s;
             }
 
-            private static string NextArrayLabel(List<Rhino.DocObjects.RhinoObject> selectedSources)
-            {
-                // Conservative default. Later this can inspect existing SourceLabels and pick the next number.
-                return "01";
-            }
         }
 
         [System.Runtime.InteropServices.Guid("2C93BFD7-B515-4D33-8B9D-25F4A060921B")]
@@ -1629,6 +1624,9 @@ namespace Pachyderm_Acoustic
             private List<RhinoCabinetDisplay> m_Cabinets = new List<RhinoCabinetDisplay>();
             private string m_last_selected_array_preview = ""; 
             private bool m_array_preview_pending = false;
+            private readonly Dictionary<string, List<Guid>> m_copied_arrays = new Dictionary<string, List<Guid>>();
+            private RhinoDoc m_copy_document;
+            private bool? m_copy_transform;
             public Dodec d = new Dodec(0.18);
             DisplayBitmap SS;
             DisplayBitmap SU;
@@ -1676,6 +1674,9 @@ namespace Pachyderm_Acoustic
                     if ((!m_bHandlerAdded))
                     {
                         Rhino.RhinoDoc.AddRhinoObject += OnCopyObject;
+                        Rhino.RhinoDoc.BeforeTransformObjects += OnBeforeTransformObjects;
+                        Rhino.RhinoDoc.AfterTransformObjects += OnAfterTransformObjects;
+                        Rhino.Commands.Command.EndCommand += OnEndCommand;
                         Rhino.RhinoDoc.DeleteRhinoObject += OnDeleteObject;
                         Rhino.RhinoDoc.ReplaceRhinoObject += OnReplaceObject;
                         Rhino.RhinoDoc.BeginOpenDocument += ClearConduit;
@@ -1685,6 +1686,9 @@ namespace Pachyderm_Acoustic
                 else
                 {
                     Rhino.RhinoDoc.AddRhinoObject -= OnCopyObject;
+                    Rhino.RhinoDoc.BeforeTransformObjects -= OnBeforeTransformObjects;
+                    Rhino.RhinoDoc.AfterTransformObjects -= OnAfterTransformObjects;
+                    Rhino.Commands.Command.EndCommand -= OnEndCommand;
                     Rhino.RhinoDoc.DeleteRhinoObject -= OnDeleteObject;
                     Rhino.RhinoDoc.ReplaceRhinoObject -= OnReplaceObject;
                     Rhino.RhinoDoc.BeginOpenDocument -= ClearConduit;
@@ -1698,6 +1702,9 @@ namespace Pachyderm_Acoustic
 
             private void ClearConduit(object sender, EventArgs e)
             {
+                m_copied_arrays.Clear();
+                m_copy_document = null;
+                m_copy_transform = null;
                 Rhino.RhinoApp.Idle -= UpdateArrayPreview;
                 m_array_preview_pending = false;
                 if (!string.IsNullOrWhiteSpace(m_last_selected_array_preview)) SpeakerPatternConduit.Instance.Clear();
@@ -1745,7 +1752,69 @@ namespace Pachyderm_Acoustic
             /// <param name="rhObject"></param>
             private void OnCopyObject(object sender, Rhino.DocObjects.RhinoObjectEventArgs e)
             {
-                if (e.TheObject.Attributes.Name == "Acoustical Source") SetSource(e.TheObject);
+                RhinoObject obj = e.TheObject;
+                if (obj.Attributes.Name != "Acoustical Source") return;
+                RhinoDoc doc = obj.Document;
+                string group = obj.Geometry.GetUserString("ArrayGroup");
+                if (doc != null && !doc.IsOpening && !doc.UndoActive && !doc.RedoActive && m_copy_transform != false &&
+                    !m_id_list.Contains(obj.Id) && !string.IsNullOrWhiteSpace(group) &&
+                    m_id_list.Any(id => doc.Objects.FindId(id)?.Geometry.GetUserString("ArrayGroup") == group))
+                {
+                    if (!m_copied_arrays.ContainsKey(group)) m_copied_arrays[group] = new List<Guid>();
+                    m_copied_arrays[group].Add(obj.Id);
+                    m_copy_document = doc;
+                }
+                SetSource(obj);
+            }
+
+            private void OnBeforeTransformObjects(object sender, RhinoTransformObjectsEventArgs e)
+            {
+                m_copy_transform = e.ObjectsWillBeCopied;
+            }
+
+            private void OnAfterTransformObjects(object sender, RhinoAfterTransformObjectsEventArgs e)
+            {
+                // Each completed transform in Copy/Array is a separate instance.
+                FinishArrayCopies();
+                m_copy_transform = null;
+            }
+
+            private void OnEndCommand(object sender, CommandEventArgs e)
+            {
+                // Also handles clipboard paste, which need not raise a transform event.
+                FinishArrayCopies();
+                m_copy_transform = null;
+            }
+
+            private void FinishArrayCopies()
+            {
+                RhinoDoc doc = m_copy_document;
+                var copies = m_copied_arrays.ToArray();
+                m_copied_arrays.Clear();
+                m_copy_document = null;
+                if (doc == null || doc.IsOpening || doc.UndoActive || doc.RedoActive) return;
+                foreach (var copy in copies)
+                {
+                    List<RhinoObject> elements = copy.Value.Select(id => doc.Objects.FindId(id)).Where(obj => obj != null && obj.Geometry.GetUserString("ArrayGroup") == copy.Key).ToList();
+                    if (elements.Count == 0) continue;
+                    Guid group = Guid.NewGuid();
+                    string label = ArraySourceConstruction.NextArrayLabel(doc);
+                    HashSet<int> oldGroups = new HashSet<int>(elements.SelectMany(obj => obj.Attributes.GetGroupList() ?? new int[0])
+                        .Where(index => doc.Groups.GroupMembers(index)?.All(member => member.Geometry.GetUserString("ArrayGroup") == copy.Key) == true));
+                    foreach (RhinoObject element in elements)
+                    {
+                        int index;
+                        int.TryParse(element.Geometry.GetUserString("ArrayElementIndex"), out index);
+                        string device = element.Geometry.GetUserString("ArrayDeviceType") ?? "Line";
+                        string control = element.Geometry.GetUserString("ArrayControlMode");
+                        ArraySourceConstruction.AssignArrayMetadata(element, group, label, index, device);
+                        if (!string.IsNullOrWhiteSpace(control)) element.Geometry.SetUserString("ArrayControlMode", control);
+                        foreach (int oldGroup in oldGroups) element.Attributes.RemoveFromGroup(oldGroup);
+                        element.CommitChanges();
+                    }
+                    string name = "Pachyderm " + (elements[0].Geometry.GetUserString("ArrayDeviceType") == "Column" ? "Column" : "Steerable") + " Array " + label;
+                    ArraySourceConstruction.AddRhinoGroup(doc, name, elements.Select(obj => obj.Id).ToList());
+                }
             }
 
             /// <summary>
@@ -1866,7 +1935,7 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private Dictionary<string, List<RhinoObject>> SelectedSteerableArrays()
+            private Dictionary<string, List<RhinoObject>> SelectedSteerableArrays(bool selectedOnly = true)
             {
                 Dictionary<string, List<RhinoObject>> arrays = new Dictionary<string, List<RhinoObject>>();
                 HashSet<string> selectedGroups = new HashSet<string>();
@@ -1890,9 +1959,9 @@ namespace Pachyderm_Acoustic
                     arrays[group].Add(obj);
                 }
 
-                foreach (string group in arrays.Keys.Where(group => !selectedGroups.Contains(group)).ToArray()) arrays.Remove(group);
+                if (selectedOnly) foreach (string group in arrays.Keys.Where(group => !selectedGroups.Contains(group)).ToArray()) arrays.Remove(group);
 
-                foreach (KeyValuePair<string, List<RhinoObject>> kvp in arrays)
+                if (selectedOnly) foreach (KeyValuePair<string, List<RhinoObject>> kvp in arrays)
                 {
                     kvp.Value.Sort((a, b) =>
                     {
@@ -1942,7 +2011,8 @@ namespace Pachyderm_Acoustic
 
             protected override void DrawForeground(DrawEventArgs e)
             {
-                Dictionary<string, List<RhinoObject>> selected_arrays = SelectedSteerableArrays();
+                Dictionary<string, List<RhinoObject>> arrays = SelectedSteerableArrays(false);
+                Dictionary<string, List<RhinoObject>> selected_arrays = arrays.Where(array => array.Value.Any(obj => obj.IsSelected(false) != 0)).ToDictionary(array => array.Key, array => array.Value);
                 HashSet<string> selected_array_groups = new HashSet<string>(selected_arrays.Keys);
                 if ((selected_arrays.Count > 0 || !string.IsNullOrWhiteSpace(m_last_selected_array_preview)) && !m_array_preview_pending)
                 {
@@ -1976,6 +2046,7 @@ namespace Pachyderm_Acoustic
                             if (string.IsNullOrWhiteSpace(array_group)) array_group = rhobj.Geometry.GetUserString("Cluster");
 
                             bool suppress_element_balloon = !string.IsNullOrWhiteSpace(array_group) && selected_array_groups.Contains(array_group);
+                            bool array_label = !string.IsNullOrWhiteSpace(rhobj.Geometry.GetUserString("ArrayGroup")) && !string.IsNullOrWhiteSpace(rhobj.Geometry.GetUserString("ArrayGroupLabel"));
                             
                             if ((mode == "2" || mode == "3") && m_Balloons[index] != null)
                             {
@@ -1985,7 +2056,7 @@ namespace Pachyderm_Acoustic
                                     //e.Display.DrawSprite(LS, pt, 0.25f, true);// screen_pt, 32.0f);
                                     DrawCabinetOrSprite(e, rhobj, index, LS, pt, 0.25f);
                                     if (!suppress_element_balloon) e.Display.DrawMeshWires(Utilities.RCPachTools.HareMeshToModel(this.m_Balloons[index].m_DisplayMesh, false), Color.Blue);
-                                    e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
+                                    if (!array_label) e.Display.Draw2dText(index.ToString(), Color.Yellow, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                                     double Theta = (m_Balloons[index].CurrentAlt + 270) * System.Math.PI / 180;
                                     double Phi = (m_Balloons[index].CurrentAzi - 90) * System.Math.PI / 180;
                                     Hare.Geometry.Vector Direction = new Hare.Geometry.Vector(Math.Sin(Theta) * Math.Cos(Phi), Math.Sin(Theta) * Math.Sin(Phi), Math.Cos(Theta));
@@ -1994,7 +2065,7 @@ namespace Pachyderm_Acoustic
                                 else
                                 {
                                     DrawCabinetOrSprite(e, rhobj, index, LU, pt, 0.25f);
-                                    e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
+                                    if (!array_label) e.Display.Draw2dText(index.ToString(), Color.Black, new Rhino.Geometry.Point2d((int)screen_pt.X, (int)screen_pt.Y + 40), false, 18, "Arial");
                                 }
                             }
                             else
@@ -2142,6 +2213,15 @@ namespace Pachyderm_Acoustic
                         }
                     }
                     index++;
+                }
+                foreach (var array in arrays)
+                {
+                    string label = array.Value[0].Geometry.GetUserString("ArrayGroupLabel");
+                    if (string.IsNullOrWhiteSpace(label)) continue;
+                    BoundingBox bounds = BoundingBox.Unset;
+                    foreach (RhinoObject element in array.Value) bounds.Union(element.Geometry.GetBoundingBox(true));
+                    Point2d center = e.Display.Viewport.WorldToClient(bounds.Center);
+                    e.Display.Draw2dText(label, selected_array_groups.Contains(array.Key) ? Color.Yellow : Color.Black, new Point2d(center.X, center.Y + 40), false, 18, "Arial");
                 }
             }
 

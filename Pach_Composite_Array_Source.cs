@@ -9,7 +9,6 @@ namespace Pachyderm_Acoustic.UI
 {
     internal static class ArraySimulationSettings
     {
-        internal const string ModeKey = "ArraySimulationMode";
         internal const string DistanceKey = "ArrayReferenceDistance";
         internal const string CenterModeKey = "ArrayCenterMode";
         internal const string PowerKey = "ArraySoundPowerBandsDb";
@@ -74,11 +73,6 @@ namespace Pachyderm_Acoustic.UI
             return result;
         }
 
-        internal static bool UseComposite(RhinoObject obj)
-        {
-            return obj != null && obj.Geometry.GetUserString(ModeKey) == "Composite";
-        }
-
         internal static double ReferenceDistance(RhinoObject obj)
         {
             double value;
@@ -118,7 +112,7 @@ namespace Pachyderm_Acoustic.UI
         }
 
         internal CompositeArraySource(List<RhinoObject> elements, double distance, int id)
-            : this(BuildPatterns(elements, distance, true), id) { }
+            : this(BuildPatterns(elements, distance), id) { }
 
         private CompositeArraySource(SpeakerPatternConduit.ArrayPattern[] thirdPatterns, int id)
             : base(PowerLevels(thirdPatterns), thirdPatterns[0].Center, id, false)
@@ -127,11 +121,11 @@ namespace Pachyderm_Acoustic.UI
             type = "Directional";
         }
 
-        private static SpeakerPatternConduit.ArrayPattern[] BuildPatterns(List<RhinoObject> elements, double distance, bool thirdOctave)
+        private static SpeakerPatternConduit.ArrayPattern[] BuildPatterns(List<RhinoObject> elements, double distance)
         {
-            var result = new SpeakerPatternConduit.ArrayPattern[thirdOctave ? 24 : 8];
+            var result = new SpeakerPatternConduit.ArrayPattern[24];
             for (int oct = 0; oct < result.Length; oct++)
-                result[oct] = new SpeakerPatternConduit.ArrayPattern(elements, oct, distance, thirdOctave);
+                result[oct] = new SpeakerPatternConduit.ArrayPattern(elements, oct, distance, true);
             return result;
         }
 
@@ -151,13 +145,10 @@ namespace Pachyderm_Acoustic.UI
 
         public override double[] DirPower(int threadid, int random, Hare.Geometry.Vector direction)
         {
-            var result = new double[BandCount];
-            var world = new Hare.Geometry.Vector(direction.dx, direction.dy, direction.dz);
             double[] thirdPower = new double[24];
             for (int band = 0; band < thirdPower.Length; band++)
-                thirdPower[band] = powerScale[band] * 1E-12 * Math.Pow(10, thirdPatterns[band].PowerLevel / 10) * thirdPatterns[band].RelativePower(world);
-            result = Utilities.AcousticalMath.ConvertBandEnergy(thirdPower, ThirdOctave);
-            return result;
+                thirdPower[band] = powerScale[band] * 1E-12 * Math.Pow(10, thirdPatterns[band].PowerLevel / 10) * thirdPatterns[band].RelativePower(direction);
+            return ThirdOctave ? thirdPower : Utilities.AcousticalMath.ConvertBandEnergy(thirdPower, false);
         }
 
         public override double[] DirPressure(int threadid, int random, Hare.Geometry.Vector direction)

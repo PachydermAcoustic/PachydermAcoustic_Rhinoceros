@@ -54,6 +54,8 @@ namespace Pachyderm_Acoustic
             private Label GeoLbl;
             private Label ConvLbl;
             private CheckBox Screen_Attenuation;
+            private CheckBox Image_Sources;
+            private NumericStepper Image_Order;
             private RadioButton Rec_Centroid;
             private RadioButton Rec_Vertex;
             private CheckBox Offset_Mesh;
@@ -304,6 +306,13 @@ namespace Pachyderm_Acoustic
                 };
                 Calc_Layout.AddRow(new GroupBox { Text = "Simulation frequency bands", Content = bandSelection });
 
+                Image_Sources = new CheckBox { Text = "Include image sources", Checked = false };
+                Image_Order = new NumericStepper { MinValue = 1, MaxValue = 12, Value = 1, Enabled = false };
+                Image_Sources.ToolTip = "Adds deterministic specular reflections. Higher orders can take much longer on dense maps.";
+                Image_Sources.CheckedChanged += (sender, args) => Image_Order.Enabled = Image_Sources.Checked == true;
+                //DynamicLayout imageSettings = new DynamicLayout { Spacing = new Size(8, 8), Padding = 8 };
+                //imageSettings.AddRow(Image_Sources, new Label { Text = "Maximum order" }, Image_Order);
+
                 GroupBox Conv = new GroupBox();
                 Conv.Text = "Convergence:";
                 DynamicLayout CL = new DynamicLayout();
@@ -334,6 +343,7 @@ namespace Pachyderm_Acoustic
 
                 DynamicLayout RCT = new DynamicLayout();
                 RCT.Spacing = new Size(8, 8);
+                RCT.AddRow(Image_Sources, null, Image_Order);
                 RCT.AddRow(RayNo, null, RT_Count);
                 RCT.AddRow(COTime, null, CO_TIME);
                 RCT.AddRow(MapIncr, null, Increment);
@@ -719,6 +729,7 @@ namespace Pachyderm_Acoustic
                 }
 
                 Map = new PachMapReceiver[Source.Length];
+                int imageOrder = Image_Sources.Checked == true ? (int)Image_Order.Value : 0;
                 for (int i = 0; i < Source.Length; i++)
                 {
                     Source[i].AppendPts(ref P);
@@ -755,10 +766,37 @@ namespace Pachyderm_Acoustic
                         return;
                     }
 
+                    ImageSourceData images = null;
+                    if (imageOrder > 0)
+                    {
+                        try
+                        {
+                            images = new ImageSourceData(Source[s_id], Map[s_id], Direct_Data, PScene, new int[] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, false, s_id);
+                            images = await RCPachTools.RunSimulation(images) as ImageSourceData;
+                        }
+                        catch (Exception error)
+                        {
+                            Rhino.RhinoApp.WriteLine("Mapping image-source calculation failed: {0}", error);
+                            Array.Resize(ref Source, s_id);
+                            Array.Resize(ref Map, s_id);
+                            Calculate.Enabled = true;
+                            return;
+                        }
+                        if (images == null)
+                        {
+                            Array.Resize(ref Source, s_id);
+                            Array.Resize(ref Map, s_id);
+                            Calculate.Enabled = true;
+                            return;
+                        }
+                        for (int receiver = 0; receiver < Map[s_id].Count; receiver++)
+                            ((PachMapReceiver.Map_Receiver)Map[s_id].Rec_List[receiver]).Direct_Time = Direct_Data.Time(receiver);
+                    }
+
                     ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource(), 1000);
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
                     TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();
@@ -778,21 +816,24 @@ namespace Pachyderm_Acoustic
                         Calculate.Enabled = true;
                         break;
                     }
-                    double[] energyBeforeDirect = Direct_Data.CoherentSpeakers
-                        ? Enumerable.Range(0, Direct_Data.BandCount).Select(band => Map[s_id].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum())).ToArray()
-                        : null;
-                    Map[s_id].AddDirect(Direct_Data, Source[s_id]);
-                    if (energyBeforeDirect != null)
+                    if (images == null) Map[s_id].AddDirect(Direct_Data, Source[s_id]);
+                    else
                     {
-                        Rhino.RhinoApp.WriteLine(string.Format("Array direct sound diagnostics, source {0}: {1} receivers, {2} bands, histogram rate {3} Hz, SPL Only {4}.", s_id, Direct_Data.Io.Length, Direct_Data.BandCount, Map[s_id].SampleRate, Direct_Data.SPL_Only));
-                        Rhino.RhinoApp.WriteLine("Universal assembly: {0}", typeof(Direct_Sound).Assembly.Location);
-                        double[] centers = Direct_Data.ThirdOctave ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
-                        for (int band = 0; band < Direct_Data.BandCount; band++)
+                        ProgressBox progress = new ProgressBox("Adding direct sound and image sources to the map...");
+                        progress.Show();
+                        try
                         {
-                            double[] energy = Direct_Data.Io.Select(receiver => receiver[band].Sum()).ToArray();
-                            double mapped = Map[s_id].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum()) - energyBeforeDirect[band];
-                            Rhino.RhinoApp.WriteLine(string.Format("  {0} Hz: direct energy {1:E6}, map addition {2:E6}, receivers with energy {3}/{4}, SWL {5:F2} dB.", centers[band], energy.Sum(), mapped, energy.Count(value => value > 0), energy.Length, Direct_Data.SWL[band]));
+                            await Task.Run(() => Map[s_id].AddDirect(Direct_Data, Source[s_id], images));
                         }
+                        catch (Exception error)
+                        {
+                            Rhino.RhinoApp.WriteLine("Mapping image-source assembly failed: {0}", error);
+                            Array.Resize(ref Source, s_id);
+                            Array.Resize(ref Map, s_id);
+                            Calculate.Enabled = true;
+                            return;
+                        }
+                        finally { progress.Close(); }
                     }
                     Source[s_id].Lighten();
 
@@ -1346,15 +1387,7 @@ namespace Pachyderm_Acoustic
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_SPLMin, Current_SPLMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
-                            if (PlotNumbers)
-                            {
-                                List<int> selectedSources = SourceList.SelectedSources();
-                                int band = color_control.Octave.SelectedIndex;
-                                double storedEnergy = selectedSources.Sum(source => Map[source].Rec_List.Sum(receiver => receiver.GetEnergyHistogram(band).Sum()));
-                                Rhino.RhinoApp.WriteLine(string.Format("Mapping SPL diagnostics: band index {0} ({1}), sources [{2}], time {3} to {4} ms, coherent {5}, zero at direct {6}.", band, color_control.Octave.SelectedValue, string.Join(",", selectedSources), Start_Time_Control.Value, End_Time_Control.Value, Coherent.Checked, ZeroAtDirect.Checked));
-                                Rhino.RhinoApp.WriteLine(string.Format("  Stored band energy {0:E6}; plotted SPL range {1} to {2} dB; positive finite levels {3}/{4}.", storedEnergy, Values.Min(), Values.Max(), Values.Count(value => !double.IsNaN(value) && !double.IsInfinity(value) && value > 0), Values.Length));
-                                Utilities.RCPachTools.PlotMapValues(Map, Values);
-                            }
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values);
                         }
                         break;
                     case "Sound Pressure Level (A-weighted)":

@@ -750,24 +750,18 @@ namespace Pachyderm_Acoustic
                 Padding = 8;
                 DefaultSpacing = new Size(4, 6);
                 loading = true;
-                double[] target = ArraySimulationSettings.TargetPower(elements[0], thirdOctave);
-                string stored = elements[0].Geometry.GetUserString(ArraySimulationSettings.PowerKey);
-                levels = !string.IsNullOrWhiteSpace(stored) ? Utilities.PachTools.DecodeSourcePower(stored)
-                    : target ?? Utilities.PachTools.DecodeSourcePower(elements[0].Geometry.GetUserString("SWL"));
-                enabledPower = new CheckBox { Text = "Control band power", Checked = target != null };
+                enabledPower = new CheckBox { Text = "Control band power" };
                 powerMode = new DropDown();
                 powerMode.Items.Add("Total array power");
                 powerMode.Items.Add("Power per element");
                 powerMode.ToolTip = "Total mode specifies array radiation after gain shading. Per-element mode specifies nominal driver power before gain shading.";
-                powerMode.SelectedIndex = ArraySimulationSettings.PerElementPower(elements[0]) ? 1 : 0;
                 spectrum = new FreqSlider(thirdOctave ? FreqSlider.bands.Third_Octave : FreqSlider.bands.Octave, true, selectBands);
                 spectrum.SetRange(-120, 200);
                 AddRow(enabledPower);
                 AddRow(powerMode);
                 AddRow(new Label { Text = "Band sound power, dB re 1 pW" });
                 Add(spectrum, xscale: true);
-                SetBandResolution(thirdOctave);
-                powerMode.Enabled = spectrum.Enabled = target != null;
+                SetBandResolution(thirdOctave, true);
                 loading = false;
                 enabledPower.CheckedChanged += (sender, args) => SavePower();
                 powerMode.SelectedIndexChanged += (sender, args) => SavePower();
@@ -1042,7 +1036,6 @@ namespace Pachyderm_Acoustic
                         hasThirdOctaveValues = value.Length == 24;
                         for (int i = 0; i < 24; i++)
                         {
-                            // A new material starts a new interpolation/edit history.
                             thirdOctaveEdited[i] = value.Length == 24;
                             sliders[i].Value = value.Length == 24 ? value[i] : value[i / 3];
                         }
@@ -1057,9 +1050,9 @@ namespace Pachyderm_Acoustic
                 updatingValues = true;
                 try
                 {
-                for (int i = 0; i < 24; i++)
-                    if (bandwidth == bands.Third_Octave || i % 3 == 1)
-                        sliders[i].Value = sliders[24].Value;
+                    for (int i = 0; i < 24; i++)
+                        if (bandwidth == bands.Third_Octave || i % 3 == 1)
+                            sliders[i].Value = sliders[24].Value;
                 }
                 finally { updatingValues = false; }
                 ValueChanged?.Invoke(this, EventArgs.Empty);
