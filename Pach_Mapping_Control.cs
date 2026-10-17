@@ -112,7 +112,12 @@ namespace Pachyderm_Acoustic
             private ScottPlot.Eto.EtoPlot Analysis_View;
             private CheckBox Normalize_Graph;
             private CheckBox LockUserScale;
-            private DropDown Graph_Octave;//
+            private readonly DropDown distributionParameter = new DropDown();
+            private readonly DropDown distributionDirection = new DropDown();
+            private readonly CheckBox distributionNormalFit = new CheckBox { Text = "Show normal fit", Checked = true };
+            private readonly DynamicLayout distributionControls = new DynamicLayout();
+            private readonly Label responseSummary = new Label { Wrap = WrapMode.Word };
+            private int previousGraphType = -1;
             private DropDown Graph_Type;
             private NumericStepper Receiver_Selection;
             private Label RecLbl;
@@ -358,6 +363,7 @@ namespace Pachyderm_Acoustic
                 this.Sum_Time.CheckedChanged += this.Sum_Time_CheckedChanged;
                 this.Sum_Time.Text = "SPL Only (sum of time)";
                 this.DirectionalToggle.Text = "Track Directionality";
+                this.DirectionalToggle.CheckedChanged += (sender, args) => Update_Lateral_Controls();
                 Rset.AddRow(null, Sum_Time, null, DirectionalToggle, null);
                 Calc_Layout.AddRow(Rset);
 
@@ -377,7 +383,7 @@ namespace Pachyderm_Acoustic
                 srclbl.Text = "Select Sources...";
                 srclbl.TextAlignment = TextAlignment.Left;
                 this.SourceList.Height = 80;
-                this.SourceList.Update += Update_Graph;
+                this.SourceList.Update += (sender, args) => { if (Graph_Type.SelectedIndex != 8) Update_Graph(sender, args); };
                 this.SourceList.Update += Update_Map_Preview;
                 AnalysisLayout.AddRow(srclbl);
                 AnalysisLayout.AddRow(SourceList);
@@ -401,6 +407,7 @@ namespace Pachyderm_Acoustic
                 this.Parameter_Selection.Items.Add("Speech Transmission Index - Male");
                 this.Parameter_Selection.Items.Add("Speech Transmission Index - Female");
                 this.Parameter_Selection.Items.Add("Early Decay Time (EDT)");
+                this.Parameter_Selection.Items.Add("Clarity (C-50)");
                 this.Parameter_Selection.Items.Add("Clarity (C-80)");
                 this.Parameter_Selection.Items.Add("Definition (D-50)");
                 this.Parameter_Selection.Items.Add("Strength/Loudness (G)");
@@ -413,6 +420,33 @@ namespace Pachyderm_Acoustic
                 color_control.On_Output_Changed += Parameter_Selection_SelectedIndexChanged;
                 color_control.Octave.SelectedIndexChanged += Update_Map_Preview;
                 OL.AddRow(color_control);
+
+                receiverAltitude.DecimalPlaces = receiverAzimuth.DecimalPlaces = 2;
+                receiverAltitude.MinValue = -90;
+                receiverAltitude.MaxValue = 90;
+                receiverAzimuth.MinValue = 0;
+                receiverAzimuth.MaxValue = 360;
+                receiverAltitude.Width = receiverAzimuth.Width = 70;
+                receiverAltitude.ValueChanged += Update_Map_Preview;
+                receiverAzimuth.ValueChanged += Update_Map_Preview;
+                faceSourceCenter.Text = "Face average source center";
+                receiverAltitude.Enabled = receiverAzimuth.Enabled = faceSourceCenter.Checked != true;
+                faceSourceCenter.CheckedChanged += (sender, args) =>
+                {
+                    Update_Receiver_Direction();
+                    receiverAltitude.Enabled = receiverAzimuth.Enabled = faceSourceCenter.Checked != true;
+                    Update_Map_Preview(sender, args);
+                };
+                DynamicLayout receiverDirectionLayout = new DynamicLayout { Spacing = new Size(8, 8) };
+                receiverDirectionLayout.AddRow(new Label { Text = "Azimuth" }, receiverAzimuth);
+                receiverDirectionLayout.AddRow(new Label { Text = "Altitude" }, receiverAltitude);
+                receiverDirectionLayout.AddRow(faceSourceCenter);
+                receiverDirection.Text = "Receiver Direction (degrees)";
+                receiverDirection.Width = 230;
+                receiverDirection.Content = receiverDirectionLayout;
+                receiverDirection.Visible = false;
+                color_control.ControlCluster.Items.Add(receiverDirection);
+                color_control.Height = -1;
 
                 DynamicLayout Output_Times = new DynamicLayout();
                 Output_Times.Spacing = new Size(8, 8);
@@ -510,6 +544,7 @@ namespace Pachyderm_Acoustic
                 this.Graph_Type.Items.Add("Vertical PTC");
                 this.Graph_Type.Items.Add("Fore-Aft ETC");
                 this.Graph_Type.Items.Add("Fore-Aft PTC");
+                this.Graph_Type.Items.Add("Map parameter distribution");
                 this.Graph_Type.SelectedIndex = 0;
                 this.Graph_Type.SelectedIndexChanged += Update_Graph;
                 this.Octave.Items.Add("62.5 Hz.");
@@ -524,7 +559,7 @@ namespace Pachyderm_Acoustic
                 this.Octave.SelectedIndex = 8;
                 this.Octave.SelectedIndexChanged += Update_Graph;
 
-                this.Normalize_Graph.Text = "Normalize To Direct";
+                this.Normalize_Graph.Text = "Normalize";
                 this.Normalize_Graph.CheckedChanged += Update_Graph;
                 this.LockUserScale.Text = "Lock User Scale";
                 this.LockUserScale.CheckedChanged += Update_Graph;
@@ -534,12 +569,27 @@ namespace Pachyderm_Acoustic
                 Receiver_Selection.ValueChanged += ReceiverSelection_ValueChanged;
 
                 IR_ctrls.AddRow(RecLbl, Receiver_Selection);
-                IR_ctrls.AddRow(Graph_Type, Graph_Octave);
+                IR_ctrls.AddRow(Graph_Type, Octave);
                 IR_ctrls.AddRow(LockUserScale, Normalize_Graph);
                 IRL.AddRow(IR_ctrls);
 
+                foreach (var item in Parameter_Selection.Items) distributionParameter.Items.Add(new ListItem { Text = item.Text, Key = item.Key });
+                distributionParameter.SelectedIndex = 0;
+                distributionDirection.Items.Add("Arrival azimuth");
+                distributionDirection.Items.Add("Arrival altitude");
+                distributionDirection.SelectedIndex = 0;
+                distributionParameter.SelectedIndexChanged += Update_Graph;
+                distributionDirection.SelectedIndexChanged += Update_Graph;
+                distributionNormalFit.CheckedChanged += Update_Graph;
+                distributionControls.Spacing = new Size(8, 8);
+                distributionControls.AddRow(new Label { Text = "Map parameter" }, distributionParameter);
+                distributionControls.AddRow(distributionDirection, distributionNormalFit);
+                distributionControls.Visible = false;
+                IRL.AddRow(distributionControls);
+                IRL.AddRow(responseSummary);
+
                 GroupBox display = new GroupBox();
-                display.Text = "Impulse Response";
+                display.Text = "Response / Map Distribution";
                 display.Content = Analysis_View;
                 Analysis_View.Plot.Title("Logarithmic Energy Time Curve", 12);
                 Analysis_View.Size = new Size(-1, 300);
@@ -652,6 +702,10 @@ namespace Pachyderm_Acoustic
             PachMapReceiver[] Map;
             WaveConduit WC;
             private bool mapPreviewUpdatePending;
+            private readonly NumericStepper receiverAltitude = new NumericStepper();
+            private readonly NumericStepper receiverAzimuth = new NumericStepper();
+            private readonly CheckBox faceSourceCenter = new CheckBox { Checked = true };
+            private readonly GroupBox receiverDirection = new GroupBox();
 
             public void Toggle_Conduits_On(object sender, System.EventArgs e)
             {
@@ -962,6 +1016,9 @@ namespace Pachyderm_Acoustic
             double Current_DMax = 70;
             double Current_CMin = -5;
             double Current_CMax = 15;
+            double Current_C50Min = -5, Current_C50Max = 15;
+            double Current_LFMin = 0, Current_LFMax = 100;
+            double Current_LEMin = 0, Current_LEMax = 100;
             double Current_GMin = -5;
             double Current_GMax = 15;
             double Current_RTMin = 0;
@@ -972,33 +1029,14 @@ namespace Pachyderm_Acoustic
             double Current_EMin = 0;
             //Pach_Graphics.colorscale c_scale;
 
-            public void Create_Contours()
+            private double[] Map_Parameter_Values(string metric, int band, List<int> srcIds, out double min, out double max)
             {
-                if (Map == null)
-                {
-                    Rhino.RhinoApp.WriteLine("No map data available.");
-                    return;
-                }
-
-                string n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
-                double[] Noise = new double[8];
-
-                List<int> srcIds = SourceList.SelectedSources();
-                if (srcIds.Count == 0)
-                {
-                    Rhino.RhinoApp.WriteLine("Select at least one source.");
-                    return;
-                }
-
-                string metric = Parameter_Selection.SelectedKey as string;
+                min = max = 0;
                 double[] values = null;
-                double min = 0;
-                double max = 0;
-
                 switch (metric)
                 {
                     case "Sound Pressure Level":
-                        values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked, ZeroAtDirect.Checked);
+                        values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, band, srcIds, Coherent.Checked, ZeroAtDirect.Checked);
                         min = Current_SPLMin; max = Current_SPLMax;
                         break;
                     case "Sound Pressure Level (A-weighted)":
@@ -1010,7 +1048,7 @@ namespace Pachyderm_Acoustic
                         min = Current_SPLCMin; max = Current_SPLCMax;
                         break;
                     case "Sound Exposure Level":
-                        values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked, ZeroAtDirect.Checked, deltaSEL);
+                        values = PachMapReceiver.Get_SPL_Map(Map, new double[] { (double)End_Time_Control.Value, (double)Start_Time_Control.Value }, band, srcIds, Coherent.Checked, ZeroAtDirect.Checked, deltaSEL);
                         min = Current_SPLMin; max = Current_SPLMax;
                         break;
                     case "Sound Exposure Level (A-weighted)":
@@ -1018,33 +1056,45 @@ namespace Pachyderm_Acoustic
                         min = Current_SPLAMin; max = Current_SPLAMax;
                         break;
                     case "Reverberation Time (T-15)":
-                        values = PachMapReceiver.Get_RT_Map(Map, 15, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked);
+                        values = PachMapReceiver.Get_RT_Map(Map, 15, band, srcIds, Coherent.Checked);
                         min = Current_RTMin; max = Current_RTMax;
                         break;
                     case "Reverberation Time (T-30)":
-                        values = PachMapReceiver.Get_RT_Map(Map, 30, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked);
+                        values = PachMapReceiver.Get_RT_Map(Map, 30, band, srcIds, Coherent.Checked);
                         min = Current_RTMin; max = Current_RTMax;
                         break;
                     case "Early Decay Time (EDT)":
-                        values = PachMapReceiver.Get_EDT_Map(Map, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked);
+                        values = PachMapReceiver.Get_EDT_Map(Map, band, srcIds, Coherent.Checked);
                         min = Current_EDTMin; max = Current_EDTMax;
                         break;
+                    case "Clarity (C-50)":
+                        values = PachMapReceiver.Get_Clarity_Map(Map, 50, band, srcIds, Coherent.Checked);
+                        min = Current_C50Min; max = Current_C50Max;
+                        break;
                     case "Clarity (C-80)":
-                        values = PachMapReceiver.Get_Clarity_Map(Map, 80, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked);
+                        values = PachMapReceiver.Get_Clarity_Map(Map, 80, band, srcIds, Coherent.Checked);
                         min = Current_CMin; max = Current_CMax;
                         break;
+                    case "Lateral Fraction (LF)":
+                        values = PachMapReceiver.Get_Lateral_Map(Map, band, srcIds, Coherent.Checked, true, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                        min = Current_LFMin; max = Current_LFMax;
+                        break;
+                    case "Lateral Efficiency (LE)":
+                        values = PachMapReceiver.Get_Lateral_Map(Map, band, srcIds, Coherent.Checked, false, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                        min = Current_LEMin; max = Current_LEMax;
+                        break;
                     case "Definition (D-50)":
-                        values = PachMapReceiver.Get_Definition_Map(Map, color_control.Octave.SelectedIndex, srcIds, Coherent.Checked);
+                        values = PachMapReceiver.Get_Definition_Map(Map, band, srcIds, Coherent.Checked);
                         min = Current_DMin; max = Current_DMax;
                         break;
                     case "Strength/Loudness (G)":
                         if (srcIds.Count != 1)
                         {
-                            Rhino.RhinoApp.WriteLine("G contours require a single source selection.");
-                            return;
+                            Rhino.RhinoApp.WriteLine("G requires a single source selection.");
+                            return null;
                         }
                         int gSrc = srcIds[0];
-                        int oct = color_control.Octave.SelectedIndex;
+                        int oct = band;
                         double SWL = 0;
                         if (oct < Map[0].SWL.Length)
                         {
@@ -1060,78 +1110,76 @@ namespace Pachyderm_Acoustic
                         min = Current_GMin; max = Current_GMax;
                         break;
                     case "Percent who perceive echoes (EK)":
-                        values = PachMapReceiver.Get_EchoCritPercent_Map(Map, color_control.Octave.SelectedIndex, srcIds);
+                        values = PachMapReceiver.Get_EchoCritPercent_Map(Map, band, srcIds);
                         if (values == null)
                         {
-                            Rhino.RhinoApp.WriteLine("EK contours require a single receiver bank.");
-                            return;
+                            Rhino.RhinoApp.WriteLine("EK requires a single receiver bank.");
+                            return null;
                         }
                         min = Current_EMin; max = Current_EMax;
                         break;
                     case "Speech Transmission Index - 2003":
-                        this.Enabled = false;
-                        Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
-                        if (n != null && n.Length > 0)
-                        {
-                            string[] ns = n.Split(","[0]);
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
-                        }
-                        else
-                        {
-                            n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
-                            string[] ns = n.Split(","[0]);
-                            Noise = new double[8];
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
-                            this.Enabled = true;
-                        }
-                        values = PachMapReceiver.Get_STI_Map(Map, Noise, srcIds, 0, Coherent.Checked);
-                        min = Current_STI1Min; max = Current_STI1Max;
-                        break;
                     case "Speech Transmission Index - Male":
-                        this.Enabled = false;
-                        Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
-                        if (n != null && n.Length > 0)
-                        {
-                            string[] ns = n.Split(","[0]);
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
-                        }
-                        else
-                        {
-                            n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
-                            string[] ns = n.Split(","[0]);
-                            Noise = new double[8];
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
-                            this.Enabled = true;
-                        }
-                        values = PachMapReceiver.Get_STI_Map(Map, Noise, srcIds, 1, Coherent.Checked);
-                        min = Current_STI2Min; max = Current_STI2Max;
-                        break;
                     case "Speech Transmission Index - Female":
-                        this.Enabled = false;
-                        Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false);
-                        if (n != null && n.Length > 0)
+                        string noiseText = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
+                        if (string.IsNullOrWhiteSpace(noiseText))
                         {
-                            string[] ns = n.Split(","[0]);
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
+                            this.Enabled = false;
+                            try { Rhino.RhinoApp.RunScript("Pachyderm_BackgroundNoise", false); }
+                            finally { this.Enabled = true; }
+                            noiseText = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
                         }
-                        else
-                        {
-                            n = Rhino.RhinoDoc.ActiveDoc.Strings.GetValue("Noise");
-                            string[] ns = n.Split(","[0]);
-                            Noise = new double[8];
-                            for (int oct_ = 0; oct_ < 8; oct_++) Noise[oct_] = double.Parse(ns[oct_]);
-                            this.Enabled = true;
-                        }
-                        values = PachMapReceiver.Get_STI_Map(Map, Noise, srcIds, 2, Coherent.Checked);
-                        min = Current_STI3Min; max = Current_STI3Max;
+                        if (string.IsNullOrWhiteSpace(noiseText)) return null;
+                        double[] noise = noiseText.Split(',').Select(double.Parse).ToArray();
+                        int type = metric == "Speech Transmission Index - Male" ? 1 : metric == "Speech Transmission Index - Female" ? 2 : 0;
+                        values = PachMapReceiver.Get_STI_Map(Map, noise, srcIds, type, Coherent.Checked);
+                        min = type == 1 ? Current_STI2Min : type == 2 ? Current_STI3Min : Current_STI1Min;
+                        max = type == 1 ? Current_STI2Max : type == 2 ? Current_STI3Max : Current_STI1Max;
                         break;
                     case "Directionality":
-                        Rhino.RhinoApp.WriteLine("Directionality is vector data; contours are not supported.");
-                        return;
+                        if (srcIds.Any(source => !Map[source].Directional)) return null;
+                        Hare.Geometry.Vector[] directions = PachMapReceiver.Get_Directional_Map(Map, new double[] { Start_Time_Control.Value, End_Time_Control.Value }, band, srcIds);
+                        values = new double[directions.Length];
+                        for (int receiver = 0; receiver < directions.Length; receiver++)
+                        {
+                            if (directions[receiver].Length() < 1E-12) { values[receiver] = double.NaN; continue; }
+                            double altitude, azimuth;
+                            PachTools.World_Angles(new Hare.Geometry.Point(-directions[receiver].dx, -directions[receiver].dy, -directions[receiver].dz), new Hare.Geometry.Point(), true, out altitude, out azimuth);
+                            values[receiver] = distributionDirection.SelectedIndex == 1 ? altitude : azimuth;
+                        }
+                        min = distributionDirection.SelectedIndex == 1 ? -90 : 0;
+                        max = distributionDirection.SelectedIndex == 1 ? 90 : 360;
+                        break;
                     default:
-                        Rhino.RhinoApp.WriteLine("Unsupported metric for contours.");
-                        return;
+                        Rhino.RhinoApp.WriteLine("Unsupported map parameter.");
+                        return null;
                 }
+                return values;
+            }
+
+            public void Create_Contours()
+            {
+                if (Map == null)
+                {
+                    Rhino.RhinoApp.WriteLine("No map data available.");
+                    return;
+                }
+
+                List<int> srcIds = SourceList.SelectedSources();
+                if (srcIds.Count == 0)
+                {
+                    Rhino.RhinoApp.WriteLine("Select at least one source.");
+                    return;
+                }
+
+                string metric = Parameter_Selection.SelectedKey as string;
+                if (metric == "Directionality")
+                {
+                    Rhino.RhinoApp.WriteLine("Directionality is vector data; contours are not supported.");
+                    return;
+                }
+                double min, max;
+                double[] values = Map_Parameter_Values(metric, color_control.Octave.SelectedIndex, srcIds, out min, out max);
 
                 if (values == null || values.Length == 0)
                 {
@@ -1356,11 +1404,35 @@ namespace Pachyderm_Acoustic
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                         }
                         break;
+                    case "Clarity (C-50)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 50, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_C50Min, Current_C50Max }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                        }
+                        break;
                     case "Clarity (C-80)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 80, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                        }
+                        break;
+                    case "Lateral Fraction (LF)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Lateral_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, true, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_LFMin, Current_LFMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                        }
+                        break;
+                    case "Lateral Efficiency (LE)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Lateral_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, false, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_LEMin, Current_LEMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                         }
                         break;
@@ -1632,11 +1704,41 @@ namespace Pachyderm_Acoustic
                             if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
                         }
                         break;
+                    case "Clarity (C-50)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 50, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_C50Min, Current_C50Max }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                            if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
+                        }
+                        break;
                     case "Clarity (C-80)":
                         if (Map != null)
                         {
                             double[] Values = PachMapReceiver.Get_Clarity_Map(Map, 80, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked);
                             Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_CMin, Current_CMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                            if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
+                        }
+                        break;
+                    case "Lateral Fraction (LF)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Lateral_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, true, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_LFMin, Current_LFMax }, color_control.Scale);
+                            Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
+                            if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
+                            if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
+                        }
+                        break;
+                    case "Lateral Efficiency (LE)":
+                        if (Map != null)
+                        {
+                            double[] Values = PachMapReceiver.Get_Lateral_Map(Map, color_control.Octave.SelectedIndex, SourceList.SelectedSources(), Coherent.Checked, false, receiverAltitude.Value, receiverAzimuth.Value, faceSourceCenter.Checked.Value);
+                            Eto.Drawing.Color[] C = PachMapReceiver.SetColors(Values, new double[] { Current_LEMin, Current_LEMax }, color_control.Scale);
                             Mesh_Map = Utilities.RCPachTools.PlotMesh(Map, C);
                             if (Mesh_Map != null) Rhino.RhinoDoc.ActiveDoc.Objects.AddMesh(Mesh_Map);
                             if (PlotNumbers) Utilities.RCPachTools.PlotMapValues(Map, Values, 2);
@@ -1734,9 +1836,21 @@ namespace Pachyderm_Acoustic
                         Current_STI3Min = (double)this.color_control.Min;
                         Current_STI3Max = (double)this.color_control.Max;
                         break;
+                    case "Clarity (C-50)":
+                        Current_C50Min = (double)this.color_control.Min;
+                        Current_C50Max = (double)this.color_control.Max;
+                        break;
                     case "Clarity (C-80)":
                         Current_CMin = (double)this.color_control.Min;
                         Current_CMax = (double)this.color_control.Max;
+                        break;
+                    case "Lateral Fraction (LF)":
+                        Current_LFMin = (double)this.color_control.Min;
+                        Current_LFMax = (double)this.color_control.Max;
+                        break;
+                    case "Lateral Efficiency (LE)":
+                        Current_LEMin = (double)this.color_control.Min;
+                        Current_LEMax = (double)this.color_control.Max;
                         break;
                     case "Definition (D-50)":
                         Current_DMin = (double)this.color_control.Min;
@@ -1767,11 +1881,14 @@ namespace Pachyderm_Acoustic
 
             private void Update_Map_Preview(object sender, EventArgs e)
             {
-                if (WC == null || !WC.Enabled || Map == null || mapPreviewUpdatePending) return;
+                bool refreshGraph = Graph_Type.SelectedIndex == 8 || Graph_Type.SelectedIndex >= 2 &&
+                    (sender == receiverAltitude || sender == receiverAzimuth || sender == faceSourceCenter);
+                if (Map == null || mapPreviewUpdatePending || !refreshGraph && (WC == null || !WC.Enabled)) return;
                 mapPreviewUpdatePending = true;
                 Application.Instance.AsyncInvoke(() =>
                 {
                     mapPreviewUpdatePending = false;
+                    if (refreshGraph) Update_Graph(sender, e);
                     if (WC == null || !WC.Enabled || Map == null || color_control.Octave.SelectedIndex < 0) return;
                     Show_Conduit_Map(false);
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
@@ -1839,6 +1956,8 @@ namespace Pachyderm_Acoustic
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)
             {
+                if (Parameter_Selection.SelectedIndex < 0) return;
+                receiverDirection.Visible = Parameter_Selection.SelectedKey == "Lateral Fraction (LF)" || Parameter_Selection.SelectedKey == "Lateral Efficiency (LE)";
                 if (!(sender is NumericStepper))
                 {
                     switch (Parameter_Selection.SelectedKey)
@@ -1870,8 +1989,17 @@ namespace Pachyderm_Acoustic
                         case "Speech Transmission Index - Female":
                             color_control.setscale(Current_STI3Min, Current_STI3Max);
                             break;
+                        case "Clarity (C-50)":
+                            color_control.setscale(Current_C50Min, Current_C50Max);
+                            break;
                         case "Clarity (C-80)":
                             color_control.setscale(Current_CMin, Current_CMax);
+                            break;
+                        case "Lateral Fraction (LF)":
+                            color_control.setscale(Current_LFMin, Current_LFMax);
+                            break;
+                        case "Lateral Efficiency (LE)":
+                            color_control.setscale(Current_LEMin, Current_LEMax);
                             break;
                         case "Definition (D-50)":
                             color_control.setscale(Current_DMin, Current_DMax);
@@ -1904,7 +2032,10 @@ namespace Pachyderm_Acoustic
                     case "Reverberation Time (T-15)": min = Current_RTMin; max = Current_RTMax; break;
                     case "Reverberation Time (T-30)": min = Current_RTMin; max = Current_RTMax; break;
                     case "Early Decay Time (EDT)": min = Current_EDTMin; max = Current_EDTMax; break;
+                    case "Clarity (C-50)": min = Current_C50Min; max = Current_C50Max; break;
                     case "Clarity (C-80)": min = Current_CMin; max = Current_CMax; break;
+                    case "Lateral Fraction (LF)": min = Current_LFMin; max = Current_LFMax; break;
+                    case "Lateral Efficiency (LE)": min = Current_LEMin; max = Current_LEMax; break;
                     case "Definition (D-50)": min = Current_DMin; max = Current_DMax; break;
                     case "Strength/Loudness (G)": min = Current_GMin; max = Current_GMax; break;
                     case "Percent who perceive echoes (EK)": min = Current_EMin; max = Current_EMax; break;
@@ -1917,172 +2048,212 @@ namespace Pachyderm_Acoustic
                 Contour_StepLbl.Text = max > min ? $"Step: {step:0.###}" : "Step: --";
             }
 
-            int SampleRate = 1000;
-
             private void Update_Graph(object sender, EventArgs e)
             {
+                if (Analysis_View == null) return;
                 Analysis_View.Plot.Clear();
-
-                int REC_ID = (int)Receiver_Selection.Value;
+                responseSummary.Text = "";
+                bool distribution = Graph_Type.SelectedIndex == 8;
+                distributionControls.Visible = distribution;
+                Receiver_Selection.Enabled = RecLbl.Enabled = !distribution;
+                Normalize_Graph.Enabled = !distribution;
+                bool keepScale = LockUserScale.Checked == true && previousGraphType == Graph_Type.SelectedIndex;
                 try
                 {
-                    if (Map != null)
+                    if (Map == null || Map.Length == 0 || Map[0] == null) { responseSummary.Text = "No map data available."; return; }
+                    List<int> sources = SourceList.SelectedSources();
+                    if (sources.Count == 0) { responseSummary.Text = "Select at least one source."; return; }
+                    int band = Octave.SelectedIndex;
+                    if (band < 0) return;
+                    if (distribution)
                     {
-                        int SampleRate = Map[0].SampleRate;
+                        Plot_Map_Distribution(sources, band, keepScale);
+                        return;
                     }
-
-                    int OCT_ID = color_control.Freq_Band_ID;
-                    Analysis_View.Plot.Title("Logarithmic Energy Time Curve", 12);
-                    Analysis_View.Plot.XLabel("Time (seconds)", 12);
-                    Analysis_View.Plot.YLabel("Sound Pressure Level (dB)",12);
- 
-                    if (Map == null) return;
-
-                    List<int> SrcIDs = SourceList.SelectedSources();
-
-                    double[] Filter;
-                    double[] Schroeder;
-                    int zero_sample = 0;
-                    switch (Graph_Type.SelectedIndex)
+                    Octave.Enabled = true;
+                    int receiver = (int)Receiver_Selection.Value;
+                    if (receiver < 0 || receiver >= Map[0].Rec_List.Length) return;
+                    if (sources.Any(source => Map[source].Time1Pt)) { responseSummary.Text = "This result stores summed SPL only; time-resolved responses are unavailable."; return; }
+                    bool pressure = Graph_Type.SelectedIndex % 2 == 1;
+                    int axis = Graph_Type.SelectedIndex < 2 ? -1 : Graph_Type.SelectedIndex < 4 ? 1 : Graph_Type.SelectedIndex < 6 ? 2 : 0;
+                    if (axis >= 0 && sources.Any(source => !Map[source].Directional)) { responseSummary.Text = "This response requires a map calculated with directionality tracking."; return; }
+                    int rate = pressure ? 44100 : Map[0].SampleRate;
+                    int bands = Map[0].Third_Oct ? 24 : 8;
+                    double duration = sources.Max(source => Map[source].SampleCT / (double)Map[source].SampleRate + Map[source].delay_ms / 1000.0);
+                    double cutoff = sources.Max(source => Map[source].SampleCT * 1000.0 / Map[source].SampleRate);
+                    double altitude = receiverAltitude.Value, azimuth = receiverAzimuth.Value;
+                    if (faceSourceCenter.Checked == true && axis >= 0)
                     {
-                        case 0:
-                            Filter = IR_Construction.ETCurve(null, null, Map, (double)CO_TIME.Value, SampleRate, Octave.SelectedIndex, REC_ID, SrcIDs, false);
-                            Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                            break;
-                        //case "Pressure Time Curve":
-                        //    zero_sample = 4096 / 2;
-                        //    Filter2 = IR_Construction.Auralization_Filter(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false);
-                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
-                        //    {
-                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
-                        //    }
-                        //    Filter = new double[Filter2.Length];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Lateral ETC":
-                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Lateral PTC":
-                        //    zero_sample = 4096 / 2;
-                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[1];
-                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
-                        //    {
-                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
-                        //    }
-                        //    Filter = new double[Filter2.Length];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Vertical ETC":
-                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Vertical PTC":
-                        //    zero_sample = 4096 / 2;
-                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[2];
-                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
-                        //    {
-                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
-                        //    }
-                        //    Filter = new double[Filter2.Length];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Fore-Aft ETC":
-                        //    Filter = AcousticalMath.ETCurve_1d(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, PachTools.OctaveStr2Int(Graph_Octave.Text), REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Math.Abs(Filter[i]);
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        //case "Fore-Aft PTC":
-                        //    zero_sample = 4096 / 2;
-                        //    Filter2 = IR_Construction.Auralization_Filter_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, REC_ID, SrcIDs, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true)[0];
-                        //    if (PachTools.OctaveStr2Int(Graph_Octave.Text) < 8)
-                        //    {
-                        //        Filter2 = Audio.Pach_SP.FIR_Bandpass(Filter2, PachTools.OctaveStr2Int(Graph_Octave.Text), SampleRate, 0);
-                        //    }
-                        //    Filter = new double[Filter2.Length];
-                        //    for (int i = 0; i < Filter.Length; i++) Filter[i] = Filter2[i] * Filter2[i] / Direct_Data[0].Rho_C[REC_ID];
-                        //    Schroeder = AcousticalMath.Schroeder_Integral(Filter);
-                        //    break;
-                        default:
-                            throw new NotImplementedException();
+                        Hare.Geometry.Point center = new Hare.Geometry.Point(Map.Average(map => map.Src.x), Map.Average(map => map.Src.y), Map.Average(map => map.Src.z));
+                        if ((center - Map[0].Rec_List[receiver].Origin).Length() > 0)
+                            PachTools.World_Angles(center, Map[0].Rec_List[receiver].Origin, true, out altitude, out azimuth);
                     }
-                    //Get the maximum value of the Direct Sound
-
-                    Filter = AcousticalMath.SPL_Intensity_Signal(Filter);
-                    Schroeder = AcousticalMath.SPL_Intensity_Signal(Schroeder);
-
-                    double DirectMagnitude = 0;
-                    for (int j = 0; j < Filter.Length; j++)
+                    double[] response;
+                    if (pressure)
                     {
-                        if (Filter[j] > DirectMagnitude) DirectMagnitude = Filter[j];
-                    }
-                    
-                    if (Normalize_Graph.Checked.Value)
-                    {
-                        Filter = Utilities.AcousticalMath.Normalize_Function(Filter);
-                        Schroeder = Utilities.AcousticalMath.Normalize_Function(Schroeder);
-                    }
-
-                    double[] time = new double[Filter.Length];
-                    for (int i = 0; i < Filter.Length; i++)
-                    {
-                        time[i] = (double)(i - zero_sample) / SampleRate;
-                    }
-
-                    Analysis_View.Plot.Add.Signal(Schroeder, 1.0/1000.0, ScottPlot.Color.FromSKColor(SkiaSharp.SKColors.Red));
-                    Analysis_View.Plot.Add.Signal(Filter, 1.0/1000.0, ScottPlot.Color.FromSKColor(SkiaSharp.SKColors.Blue));
-
-                    if (!LockUserScale.Checked.Value)
-                    {
-                        Analysis_View.Plot.Axes.SetLimitsX(time[0], time[time.Length - 1]);
-
-                        if (Normalize_Graph.Checked.Value)
-                        {
-                            Analysis_View.Plot.Axes.SetLimitsY(-100,0);
-                        }
-                        else
-                        {
-                            Analysis_View.Plot.Axes.SetLimitsY(0, DirectMagnitude+15);
-                        }
+                        foreach (int source in sources)
+                            if (!Map[source].HasFilter(receiver) || axis >= 0 && Map[source].Filter_3Axis(receiver) == null)
+                                Map[source].Rec_List[receiver].Create_Filter();
+                        response = axis < 0 ? IR_Construction.PressureTimeCurve(null, null, Map, cutoff, rate, receiver, sources, true, true) :
+                            IR_Construction.PTC_Fig8_3Axis(null, null, Map, cutoff, rate, receiver, sources, true, altitude, azimuth, true, true)[axis];
+                        if (band < bands) response = Map[0].Third_Oct ? Audio.Pach_SP.FIR_Third_Bandpass(response, band, rate, 0) : Audio.Pach_SP.FIR_Bandpass(response, band, rate, 0);
+                        Array.Resize(ref response, Math.Min(response.Length, (int)Math.Ceiling(duration * rate) + 8192));
                     }
                     else
                     {
-                        double max = Analysis_View.Plot.Axes.Left.Max;
-                        double min = Analysis_View.Plot.Axes.Left.Min;
-
-                        if (Normalize_Graph.Checked.Value)
-                        {
-                            Analysis_View.Plot.Axes.SetLimitsY(min, max);
-                        }
-                        else
-                        {
-                            Analysis_View.Plot.Axes.SetLimitsY(min, max);
-                        }
+                        response = axis < 0 ? IR_Construction.ETCurve(null, null, Map, cutoff, rate, band, receiver, sources, true) :
+                            IR_Construction.ETCurve_1d(null, null, Map, cutoff, rate, band, receiver, sources, true, altitude, azimuth, true)[axis];
+                        Array.Resize(ref response, Math.Min(response.Length, (int)Math.Ceiling(duration * rate)));
+                        for (int sample = 0; sample < response.Length; sample++) response[sample] = Math.Abs(response[sample]);
                     }
-
-                    Analysis_View.Refresh();
-
-                    //Hare.Geometry.Vector V = Utilities.PachTools.Rotate_Vector(Utilities.PachTools.Rotate_Vector(new Hare.Geometry.Vector(1, 0, 0), 0, -(float)Alt_Choice.Value, true), -(float)Azi_Choice.Value, 0, true);
-
-                    //if (Receiver_Choic.SelectedIndex > 0) ReceiverConduit.Instance.set_direction(Utilities.RC_PachTools.HPttoRPt(Recs[Receiver_Choice.SelectedIndex]), new Vector3d(V.x, V.y, V.z));
-                    Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
-
+                    if (response.Length == 0) return;
+                    Analysis_View.Plot.Title(Graph_Type.SelectedValue + " — " + Octave.SelectedValue, 12);
+                    Analysis_View.Plot.XLabel("Time (seconds)", 12);
+                    double offset = pressure ? -8192.0 / rate : 0;
+                    if (pressure)
+                    {
+                        double peak = response.Max(value => Math.Abs(value));
+                        if (Normalize_Graph.Checked == true && peak > 0)
+                            for (int sample = 0; sample < response.Length; sample++) response[sample] /= peak;
+                        Analysis_View.Plot.YLabel(Normalize_Graph.Checked == true ? "Relative pressure" : "Pressure (Pa)", 12);
+                    }
+                    else
+                    {
+                        double[] schroeder = AcousticalMath.Schroeder_Integral(response);
+                        // The integral is normalized; restore its energy before converting to absolute levels.
+                        double totalEnergy = response.Sum();
+                        for (int sample = 0; sample < schroeder.Length; sample++) schroeder[sample] *= totalEnergy;
+                        response = AcousticalMath.SPL_Intensity_Signal(response);
+                        schroeder = AcousticalMath.SPL_Intensity_Signal(schroeder);
+                        if (Normalize_Graph.Checked == true)
+                        {
+                            response = AcousticalMath.Normalize_Function(response);
+                            schroeder = AcousticalMath.Normalize_Function(schroeder);
+                        }
+                        Analysis_View.Plot.YLabel(Normalize_Graph.Checked == true ? "Relative level (dB)" : "Sound Pressure Level (dB)", 12);
+                        var decay = Analysis_View.Plot.Add.Signal(schroeder, 1.0 / rate, ScottPlot.Colors.Red);
+                        decay.LegendText = "Schroeder decay";
+                    }
+                    var signal = Analysis_View.Plot.Add.Signal(response, 1.0 / rate, ScottPlot.Colors.Blue);
+                    signal.Data.XOffset = offset;
+                    signal.LegendText = pressure ? "Pressure response" : "Energy response";
+                    Analysis_View.Plot.ShowLegend();
+                    if (!keepScale)
+                    {
+                        Analysis_View.Plot.Axes.AutoScale();
+                        Analysis_View.Plot.Axes.SetLimitsX(0, Math.Max(1.0 / rate, duration));
+                        if (!pressure && Normalize_Graph.Checked == true) Analysis_View.Plot.Axes.SetLimitsY(-100, 0);
+                    }
+                    responseSummary.Text = $"{rate:N0} samples/s; recorded duration {duration:0.###} s.";
                 }
-                catch (Exception x)
+                catch (Exception error)
                 {
-                    //System.Windows.Forms.MessageBox.Show(x.Message);
-                    return;
+                    Analysis_View.Plot.Clear();
+                    responseSummary.Text = "Unable to display this result: " + error.Message;
                 }
-
-                //Analysis_View.AxesChanged();
-                Analysis_View.Refresh();
-                //Update_Parameters();
+                finally
+                {
+                    previousGraphType = Graph_Type.SelectedIndex;
+                    Analysis_View.Refresh();
+                }
             }
+
+            private void Plot_Map_Distribution(List<int> sources, int band, bool keepScale)
+            {
+                string metric = distributionParameter.SelectedKey;
+                if (string.IsNullOrEmpty(metric)) return;
+                bool angular = metric == "Directionality";
+                bool circular = angular && distributionDirection.SelectedIndex == 0;
+                bool unitInterval = metric.StartsWith("Speech Transmission");
+                bool percentage = metric == "Definition (D-50)" || metric == "Lateral Fraction (LF)" || metric == "Lateral Efficiency (LE)" || metric == "Percent who perceive echoes (EK)";
+                double domainMax = unitInterval ? 1 : percentage ? 100 : double.PositiveInfinity;
+                distributionDirection.Visible = angular;
+                distributionNormalFit.Enabled = !circular;
+                Octave.Enabled = !metric.Contains("weighted") && !metric.StartsWith("Speech Transmission");
+                if (sources.Any(source => Map[source].Time1Pt) && !(metric.StartsWith("Sound Pressure") || angular))
+                { responseSummary.Text = "This parameter requires time-resolved map data."; return; }
+                double lower, upper;
+                double[] values = Map_Parameter_Values(metric, band, sources, out lower, out upper);
+                if (values == null || values.Length == 0) { responseSummary.Text = "This parameter is unavailable for the selected map or source selection."; return; }
+                var mesh = Map[0].MapMesh();
+                double[] area = new double[values.Length];
+                for (int face = 0; face < mesh.Polys.Count; face++)
+                {
+                    double faceArea = mesh.Polygon_Area(face);
+                    if (Map[0].Rec_Vertex)
+                    {
+                        var polygon = mesh.Polys[face];
+                        for (int vertex = 0; vertex < polygon.VertextCT; vertex++) area[polygon.Points[vertex].index] += faceArea / polygon.VertextCT;
+                    }
+                    else area[face] = faceArea;
+                }
+                double totalArea = area.Sum();
+                int[] valid = Enumerable.Range(0, values.Length).Where(index => area[index] > 0 && !double.IsNaN(values[index]) && !double.IsInfinity(values[index]) &&
+                    (!(unitInterval || percentage) || values[index] >= 0 && values[index] <= domainMax)).OrderBy(index => values[index]).ToArray();
+                if (totalArea <= 0 || valid.Length == 0) { responseSummary.Text = "No finite parameter values with mapped surface area."; return; }
+                double validArea = valid.Sum(index => area[index]);
+                double coverage = 100 * validArea / totalArea;
+                double mean = valid.Sum(index => values[index] * area[index]) / validArea;
+                double deviation = Math.Sqrt(valid.Sum(index => area[index] * Math.Pow(values[index] - mean, 2)) / validArea);
+                double cumulative = 0, median = values[valid[valid.Length - 1]];
+                foreach (int index in valid)
+                {
+                    cumulative += area[index];
+                    if (cumulative >= validArea / 2) { median = values[index]; break; }
+                }
+                double min = values[valid[0]], max = values[valid[valid.Length - 1]];
+                int bins = max > min ? Math.Min(50, Math.Max(8, (int)Math.Ceiling(Math.Sqrt(valid.Length)))) : 1;
+                double width = max > min ? (max - min) / bins : Math.Max(1, Math.Abs(min) * .01);
+                double first = max > min ? min : min - width / 2;
+                if (unitInterval || percentage)
+                {
+                    bins = Math.Min(50, Math.Max(8, (int)Math.Ceiling(Math.Sqrt(valid.Length))));
+                    first = 0;
+                    width = domainMax / bins;
+                }
+                if (circular) { bins = 36; width = 10; first = 0; }
+                double[] percentages = new double[bins];
+                foreach (int index in valid)
+                {
+                    int bin = Math.Min(bins - 1, Math.Max(0, (int)((values[index] - first) / width)));
+                    percentages[bin] += 100 * area[index] / totalArea;
+                }
+                var bars = Enumerable.Range(0, bins).Select(bin => new ScottPlot.Bar { Position = first + (bin + .5) * width, Value = percentages[bin], Size = width * .95, FillColor = ScottPlot.Colors.LightBlue }).ToArray();
+                Analysis_View.Plot.Add.Bars(bars).LegendText = "Mapped area";
+                double[] centers = Enumerable.Range(0, bins).Select(bin => first + (bin + .5) * width).ToArray();
+                if (bins > 1)
+                {
+                    var curve = Analysis_View.Plot.Add.ScatterLine(centers, percentages, ScottPlot.Colors.Blue);
+                    curve.LegendText = "Area distribution";
+                }
+                if (!circular && distributionNormalFit.Checked == true && max > min && deviation > 0)
+                {
+                    double[] x = Enumerable.Range(0, 201).Select(sample => first + sample * bins * width / 200).ToArray();
+                    double[] fit = x.Select(value => coverage * width / (deviation * Math.Sqrt(2 * Math.PI)) * Math.Exp(-.5 * Math.Pow((value - mean) / deviation, 2))).ToArray();
+                    Analysis_View.Plot.Add.ScatterLine(x, fit, ScottPlot.Colors.Red).LegendText = "Normal fit";
+                }
+                string unit = angular ? "degrees" : metric.Contains("Time") || metric.StartsWith("Early Decay") ? "s" : metric.StartsWith("Clarity") || metric.StartsWith("Sound") || metric.StartsWith("Strength") ? "dB" : metric.StartsWith("Speech") ? "" : "%";
+                Analysis_View.Plot.Title(metric + " — " + (angular ? distributionDirection.SelectedValue : Octave.Enabled ? Octave.SelectedValue : "All bands"), 12);
+                Analysis_View.Plot.XLabel((angular ? distributionDirection.SelectedValue : metric) + (unit.Length > 0 ? " (" + unit + ")" : ""), 12);
+                Analysis_View.Plot.YLabel("Mapped surface area per bin (%)", 12);
+                Analysis_View.Plot.ShowLegend();
+                if (!keepScale)
+                {
+                    Analysis_View.Plot.Axes.AutoScale();
+                    if (unitInterval || percentage) Analysis_View.Plot.Axes.SetLimitsX(0, domainMax);
+                    else if (circular) Analysis_View.Plot.Axes.SetLimitsX(0, 360);
+                    Analysis_View.Plot.Axes.SetLimitsY(0, Math.Max(1, Math.Max(Analysis_View.Plot.Axes.Left.Max, percentages.Max() * 1.15)));
+                }
+                if (circular)
+                {
+                    double cosine = valid.Sum(index => area[index] * Math.Cos(values[index] * Math.PI / 180));
+                    double sine = valid.Sum(index => area[index] * Math.Sin(values[index] * Math.PI / 180));
+                    double bearing = Math.Sqrt(cosine * cosine + sine * sine) > validArea * 1E-12 ? (Math.Atan2(sine, cosine) * 180 / Math.PI + 360) % 360 : double.NaN;
+                    responseSummary.Text = $"Area-weighted circular mean: {bearing:0.###} degrees. Valid mapped area: {coverage:0.##}%; unavailable: {100 - coverage:0.##}%.";
+                }
+                else responseSummary.Text = $"Area-weighted mean: {mean:0.###}; median: {median:0.###}; standard deviation: {deviation:0.###} {unit}\nRange: {min:0.###} to {max:0.###} {unit}. Valid mapped area: {coverage:0.##}%; unavailable: {100 - coverage:0.##}%.";
+            }
+
 
             System.Threading.Thread T;
             //private delegate void ForCall();
@@ -2206,6 +2377,9 @@ namespace Pachyderm_Acoustic
             private void UpdateResultBands()
             {
                 if (Map == null || Map.Length == 0 || Map[0] == null) return;
+                Receiver_Selection.MaxValue = Math.Max(0, Map[0].Rec_List.Length - 1);
+                DirectionalToggle.Checked = Map.All(map => map != null && map.Directional);
+                Update_Lateral_Controls();
                 double[] centers = Map[0].Third_Oct ? AcousticalMath.ThirdOctaveCenters() : AcousticalMath.OctaveCenters();
                 if (Octave.Items.Count != centers.Length + 1)
                 {
@@ -2221,6 +2395,47 @@ namespace Pachyderm_Acoustic
                     color_control.Octave.Items.Add("Summation: All Bands");
                     color_control.Octave.SelectedIndex = centers.Length;
                 }
+            }
+
+            private void Update_Receiver_Direction()
+            {
+                if (Map == null || Map.Length == 0 || Map.Any(map => map == null || map.Src == null) || Map[0].Rec_List == null) return;
+                Hare.Geometry.Point center = new Hare.Geometry.Point(Map.Average(map => map.Src.x), Map.Average(map => map.Src.y), Map.Average(map => map.Src.z));
+                Hare.Geometry.Vector direction = new Hare.Geometry.Vector();
+                foreach (var receiver in Map[0].Rec_List)
+                {
+                    Hare.Geometry.Vector facing = center - receiver.Origin;
+                    if (facing.Length() == 0) continue;
+                    facing.Normalize();
+                    direction += facing;
+                }
+                if (direction.Length() < 1E-12) return;
+                double altitude, azimuth;
+                PachTools.World_Angles(new Hare.Geometry.Point(direction.dx, direction.dy, direction.dz), new Hare.Geometry.Point(), true, out altitude, out azimuth);
+                receiverAltitude.Value = altitude;
+                receiverAzimuth.Value = azimuth;
+            }
+
+            private void Update_Lateral_Controls()
+            {
+                if (Parameter_Selection == null || color_control == null) return;
+                bool available = DirectionalToggle.Checked == true && Sum_Time.Checked != true &&
+                    (Map == null || Map.All(map => map != null && map.Directional && !map.Time1Pt && map.SampleCT > 1));
+                foreach (string name in new[] { "Lateral Fraction (LF)", "Lateral Efficiency (LE)" })
+                {
+                    foreach (DropDown selection in new[] { Parameter_Selection, distributionParameter })
+                    {
+                        var item = selection.Items.FirstOrDefault(value => value.Key == name);
+                        if (available && item == null) selection.Items.Add(name);
+                        else if (!available && item != null)
+                        {
+                            if (selection.SelectedKey == name) selection.SelectedIndex = 0;
+                            selection.Items.Remove(item);
+                        }
+                    }
+                }
+                receiverDirection.Visible = available && (Parameter_Selection.SelectedKey == "Lateral Fraction (LF)" || Parameter_Selection.SelectedKey == "Lateral Efficiency (LE)");
+                if (available && faceSourceCenter.Checked == true) Update_Receiver_Direction();
             }
 
             public bool Simulations_Ready()
@@ -2252,6 +2467,7 @@ namespace Pachyderm_Acoustic
                     Minimum_Convergence.Enabled = true;
                     DirectionalToggle.Enabled = true; 
                 }
+                Update_Lateral_Controls();
             }
 
             bool Linear_Phase = false;
@@ -2333,11 +2549,11 @@ namespace Pachyderm_Acoustic
                     return;
                 }
 
-                Receiver_Selection.MaxValue = Map[0].Rec_List.Length;
+                Receiver_Selection.MaxValue = Math.Max(0, Map[0].Rec_List.Length - 1);
                 
                 List<int> SrcID = SourceList.SelectedSources();
 
-                if (SrcID.Count < 1) return;
+                if (SrcID.Count < 1 || SrcID[0] < 0 || SrcID[0] >= Map.Length) return;
 
                 ReceiverPointer.Enabled = true;
                 ReceiverPointer.setPoint(Utilities.RCPachTools.HarePointToModel(Map[(int)(SrcID[0])].Origin((int)Receiver_Selection.Value)));
@@ -2456,6 +2672,10 @@ namespace Pachyderm_Acoustic
                 Discretize.Dispose();
                 Parameter_Selection.Dispose();
                 color_control.Dispose();
+                receiverDirection.Dispose();
+                receiverAltitude.Dispose();
+                receiverAzimuth.Dispose();
+                faceSourceCenter.Dispose();
                 End_Time_Control.Dispose();
                 Start_Time_Control.Dispose();
                 ETlbl.Dispose();
@@ -2468,7 +2688,11 @@ namespace Pachyderm_Acoustic
                 Analysis_View.Dispose();
                 Normalize_Graph.Dispose();
                 LockUserScale.Dispose();
-                //Graph_Octave.Dispose();
+                distributionParameter.Dispose();
+                distributionDirection.Dispose();
+                distributionNormalFit.Dispose();
+                distributionControls.Dispose();
+                responseSummary.Dispose();
                 Graph_Type.Dispose();
                 Receiver_Selection.Dispose();
                 RecLbl.Dispose();

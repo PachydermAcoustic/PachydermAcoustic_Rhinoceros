@@ -70,32 +70,149 @@ namespace Pachyderm_Acoustic.UI
             public Mesh Mesh;
             public List<Line> Lines = new List<Line>();
             public BoundingBox Bounds = BoundingBox.Empty;
+            private readonly List<Point3d> Profile = new List<Point3d>();
             private string GeometryCode;
             public void Refresh(RhinoObject obj)
             {
                 string code = obj.Geometry.GetUserString("CLF_CabinetPoints") + "\n" + obj.Geometry.GetUserString("CLF_CabinetFaces") + "\n" + obj.Geometry.GetUserString("CLF_CabinetLines");
                 if (code == GeometryCode) return;
                 GeometryCode = code;
-                Mesh?.Dispose(); Mesh = null; Lines.Clear(); Bounds = BoundingBox.Empty;
+                Mesh?.Dispose(); Mesh = null; Lines.Clear(); Profile.Clear(); Bounds = BoundingBox.Empty;
                 Cabinet_Geometry cabinet = Cabinet_Geometry_Parser.Parse(obj.Geometry.GetUserString("CLF_CabinetPoints"), obj.Geometry.GetUserString("CLF_CabinetFaces"), obj.Geometry.GetUserString("CLF_CabinetLines"));
                 if (cabinet != null)
                 {
                     // Keep template coordinates in meters; Rebuild scales them to document units.
                     if (cabinet.HasMesh) Mesh = SourceConduit.BuildRhinoCabinetMesh(cabinet);
-                    foreach (Hare.Geometry.Point p in cabinet.Vertices) Bounds.Union(Utilities.RCPachTools.HPttoRPt(p));
+                    foreach (Hare.Geometry.Point p in cabinet.Vertices)
+                    {
+                        Point3d point = Utilities.RCPachTools.HPttoRPt(p);
+                        Bounds.Union(point); Profile.Add(point);
+                    }
                     foreach (Cabinet_Line line in cabinet.Lines)
                     {
                         Line wire = new Line(Utilities.RCPachTools.HPttoRPt(line.A), Utilities.RCPachTools.HPttoRPt(line.B));
                         Lines.Add(wire);
                         Bounds.Union(wire.From); Bounds.Union(wire.To);
+                        Profile.Add(wire.From); Profile.Add(wire.To);
                     }
                 }
+                // A convex side envelope includes bevels and slopes and conservatively closes recesses.
+                // Splay is about local X, so projection onto Y/Z also covers geometry away from the center slice.
+                Profile.Sort((a, b) => a.Y == b.Y ? a.Z.CompareTo(b.Z) : a.Y.CompareTo(b.Y));
+                List<Point3d> points = new List<Point3d>();
+                double tolerance = Bounds.IsValid ? Math.Max(1E-9, Bounds.Diagonal.Length * 1E-9) : 1E-9;
+                foreach (Point3d point in Profile)
+                    if (points.Count == 0 || Math.Abs(point.Y - points[points.Count - 1].Y) > tolerance || Math.Abs(point.Z - points[points.Count - 1].Z) > tolerance)
+                        points.Add(point);
+                Profile.Clear();
+                for (int pass = 0; pass < 2; pass++)
+                {
+                    List<Point3d> half = new List<Point3d>();
+                    for (int j = 0; j < points.Count; j++)
+                    {
+                        Point3d point = points[pass == 0 ? j : points.Count - 1 - j];
+                        while (half.Count >= 2)
+                        {
+                            Point3d a = half[half.Count - 2], b = half[half.Count - 1];
+                            double cross = (b.Y - a.Y) * (point.Z - a.Z) - (b.Z - a.Z) * (point.Y - a.Y);
+                            if (cross > tolerance * tolerance) break;
+                            half.RemoveAt(half.Count - 1);
+                        }
+                        half.Add(point);
+                    }
+                    for (int j = 0; j + 1 < half.Count; j++)
+                        Profile.Add(new Point3d((Bounds.Min.X + Bounds.Max.X) * 0.5, half[j].Y, half[j].Z));
+                }
             }
-            public bool HasPivots { get { return Bounds.IsValid && Bounds.Max.Z - Bounds.Min.Z > 1E-6; } }
-            public Point3d Pivot(bool top, int reference)
+            public bool HasPivots { get { return Profile.Count >= 3 && Bounds.IsValid && Bounds.Max.Z - Bounds.Min.Z > 1E-6; } }
+
+            // With a lower template, select clear contact points at the requested splay; the contact may change at a face transition.
+            // Both outputs are in their respective cabinet's local meter coordinates; no world tilt enters this test.
+            public bool Pivot(bool top, int reference, out Point3d pivot, out Point3d lowerPivot, Template below = null, double splay = 0, double? depthFraction = null)
             {
-                double y = reference == 0 ? Bounds.Max.Y : reference == 1 ? (Bounds.Min.Y + Bounds.Max.Y) * 0.5 : Bounds.Min.Y;
-                return new Point3d((Bounds.Min.X + Bounds.Max.X) * 0.5, y, top ? Bounds.Max.Z : Bounds.Min.Z);
+                pivot = lowerPivot = Point3d.Origin;
+                if (!HasPivots) return false;
+                double tolerance = Math.Max(1E-8, Bounds.Diagonal.Length * 1E-8);
+                double fraction = depthFraction ?? (reference == 0 ? 1 : reference == 1 ? 0.5 : 0);
+                double y = Bounds.Min.Y + fraction * (Bounds.Max.Y - Bounds.Min.Y);
+                double z = top ? double.NegativeInfinity : double.PositiveInfinity;
+                // Intersect the preferred Y with the actual envelope instead of inventing a bounding-box corner.
+                for (int i = 0; i < Profile.Count; i++)
+                {
+                    Point3d a = Profile[i], b = Profile[(i + 1) % Profile.Count];
+                    if (Math.Abs(b.Y - a.Y) <= tolerance)
+                    {
+                        if (Math.Abs(y - a.Y) <= tolerance) z = top ? Math.Max(z, Math.Max(a.Z, b.Z)) : Math.Min(z, Math.Min(a.Z, b.Z));
+                    }
+                    else if (y >= Math.Min(a.Y, b.Y) - tolerance && y <= Math.Max(a.Y, b.Y) + tolerance)
+                    {
+                        double value = a.Z + (b.Z - a.Z) * Math.Max(0, Math.Min(1, (y - a.Y) / (b.Y - a.Y)));
+                        z = top ? Math.Max(z, value) : Math.Min(z, value);
+                    }
+                }
+                if (double.IsInfinity(z) || double.IsNaN(z)) return false;
+                pivot = new Point3d((Bounds.Min.X + Bounds.Max.X) * 0.5, y, z);
+                if (below == null) return true;
+                if (top || !below.HasPivots || double.IsNaN(splay) || double.IsInfinity(splay) || Math.Abs(splay) > 90) return false;
+                Point3d unused;
+                if (!below.Pivot(true, reference, out lowerPivot, out unused)) return false;
+                Point3d preferred = pivot, lowerPreferred = lowerPivot;
+                tolerance = Math.Max(tolerance, below.Bounds.Diagonal.Length * 1E-8);
+                // Pair matching depths, so a blocked front joint cannot turn into a front-to-rear offset.
+                List<double> candidates = new List<double> { fraction };
+                for (int shape = 0; shape < 2; shape++)
+                {
+                    Template template = shape == 0 ? this : below;
+                    double depth = template.Bounds.Max.Y - template.Bounds.Min.Y;
+                    if (depth <= tolerance) return false;
+                    foreach (Point3d point in template.Profile)
+                    {
+                        double candidate = (point.Y - template.Bounds.Min.Y) / depth;
+                        if (!candidates.Exists(value => Math.Abs(value - candidate) <= 1E-9)) candidates.Add(candidate);
+                    }
+                }
+                double angle = splay * Math.PI / 180.0, cosine = Math.Cos(angle), sine = Math.Sin(angle);
+                List<Vector3d> normals = new List<Vector3d> { Vector3d.ZAxis };
+                // Separating-line candidates come from both profiles, including the lower profile's rotated edges.
+                for (int shape = 0; shape < 3; shape++)
+                {
+                    List<Point3d> profile = shape == 0 ? Profile : below.Profile;
+                    for (int i = 0; i < profile.Count; i++)
+                    {
+                        Vector3d edge = profile[(i + 1) % profile.Count] - profile[i];
+                        Vector3d normal = new Vector3d(0, -edge.Z, edge.Y);
+                        if (shape == 2) normal = new Vector3d(0, normal.Y * cosine + normal.Z * sine, -normal.Y * sine + normal.Z * cosine);
+                        if (normal.Z < 0) normal = -normal;
+                        // A vertical separator would place cabinets side by side rather than one below the other.
+                        if (normal.Unitize() && normal.Z > 1E-8) normals.Add(normal);
+                    }
+                }
+                double best = double.PositiveInfinity;
+                foreach (double candidate in candidates)
+                {
+                    Point3d upper, lower;
+                    if (!Pivot(false, reference, out upper, out unused, null, 0, candidate) ||
+                        !below.Pivot(true, reference, out lower, out unused, null, 0, candidate)) continue;
+                    double score = upper.DistanceToSquared(preferred) + lower.DistanceToSquared(lowerPreferred);
+                    if (score >= best) continue;
+                    foreach (Vector3d normal in normals)
+                    {
+                        bool clear = true;
+                        foreach (Point3d point in Profile)
+                            if ((point - upper) * normal < -tolerance) { clear = false; break; }
+                        if (!clear) continue;
+                        foreach (Point3d point in below.Profile)
+                        {
+                            Vector3d delta = point - lower;
+                            double a = normal.Y * delta.Y + normal.Z * delta.Z;
+                            double b = normal.Y * delta.Z - normal.Z * delta.Y;
+                            double maximum = a * cosine + b * sine;
+                            if (maximum > tolerance) { clear = false; break; }
+                        }
+                        if (clear) { best = score; pivot = upper; lowerPivot = lower; break; }
+                    }
+                }
+                return !double.IsInfinity(best);
             }
         }
 
@@ -187,7 +304,7 @@ namespace Pachyderm_Acoustic.UI
             Button addCopies = new Button { Text = "Add Copies" };
             addCopies.Click += (s, e) => InsertCopies((int)Copies.Value, true);
             layout.AddRow(addCopies, Copies, null);
-            layout.AddRow(new Label { Text = "Auto joins cabinet pivots. Manual pitch follows the current cabinet's downward axis.\nPositive splay aims the next cabinet farther down. The last row's connection is unused." });
+            layout.AddRow(new Label { Text = "Auto uses cabinet profiles and moves blocked pivots to a clear corner. Manual pitch follows the current cabinet's downward axis.\nPositive splay aims the next cabinet farther down. The last row's connection is unused." });
             layout.AddRow(Status);
             layout.AddRow(Create, cancel);
             Content = layout;
@@ -305,7 +422,8 @@ namespace Pachyderm_Acoustic.UI
                 Point3d connection;
                 if (i == 0)
                 {
-                    Point3d pivot = row.Speaker.HasPivots ? row.Speaker.Pivot(true, Rigging.SelectedIndex) : Point3d.Origin;
+                    Point3d pivot, unused;
+                    row.Speaker.Pivot(true, Rigging.SelectedIndex, out pivot, out unused);
                     pivot.Transform(transform);
                     position = Top - (Vector3d)pivot; connection = Top;
                 }
@@ -315,9 +433,11 @@ namespace Pachyderm_Acoustic.UI
                     LineArrayPreviewConduit.Item previous = Preview.Items[i - 1];
                     if (above.Auto && above.Speaker.HasPivots && row.Speaker.HasPivots)
                     {
-                        connection = above.Speaker.Pivot(false, Rigging.SelectedIndex);
+                        Point3d pivot;
+                        if (!above.Speaker.Pivot(false, Rigging.SelectedIndex, out connection, out pivot, row.Speaker, above.Splay))
+                            error = "No clear cabinet pivot below row " + i + ". Reduce splay or choose Manual spacing.";
                         connection.Transform(previous.Transform);
-                        Point3d pivot = row.Speaker.Pivot(true, Rigging.SelectedIndex); pivot.Transform(transform);
+                        pivot.Transform(transform);
                         position = connection - (Vector3d)pivot;
                     }
                     else
@@ -345,7 +465,7 @@ namespace Pachyderm_Acoustic.UI
             }
             Preview.Selected = Grid.SelectedRow;
             Create.Enabled = error == null;
-            Status.Text = error ?? (Modules.Count + " cabinets. Preview uses the same transforms as Create Array.");
+            Status.Text = error ?? (Modules.Count + " cabinets. Profile pivots checked at each connection. Preview matches Create Array.");
             Preview.Valid = error == null;
             Doc.Views.Redraw();
         }
@@ -378,7 +498,7 @@ namespace Pachyderm_Acoustic.UI
                     ArraySourceConstruction.AssignArrayMetadata(obj, group, label, i, "Line");
                     obj.Geometry.SetUserString("Aiming", ArraySourceConstruction.AimingString(item.Forward, item.Up));
                     obj.Geometry.SetUserString("ArrayCabinetOwner", "True");
-                    obj.Geometry.SetUserString("ArrayConstructionVersion", "1");
+                    obj.Geometry.SetUserString("ArrayConstructionVersion", "2");
                     obj.Geometry.SetUserString("ArrayTemplateId", row.Speaker.Id.ToString());
                     obj.Geometry.SetUserString("ArraySpacingMode", row.Auto ? "Cabinet" : "Manual");
                     obj.Geometry.SetUserString("ArrayManualSpacing_m", row.Spacing.ToString(CultureInfo.InvariantCulture));
@@ -453,23 +573,32 @@ namespace Pachyderm_Acoustic.UI
             for (int i = 0; i < Items.Count; i++)
             {
                 Item item = Items[i];
-                DrawingColor color = !Valid ? DrawingColor.IndianRed : i == Selected ? DrawingColor.Orange : DrawingColor.SteelBlue;
+                DrawingColor color = !Valid ? DrawingColor.Magenta : i == Selected ? DrawingColor.Lime : DrawingColor.White;
                 if (item.Mesh != null)
                 {
-                    using (Rhino.Display.DisplayMaterial material = new Rhino.Display.DisplayMaterial(color, 0.55)) e.Display.DrawMeshShaded(item.Mesh, material);
-                    e.Display.DrawMeshWires(item.Mesh, color);
+                    using (Rhino.Display.DisplayMaterial material = new Rhino.Display.DisplayMaterial(color, 0.25)) e.Display.DrawMeshShaded(item.Mesh, material);
+                    e.Display.DrawMeshWires(item.Mesh, DrawingColor.Black, i == Selected ? 5 : 3);
+                    e.Display.DrawMeshWires(item.Mesh, color, i == Selected ? 3 : 1);
                 }
-                foreach (Line wire in item.Lines) e.Display.DrawLine(wire, color, i == Selected ? 3 : 1);
+                foreach (Line wire in item.Lines)
+                {
+                    e.Display.DrawLine(wire, DrawingColor.Black, i == Selected ? 5 : 3);
+                    e.Display.DrawLine(wire, color, i == Selected ? 3 : 1);
+                }
                 e.Display.DrawPoint(item.Position, Rhino.Display.PointStyle.RoundSimple, 4, color);
                 e.Display.DrawArrow(new Line(item.Position, item.Position + item.Forward * (0.25 * units)), color);
-                e.Display.DrawDot(item.Position, item.Number.ToString(CultureInfo.InvariantCulture), color, DrawingColor.White);
+                e.Display.DrawDot(item.Position, item.Number.ToString(CultureInfo.InvariantCulture), color, DrawingColor.Black);
                 if (i == 0) continue;
                 Item previous = Items[i - 1];
                 Vector3d right = Vector3d.CrossProduct(previous.Forward, previous.Up);
                 Point3d a = previous.Position + right * (0.45 * units), b = item.Position + right * (0.45 * units);
-                e.Display.DrawLine(previous.Position, a, DrawingColor.Gray, 1);
-                e.Display.DrawLine(item.Position, b, DrawingColor.Gray, 1);
-                e.Display.DrawLine(a, b, DrawingColor.Gray, 1);
+                foreach (Line dimension in new[] { new Line(previous.Position, a), new Line(item.Position, b), new Line(a, b) })
+                {
+                    e.Display.DrawLine(dimension, DrawingColor.Black, 3);
+                    e.Display.DrawLine(dimension, DrawingColor.White, 1);
+                }
+                e.Display.DrawPoint(item.Connection, Rhino.Display.PointStyle.RoundSimple, 6, DrawingColor.Black);
+                e.Display.DrawPoint(item.Connection, Rhino.Display.PointStyle.RoundSimple, 4, color);
                 e.Display.DrawDot((a + b) * 0.5, item.SpacingLabel, DrawingColor.White, DrawingColor.Black);
                 Point3d center = item.Connection - right * (0.25 * units);
                 double radius = 0.15 * units;
@@ -483,7 +612,7 @@ namespace Pachyderm_Acoustic.UI
                     Point3d next = center + direction * radius;
                     e.Display.DrawLine(last, next, color, 2); last = next;
                 }
-                e.Display.DrawDot(center, item.Splay.ToString("0.##", CultureInfo.InvariantCulture) + "°", color, DrawingColor.White);
+                e.Display.DrawDot(center, item.Splay.ToString("0.##", CultureInfo.InvariantCulture) + "°", color, DrawingColor.Black);
             }
         }
     }

@@ -85,25 +85,32 @@ namespace Pachyderm_Acoustic
 
             private const int Array_Diagnostic_Samples = 1440; // 0.25 degree
 
-            private static Rhino.Geometry.Vector3d DiagnosticDirection(DiagnosticPlane plane, double angle)
+            private static Rhino.Geometry.Vector3d DiagnosticDirection(DiagnosticPlane plane, double angle, Transform? orientation = null)
             {
                 double c = Math.Cos(angle);
                 double s = Math.Sin(angle);
+                Vector3d direction;
 
                 switch (plane)
                 {
                     case DiagnosticPlane.XY:
-                        return new Vector3d(c, s, 0);
+                        direction = new Vector3d(c, s, 0);
+                        break;
 
                     case DiagnosticPlane.XZ:
-                        return new Vector3d(c, 0, s);
+                        direction = new Vector3d(c, 0, s);
+                        break;
 
                     case DiagnosticPlane.YZ:
-                        return new Vector3d(0, c, s);
+                        direction = new Vector3d(0, c, s);
+                        break;
 
                     default:
-                        return new Vector3d(c, 0, s);
+                        direction = new Vector3d(c, 0, s);
+                        break;
                 }
+                if (orientation.HasValue) direction.Transform(orientation.Value);
+                return direction;
             }
 
             public double ArrayDiagnosticLevel(double angleDegrees)
@@ -837,6 +844,86 @@ namespace Pachyderm_Acoustic
                     if (amplitudeBound <= 0) return 0;
                     double amplitude = Magnitude(RCPachTools.HPttoRPt(direction)) / amplitudeBound;
                     return amplitude * amplitude;
+                }
+
+                internal double Beamwidth(DiagnosticPlane plane, Transform orientation, System.Threading.CancellationToken token, double depthDb = 6)
+                {
+                    if (!(depthDb > 0) || double.IsInfinity(depthDb)) return double.NaN;
+                    const int count = Array_Diagnostic_Samples;
+                    const double step = 360.0 / count;
+                    Func<double, double> magnitude = angle =>
+                    {
+                        double radians = angle * Math.PI / 180;
+                        // XY starts at +X for the polar readout. Beamwidth angles start
+                        // at forward (+Y), with positive horizontal angles toward +X.
+                        if (plane == DiagnosticPlane.XY) radians = Math.PI / 2 - radians;
+                        return Magnitude(DiagnosticDirection(plane, radians, orientation));
+                    };
+                    double[] samples = new double[count];
+                    double peak = 0, peakAngle = 0;
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (token.IsCancellationRequested) return double.NaN;
+                        samples[i] = magnitude(i * step - 180);
+                        if (double.IsNaN(samples[i]) || double.IsInfinity(samples[i])) return double.NaN;
+                    }
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (token.IsCancellationRequested) return double.NaN;
+                        if (samples[i] < samples[(i + count - 1) % count] || samples[i] < samples[(i + 1) % count]) continue;
+                        double angle = i * step - 180;
+                        // Refine isolated sampled maxima before comparing lobes, including equal front/rear peaks.
+                        if (samples[i] > samples[(i + count - 1) % count] && samples[i] > samples[(i + 1) % count])
+                        {
+                            double lo = angle - step, hi = angle + step;
+                            for (int j = 0; j < 24; j++)
+                            {
+                                if (token.IsCancellationRequested) return double.NaN;
+                                double a = lo + (hi - lo) / 3, b = hi - (hi - lo) / 3;
+                                if (magnitude(a) < magnitude(b)) lo = a; else hi = b;
+                            }
+                            angle = (lo + hi) / 2;
+                        }
+                        double value = magnitude(angle);
+                        angle = (angle + 540) % 360 - 180;
+                        if (value > peak * (1 + 1e-10) ||
+                            (Math.Abs(value - peak) <= peak * 1e-10 && Math.Abs(angle) < Math.Abs(peakAngle)))
+                        {
+                            peak = value;
+                            peakAngle = angle;
+                        }
+                    }
+                    if (!(peak > 0) || double.IsInfinity(peak)) return double.NaN;
+                    double threshold = peak * Math.Pow(10, -depthDb / 20);
+                    double width = 0;
+                    foreach (int sign in new[] { -1, 1 })
+                    {
+                        double inside = 0;
+                        bool crossed = false;
+                        for (int i = 1; i <= count; i++)
+                        {
+                            if (token.IsCancellationRequested) return double.NaN;
+                            double outside = i * step;
+                            double value = magnitude(peakAngle + sign * outside);
+                            if (double.IsNaN(value) || double.IsInfinity(value)) return double.NaN;
+                            if (value <= threshold)
+                            {
+                                for (int j = 0; j < 24; j++)
+                                {
+                                    if (token.IsCancellationRequested) return double.NaN;
+                                    double middle = (inside + outside) / 2;
+                                    if (magnitude(peakAngle + sign * middle) > threshold) inside = middle;
+                                    else outside = middle;
+                                }
+                                width += (inside + outside) / 2;
+                                crossed = true;
+                                break;
+                            }
+                            inside = outside;
+                        }
+                        if (!crossed) return 360;
+                    }
+                    return Math.Min(360, width);
                 }
             }
 

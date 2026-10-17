@@ -454,6 +454,7 @@ namespace Pachyderm_Acoustic
             private NumericStepper Param_Min;
             private CheckBox Discretize;
             ImageView Param_Scale;
+            internal StackLayout ControlCluster;
             public Color_Output_Control(bool discretize_option = false, string label = "did not properly indicate what control was...", Control add_ctrl_1 = null)
             {
                 Update += OnUpdate;
@@ -514,7 +515,7 @@ namespace Pachyderm_Acoustic
                 //byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
                 Param_Scale.Image = Scale.PIC;
 
-                StackLayout ControlCluster = new StackLayout();
+                ControlCluster = new StackLayout();
                 ControlCluster.Spacing = 12;
                 if (add_ctrl_1 != null)
                 {
@@ -613,7 +614,7 @@ namespace Pachyderm_Acoustic
                 //byte[] bb = (byte[])converter.ConvertTo(Scale.PIC, typeof(byte[]));
                 Param_Scale.Image = Scale.PIC;
 
-                StackLayout ControlCluster = new StackLayout();
+                ControlCluster = new StackLayout();
                 ControlCluster.Spacing = 12;
 
                 ControlCluster.Items.Add(ColorLabel);

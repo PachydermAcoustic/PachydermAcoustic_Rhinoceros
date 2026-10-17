@@ -11,6 +11,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Rhino.UI;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text;
 
 namespace Pachyderm_Acoustic
 {
@@ -25,10 +28,9 @@ namespace Pachyderm_Acoustic
             private ArrayPowerControl ArrayPower;
 
             private bool LoadingGroup = false;
-            private DropDown ArrayControlMode;
+            private readonly bool ColumnMode;
             private GroupBox ArrayOrientation;
             private NumericStepper ArrayAlt, ArrayAzi, ArrayAxial;
-            private bool ColumnMode { get { return ArrayControlMode != null && ArrayControlMode.SelectedIndex == 1; } }
 
             private CheckBox ShowPattern;
             private DropDown PatternOctave;
@@ -45,6 +47,13 @@ namespace Pachyderm_Acoustic
             private DropDown PatternCenterMode;
 
             private SpeakerPatternConduit PatternConduit;
+            private ScottPlot.Eto.EtoPlot BeamwidthGraph;
+            private Label BeamwidthStatus;
+            private NumericStepper BeamwidthDepth;
+            private readonly UITimer BeamwidthTimer = new UITimer { Interval = 0.2 };
+            private CancellationTokenSource BeamwidthCancellation;
+            private string BeamwidthSignature;
+            private bool BeamwidthClosed;
 
             public Pach_ArrayControl(List<RhinoObject> elements)
             {
@@ -68,13 +77,10 @@ namespace Pachyderm_Acoustic
 
                 string label = "Steerable Array " + Elements[0].Geometry.GetUserString("ArrayGroupLabel");
 
-                ArrayControlMode = new DropDown { Width = 140 };
-                ArrayControlMode.Items.Add("Line array");
-                ArrayControlMode.Items.Add("Column array");
                 string controlMode = Elements[0].Geometry.GetUserString("ArrayControlMode") ?? Elements[0].Geometry.GetUserString("ArrayDeviceType");
-                ArrayControlMode.SelectedIndex = controlMode == "Column" ? 1 : 0;
+                ColumnMode = controlMode == "Column";
                 layout.AddSeparateRow(new Label { Text = label, Font = new Eto.Drawing.Font(SystemFont.Bold, 12) },
-                    null, new Label { Text = "Array control" }, ArrayControlMode);
+                    null, new Label { Text = ColumnMode ? "Column array" : "Line array" });
 
                 ArrayAlt = new NumericStepper { MinValue = -90, MaxValue = 90, DecimalPlaces = 1, Increment = 1, Width = 80 };
                 ArrayAzi = new NumericStepper { MinValue = -360, MaxValue = 360, DecimalPlaces = 1, Increment = 1, Width = 80 };
@@ -86,33 +92,9 @@ namespace Pachyderm_Acoustic
                 orientation.AddRow(orientationAngles);
                 orientation.AddRow(new Label { Text = "Rotates all elements together, preserving spacing and splay.", Wrap = WrapMode.Word });
                 ArrayOrientation = new GroupBox { Text = "Global array orientation", Content = orientation, ToolTip = "Angles use the first element as the orientation reference. Changing them rotates every element together. Column mode locks individual aiming." };
-                layout.AddRow(ArrayOrientation);
                 ArrayAlt.ValueChanged += OnArrayOrientationChanged;
                 ArrayAzi.ValueChanged += OnArrayOrientationChanged;
                 ArrayAxial.ValueChanged += OnArrayOrientationChanged;
-                ArrayControlMode.SelectedIndexChanged += (s, e) =>
-                {
-                    if (LoadingGroup) return;
-                    RhinoDoc doc = Elements[0].Document ?? RhinoDoc.ActiveDoc;
-                    if (doc == null) return;
-                    uint undo = doc.BeginUndoRecord("Change array control mode");
-                    try
-                    {
-                        for (int i = 0; i < Elements.Count; i++)
-                        {
-                            RhinoObject current = doc.Objects.FindId(Elements[i].Id);
-                            if (current == null || current.Geometry == null) continue;
-                            current.Geometry.SetUserString("ArrayControlMode", ColumnMode ? "Column" : "Line");
-                            current.CommitChanges();
-                            Elements[i] = doc.Objects.FindId(current.Id) ?? current;
-                        }
-                    }
-                    finally { if (undo != 0) doc.EndUndoRecord(undo); }
-                    RebuildElementEditors();
-                    ArrayPower?.SetBandResolution(ThirdOctave, true);
-                    UpdatePatternConduit();
-                    doc.Views.Redraw();
-                };
 
                 //Add Pattern Controls
                 GroupBox box = new GroupBox { Text = "Array preview and steering" };
@@ -210,9 +192,6 @@ namespace Pachyderm_Acoustic
                 bands.AddSeparateRow(octaveBands, ThirdBands, null);
                 bands.AddSeparateRow(new Label { Text = "Preview frequency" }, PatternOctave, null);
                 bands.Add(null, yscale: true);
-                DynamicLayout settingsLayout = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
-                settingsLayout.AddRow(simulationBox, new GroupBox { Text = "Frequency bands", Content = bands });
-                layout.AddRow(settingsLayout);
 
                 ShowArrayGraph = new CheckBox { Text = "3D graph", Checked = PatternConduit.Show_Array_Graph };
                 ShowArraySlice = new CheckBox { Text = "Polar slice", Checked = PatternConduit.Show_Array_Diagnostic_Slice };
@@ -241,7 +220,25 @@ namespace Pachyderm_Acoustic
                     aimAtPoints, optimizeAtPoints, null);
 
                 box.Content = l;
-                layout.AddRow(box);
+                DynamicLayout settingsAndPreview = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                settingsAndPreview.AddRow(ArrayOrientation);
+                settingsAndPreview.AddRow(simulationBox);
+                settingsAndPreview.AddRow(new GroupBox { Text = "Frequency bands", Content = bands });
+                settingsAndPreview.AddRow(box);
+                BeamwidthGraph = new ScottPlot.Eto.EtoPlot { MinimumSize = new Size(300, 300) };
+                BeamwidthStatus = new Label { Text = "Calculating…", Wrap = WrapMode.Word, Width = 300 };
+                BeamwidthDepth = new NumericStepper { MinValue = 3, MaxValue = 24, DecimalPlaces = 0, Increment = 1, Width = 80, Value = 6 };
+                BeamwidthDepth.ToolTip = "Beamwidth is measured this many dB below the peak of each cut.";
+                BeamwidthDepth.ValueChanged += (s, e) => UpdatePatternConduit();
+                DynamicLayout graphLayout = new DynamicLayout { Padding = 8, DefaultSpacing = new Size(6, 6) };
+                graphLayout.AddSeparateRow(new Label { Text = "Beam Width", Font = new Eto.Drawing.Font(SystemFont.Bold, 12) },
+                    null, BeamwidthDepth, new Label { Text = "dB" });
+                graphLayout.Add(BeamwidthGraph, xscale: true, yscale: true);
+                graphLayout.AddRow(BeamwidthStatus);
+                DynamicLayout upperControls = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
+                upperControls.AddRow(settingsAndPreview, new GroupBox { Content = graphLayout });
+                layout.AddRow(upperControls);
+                BeamwidthTimer.Elapsed += (sender, args) => CalculateBeamwidth();
 
                 AddElementControls(layout);
 
@@ -254,6 +251,11 @@ namespace Pachyderm_Acoustic
 
                 Closed += (s, e) =>
                 {
+                    BeamwidthClosed = true;
+                    BeamwidthTimer.Stop();
+                    BeamwidthTimer.Dispose();
+                    BeamwidthCancellation?.Cancel();
+                    BeamwidthCancellation?.Dispose();
                     if (PatternConduit != null)
                     {
                         PatternConduit.Clear();
@@ -297,6 +299,73 @@ namespace Pachyderm_Acoustic
                 DynamicLayout body = new DynamicLayout { DefaultSpacing = new Size(6, 6) };
                 body.AddRow(new GroupBox { Text = "Overall band levels", Content = powerScroll }, ElementScroll);
                 layout.Add(body, xscale: true, yscale: true);
+            }
+
+            private async void CalculateBeamwidth()
+            {
+                BeamwidthTimer.Stop();
+                if (BeamwidthClosed || BeamwidthCancellation == null) return;
+                CancellationToken token = BeamwidthCancellation.Token;
+                try
+                {
+                    // Capture geometry, metadata, units and directivity tables on the UI thread.
+                    // ArrayPattern retains only detached numerical data after construction.
+                    List<RhinoObject> sources = Elements.Select(obj => obj.Document?.Objects.FindId(obj.Id) ?? obj).ToList();
+                    double[] frequencies = BandFrequencies;
+                    double depthDb = BeamwidthDepth.Value;
+                    SpeakerPatternConduit.ArrayPattern[] thirds = Enumerable.Range(0, 24).Select(b =>
+                        new SpeakerPatternConduit.ArrayPattern(sources, b, PatternReferenceDistance.Value, true)).ToArray();
+                    SpeakerPatternConduit.ArrayPattern[] patterns = ThirdOctave ? thirds : Enumerable.Range(0, 8).Select(b =>
+                        new SpeakerPatternConduit.ArrayPattern(thirds, b)).ToArray();
+                    Environment.Cabinet_Geometry axes = new Environment.Cabinet_Geometry();
+                    axes.Vertices.Add(new Hare.Geometry.Point(1, 0, 0));
+                    axes.Vertices.Add(new Hare.Geometry.Point(0, 1, 0));
+                    axes.Vertices.Add(new Hare.Geometry.Point(0, 0, 1));
+                    Environment.Cabinet_Geometry frame = axes.Transform(new Hare.Geometry.Point(0, 0, 0),
+                        ArrayAlt.Value, ArrayAzi.Value, ArrayAxial.Value, 1);
+                    Vector3d right = (Vector3d)RCPachTools.HPttoRPt(frame.Vertices[0]);
+                    Vector3d forward = (Vector3d)RCPachTools.HPttoRPt(frame.Vertices[1]);
+                    Transform orientation = Transform.PlaneToPlane(Plane.WorldXY, new Plane(Point3d.Origin, right, forward));
+                    double[][] widths = await Task.Run(() =>
+                    {
+                        double[][] result = { new double[patterns.Length], new double[patterns.Length] };
+                        for (int b = 0; b < patterns.Length; b++)
+                        {
+                            if (token.IsCancellationRequested) return null;
+                            result[0][b] = patterns[b].Beamwidth(SpeakerPatternConduit.DiagnosticPlane.XY, orientation, token, depthDb);
+                            result[1][b] = patterns[b].Beamwidth(SpeakerPatternConduit.DiagnosticPlane.YZ, orientation, token, depthDb);
+                        }
+                        return result;
+                    });
+                    if (token.IsCancellationRequested || widths == null) return;
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        if (BeamwidthClosed || token.IsCancellationRequested) return;
+                        BeamwidthGraph.Plot.Clear();
+                        double[] x = frequencies.Select(f => Math.Log10(f)).ToArray();
+                        BeamwidthGraph.Plot.Add.Scatter(x, widths[0], ScottPlot.Colors.Blue).LegendText = "Horizontal";
+                        BeamwidthGraph.Plot.Add.Scatter(x, widths[1], ScottPlot.Colors.Orange).LegendText = "Vertical";
+                        BeamwidthGraph.Plot.Axes.Bottom.TickGenerator = new ScottPlot.TickGenerators.NumericManual(x,
+                            frequencies.Select(f => f.ToString("0.##", CultureInfo.InvariantCulture)).ToArray());
+                        BeamwidthGraph.Plot.XLabel("Frequency (Hz, logarithmic scale)");
+                        BeamwidthGraph.Plot.YLabel("−" + depthDb.ToString("0", CultureInfo.InvariantCulture) + " dB beamwidth (°)");
+                        BeamwidthGraph.Plot.ShowLegend();
+                        BeamwidthGraph.Plot.Axes.SetLimits(x[0], x[x.Length - 1], 0, 365);
+                        BeamwidthGraph.Refresh();
+                        BeamwidthStatus.Text = "Strongest lobe per cut; gaps indicate silent or undefined results. Angular sampling: 0.25°.";
+                    });
+                }
+                catch (Exception error)
+                {
+                    Application.Instance.AsyncInvoke(() =>
+                    {
+                        if (BeamwidthClosed || token.IsCancellationRequested) return;
+                        BeamwidthSignature = null;
+                        BeamwidthGraph.Plot.Clear();
+                        BeamwidthGraph.Refresh();
+                        BeamwidthStatus.Text = "Beamwidth unavailable: " + error.Message;
+                    });
+                }
             }
 
             private void AimPhaseAtPoints(bool fineTune)
@@ -972,6 +1041,34 @@ namespace Pachyderm_Acoustic
             private void UpdatePatternConduit()
             {
                 if (PatternConduit == null) return;
+
+                if (BeamwidthGraph != null && !LoadingGroup && !BeamwidthClosed)
+                {
+                    StringBuilder signature = new StringBuilder();
+                    signature.Append(ThirdOctave).Append('|').Append(PatternReferenceDistance.Value.ToString("R", CultureInfo.InvariantCulture));
+                    signature.Append('|').Append(BeamwidthDepth.Value.ToString("R", CultureInfo.InvariantCulture));
+                    signature.Append('|').Append(ArrayAlt.Value).Append('|').Append(ArrayAzi.Value).Append('|').Append(ArrayAxial.Value);
+                    foreach (RhinoObject element in Elements)
+                    {
+                        RhinoObject obj = element.Document?.Objects.FindId(element.Id) ?? element;
+                        signature.Append('|').Append(obj.Document?.ModelUnitSystem).Append('|').Append(obj.RuntimeSerialNumber)
+                            .Append('|').Append(obj.Geometry.DataCRC(0));
+                        var metadata = obj.Geometry.GetUserStrings();
+                        foreach (string key in metadata.AllKeys) signature.Append('|').Append(key).Append('=').Append(metadata[key]);
+                    }
+                    if (signature.ToString() != BeamwidthSignature)
+                    {
+                        BeamwidthSignature = signature.ToString();
+                        BeamwidthCancellation?.Cancel();
+                        BeamwidthCancellation?.Dispose();
+                        BeamwidthCancellation = new CancellationTokenSource();
+                        BeamwidthTimer.Stop();
+                        BeamwidthGraph.Plot.Clear();
+                        BeamwidthGraph.Refresh();
+                        BeamwidthStatus.Text = "Calculating…";
+                        BeamwidthTimer.Start();
+                    }
+                }
 
                 if (ShowPattern == null ||
                     !ShowPattern.Checked.HasValue ||
