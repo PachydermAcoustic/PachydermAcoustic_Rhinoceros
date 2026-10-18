@@ -35,6 +35,8 @@ namespace Pachyderm_Acoustic
         double[] arrayx, arrayy, arrayx2, arrayy2, arrayx3, arrayy3, arrayx4, arrayy4;
         string xdom, ydom;
         int Prog_Percent;
+        readonly object DataLock = new object();
+        bool PendingUpdate, IsClosed;
 
         Scatter sd1, sd2, sd3, sd4;
         //Eto.Forms.Form _parent;
@@ -110,23 +112,41 @@ namespace Pachyderm_Acoustic
 
         public void Populate()
         {
-            Graph.Update(new Eto.Drawing.Rectangle(Graph.Size));
+            lock (DataLock)
+            {
+                if (IsClosed || !PendingUpdate) return;
+                PendingUpdate = false;
+                Populate(arrayx, arrayy, arrayx2, arrayy2, arrayx3, arrayy3, arrayx4, arrayy4, xdom, ydom, 0, Prog_Percent);
+            }
         }
 
         public void Populate(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, double[] arrayx4, double[] arrayy4, string xdom, string ydom, int WaitDuration, int Prog_Percent)
         {
             if (this.Visible == false) return;
-            //Graph.Plot.Clear();
+            Graph.Plot.Clear();
             Graph.Plot.XLabel(xdom, 12);//new AxisLabel(xdom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
             Graph.Plot.YLabel(ydom, 12);//new AxisLabel(ydom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
             ScottPlot.DataSources.ScatterSourceDoubleArray sd1 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx, arrayy);
             this.sd1 = Graph.Plot.Add.Scatter(sd1, ScottPlot.Colors.Red);
-            ScottPlot.DataSources.ScatterSourceDoubleArray sd2 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx2, arrayy2);
-            this.sd2 = Graph.Plot.Add.Scatter(sd2, ScottPlot.Colors.Orange);
-            ScottPlot.DataSources.ScatterSourceDoubleArray sd3 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx3, arrayy3);
-            this.sd3 = Graph.Plot.Add.Scatter(sd3, ScottPlot.Colors.Green);
-            ScottPlot.DataSources.ScatterSourceDoubleArray sd4 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx4, arrayy4);
-            this.sd4 = Graph.Plot.Add.Scatter(sd4, ScottPlot.Colors.Blue);
+            this.sd1.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
+            if (arrayx2 != null && arrayy2 != null)
+            {
+                ScottPlot.DataSources.ScatterSourceDoubleArray sd2 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx2, arrayy2);
+                this.sd2 = Graph.Plot.Add.Scatter(sd2, ScottPlot.Colors.Orange);
+                this.sd2.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
+            }
+            if (arrayx3 != null && arrayy3 != null)
+            {
+                ScottPlot.DataSources.ScatterSourceDoubleArray sd3 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx3, arrayy3);
+                this.sd3 = Graph.Plot.Add.Scatter(sd3, ScottPlot.Colors.Green);
+                this.sd3.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
+            }
+            if (arrayx4 != null && arrayy4 != null)
+            {
+                ScottPlot.DataSources.ScatterSourceDoubleArray sd4 = new ScottPlot.DataSources.ScatterSourceDoubleArray(arrayx4, arrayy4);
+                this.sd4 = Graph.Plot.Add.Scatter(sd4, ScottPlot.Colors.Blue);
+                this.sd4.MarkerStyle.Shape = ScottPlot.MarkerShape.None;
+            }
             Graph.Plot.Axes.AutoScale();
             //Graph.Plot.Render
             Graph.Refresh();
@@ -143,59 +163,24 @@ namespace Pachyderm_Acoustic
 
         public void Fill(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, double[] arrayx4, double[] arrayy4, string xdom, string ydom, int WaitDuration, int Prog_Percent)
         {
-            Graph.Plot.XLabel(xdom, 12);//new AxisLabel(xdom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
-            Graph.Plot.YLabel(ydom, 12);//new AxisLabel(ydom, "Arial", 10, System.Drawing.Color.Black, false, false, false);
-
-            //if (this.arrayx != null && arrayx.Length == this.arrayx.Length)
-            //{
-            //    for (int i = 0; i < arrayx.Length; i++)
-            //    {
-            //        this.arrayx[i] = arrayx[i];
-            //        this.arrayy[i] = arrayy[i];
-            //        this.arrayx2[i] = arrayx2[i];
-            //        this.arrayy2[i] = arrayy2[i];
-            //        this.arrayx3[i] = arrayx3[i];
-            //        this.arrayy3[i] = arrayy3[i];
-            //        this.arrayx4[i] = arrayx4[i];
-            //        this.arrayy4[i] = arrayy4[i];
-            //        this.xdom = xdom;
-            //        this.ydom = ydom;
-            //        this.Prog_Percent = Prog_Percent;
-            //    }
-            //}
-            //else 
-            //{
-            Graph.Plot.Clear();
-
-                this.arrayx = arrayx;
-                this.arrayy = arrayy;
-                this.arrayx2 = arrayx2;
-                this.arrayy2 = arrayy2;
-                this.arrayx3 = arrayx3;
-                this.arrayy3 = arrayy3;
-                this.arrayx4 = arrayx4;
-                this.arrayy4 = arrayy4;
-
-                ScottPlot.DataSources.ScatterSourceDoubleArray sd1 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.arrayx, this.arrayy);
-                this.sd1 = Graph.Plot.Add.Scatter(sd1, ScottPlot.Colors.Red);
-                if (arrayx2 != null)
-                {
-                    ScottPlot.DataSources.ScatterSourceDoubleArray sd2 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.arrayx2, this.arrayy2);
-                    this.sd2 = Graph.Plot.Add.Scatter(sd2, ScottPlot.Colors.Orange);
-                }
-                if (arrayx3 != null)
-                {
-                    ScottPlot.DataSources.ScatterSourceDoubleArray sd3 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.arrayx3, this.arrayy3);
-                    this.sd3 = Graph.Plot.Add.Scatter(sd3, ScottPlot.Colors.Green);
-                }
-                if (arrayx4 != null)
-                {
-                    ScottPlot.DataSources.ScatterSourceDoubleArray sd4 = new ScottPlot.DataSources.ScatterSourceDoubleArray(this.arrayx4, this.arrayy4);
-                    this.sd4 = Graph.Plot.Add.Scatter(sd4, ScottPlot.Colors.Blue);
-                }
-
-            //Graph.Plot.Render();
-            Graph.Refresh();
+            // The calculation thread only publishes data. Populate() consumes the
+            // latest snapshot on the UI thread, without queuing every frequency.
+            lock (DataLock)
+            {
+                if (IsClosed) return;
+                this.arrayx = (double[])arrayx?.Clone();
+                this.arrayy = (double[])arrayy?.Clone();
+                this.arrayx2 = (double[])arrayx2?.Clone();
+                this.arrayy2 = (double[])arrayy2?.Clone();
+                this.arrayx3 = (double[])arrayx3?.Clone();
+                this.arrayy3 = (double[])arrayy3?.Clone();
+                this.arrayx4 = (double[])arrayx4?.Clone();
+                this.arrayy4 = (double[])arrayy4?.Clone();
+                this.xdom = xdom;
+                this.ydom = ydom;
+                this.Prog_Percent = Prog_Percent;
+                PendingUpdate = true;
+            }
         }
 
         public void Populate(double[] arrayx, double[] arrayy, double[] arrayx2, double[] arrayy2, double[] arrayx3, double[] arrayy3, string xdom, string ydom, int WaitDuration, int Prog_Percent)
@@ -221,6 +206,14 @@ namespace Pachyderm_Acoustic
 
         private void InitializeComponent()
         {
+            Closed += (sender, e) =>
+            {
+                lock (DataLock)
+                {
+                    IsClosed = true;
+                    PendingUpdate = false;
+                }
+            };
             this.Size = new Eto.Drawing.Size(300, 350);
             this.Graph = new ScottPlot.Eto.EtoPlot();
             Graph.Size = new Eto.Drawing.Size(300, 250);

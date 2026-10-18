@@ -83,12 +83,11 @@ namespace Pachyderm_Acoustic
                 this.label21 = new Eto.Forms.Label();
                 this.label22 = new Eto.Forms.Label();
                 this.Air_Term = new Eto.Forms.RadioButton();
-                this.Rigid_Term = new Eto.Forms.RadioButton();
+                this.Rigid_Term = new Eto.Forms.RadioButton(this.Air_Term);
                 this.label4 = new Eto.Forms.Label();
                 this.label5 = new Eto.Forms.Label();
                 this.label14 = new Eto.Forms.Label();
                 this.label15 = new Eto.Forms.Label();
-                this.Zf_Incorp_Method = new Eto.Forms.ComboBox();
                 this.Z_rad_feedback = new Eto.Forms.Label();
                 this.Calc_Zr = new Eto.Forms.Button();
                 this.Inf_Sample = new Eto.Forms.RadioButton();
@@ -101,7 +100,7 @@ namespace Pachyderm_Acoustic
                 this.Rem = new Eto.Forms.Button();
                 this.Add = new Eto.Forms.Button();
                 this.Chart_Contents = new Eto.Forms.ComboBox();
-                this.IIR_Order = new Eto.Forms.NumericStepper();
+                this.Band_Resolution = new Eto.Forms.ComboBox();
                 this.Direction_choice = new Eto.Forms.ComboBox();
                 Cancel = new Eto.Forms.Button();
 
@@ -118,11 +117,8 @@ namespace Pachyderm_Acoustic
                 GraphLeft.AddRow(GraphCtrls);
 
                 ////////////////////////////////////////
-                Label label23 = new Label();
                 Label label24 = new Label();
                 Label label25 = new Label();
-                label23.Text = "IIR Filter Order";
-                this.IIR_Order.Value = 3;
                 label25.Text = "Direction:";
                 this.Direction_choice.Items.Add("Normal");
                 this.Direction_choice.Items.Add("2.5 degrees");
@@ -150,7 +146,12 @@ namespace Pachyderm_Acoustic
                 this.Chart_Contents.Items.Add("Transmission");
                 this.Chart_Contents.Text = "Absorption";
                 this.Chart_Contents.SelectedIndexChanged += this.Chart_Contents_SelectedIndexChanged;
-                GraphCtrls.AddRow(label23, IIR_Order, label25, Direction_choice, label24, Chart_Contents); ;
+                GraphCtrls.AddRow(label25, Direction_choice, label24, Chart_Contents);
+                Band_Resolution.Items.Add("Octave");
+                Band_Resolution.Items.Add("Third octave");
+                Band_Resolution.SelectedIndex = 0;
+                Band_Resolution.SelectedIndexChanged += Direction_choice_SelectedIndexChanged;
+                GraphCtrls.AddRow(new Label() { Text = "Output bands:" }, Band_Resolution);
                 GraphCtrls.DefaultSpacing = new Eto.Drawing.Size(8, 8);
 
                 ///Ctrls for graph display...
@@ -166,10 +167,10 @@ namespace Pachyderm_Acoustic
                 TerminationBox.Text = "Termination Type";
                 DynamicLayout DL = new DynamicLayout();
                 this.Air_Term.Text = "Air Termination (Trans)";
-                this.Air_Term.MouseUp += Rigid_Term_CheckedChanged;
+                this.Air_Term.CheckedChanged += Rigid_Term_CheckedChanged;
                 this.Rigid_Term.Checked = true;
                 this.Rigid_Term.Text = "Rigid Termination (ABS Only)";
-                this.Rigid_Term.MouseUp += this.Rigid_Term_CheckedChanged;
+                this.Rigid_Term.CheckedChanged += this.Rigid_Term_CheckedChanged;
                 DL.AddRow(Rigid_Term, Air_Term);
                 TerminationBox.Content = DL;
                 Scrollable LLScroll = new Scrollable();
@@ -229,15 +230,10 @@ namespace Pachyderm_Acoustic
                 this.XDim.DecimalPlaces = 1;
                 this.XDim.Increment = 1;
                 this.XDim.Value = 2;
-                Label label20 = new Label();
-                label20.Text = "Correction Method";
-                this.Zf_Incorp_Method.Items.Add("a = 4*Za.Real*Zf.Real / |Za + Zf|^2");
-                this.Zf_Incorp_Method.Items.Add("R = [(Za + Zf) - 1] / [(Za + Zf) + 1]");
-                this.Zf_Incorp_Method.SelectedIndexChanged += this.Zf_Incorp_Method_SelectedIndexChanged;
                 Inf_Sample.Checked = true;
                 Inf_Sample.CheckedChanged += this.Inf_Sample_CheckedChanged;
                 Fin_Sample.CheckedChanged += this.Fin_Sample_CheckedChanged;
-                ZF.AddRow(Inf_Sample, label3, XDim, label20, Zf_Incorp_Method);
+                ZF.AddRow(Inf_Sample, label3, XDim);
 
                 this.Inf_Sample.Text = "Infinite Sample";
                 this.Fin_Sample.Text = "Finite Sample";
@@ -246,7 +242,7 @@ namespace Pachyderm_Acoustic
                 this.YDim.DecimalPlaces = 1;
                 this.YDim.Increment = 1;
                 this.YDim.Value = 2;
-                this.Z_rad_feedback.Text = "No Z-rad Stored";
+                this.Z_rad_feedback.Text = "Z-rad: Thomasson lookup";
 
                 ZF.AddRow(Fin_Sample, label7, YDim, Z_rad_feedback);
 
@@ -273,7 +269,7 @@ namespace Pachyderm_Acoustic
 
                 this.depth.Width = 75;
                 this.depth.DecimalPlaces = 3;
-                this.depth.MaxValue = 10000;
+                this.depth.MaxValue = 100000;
                 this.depth.Value = 25;
                 this.depth.ValueChanged += this.param_ValueChanged;
 
@@ -306,9 +302,9 @@ namespace Pachyderm_Acoustic
                 this.label12.Text = "Poisson\'s Ratio";
                 this.label12.Visible = false;
                 this.PoissonsRatio.MaxValue = 0.5;
-                this.PoissonsRatio.MinValue = 0;
+                this.PoissonsRatio.MinValue = -0.99;
                 this.PoissonsRatio.DecimalPlaces = 2;
-                this.PoissonsRatio.Value = 44;
+                this.PoissonsRatio.Value = 0.44;
                 this.PoissonsRatio.ValueChanged += param_ValueChanged;
                 this.PoissonsRatio.Visible = false;
 
@@ -327,7 +323,7 @@ namespace Pachyderm_Acoustic
                 this.pitch_label.Text = "Spacing-centers (mm)";
                 this.pitch_label.Visible = false;
                 this.pitch.DecimalPlaces = 3;
-                this.pitch.MaxValue = 1000;
+                this.pitch.MaxValue = 10000;
                 this.pitch.Value = 25;
                 this.pitch.Visible = false;
                 this.pitch.ValueChanged += this.param_ValueChanged;
@@ -335,7 +331,7 @@ namespace Pachyderm_Acoustic
                 this.diam_label.Text = "Hole Diameter (mm)";
                 this.diam_label.Visible = false;
                 this.diameter.DecimalPlaces = 3;
-                this.diameter.MaxValue = 1000;
+                this.diameter.MaxValue = 10000;
                 this.diameter.Value = 25;
                 this.diameter.Visible = false;
                 this.diameter.ValueChanged += this.param_ValueChanged;
@@ -354,7 +350,7 @@ namespace Pachyderm_Acoustic
 
                 this.Label1.Text = "Airflow Resistivity (Pa *s/m^2)";
                 this.Label1.Visible = false;
-                this.Sigma.MaxValue = 200000;
+                this.Sigma.MaxValue = 10000000;
                 this.Sigma.Value = 25000;
                 this.Sigma.Visible = false;
                 this.Sigma.ValueChanged += this.Resistivity_ValueChanged;
@@ -379,6 +375,8 @@ namespace Pachyderm_Acoustic
                 lblBP.Text = "Biot Porous:";
                 AdvancedPorous.AddRow(lblBP);
                 this.ThermalPermeability.MaxValue = 1;
+                this.ThermalPermeability.DecimalPlaces = 12;
+                this.ThermalPermeability.Increment = 1E-10;
                 this.ThermalPermeability.Value = 61;
                 this.ThermalPermeability.Visible = false;
                 this.ThermalPermeability.ValueChanged += param_ValueChanged;
@@ -425,7 +423,7 @@ namespace Pachyderm_Acoustic
                 Label EC_N_Lbl = new Label() { Text = "Material Name:" };
                 Label EC_Coef_Lbl = new Label() { Text = "A1-A3 ECC (kgCO2e/m3):" };
                 EC_Name = new TextBox() { Width = 50 };
-                EC_Coefficient = new NumericStepper() { Width = 50, DecimalPlaces = 2, MinValue = 0, MaxValue = 1000000, Value = 0 };
+                EC_Coefficient = new NumericStepper() { Width = 50, DecimalPlaces = 2, MinValue = -1000000, MaxValue = 1000000, Value = 0 };
                 EC_LO.AddRow(EC_N_Lbl, EC_Name);
                 EC_LO.AddRow(EC_Coef_Lbl, EC_Coefficient);
                 EC_LO.DefaultSpacing = new Eto.Drawing.Size(8, 8);
@@ -435,10 +433,6 @@ namespace Pachyderm_Acoustic
 
                 DynamicLayout CtrlX = new DynamicLayout();
                 CtrlX.DefaultSpacing = new Eto.Drawing.Size(8, 8);
-                //this.Averaging.Items.Add("Paris [sin(the)cos(the)]");
-                //this.Averaging.Items.Add("0 to 78 only");
-                //this.Averaging.Items.Add("0 t0 90 Flat");
-                //this.Averaging.SelectedIndexChanged += this.Averaging_SelectedIndexChanged;
                 this.Smart_Mat.Text = "Create Smart Material";
                 this.Smart_Mat.Click += this.Smart_Mat_Click;
                 this.Use_RI.Text = "Random Incidence";
@@ -491,7 +485,7 @@ namespace Pachyderm_Acoustic
                 Set_EHM.Click += Set_EHM_Click;
                 Get_Est = new Button { Text = "Fit Estimate" };
                 Get_Est.Click += Get_Est_Click;
-                Set_Est = new Button() { Text = "Set Estimate" };
+                Set_Est = new Button() { Text = "Set Estimate", Enabled = false };
                 Set_Est.Click += Set_Est_Click;
 
                 EHM_ECC = new Label() { Text = "A1-A3 ECC (kgCO2e/m2):" };
@@ -561,57 +555,62 @@ namespace Pachyderm_Acoustic
             private void Set_EHM_Click(object sender, EventArgs e)
             {
                 if (Material_List.SelectedIndex < 0) return;
-                if (Material_List.SelectedIndex < EHM.ECC_Abs.Count)
+                bool wasLoading = _designerLoading;
+                _designerLoading = true;
+                try
                 {
-                    Material_Type.SelectedIndex = 4;
-                    Material_Type.SelectedKey = "Porous Absorber (Miki)";
-                    Material_Type.Invalidate();
-                    Sigma.Value = EHM.Flow_Resistivity[Material_List.SelectedIndex];
-                    depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
-                    Add_Click(sender, e);
-                    if (LayerList.Items.Count == 1)
+                    if (Material_List.SelectedIndex < EHM.ECC_Abs.Count)
                     {
-                        Show_ECC_ABS.Visible = true;
-                        Estimates.Visible = true;
-                        Get_Est.Visible = true;
-                        Set_Est.Visible = true;
-                        Est_Density.Visible = true;
-                        Est_FlowResistivity.Visible = true;
-                        Est_Porosity.Visible = true;
+                        Material_Type.SelectedIndex = 4;
+                        Material_Type.Invalidate();
+                        Sigma.Value = EHM.Flow_Resistivity[Material_List.SelectedIndex];
+                        depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
+                        Add_Click(sender, e);
+                        if (LayerList.Items.Count == 1)
+                        {
+                            Show_ECC_ABS.Visible = true;
+                            Estimates.Visible = true;
+                            Get_Est.Visible = true;
+                            Set_Est.Visible = true;
+                            Est_Density.Visible = true;
+                            Est_FlowResistivity.Visible = true;
+                            Est_Porosity.Visible = true;
+                        }
+                        else
+                        {
+                            Show_ECC_ABS.Visible = false;
+                            Show_ECC_ABS.Checked = false;
+                            Estimates.Visible = false;
+                            Get_Est.Visible = false;
+                            Set_Est.Visible = false;
+                            Est_Density.Visible = false;
+                            Est_FlowResistivity.Visible = false;
+                            Est_Porosity.Visible = false;
+                        }
                     }
                     else
                     {
-                        Show_ECC_ABS.Visible = false;
+                        List<ABS_Layer> layers = Material_Layers_Snapshot(EHM.Substrates[Material_List.SelectedIndex - EHM.ECC_Abs.Count]);
+                        Layers.Clear();
+                        LayerList.Items.Clear();
+                        foreach (ABS_Layer l in layers)
+                        {
+                            Layers.Add(l);
+                            LayerList.Items.Add(l.Material_Name);
+                        }
+                        Rigid_Term.Checked = false;
+                        Air_Term.Checked = true;
                         Show_ECC_ABS.Checked = false;
-                        Estimates.Visible = false; 
-                        Get_Est.Visible = false;
-                        Set_Est.Visible = false;
-                        Est_Density.Visible = false;
-                        Est_FlowResistivity.Visible = false;
-                        Est_Porosity.Visible = false;
                     }
                 }
-                else
-                {
-                    ABS_Layer[] layers = EHM.Substrates[Material_List.SelectedIndex - EHM.ECC_Abs.Count];
-                    Layers.Clear();
-                    LayerList.Items.Clear();
-                    foreach (ABS_Layer l in layers)
-                    {
-                        Layers.Add(l);
-                        LayerList.Items.Add(l.Material_Name);
-                    }
-                    Rigid_Term.Checked = false;
-                    Air_Term.Checked = true;
-                    Show_ECC_ABS.Checked = false;
-                    Update_Graphs();
-                }
+                finally { _designerLoading = wasLoading; }
+                Update_Graphs();
             }
 
             private void Get_Est_Click(object sender, EventArgs e)
             {
                 // Check if a material is selected in the list
-                if (Material_List.SelectedIndex < 0)
+                if (Material_List.SelectedIndex < 0 || Material_List.SelectedIndex >= EHM.ECC_Abs.Count)
                 {
                     MessageBox.Show("Please select a material from the list first.");
                     return;
@@ -647,6 +646,8 @@ namespace Pachyderm_Acoustic
 
                 Fit_Resistivity = bestResistivity;
                 Fit_Airspace = airspace;
+                Fit_MaterialIndex = selectedIndex;
+                Set_Est.Enabled = true;
 
                 // Step 6: Update the UI with the results
                 Est_FlowResistivity.Text = $"Flow Resistivity (ρ) (pa*s/m²): {bestResistivity:F0} (confidence: {confidence:P1})";
@@ -656,6 +657,7 @@ namespace Pachyderm_Acoustic
 
             double Fit_Resistivity = 0;
             double Fit_Airspace = 0;
+            int Fit_MaterialIndex = -1;
 
             private (double bestResistivity, double airspace, double confidence) BayesianFlowResistivityFit(
             double[] targetAbsorption,
@@ -892,17 +894,27 @@ namespace Pachyderm_Acoustic
 
             private void Set_Est_Click(object sender, EventArgs e)
             {
-                if (Fit_Airspace > 0)
+                if (Material_List.SelectedIndex < 0 || Material_List.SelectedIndex >= EHM.ECC_Abs.Count ||
+                    Fit_MaterialIndex != Material_List.SelectedIndex || !(Fit_Resistivity > 0) ||
+                    double.IsInfinity(Fit_Resistivity) || double.IsNaN(Fit_Airspace) || double.IsInfinity(Fit_Airspace) || Fit_Airspace < 0) return;
+                bool wasLoading = _designerLoading;
+                _designerLoading = true;
+                try
                 {
-                    Material_Type.SelectedIndex = 0;
-                    depth.Value = Fit_Airspace * 1000;
+                    if (Fit_Airspace > 0)
+                    {
+                        Material_Type.SelectedIndex = 0;
+                        depth.Value = Fit_Airspace * 1000;
+                        Add_Click(sender, e);
+                    }
+
+                    Material_Type.SelectedIndex = 4;
+                    Sigma.Value = Fit_Resistivity;
+                    depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
                     Add_Click(sender, e);
                 }
-
-                Material_Type.SelectedIndex = 4;
-                Sigma.Value = Fit_Resistivity;
-                depth.Value = EHM.Thickness[Material_List.SelectedIndex] * 1000;
-                Add_Click(sender, e);
+                finally { _designerLoading = wasLoading; }
+                Update_Graphs();
             }
 
             private DynamicLayout Sustainability_Reference;
@@ -961,7 +973,6 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.Label label4;
             private Eto.Forms.Label label5;
             private Eto.Forms.Label label14;
-            private Eto.Forms.ComboBox Zf_Incorp_Method;
             private Eto.Forms.Label Z_rad_feedback;
             private Eto.Forms.Button Calc_Zr;
             private Eto.Forms.RadioButton Inf_Sample;
@@ -975,7 +986,7 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.Button Add;
             private Eto.Forms.Label label15;
             private Eto.Forms.ComboBox Chart_Contents;
-            private Eto.Forms.NumericStepper IIR_Order;
+            private Eto.Forms.ComboBox Band_Resolution;
             private Eto.Forms.ComboBox Direction_choice;
             private Eto.Forms.TextBox EC_Name;
             private Eto.Forms.NumericStepper EC_Coefficient;

@@ -1653,7 +1653,7 @@ namespace Pachyderm_Acoustic
             private void Commit_SmartMaterial(Pach_Absorption_Designer AD)
             {
                 int layer_index = LayerDisplay.SelectedIndex;
-                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(LayerPaths[layer_index].layer_id);
                 if (AD.Is_Finite)
                 {
                     layer.SetUserString("ABSType", "Buildup_Finite");
@@ -1772,7 +1772,7 @@ namespace Pachyderm_Acoustic
                 if (M == "Buildup")
                 {
                     Material_Mode(false);
-                    string[] BU = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
@@ -1803,7 +1803,7 @@ namespace Pachyderm_Acoustic
                 else if (M == "Buildup_Finite")
                 {
                     Material_Mode(false);
-                    string[] BU = layer.GetUserString("Buildup").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                     List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                     for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
@@ -1866,18 +1866,32 @@ namespace Pachyderm_Acoustic
 
             private void Abs_Designer_Click(object sender, EventArgs e)
             {
-                Pach_Absorption_Designer AD = new Pach_Absorption_Designer();
-                AD.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, this);
                 int layer_index = LayerDisplay.SelectedIndex;
-                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                if (layer_index < 0 || layer_index >= LayerPaths.Count) return;
+                Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(LayerPaths[layer_index].layer_id);
+                if (layer == null) return;
+                Pach_Absorption_Designer AD = new Pach_Absorption_Designer();
+                string materialType = layer.GetUserString("ABSType");
+                string buildup = layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup");
+                if ((materialType == "Buildup" || materialType == "Buildup_Finite") && !string.IsNullOrWhiteSpace(buildup))
+                {
+                    try { AD.Load_Buildup(buildup, materialType == "Buildup_Finite"); }
+                    catch (Exception error)
+                    {
+                        AD.Dispose();
+                        MessageBox.Show("The saved material buildup could not be restored: " + error.Message);
+                        return;
+                    }
+                }
+                AD.ShowSemiModal(Rhino.RhinoDoc.ActiveDoc, this);
 
                 switch (AD.Result)
                 {
                     case Pach_Absorption_Designer.AbsorptionModelResult.Random_Incidence:
                         //Assign Random Incidence Absorption Coefficients...
                         Material_Mode(true);
-                        double[] abs = new double[8];
-                        for (int i = 0; i < 8; i++) abs[i] = AD.RI_Absorption[i] * 100;
+                        double[] abs = new double[AD.RI_Absorption.Length];
+                        for (int i = 0; i < abs.Length; i++) abs[i] = AD.RI_Absorption[i] * 100;
                         ABSSlider.Value = abs;
 
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);

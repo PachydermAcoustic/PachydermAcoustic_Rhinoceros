@@ -1421,8 +1421,9 @@ namespace Pachyderm_Acoustic
                 };
             }
 
-            private static LayerFitResult EvaluateAlphaOnlyMaterial(Environment.Material material, int order, double maxFreq, double fs)
+            internal static LayerFitResult EvaluateAlphaOnlyMaterial(Environment.Material material, int order, double maxFreq, double fs, CancellationToken CTS = default)
             {
+                if (CTS.IsCancellationRequested) return null;
                 double fMax = Math.Min(maxFreq, 0.48 * fs);
                 if (fMax < 20.0)
                     return new LayerFitResult { ErrorMessage = "Maximum fit frequency is below 20 Hz." };
@@ -1669,6 +1670,7 @@ namespace Pachyderm_Acoustic
 
                 double ReflectionError(double[] bR, double[] aR)
                 {
+                    if (CTS.IsCancellationRequested) return double.PositiveInfinity;
                     double[] alphaFitDense = new double[frequencies.Length];
 
                     for (int i = 0; i < frequencies.Length; i++)
@@ -1776,6 +1778,7 @@ namespace Pachyderm_Acoustic
 
                 for (int section = 0; section < sectionBudget; section++)
                 {
+                    if (CTS.IsCancellationRequested) return null;
                     double[] bestB = null;
                     double[] bestA = null;
                     string bestLabel = null;
@@ -1840,6 +1843,8 @@ namespace Pachyderm_Acoustic
                     bestError = trialBestError;
                     selectedSections.Add(bestLabel);
                 }
+
+                if (CTS.IsCancellationRequested) return null;
 
                 // If the target is essentially flat, the greedy dictionary may correctly
                 // decide that no peaking/shelf section improves the fit. That leaves a
