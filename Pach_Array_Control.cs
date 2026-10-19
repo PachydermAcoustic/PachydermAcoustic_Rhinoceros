@@ -62,6 +62,7 @@ namespace Pachyderm_Acoustic
                 Elements = elements;
 
                 Title = "Pachyderm Speaker Array Control";
+                Topmost = true;
                 ClientSize = new Size(900, 680);
                 MinimumSize = new Size(780, 580);
 
