@@ -21,7 +21,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Open Research in Acoustical Science and Educaton, Inc.")]
 [assembly: AssemblyProduct("Pachyderm_Acoustic_Simulation")]
-[assembly: AssemblyCopyright("Copyright © Open Research in Acoustical Science and Education 2025")]
+[assembly: AssemblyCopyright("Copyright © Open Research in Acoustical Science and Education 2026")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

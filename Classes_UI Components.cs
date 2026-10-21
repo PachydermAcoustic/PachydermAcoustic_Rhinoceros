@@ -1,4 +1,22 @@
-﻿using Pachyderm_Acoustic.Environment;
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
+//' 
+//'This file is part of Pachyderm-Acoustic. 
+//' 
+//'Copyright (c) 2008-2026, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit 
+//'Pachyderm-Acoustic is free software; you can redistribute it and/or modify 
+//'it under the terms of the GNU General Public License as published 
+//'by the Free Software Foundation; either version 3 of the License, or 
+//'(at your option) any later version. 
+//'Pachyderm-Acoustic is distributed in the hope that it will be useful, 
+//'but WITHOUT ANY WARRANTY; without even the implied warranty of 
+//'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
+//'GNU General Public License for more details. 
+//' 
+//'You should have received a copy of the GNU General Public 
+//'License along with Pachyderm-Acoustic; if not, write to the Free Software 
+//'Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+using Pachyderm_Acoustic.Environment;
 using Pachyderm_Acoustic.Pach_Graphics;
 using System;
 using System.Collections.Generic;

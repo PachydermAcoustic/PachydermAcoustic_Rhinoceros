@@ -2,7 +2,7 @@ Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros
 PachydermGH
 Hare
 
-Copyright (C) 2008-2025, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit
+Copyright (C) 2008-2026, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit
 
 This software is maintained by Open Reesarch in Acoustical Science and Education, Inc. and is and always will be free and open-source software under the General Public License 3.0 or later.
 
