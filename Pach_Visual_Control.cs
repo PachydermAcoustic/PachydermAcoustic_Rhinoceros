@@ -161,6 +161,9 @@ namespace Pachyderm_Acoustic
                 //
                 this.Preview.Text = "Preview";
                 this.Loop.Text = "Loop";
+                this.Load += Toggle_Conduits_On;
+                this.UnLoad += Toggle_Conduits_Off;
+                StartOver.Enabled = ForwButton.Enabled = BackButton.Enabled = Loop.Enabled = false;
                 this.Preview.Click += this.onPreview_Click;
                 this.Loop.Click += this.Loop_Click;
                 
@@ -247,108 +250,125 @@ namespace Pachyderm_Acoustic
 
             public void Toggle_Conduits_On(object sender, System.EventArgs e)
             {
-                if (PreviewDisplay != null) PreviewDisplay.Enabled = true;
+                previewVisible = true;
+                if (!disposed && !previewBuilding && PreviewDisplay != null && Rhino.RhinoDoc.ActiveDoc == previewDocument) PreviewDisplay.Enabled = true;
             }
             public void Toggle_Conduits_Off(object sender, System.EventArgs e)
             {
+                previewVisible = false;
+                playbackCancellation?.Cancel();
+                if (!disposed)
+                {
+                    Time_Preview.Enabled = true;
+                    Loop.Text = "Loop";
+                }
                 if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
             }
 
             private async void onPreview_Click(object sender, EventArgs e)
             {
-                if (T != null && T.ThreadState == System.Threading.ThreadState.Running)
-                {
-                    Time_Preview.Enabled = true;
-                    Loop.Text = "Loop";
-                    stop = true;
-                }
-
+                if (previewBuilding || disposed) return;
+                previewBuilding = true;
+                Preview.Enabled = false;
+                Toggle_Conduits_Off(this, EventArgs.Empty);
+                previewVisible = true;
                 Loop.Enabled = false;
+                StartOver.Enabled = false;
                 ForwButton.Enabled = false;
                 BackButton.Enabled = false;
-                PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
-
-                if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
-
-                max = (int)(Frame_Rate.Value * Seconds.Value);
-
-                Hare.Geometry.Point[] SPT;
-
-                if (!plugin.SourceOrigin(out SPT))
+                try
                 {
-                    Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
-                    return;
-                }
+                    await playbackTask;
+                    if (disposed) return;
+                    PreviewDisplay = null;
+                    previewDocument = Rhino.RhinoDoc.ActiveDoc;
+                    PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
+                    if (plugin == null || previewDocument == null) return;
 
-                if (T != null && T.ThreadState == System.Threading.ThreadState.Running) ;
-                PreviewDisplay = null;
+                    max = (int)(Frame_Rate.Value * Seconds.Value);
+                    if (max <= 0 || !plugin.Source(out Source) || Source == null || Source.Length == 0) return;
 
-                Pach_GetModel_Command Model = Pach_GetModel_Command.Instance;
+                    Pach_GetModel_Command Model = Pach_GetModel_Command.Instance;
+                    if (Model == null) return;
+                    Model.Rel_Humidity = 50;
+                    Model.Air_Temp = (double)Air_Temp.Value;
+                    Model.Atm_pressure = 1000;
+                    Model.Atten_Choice = 0;
+                    // A failed command must not reuse geometry from the previous preview.
+                    Model.Ret_NURBS_Scene = null;
+                    Model.Ret_Mesh_Scene = null;
+                    if (!Rhino.RhinoApp.RunScript("GetModel", false)) return;
+                    Scene scene = plugin.Geometry_Spec == 0 ? (Scene)Model.Ret_NURBS_Scene : Model.Ret_Mesh_Scene;
+                    if (scene == null || !scene.Complete || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
 
-                Model.Rel_Humidity = 50;
-                Model.Air_Temp = (double)Air_Temp.Value;
-                Model.Atm_pressure = 1000;
-                Model.Atten_Choice = 0;
-                Rhino.RhinoApp.RunScript("GetModel", false);
-
-                plugin.Source(out Source);
-
-                ParticleRays[] RTParticles = new ParticleRays[Source.Length];
-                List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
-                for (int i = 0; i < Source.Length; i++)
-                {
-                    L.Add(Source[i].Origin);
-                }
-                for (int j = 0; j < Source.Length; j++)
-                {
-                    if (plugin.Geometry_Spec == 0)
+                    ParticleRays[] RTParticles = new ParticleRays[Source.Length];
+                    List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
+                    for (int i = 0; i < Source.Length; i++) L.Add(Source[i].Origin);
+                    if (plugin.Geometry_Spec == 0) Model.Ret_NURBS_Scene.partition(L);
+                    else Model.Ret_Mesh_Scene.partition(L);
+                    for (int i = 0; i < Source.Length; i++)
                     {
-                        Model.Ret_NURBS_Scene.partition(L);
-                        RTParticles[j] = new ParticleRays(Source[j], Model.Ret_NURBS_Scene, (int)RT_Count.Value, CutOffLength());
-                        PreviewDisplay = new WaveConduit(RTParticles, colorcontrol.Scale, new double[2] { colorcontrol.Min, colorcontrol.Max }, Model.Ret_NURBS_Scene);
+                        RTParticles[i] = new ParticleRays(Source[i], scene, (int)RT_Count.Value, CutOffLength());
+                        RTParticles[i].Begin();
                     }
-                    else
-                    {
-                        Model.Ret_Mesh_Scene.partition(L);
-                        RTParticles[j] = new ParticleRays(Source[j], Model.Ret_Mesh_Scene, (int)RT_Count.Value, CutOffLength());
-                        PreviewDisplay = new WaveConduit(RTParticles, colorcontrol.Scale, new double[2] { colorcontrol.Min, colorcontrol.Max }, Model.Ret_Mesh_Scene);
-                    }
-
-                    RTParticles[j].Begin();
+                    PreviewDisplay = new WaveConduit(RTParticles, colorcontrol.Scale, new double[2] { colorcontrol.Min, colorcontrol.Max }, scene);
+                    j = 0;
                 }
-
-                this.Load += Toggle_Conduits_On;
-                this.UnLoad += Toggle_Conduits_Off;
-
-                ForwButton.Enabled = true;
-                BackButton.Enabled = true;
-                Loop.Enabled = true;
-                stop = false;
-                Loop_Click(null, null);
+                catch (Exception error)
+                {
+                    if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
+                    PreviewDisplay = null;
+                    Rhino.RhinoApp.WriteLine("Preview failed: " + error.ToString());
+                }
+                finally
+                {
+                    previewBuilding = false;
+                    if (!disposed)
+                    {
+                        Preview.Enabled = true;
+                        StartOver.Enabled = ForwButton.Enabled = BackButton.Enabled = Loop.Enabled = PreviewDisplay != null;
+                    }
+                }
+                if (!disposed && previewVisible && PreviewDisplay != null) Loop_Click(null, null);
             }
 
             WaveConduit PreviewDisplay = null;
-            System.Threading.Thread T;
+            Rhino.RhinoDoc previewDocument;
+            Task playbackTask = Task.CompletedTask;
+            System.Threading.CancellationTokenSource playbackCancellation;
+            bool previewVisible = true;
+            bool previewBuilding;
+            bool disposed;
             int j = 0;
             int max = 0;
-            bool stop = false;
             private async Task LoopStart()
             {
-                do
+                var cancellation = playbackCancellation;
+                try
                 {
-                    await Task.Run(() => Forw_proc());
-                    if (stop) break;
-                    int t = 0;
-                    Eto.Forms.Application.Instance.Invoke(() => { t = (int)(1000 / this.Frame_Rate.Value); });
-                    await Task.Delay(t);
+                    while (!cancellation.IsCancellationRequested && !disposed && previewVisible && !previewBuilding && PreviewDisplay != null && Rhino.RhinoDoc.ActiveDoc == previewDocument)
+                    {
+                        await Forw_proc();
+                        await Task.Delay(Math.Max(1, (int)(1000 / Frame_Rate.Value)), cancellation.Token);
+                    }
                 }
-                while (true);
+                catch (OperationCanceledException) { }
+                catch (Exception error) { Rhino.RhinoApp.WriteLine("Preview playback failed: " + error.ToString()); }
+                finally
+                {
+                    if (PreviewDisplay != null && (disposed || previewBuilding || !previewVisible || Rhino.RhinoDoc.ActiveDoc != previewDocument)) PreviewDisplay.Enabled = false;
+                    if (!disposed)
+                    {
+                        Time_Preview.Enabled = true;
+                        Loop.Text = "Loop";
+                    }
+                }
             }
 
-            private void ToStart_Click(object sender, System.EventArgs e)
+            private async void ToStart_Click(object sender, System.EventArgs e)
             {
                 j = 0;
-                Forw_proc();
+                await Forw_proc();
             }
 
             private void Rev_Click(object sender, System.EventArgs e)
@@ -358,13 +378,14 @@ namespace Pachyderm_Acoustic
 
             private void Rev_proc()
             {
+                if (disposed || previewBuilding || PreviewDisplay == null || max <= 0 || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
                 j -= 1;
                 if (j <= 0) j = max;
 
                 Time_Preview.Text = (CO_TIME.Value * j / max).ToString();
-                if (this.VisualizationSelect.SelectedIndex == 1)
+                if (this.VisualizationSelect.SelectedIndex == 2 && Source != null && Source.Length > 0 && Source[0] is GeodesicMeshSource meshSource && meshSource.T != null)
                 {
-                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(((GeodesicMeshSource)Source[0]).T, true));
+                    PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(meshSource.T, true));
                 }
                 else
                 {
@@ -375,11 +396,12 @@ namespace Pachyderm_Acoustic
 
             private async void Forw_Click(object sender, System.EventArgs e)
             {
-                Forw_proc();
+                await Forw_proc();
             }
 
             private async Task Forw_proc()
             {
+                if (disposed || previewBuilding || PreviewDisplay == null || max <= 0 || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
                 j++;
                 if (j >= max)
                 {
@@ -389,9 +411,10 @@ namespace Pachyderm_Acoustic
 
                 await Eto.Forms.Application.Instance.InvokeAsync(() =>
                 {
-                    if (this.VisualizationSelect.SelectedIndex == 1)
+                    if (disposed || previewBuilding || PreviewDisplay == null || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
+                    if (this.VisualizationSelect.SelectedIndex == 2 && Source != null && Source.Length > 0 && Source[0] is GeodesicMeshSource meshSource && meshSource.T != null)
                     {
-                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(((GeodesicMeshSource)Source[0]).T, true));
+                        PreviewDisplay.Populate(j * (double)CO_TIME.Value * C_Sound() / (max * 1000), RCPachTools.HareMeshToModel(meshSource.T, true));
                     }
                     else
                     {
@@ -419,25 +442,25 @@ namespace Pachyderm_Acoustic
             }
 
 
-            private void Loop_Click(object sender, EventArgs e)
+            private async void Loop_Click(object sender, EventArgs e)
             {
-                if (Loop.Text == "Loop")
+                if (disposed || previewBuilding || PreviewDisplay == null || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
+                if (!playbackTask.IsCompleted)
                 {
-                    stop = false;
-                    Time_Preview.Enabled = false;
-                    Loop.Text = "Pause";
-                    Task.Run(LoopStart);
+                    playbackCancellation?.Cancel();
+                    await playbackTask;
+                    return;
                 }
-                else
-                {
-                    stop = true;
-                    Time_Preview.Enabled = true;
-                    Loop.Text = "Loop";
-                }
+                playbackCancellation?.Dispose();
+                playbackCancellation = new System.Threading.CancellationTokenSource();
+                Time_Preview.Enabled = false;
+                Loop.Text = "Pause";
+                playbackTask = LoopStart();
             }
 
             public void update(object sender, System.EventArgs e)
             {
+                if (disposed || Parent == null) return;
                 this.Width = this.Parent.Width;
 
                 SimSetBox.Width = this.Width;
@@ -451,6 +474,11 @@ namespace Pachyderm_Acoustic
 
             protected override void Dispose(bool disposing)
             {
+                disposed = true;
+                playbackCancellation?.Cancel();
+                if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
+                this.Load -= Toggle_Conduits_On;
+                this.UnLoad -= Toggle_Conduits_Off;
                 base.Dispose(disposing);
                 FileLocation.Dispose();
                 BackButton.Dispose();
@@ -492,6 +520,7 @@ namespace Pachyderm_Acoustic
 
             public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
             {
+                Toggle_Conduits_Off(this, EventArgs.Empty);
                 // Called when the panel tab is hidden, in Mac Rhino this will happen
                 // for a document panel when a new document becomes active, the previous
                 // documents panel will get hidden and the new current panel will get shown.
@@ -499,6 +528,7 @@ namespace Pachyderm_Acoustic
 
             public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
             {
+                Toggle_Conduits_Off(this, EventArgs.Empty);
                 // Called when the document or panel container is closed/destroyed
             }
             #endregion IPanel methods

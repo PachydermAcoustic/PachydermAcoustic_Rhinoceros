@@ -948,6 +948,7 @@ namespace Pachyderm_Acoustic
             {
                 try
                 {
+                if (!Calculate.Enabled || plugin == null || Rhino.RhinoDoc.ActiveDoc == null) return;
                 SampleRate = 44100;
                 IR_Parts_Analysis.Visible = false;
                 string SavePath = null;
@@ -964,12 +965,6 @@ namespace Pachyderm_Acoustic
                         SavePath = sf.FileName;
                     }
                 }
-                for (int i = 0; i < SourceList.Count; i++) 
-                {
-                    Source_Aim.Items.Add(i.ToString());
-                    SourceList.Set_Src_Checked(i, false); 
-                }
-
                 SourceList.Clear();
                 Source_Aim.Items.Clear();
                 Receiver_Choice.SelectedIndex = 0;
@@ -984,6 +979,7 @@ namespace Pachyderm_Acoustic
 
                 IS_Data = null;
                 Direct_Data = null;
+                Receiver = null;
                 List<Hare.Geometry.Point> RPT;
 
                 if (!(plugin.Receiver(out RPT) && plugin.Source(out Source, thirdOctave: SimulationThirdOctave.Checked)))
@@ -1157,7 +1153,7 @@ namespace Pachyderm_Acoustic
                 if (PachydermAc_PlugIn.Instance.Geometry_Spec == 0)
                 {
                     RhCommon_Scene NScene = RCPachTools.GetNURBSScene(MediumProps.RelHumidity, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, MediumProps.Edge_Frequency);
-                    if (!NScene.Complete)
+                    if (NScene == null || !NScene.Complete)
                     {
                         CancelCalc();
                         return;
@@ -1172,7 +1168,7 @@ namespace Pachyderm_Acoustic
 
                 Receiver_Bank.Type T;
 
-                switch ((string)ReceiverSelection.SelectedValue.ToString())
+                switch (ReceiverSelection.SelectedValue?.ToString())
                 {
                     case "1 m. Stationary Receiver":
                         T = Receiver_Bank.Type.Stationary;
@@ -1221,13 +1217,13 @@ namespace Pachyderm_Acoustic
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for deterinistic reflections...");
                             VB.Show();
-                            IS_Data[s] = IS;
-                            Populate_Sources();
-                            if (!await CreateImagePressure(IS_Data[s], Source[s].SWL(), VB))
+                            if (!await CreateImagePressure(IS, Source[s].SWL(), VB))
                             {
                                 CancelCalc();
                                 return;
                             }
+                            IS_Data[s] = IS;
+                            Populate_Sources();
                         }
                         else
                         {
@@ -1243,8 +1239,6 @@ namespace Pachyderm_Acoustic
 
                         while (!TISTA.IsCompleted) await Task.Delay(1500);
                         IST = TISTA.GetResult() as IS_Trace;
-
-                        Populate_Sources();
 
                         if (IST != null)
                         {
@@ -1286,12 +1280,12 @@ namespace Pachyderm_Acoustic
 
                         if (RT != null)
                         {
-                            Receiver[s] = RT.GetReceiver;
-                            Populate_Sources();
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            await Task.Run(() => { Receiver[s].Create_Filter(VB); });
+                            await Task.Run(() => { RT.GetReceiver.Create_Filter(VB); });
                             VB.Close();
+                            Receiver[s] = RT.GetReceiver;
+                            Populate_Sources();
                             Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
                             Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
                         }
@@ -1308,7 +1302,7 @@ namespace Pachyderm_Acoustic
                 if (Source != null)
                 {
                     if (SavePath != null) Utilities.FileIO.Write_Pac1(SavePath, Direct_Data, IS_Data, Receiver);
-                    OpenAnalysis();
+                    Populate_Sources();
                     cleanup();
                 }
 
@@ -1403,28 +1397,37 @@ namespace Pachyderm_Acoustic
                         Array.Resize(ref Source, i);
                         Array.Resize(ref Direct_Data, i);
                         Array.Resize(ref IS_Data, i);
-                        Populate_Sources();
+                        Array.Resize(ref Receiver, i);
                     }
                 }
+                Populate_Sources();
                 this.Calculate.Enabled = true;
             }
 
             private void Populate_Sources()
             {
 
-                if (Source != null)
+                bool wasUpdating = updatingAnalysis;
+                updatingAnalysis = true;
+                try
                 {
                     SourceList.Clear();
-                    SourceList.Populate(Direct_Data, IS_Data, Receiver);
-                    foreach (Source S in Source)
+                    Source_Aim.Items.Clear();
+                    if (Source != null && Source.Length > 0 && (Direct_Data != null || Receiver != null))
                     {
-                        Source_Aim.Items.Add(String.Format("S{0}-", S.Source_ID()) + S.Type());
+                        SourceList.Populate(Direct_Data, IS_Data, Receiver);
+                        foreach (Source S in Source)
+                        {
+                            Source_Aim.Items.Add(String.Format("S{0}-", S.Source_ID()) + S.Type());
+                        }
+                        List<int> selected = SourceList.SelectedSources();
+                        Source_Aim.SelectedIndex = selected.Count > 0 ? selected[0] : -1;
                     }
-                    SourceList.Set_Src_Checked(0, true);
-                    Source_Aim.SelectedIndex = 0;
                 }
+                finally { updatingAnalysis = wasUpdating; }
                 OpenAnalysis();
-                Update_Graph(null, null);
+                if (Source_Aim.SelectedIndex >= 0) Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
+                else Update_Graph(null, null);
             }
 
             private void cleanup()
@@ -1458,7 +1461,7 @@ namespace Pachyderm_Acoustic
 
                     if (IS_Data != null)
                     {
-                        if (IS_Data != null && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
+                        if (IS_Data.Length > 0 && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
                         {
                             List<int> srcs = SourceList.SelectedSources();
                             if (srcs.Count == 0) return;
@@ -1483,7 +1486,7 @@ namespace Pachyderm_Acoustic
             {
                 if (Tabs.SelectedPage.Text == "Materials")
                 {
-                    string Selection = LayerDisplay.SelectedValue.ToString();
+                    string Selection = LayerDisplay.SelectedValue?.ToString();
                     LayerPaths.Clear();
                     for (int q = 0; q < Rhino.RhinoDoc.ActiveDoc.Layers.Count; q++)
                     {
@@ -1674,10 +1677,12 @@ namespace Pachyderm_Acoustic
                 Retrieve_Layer_Acoustics(null, null);
             }
 
+            private bool loadingLayerAcoustics;
+
             private void Commit_Layer_Acoustics()
             {
-                if (LayerDisplay.SelectedIndex < 0) LayerDisplay.SelectedIndex = 0;
-                if ( LayerDisplay.SelectedValue.ToString().Length == 0) return;
+                if (loadingLayerAcoustics || Rhino.RhinoDoc.ActiveDoc == null) return;
+                if (LayerDisplay.SelectedIndex < 0 || LayerDisplay.SelectedIndex >= LayerPaths.Count) return;
                 int layer_index = LayerDisplay.SelectedIndex;
                 double[] Absd = ABSSlider.MaterialValues;
                 double[] Sctd = SCATSlider.Value;
@@ -1688,6 +1693,7 @@ namespace Pachyderm_Acoustic
                 for(int i = 0; i < Sctd.Length; i++) Sct[i] = (int)(Sctd[i]);
 
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(this.LayerPaths[layer_index].layer_id);
+                if (layer == null) return;
                 double[] TL = null;
                 if (Trans_Check.Checked.Value)
                 {
@@ -1728,6 +1734,11 @@ namespace Pachyderm_Acoustic
 
             private void Trans_Check_CheckedChanged(object sender, EventArgs e)
             {
+                if (loadingLayerAcoustics || Rhino.RhinoDoc.ActiveDoc == null) return;
+                int selectedLayer = LayerDisplay.SelectedIndex;
+                if (selectedLayer < 0 || selectedLayer >= LayerPaths.Count) return;
+                Rhino.DocObjects.Layer selected = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(LayerPaths[selectedLayer].layer_id);
+                if (selected == null) return;
 
                 if (sender == TL_Check)
                 {
@@ -1735,7 +1746,7 @@ namespace Pachyderm_Acoustic
                     else
                     {
                         int layer_index = LayerDisplay.SelectedIndex;// (LayerDisplay.SelectedItem as layer).id;
-                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                        Rhino.DocObjects.Layer layer = selected;
                         layer.SetUserString("Transmission", "");
                         TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     }
@@ -1747,7 +1758,7 @@ namespace Pachyderm_Acoustic
                         TL_Check.Checked = false;
                         //int layer_index = Rhino.RhinoDoc.ActiveDoc.Layers.Find(LayerDisplay.Text, true);
                         int layer_index = LayerDisplay.SelectedIndex;//(LayerDisplay.SelectedItem as layer).id;
-                        Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers[layer_index];
+                        Rhino.DocObjects.Layer layer = selected;
                         layer.SetUserString("Transmission", "");
                         TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     }
@@ -1763,104 +1774,125 @@ namespace Pachyderm_Acoustic
             private void Retrieve_Layer_Acoustics(object sender, EventArgs e)
             {
                 int layer_index = LayerDisplay.SelectedIndex;// (LayerDisplay.SelectedItem as layer).id;
-                if (layer_index < 0) return;
+                if (loadingLayerAcoustics || layer_index < 0 || layer_index >= LayerPaths.Count || Rhino.RhinoDoc.ActiveDoc == null) return;
                 Rhino.DocObjects.Layer layer = Rhino.RhinoDoc.ActiveDoc.Layers.FindId(LayerPaths[layer_index].layer_id);
-                string AC = layer.GetUserString("Acoustics");
-                string TL = layer.GetUserString("Transmission");
-
-                string M = layer.GetUserString("ABSType");
-                if (M == "Buildup")
+                if (layer == null) return;
+                loadingLayerAcoustics = true;
+                try
                 {
-                    Material_Mode(false);
-                    string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                    for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
+                    SmartMat_Display.Plot.Clear();
+                    string AC = layer.GetUserString("Acoustics");
+                    string TL = layer.GetUserString("Transmission");
 
-                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
-                    double[] AnglesDeg = new double[sm.Angles.Length];
-                    ScottPlot.Color[] colors = new ScottPlot.Color[8] { ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet};
-
-                    for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
-                    polarPlot = this.SmartMat_Display.Plot.Add.PolarAxis(1);
-                    polarPlot.Circles.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
-                    polarPlot.Spokes.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
-                    polarPlot.Rotation = ScottPlot.Angle.FromDegrees(90);
-
-                    for (int oct = 0; oct < 8; oct++)
+                    string M = layer.GetUserString("ABSType");
+                    if (M == "Buildup")
                     {
-                        List<ScottPlot.Coordinates> polar = new List<ScottPlot.Coordinates>();
-                        for (int i = 0; i < AnglesDeg.Length; i++)
+                        Material_Mode(false);
+                        string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
+                        for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
+
+                        Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
+                        double[] AnglesDeg = new double[sm.Angles.Length];
+                        ScottPlot.Color[] colors = new ScottPlot.Color[8] { ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet};
+
+                        for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
+                        polarPlot = this.SmartMat_Display.Plot.Add.PolarAxis(1);
+                        polarPlot.Circles.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                        polarPlot.Spokes.ForEach(x => x.LineColor = ScottPlot.Colors.Grey);
+                        polarPlot.Rotation = ScottPlot.Angle.FromDegrees(90);
+
+                        for (int oct = 0; oct < 8; oct++)
                         {
-                            polar.Add(polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
+                            List<ScottPlot.Coordinates> polar = new List<ScottPlot.Coordinates>();
+                            for (int i = 0; i < AnglesDeg.Length; i++)
+                            {
+                                polar.Add(polarPlot.GetCoordinates(sm.Ang_Coef_Oct[oct][i], AnglesDeg[i]));
+                            }
+                            SmartMat_Display.Plot.Add.Scatter(polar, colors[oct]);
+                            (SmartMat_Display.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
                         }
-                        SmartMat_Display.Plot.Add.Scatter(polar, colors[oct]);
-                        (SmartMat_Display.Plot.PlottableList.Last() as ScottPlot.Plottables.Scatter).MarkerStyle = ScottPlot.MarkerStyle.None;
+
+                        SmartMat_Display.Refresh();
+                        SmartMat_Display.Plot.Axes.AutoScale();
                     }
-
-                    SmartMat_Display.Refresh();
-                    SmartMat_Display.Plot.Axes.AutoScale();
-                }
-                else if (M == "Buildup_Finite")
-                {
-                    Material_Mode(false);
-                    string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                    List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                    for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
-
-                    Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
-                    double[] AnglesDeg = new double[sm.Angles.Length];
-                    for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[1], ScottPlot.Colors.Orange);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[2], ScottPlot.Colors.Yellow);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[3], ScottPlot.Colors.Green);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[4], ScottPlot.Colors.Blue);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[5], ScottPlot.Colors.BlueViolet);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[6], ScottPlot.Colors.Violet);
-                    SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[7], ScottPlot.Colors.Plum);
-                }
-                else
-                {
-                    Material_Mode(true);
-                }
-
-                if (!string.IsNullOrEmpty(AC))
-                {
-                    double[] Abs = new double[8];
-                    double[] Sct = new double[8];
-                    double[] Trn = new double[1];
-                    RCPachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
-                    double[] AbsI = new double[Abs.Length];
-                    double[] SctI = new double[Sct.Length];
-                    for(int i = 0; i < AbsI.Length; i++) AbsI[i] = Abs[i] * 100;
-                    for (int i = 0; i < SctI.Length; i++) SctI[i] = Sct[i] * 100;
-
-                    ABSSlider.Value = AbsI;
-                    SCATSlider.Value = SctI;
-                    if (TL != "" && TL != null)
+                    else if (M == "Buildup_Finite")
                     {
-                        double[] T_Loss = PachTools.DecodeTransmissionLoss(TL);
-                        TLSlider.Value = T_Loss;
-                        TL_Check.Checked = true;
-                    }
-                    else if (Trn != null && Trn.Length == 8 && Trn.Sum() > 0)
-                    {
-                        double[] TrnI = new double[Trn.Length];
-                        for (int i = 0; i < TrnI.Length; i++) TrnI[i] = Trn[i] * 100;
-                        TRANSSlider.Value = TrnI;
-                        Trans_Check.Checked = true;
+                        Material_Mode(false);
+                        string[] BU = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup") ?? "").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
+                        for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
+
+                        Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
+                        double[] AnglesDeg = new double[sm.Angles.Length];
+                        for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[1], ScottPlot.Colors.Orange);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[2], ScottPlot.Colors.Yellow);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[3], ScottPlot.Colors.Green);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[4], ScottPlot.Colors.Blue);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[5], ScottPlot.Colors.BlueViolet);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[6], ScottPlot.Colors.Violet);
+                        SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[7], ScottPlot.Colors.Plum);
                     }
                     else
                     {
-                        Trans_Check.Checked = false; TL_Check.Checked = false;
+                        Material_Mode(true);
+                    }
+
+                    TL_Check.Checked = false;
+                    Trans_Check.Checked = false;
+                    if (!string.IsNullOrEmpty(AC))
+                    {
+                        double[] Abs = new double[8];
+                        double[] Sct = new double[8];
+                        double[] Trn = new double[1];
+                        RCPachTools.DecodeAcoustics(AC, ref Abs, ref Sct, ref Trn);
+                        double[] AbsI = new double[Abs.Length];
+                        double[] SctI = new double[Sct.Length];
+                        for(int i = 0; i < AbsI.Length; i++) AbsI[i] = Abs[i] * 100;
+                        for (int i = 0; i < SctI.Length; i++) SctI[i] = Sct[i] * 100;
+
+                        ABSSlider.Value = AbsI;
+                        SCATSlider.Value = SctI;
+                        if (TL != "" && TL != null)
+                        {
+                            double[] T_Loss = PachTools.DecodeTransmissionLoss(TL);
+                            TLSlider.Value = T_Loss;
+                            TL_Check.Checked = true;
+                        }
+                        else if (Trn != null && Trn.Length == 8 && Trn.Sum() > 0)
+                        {
+                            double[] TrnI = new double[Trn.Length];
+                            for (int i = 0; i < TrnI.Length; i++) TrnI[i] = Trn[i] * 100;
+                            TRANSSlider.Value = TrnI;
+                            Trans_Check.Checked = true;
+                        }
+                        else
+                        {
+                            Trans_Check.Checked = false; TL_Check.Checked = false;
+                        }
+                    }
+                    else
+                    {
+                        ABSSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
+                        SCATSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
+                        TRANSSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                        TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
                     }
                 }
-                else
+                catch (Exception error)
                 {
-                    ABSSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
-                    SCATSlider.Value = new double[8] { 1, 1, 1, 1, 1, 1, 1, 1 };
-                    TRANSSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
-                    TLSlider.Value = new double[8] { 0, 0, 0, 0, 0, 0, 0, 0 };
+                    // Do not substitute another acoustic model or overwrite saved metadata.
+                    SmartMat_Display.Plot.Clear();
+                    SmartMat_Display.Refresh();
+                    ReportSimulationError(error, "Could not display acoustics for layer " + layer.FullPath);
+                }
+                finally
+                {
+                    TRANSSlider.Enabled = Trans_Check.Checked == true;
+                    TLSlider.Enabled = TL_Check.Checked == true;
+                    loadingLayerAcoustics = false;
                 }
             }
 
@@ -1978,15 +2010,16 @@ namespace Pachyderm_Acoustic
 
             private void Update_Parameters()
             {
-                if (ParameterResults == null || updatingParameters) return;
+                if (ParameterResults == null || updatingParameters || updatingAnalysis || Rhino.RhinoDoc.ActiveDoc == null) return;
                 updatingParameters = true;
                 try
                 {
                     if (Parameter_Choice.SelectedIndex < 0) Parameter_Choice.SelectedIndex = 0;
-                    string parameter = Parameter_Choice.SelectedValue.ToString();
+                    string parameter = Parameter_Choice.SelectedValue?.ToString();
+                    if (parameter == null) return;
                     int receiver = Receiver_Choice.SelectedIndex;
                     List<int> sources = SourceList.SelectedSources();
-                    if (receiver < 0 || sources == null || sources.Count == 0 || Direct_Data == null || sources.Any(id => id < 0 || id >= Direct_Data.Length || Direct_Data[id] == null || receiver >= Direct_Data[id].Io.Length))
+                    if (receiver < 0 || sources == null || sources.Count == 0 || Direct_Data == null || sources.Any(id => id < 0 || id >= Direct_Data.Length || Direct_Data[id] == null || Direct_Data[id].Io == null || receiver >= Direct_Data[id].Io.Length))
                     {
                         ParameterResults.SetResults(parameter, "Select a receiver and source.", new ParameterResult[0]);
                         return;
@@ -2386,6 +2419,7 @@ namespace Pachyderm_Acoustic
                 if (updatingAnalysis) return;
                 // The compact parameter table also updates when another graph tab is selected.
                 Update_Parameters();
+                if (SourceList.SelectedSources().Count == 0 || Direct_Data == null || Direct_Data.Length == 0 || Direct_Data[0] == null) return;
                 if (analysis_tabs.SelectedIndex == 0)
                 {
                     Analysis_View.Plot.Clear();
@@ -2774,7 +2808,8 @@ namespace Pachyderm_Acoustic
 
             private void Source_Aim_SelectedIndexChanged(object sender, EventArgs e)
             {
-                if (Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
+                if (updatingAnalysis || Receiver_Choice.SelectedIndex < 0 || Source_Aim.SelectedIndex < 0) return;
+                if (Direct_Data == null || Source_Aim.SelectedIndex >= Direct_Data.Length || Direct_Data[Source_Aim.SelectedIndex]?.Src == null || Recs == null || Receiver_Choice.SelectedIndex >= Recs.Length) return;
                 double azi, alt;
 
                 PachTools.World_Angles(Direct_Data[Source_Aim.SelectedIndex].Src.Origin, Recs[Receiver_Choice.SelectedIndex], true, out alt, out azi);
