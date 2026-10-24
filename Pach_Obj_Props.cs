@@ -91,14 +91,20 @@ namespace Pachyderm_Acoustic
             private void User_Materials_CheckedChanged(object sender, System.EventArgs e)
             {
                 if (loadingMaterials) return;
-                if (sender is RadioButton)
+                if (sender is RadioButton radio && !radio.Checked) return;
+                loadingMaterials = true;
+                try
                 {
-                    if ((sender as RadioButton).Text == "Manual Choice" && (sender as RadioButton).Checked) { User_Materials.Checked = true; this.Acoustics_Layer.Checked = false; }
-                    else if ((sender as RadioButton).Checked) { this.User_Materials.Checked = false; Acoustics_Layer.Checked = true; }
-                    this.Invalidate(true);
-                }
+                    if (sender is RadioButton)
+                    {
+                        if ((sender as RadioButton).Text == "Manual Choice" && (sender as RadioButton).Checked) { User_Materials.Checked = true; this.Acoustics_Layer.Checked = false; }
+                        else if ((sender as RadioButton).Checked) { this.User_Materials.Checked = false; Acoustics_Layer.Checked = true; }
+                        this.Invalidate(true);
+                    }
 
-                Commit();
+                    Commit();
+                }
+                finally { loadingMaterials = false; }
             }
 
             public string GetCode()
@@ -178,10 +184,12 @@ namespace Pachyderm_Acoustic
 
             public void Load_Doc(List<RhinoObject> Obj)
             {
+                bool wasLoading = loadingMaterials;
                 loadingMaterials = true;
                 try
                 {
-                    Objects = Obj;
+                    this.Enabled = true;
+                    Objects = Obj ?? new List<RhinoObject>();
 
                     //Check to see if all objects have the same key values...
                     if (Objects.Count != 0)
@@ -229,9 +237,20 @@ namespace Pachyderm_Acoustic
                                 this.User_Materials.Checked = true;
                                 this.Acoustics_Layer.Checked = false;
                                 //And if there is a predefined value...
-                                if (Code != null)
+                                if (!string.IsNullOrEmpty(Code))
                                 {
-                                    Utilities.RCPachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
+                                    try
+                                    {
+                                        Utilities.RCPachTools.DecodeAcoustics(Code, ref Absorption, ref Scattering, ref Transparency);
+                                    }
+                                    catch (FormatException error)
+                                    {
+                                        // Keep invalid saved data intact rather than committing stale sliders.
+                                        MaterialCode = null;
+                                        this.Enabled = false;
+                                        Rhino.RhinoApp.WriteLine("Could not load object acoustics: " + error.Message);
+                                        return;
+                                    }
                                     MaterialCode = Code;
 
                                     Absorption_Controls.populate(Absorption.Select(v => v * 100).ToArray());
@@ -262,7 +281,7 @@ namespace Pachyderm_Acoustic
                     }
                     UpdateForm();
                 }
-                finally { loadingMaterials = false; }
+                finally { loadingMaterials = wasLoading; }
             }
 
             public void Clear()

@@ -85,28 +85,35 @@ namespace Pachyderm_Acoustic
                 SrcTypes = new List<string>();
                 for (int i = 0; i < ct; i++)
                 {
-                    if (Direct != null && Direct[i] == null) continue;
-
-                    string type = (Direct != null) ? Direct[i].type : Receiver[i].SrcType;
-                    Delay[i] = (Direct != null) ? Direct[i].Delay_ms : Receiver[i].delay_ms;
+                    Direct_Sound direct = ResultAt(Direct, i);
+                    Receiver_Bank receiver = ResultAt(Receiver, i);
+                    string type = direct?.type ?? receiver?.SrcType ?? "No results";
+                    Delay[i] = direct?.Delay_ms ?? receiver?.delay_ms ?? 0;
 
                     CheckBox src = new CheckBox();
-                    src.CheckedChanged += update_proxy;
+                    // Retain the array index for sources that have not finished yet.
+                    src.Enabled = direct != null || receiver != null;
                     src.Text = String.Format("S{0}-", i) + type;
                     SrcBoxes.Add(src);
                     SrcTypes.Add(type);
                     SrcLayout.AddRow(src);
                 }
 
-                SrcBoxes[0].Checked = true;
-
                 this.Content = SrcLayout;
+                CheckBox first = SrcBoxes.FirstOrDefault(src => src.Enabled);
+                if (first != null) first.Checked = true;
+                foreach (CheckBox src in SrcBoxes) src.CheckedChanged += update_proxy;
             }
 
 
             public void Clear()
             {
                 SrcBoxes = new List<CheckBox>();
+                DS = null;
+                IS = null;
+                Rec = null;
+                Delay = new double[0];
+                SrcTypes = new List<string>();
                 DynamicLayout Empty = new DynamicLayout();
                 Label Nothing = new Label();
                 Nothing.Text = "No Source Objects Present...";
@@ -121,7 +128,7 @@ namespace Pachyderm_Acoustic
 
                 for (int i = 0; i < SrcBoxes.Count; i++)
                 {
-                    if (SrcBoxes[i].Checked.Value) sources.Add(i);
+                    if (SrcBoxes[i].Enabled && SrcBoxes[i].Checked == true) sources.Add(i);
                 }
                 return sources;
             }
@@ -130,17 +137,17 @@ namespace Pachyderm_Acoustic
             {
                 //Interface for time selection...
                 List<int> SrcID = SelectedSources();
-                if (Rec == null || Rec[SrcID[0]] == null) return;
+                if (SrcID.Count == 0 || ResultAt(Rec, SrcID[0]) == null) return;
                 double t = Rec[SrcID[0]].delay_ms;
                 Rhino.Input.RhinoGet.GetNumber("Enter the delay to assign to selected source object(s)...", false, ref t, 0, 200);
 
                 foreach (int id in SrcID)
                 {
                     Delay[id] = t;
-                    if (Rec != null) Rec[id].delay_ms = t;
+                    if (ResultAt(Rec, id) != null) Rec[id].delay_ms = t;
                 }
 
-                Update(this, EventArgs.Empty);
+                Update?.Invoke(this, EventArgs.Empty);
             }
 
             private static T ResultAt<T>(T[] results, int index) where T : class
@@ -184,11 +191,12 @@ namespace Pachyderm_Acoustic
                         }
                     }
                 }
-                Update(this, EventArgs.Empty);
+                Update?.Invoke(this, EventArgs.Empty);
             }
 
             public void Set_Src_Checked(int index, bool Checked)
             {
+                if (index < 0 || index >= SrcBoxes.Count || !SrcBoxes[index].Enabled) return;
                 SrcBoxes[index].Checked = Checked;
                 this.Invalidate();
             }
@@ -201,7 +209,7 @@ namespace Pachyderm_Acoustic
                     string[] types = new string[srcs.Count];
                     for(int i = 0; i < srcs.Count; i++) 
                     {
-                        types[i] = SrcTypes[i];
+                        types[i] = SrcTypes[srcs[i]];
                     }
                     return types;
                 }

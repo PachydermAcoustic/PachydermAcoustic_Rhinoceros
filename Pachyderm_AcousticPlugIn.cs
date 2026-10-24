@@ -375,7 +375,9 @@ namespace Pachyderm_Acoustic
                 {
                     System.Guid R_ID = ReceiverConduit.Instance.UUID[i];
                     if (R_ID == System.Guid.Empty || R_ID == System.Guid.NewGuid()) break;
-                    Point.Add(Utilities.RCPachTools.ModelPointToHare(Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID).Geometry.GetBoundingBox(true).Min));
+                    Rhino.DocObjects.RhinoObject receiver = Rhino.RhinoDoc.ActiveDoc.Objects.Find(R_ID);
+                    if (receiver == null) continue;
+                    Point.Add(Utilities.RCPachTools.ModelPointToHare(receiver.Geometry.GetBoundingBox(true).Min));
                 }
 
                 if (Point.Count > 0) return true;
