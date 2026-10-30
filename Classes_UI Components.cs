@@ -167,27 +167,48 @@ namespace Pachyderm_Acoustic
                     foreach (int i in SrcID)
                     {
                         double[] factor = null;
-                        if (ResultAt(DS, i) != null)
+                        try
                         {
-                            factor = DS[i].Set_Power(mod.Power);
-                            // Set_Power rebuilds the direct-sound filter.
+                            if (ResultAt(DS, i) != null)
+                            {
+                                factor = DS[i].Set_Power(mod.Power);
+                                // Set_Power rebuilds the direct-sound filter.
+                            }
+                            if (ResultAt(Rec, i) != null)
+                            {
+                                if (factor == null) factor = Rec[i].PowerModFactor(mod.Power);
+                                Rec[i].Set_Power(factor);
+                                Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Creating Filter...");
+                                VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                                try
+                                {
+                                    if (Rec[i].HasFilter()) Rec[i].Create_Filter(VB);
+                                }
+                                finally
+                                {
+                                    VB.Close();
+                                }
+                            }
+                            if (ResultAt(IS, i) != null && factor != null)
+                            {
+                                Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
+                                VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                                try
+                                {
+                                    IS[i].Set_Power(factor);
+                                    IS[i].Create_Filter(mod.Power, 16384, VB);
+                                }
+                                finally
+                                {
+                                    VB.Close();
+                                }
+                            }
                         }
-                        if (ResultAt(Rec, i) != null)
+                        catch (Exception error)
                         {
-                            if (factor == null) factor = Rec[i].PowerModFactor(mod.Power);
-                            Rec[i].Set_Power(factor);
-                            Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Creating Filter...");
-                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            if (Rec[i].HasFilter()) Rec[i].Create_Filter(VB);
-                            VB.Close();
-                        }
-                        if (ResultAt(IS, i) != null && factor != null)
-                        {
-                            Pachyderm_Acoustic.ProgressBox VB = new ProgressBox("Building Image Source Paths...");
-                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            IS[i].Set_Power(factor);
-                            IS[i].Create_Filter(mod.Power, 16384, VB);
-                            VB.Close();
+                            Rhino.RhinoApp.WriteLine("Applying the power modification to source {0} failed: {1}", i, error);
+                            Eto.Forms.MessageBox.Show("Applying the power modification failed:\n" + error.Message, "Pachyderm");
+                            return;
                         }
                     }
                 }

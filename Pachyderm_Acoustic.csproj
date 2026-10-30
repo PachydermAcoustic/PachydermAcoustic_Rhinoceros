@@ -22,6 +22,8 @@
 		<!--<UseWPF>false</UseWPF>-->
 		<!--ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>-->
 		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 		<WarningLevel>0</WarningLevel>
@@ -65,15 +67,15 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="Eto">
-			<HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\Eto.dll</HintPath>
+			<HintPath>$(RhinoSystemDir)\Eto.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Rhino.UI">
-			<HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\Rhino.UI.dll</HintPath>
+			<HintPath>$(RhinoSystemDir)\Rhino.UI.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="RhinoCommon">
-			<HintPath>..\..\..\..\..\..\Program Files\Rhino 8\System\RhinoCommon.dll</HintPath>
+			<HintPath>$(RhinoSystemDir)\RhinoCommon.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<!--<Reference Include="CLF_Read">
@@ -119,13 +121,18 @@
 
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\CLF_Read_v2.n7\CLF_Read\CLF_Read.csproj" />
+		<Reference Include="CLF_Read">
+			<HintPath>..\libs\CLF_Read.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<ProjectReference Include="..\Hare\Hare.csproj">
 			<Private>True</Private>
 		</ProjectReference>
-		<ProjectReference Include="..\PachydermAcoustic_Core\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj" />
-		<ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5 Controls\ScottPlot.Eto\ScottPlot.Eto.csproj" />
-		<ProjectReference Include="..\ScottPlot\src\ScottPlot5\ScottPlot5\ScottPlot.csproj" />
+		<ProjectReference Include="..\PachydermAcoustic_Universal\Pachyderm_Acoustic_Universal\Pachyderm_Acoustic_Universal.csproj" />
+		<Reference Include="ScottPlot">
+			<HintPath>..\libs\ScottPlot.dll</HintPath>
+		</Reference>
+		<Compile Include="..\libs\ScottPlotEto\*.cs" Link="ScottPlot.Eto\%(Filename)%(Extension)" />
 	</ItemGroup>
 	<ItemGroup>
 		<!--<PackageReference Include="Microsoft-WindowsAPICodePack-Core" Version="1.1.4" />
@@ -136,6 +143,7 @@
 		<PackageReference Include="System.Resources.Extensions" Version="7.0.0" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+		<PackageReference Include="SkiaSharp" Version="2.88.9" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.9" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">

@@ -285,6 +285,121 @@ namespace Pachyderm_Acoustic
             }
         }
 
+        [System.Runtime.InteropServices.Guid("418B2164-C917-4B2F-ABD2-8219BF4EBE2F")]
+        public class Pach_LineSources_Object : Command
+        {
+            ///<returns>The command name as it appears on the Rhino command line</returns> 
+            public override string EnglishName
+            {
+                get
+                {
+                    return "Insert_LineSources";
+                }
+            }
+
+            protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
+            {
+                double[] SWL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
+
+                using (SourcePowerMod mod = new SourcePowerMod(SWL))
+                {
+                    mod.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
+                    if (!mod.accept) return Result.Cancel;
+                    SWL = mod.Power;
+                }
+
+                Rhino.Input.Custom.GetObject GO = new Rhino.Input.Custom.GetObject();
+                GO.SetCommandPrompt("Select source curves to assign the line source spectrum to...");
+                GO.GeometryFilter = Rhino.DocObjects.ObjectType.Curve;
+                GO.SubObjectSelect = false;
+                GO.EnablePreSelect(true, true);
+                GO.DeselectAllBeforePostSelect = false;
+
+                if (GO.GetMultiple(1, 0) != Rhino.Input.GetResult.Object) return Result.Cancel;
+
+                string swl = Utilities.PachTools.EncodeSourcePower(SWL);
+                SourceConduit m_source_conduit = SourceConduit.Instance;
+                int assigned = 0;
+
+                for (int i = 0; i < GO.ObjectCount; i++)
+                {
+                    Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(GO.Object(i).ObjectId);
+                    if (rhObj == null) continue;
+
+                    rhObj.Attributes.Name = "Acoustical Source";
+                    rhObj.Geometry.SetUserString("SWL", swl);
+                    rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
+                    doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+
+                    m_source_conduit.SetSource(rhObj);
+                    assigned++;
+                }
+
+                doc.Views.Redraw();
+                Rhino.RhinoApp.WriteLine("Insert_LineSources: {0} curve(s) assigned.", assigned);
+                return Result.Success;
+            }
+        }
+
+        [System.Runtime.InteropServices.Guid("5D2C8E77-4A1B-4E9C-9F63-7B0E2A15C8D4")]
+        public class Pach_Sources_Object : Command
+        {
+            ///<returns>The command name as it appears on the Rhino command line</returns> 
+            public override string EnglishName
+            {
+                get
+                {
+                    return "Insert_Sources";
+                }
+            }
+
+            protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
+            {
+                List<Rhino.Geometry.Point3d> locations = new List<Rhino.Geometry.Point3d>();
+
+                while (true)
+                {
+                    Rhino.Geometry.Point3d location;
+                    Result rc = Rhino.Input.RhinoGet.GetPoint("Select source position. Press Enter when all positions are placed...", true, out location);
+                    if (rc != Result.Success || !location.IsValid) break;
+                    locations.Add(location);
+                }
+
+                if (locations.Count == 0) return Result.Cancel;
+
+                double[] SWL = new double[] { 120, 120, 120, 120, 120, 120, 120, 120 };
+                using (SourcePowerMod mod = new SourcePowerMod(SWL))
+                {
+                    mod.ShowModal(Rhino.UI.RhinoEtoApp.MainWindow);
+                    if (!mod.accept) return Result.Cancel;
+                    SWL = mod.Power;
+                }
+
+                string swl = Utilities.PachTools.EncodeSourcePower(SWL);
+                SourceConduit m_source_conduit = SourceConduit.Instance;
+                int assigned = 0;
+
+                foreach (Rhino.Geometry.Point3d location in locations)
+                {
+                    Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(doc.Objects.AddPoint(location));
+                    if (rhObj == null) continue;
+
+                    rhObj.Attributes.Name = "Acoustical Source";
+                    rhObj.Geometry.SetUserString("SourceType", "0");
+                    rhObj.Geometry.SetUserString("SWL", swl);
+                    rhObj.Geometry.SetUserString("Phase", "0;0;0;0;0;0;0;0");
+                    doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+
+                    m_source_conduit.SetSource(rhObj);
+                    assigned++;
+                }
+
+                doc.Views.Redraw();
+                Rhino.RhinoApp.WriteLine("Insert_Sources: {0} source(s) assigned.", assigned);
+                return Result.Success;
+            }
+        }
+
         [System.Runtime.InteropServices.Guid("8F2F9D3E-9A31-4C37-9A6E-7D89386B6B9E")]
         public class PachSteerableArraySourceCommand : Command
         {
@@ -2011,6 +2126,7 @@ namespace Pachyderm_Acoustic
 
             protected override void DrawForeground(DrawEventArgs e)
             {
+                if (!Pach_Preview_State.Show_Sources) return;
                 Dictionary<string, List<RhinoObject>> arrays = SelectedSteerableArrays(false);
                 Dictionary<string, List<RhinoObject>> selected_arrays = arrays.Where(array => array.Value.Any(obj => obj.IsSelected(false) != 0)).ToDictionary(array => array.Key, array => array.Value);
                 HashSet<string> selected_array_groups = new HashSet<string>(selected_arrays.Keys);

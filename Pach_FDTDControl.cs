@@ -1052,7 +1052,18 @@ namespace Pachyderm_Acoustic
                 //PrecomputeMaterialIIRFits(Rm, fs, fitMaxFreq, fitOrder);
 
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, EigenPML.Checked.Value);
-                FDTD.RuntoCompletion();
+                using (AnalysisRun analysis = new AnalysisRun())
+                {
+                    try
+                    {
+                        await Task.Run(() => FDTD.RuntoCompletion(analysis.Token));
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                        return;
+                    }
+                }
 
                 samplefrequency = FDTD.SampleFrequency;
 
@@ -1388,7 +1399,18 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDS = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm, ref SD, ref Mic, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.ModelPointToHare(LabCenter), radius * 2.4, radius * 2.4, laboratoryheight + Sample_Depth.Value, true);
                     long size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of first model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
-                    FDTDS.RuntoCompletion();
+                    using (AnalysisRun analysis = new AnalysisRun())
+                    {
+                        try
+                        {
+                            await Task.Run(() => FDTDS.RuntoCompletion(analysis.Token));
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                            return;
+                        }
+                    }
                     Mic.reset();
                     double[][] result_control = new double[Mic.X.Length][];
                     samplefrequency = FDTDS.SampleFrequency;
@@ -1399,7 +1421,18 @@ namespace Pachyderm_Acoustic
                     Numeric.TimeDomain.Acoustic_Compact_FDTD FDTDF = new Numeric.TimeDomain.Acoustic_Compact_FDTD(Rm_Ctrl, ref SDf, ref Micf, fs, t, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.ScatteringLab, Utilities.RCPachTools.ModelPointToHare(LabCenter), radius * 2.4, radius * 2.4, laboratoryheight + Sample_Depth.Value, true);
                     size = System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64;
                     Rhino.RhinoApp.WriteLine("At end of second model, using " + (double)size / (1024 * 1024 * 1024) + " gigabytes...");
-                    FDTDF.RuntoCompletion();
+                    using (AnalysisRun analysis = new AnalysisRun())
+                    {
+                        try
+                        {
+                            await Task.Run(() => FDTDF.RuntoCompletion(analysis.Token));
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                            return;
+                        }
+                    }
                     Micf.reset();
                     double[][] result_signals = new double[Mic.X.Length][];
 
@@ -2161,7 +2194,7 @@ namespace Pachyderm_Acoustic
                         return scene;
                     }
 
-                    (double[][] recordings, double sampleFrequency) RunLab(Polygon_Scene scene)
+                    async Task<(double[][] recordings, double sampleFrequency)> RunLab(Polygon_Scene scene)
                     {
                         Source[] src = new Source[]
                         {
@@ -2173,7 +2206,18 @@ namespace Pachyderm_Acoustic
 
                         Numeric.TimeDomain.Acoustic_Compact_FDTD FVM = new Numeric.TimeDomain.Acoustic_Compact_FDTD(scene, ref SD, ref Mic, fmax, tmax, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, false);
 
-                        FVM.RuntoCompletion();
+                        using (AnalysisRun analysis = new AnalysisRun())
+                        {
+                            try
+                            {
+                                await Task.Run(() => FVM.RuntoCompletion(analysis.Token));
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                                throw;
+                            }
+                        }
                         Mic.reset();
 
                         double[][] stored = Mic.Recordings()[0];
@@ -2186,7 +2230,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.CommandPrompt = "Insertion Loss: calculating open aperture reference...";
 
                     Polygon_Scene openScene = BuildLabScene(null);
-                    (double[][] openSignals, double fsOpen) = RunLab(openScene);
+                    (double[][] openSignals, double fsOpen) = await RunLab(openScene);
 
                     openScene = null;
 
@@ -2198,7 +2242,7 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoApp.CommandPrompt = "Insertion Loss: calculating installed specimen...";
 
                     Polygon_Scene installedScene = BuildLabScene(specimen);
-                    (double[][] installedSignals, double fsInstalled) = RunLab(installedScene);
+                    (double[][] installedSignals, double fsInstalled) = await RunLab(installedScene);
 
                     if (Math.Abs(fsOpen - fsInstalled) > fsOpen * 1E-6)
                         throw new InvalidOperationException("Open and installed laboratory grids produced different sample frequencies.");
@@ -2316,6 +2360,10 @@ namespace Pachyderm_Acoustic
                     Update_Insertion_Graph();
                     Rhino.RhinoDoc.ActiveDoc?.Views.Redraw();
                     Rhino.RhinoApp.CommandPrompt = "Insertion Loss calculation complete.";
+                }
+                catch (OperationCanceledException)
+                {
+                    Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
                 }
                 catch (Exception ex)
                 {

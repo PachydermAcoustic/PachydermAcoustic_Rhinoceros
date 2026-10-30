@@ -16,7 +16,7 @@ namespace Pachyderm_Acoustic
 {
     namespace Utilities
     {
-        public class RCPachTools : PachTools
+        public partial class RCPachTools : PachTools
         {
             ///// <summary>
             ///// Shorthand tool used to run a simulation.
@@ -34,80 +34,6 @@ namespace Pachyderm_Acoustic
             //    return command.Sim;
             //}
 
-            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim, bool needfeedback = true)
-            {
-                System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
-
-                switch (PachydermAc_PlugIn.Instance.TaskPriority)
-                {
-                    case 0:
-                        {
-                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
-                            break;
-                        }
-                    case 1:
-                        {
-                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.AboveNormal;
-                            break;
-                        }
-                    case 2:
-                        {
-                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
-                            break;
-                        }
-                    default:
-                        {
-                            P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
-                            break;
-                        }
-                }
-
-                Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = false;
-
-                try
-                {
-                    if (Sim != null)
-                    {
-                        Sim.Begin();
-                        Rhino.RhinoApp.SetCommandPrompt(string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
-                        do
-                        {
-                            //if (CancelCalc)
-                            //{
-                            //    //Sim.Abort_Calculation();
-                            //    CommandResult = Result.Cancel;
-                            //    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
-                            //    return CommandResult;
-                            //}
-                            if (!needfeedback) System.Threading.Thread.Sleep(3000);
-                            else
-                            {
-                                await Task.Delay(3000);
-                                Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
-                            }
-                        } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
-
-                        Sim.Combine_ThreadLocal_Results();
-                        do
-                        {
-                            System.Threading.Thread.Sleep(3000);
-                            if (Sim.ThreadState() != System.Threading.ThreadState.Running)
-                            {
-                                break;
-                            }
-                            if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
-                        } while (true);
-                    }
-
-                    return Sim;
-                }
-                finally
-                {
-                    Rhino.ApplicationSettings.FileSettings.AutoSaveEnabled = true;
-                    Rhino.RhinoDoc.ActiveDoc.Views.RedrawEnabled = true;
-                    P.PriorityClass = System.Diagnostics.ProcessPriorityClass.Normal;
-                }
-            }
 
             /// <summary>
             /// Tool used for debug of voxel grids and bounding boxes.

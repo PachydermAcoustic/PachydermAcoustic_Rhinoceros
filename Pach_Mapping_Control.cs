@@ -1,4 +1,4 @@
-﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
+//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
@@ -751,6 +752,7 @@ namespace Pachyderm_Acoustic
                 List<Hare.Geometry.Point> P = new List<Hare.Geometry.Point>();
                 P.AddRange(SPT);
 
+                Stopwatch BatchPrep = Stopwatch.StartNew();
                 Polygon_Scene PScene = Utilities.RCPachTools.Get_Poly_Scene(Env_Control.RelHumidity, false, Env_Control.Temp_Celsius, Env_Control.StaticPressure_hPa, Env_Control.Atten_Method.SelectedIndex, Env_Control.Edge_Frequency);
 
                 if (PScene == null)
@@ -790,41 +792,59 @@ namespace Pachyderm_Acoustic
 
                 Map = new PachMapReceiver[Source.Length];
                 int imageOrder = Image_Sources.Checked == true ? (int)Image_Order.Value : 0;
+                TimeSpan[] MapPrep = new TimeSpan[Source.Length];
                 for (int i = 0; i < Source.Length; i++)
                 {
+                    Stopwatch sw = Stopwatch.StartNew();
                     Source[i].AppendPts(ref P);
                     Mesh Map_Mesh = Utilities.RCPachTools.Create_Map_Mesh(Rec_Srfs, Utilities.RCPachTools.MetersToModel((double)Increment.Value * 0.01));
                     Map_Mesh.Vertices.UseDoublePrecisionVertices = true;
                     Map_Mesh.Transform(Transform.Scale(Point3d.Origin, Utilities.RCPachTools.ModelToMetersScale));
                     Map[i] = new PachMapReceiver(Utilities.RCPachTools.RhinotoHareMesh(Map_Mesh), Source[i], 1000, (double)Increment.Value * 0.01, Flex_Scene, (double)CO_TIME.Value, Sum_Time.Checked.Value, Disp_Audience.Checked, DirectionalToggle.Checked.Value, Rec_Vertex.Checked, Offset_Mesh.Checked.Value);
+                    sw.Stop();
+                    MapPrep[i] = sw.Elapsed;
                 }
+                BatchPrep.Stop();
+                Rhino.RhinoApp.WriteLine(string.Format("Mapping batch prep (scene construction, partitioning, and map preparation; the per-source part is also reported per source below - nested, do not add): {0:0.###} s", BatchPrep.Elapsed.TotalSeconds));
 
                 deltaSEL = new double[Source.Length];
                 velocity_mps = new double[Source.Length];
 
+                using (AnalysisRun analysis = new AnalysisRun())
+                {
+                    try
+                    {
                 for (int s_id = 0; s_id < Source.Length; s_id++)
                 {
                     //double T = 3600.0;
                     //double SEL = AcousticalMath.Est_SEL_from_Leq(Leq_dB, N_events, T);
                     //Lmax_from_SEL(SEL, r0_m, v_mps);
 
+                    Source_Stage_Timing t = new Source_Stage_Timing(string.Format("Mapping source {0}/{1}", s_id, Source.Length - 1));
+                    t.Span("prepare map mesh + map receivers (batch, pre-loop)", MapPrep[s_id]);
                     Coherent_Source_Waveforms sourceWaveforms = null;
-                    try
+                    if (Source[s_id] is SourceCluster cluster && cluster.CoherentSpeakers)
                     {
-                        if (Source[s_id] is SourceCluster cluster && cluster.CoherentSpeakers)
+                        t.Segment_Start();
+                        try
+                        {
                             sourceWaveforms = await Task.Run(() => new Coherent_Source_Waveforms(cluster, Map[s_id].Third_Oct));
+                        }
+                        catch (Exception error)
+                        {
+                            Rhino.RhinoApp.WriteLine("Preparing coherent source waveforms failed: {0}", error);
+                            Calculate.Enabled = true;
+                            return;
+                        }
+                        t.Segment_Report("prepare coherent source waveforms");
                     }
-                    catch (Exception error)
-                    {
-                        Rhino.RhinoApp.WriteLine("Preparing coherent source waveforms failed: {0}", error);
-                        Calculate.Enabled = true;
-                        return;
-                    }
+                    else t.Not_Run("prepare coherent source waveforms");
                     var sourceWaveformLifetime = sourceWaveforms;
+                    t.Begin_Stage();
                     Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, Enumerable.Range(0, Map[s_id].Third_Oct ? 24 : 8).ToArray(), this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value) { SourceWaveforms = sourceWaveforms };
-                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
-                    while (!TA.IsCompleted) await Task.Delay(1500);
-                    DS = TA.GetResult() as Direct_Sound;
+                    t.Construct_Done();
+                    DS = await RCPachTools.RunSimulation(DS, true, analysis.Token, string.Format("Mapping grid {0}/{1}: direct sound", s_id + 1, Source.Length)) as Direct_Sound;
+                    t.End_Stage("direct sound", DS);
 
                     Direct_Sound Direct_Data;
                     if (DS != null)
@@ -844,8 +864,15 @@ namespace Pachyderm_Acoustic
                     {
                         try
                         {
+                            t.Begin_Stage();
                             images = new ImageSourceData(Source[s_id], Map[s_id], Direct_Data, PScene, new int[] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, false, s_id) { SourceWaveforms = sourceWaveforms };
-                            images = await RCPachTools.RunSimulation(images) as ImageSourceData;
+                            t.Construct_Done();
+                            images = await RCPachTools.RunSimulation(images, true, analysis.Token, string.Format("Mapping grid {0}/{1}: image source", s_id + 1, Source.Length)) as ImageSourceData;
+                            t.End_Stage("image source", images);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            throw;
                         }
                         catch (Exception error)
                         {
@@ -865,16 +892,18 @@ namespace Pachyderm_Acoustic
                         for (int receiver = 0; receiver < Map[s_id].Count; receiver++)
                             ((PachMapReceiver.Map_Receiver)Map[s_id].Rec_List[receiver]).Direct_Time = Direct_Data.Time(receiver);
                     }
+                    else t.Not_Run("image source");
 
-                    ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource(), 1000);
+                    ConvergenceProgress CP = new ConvergenceProgress(System.Threading.CancellationTokenSource.CreateLinkedTokenSource(analysis.Token), 1000);
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
+                    t.Begin_Stage();
                     SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    t.Construct_Done();
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
-                    TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();
-                    while (!RTA.IsCompleted) await Task.Delay(1500);
-                    RT = RTA.GetResult() as SplitRayTracer;
+                    RT = await RCPachTools.RunSimulation(RT, true, analysis.Token, string.Format("Mapping grid {0}/{1}: ray trace", s_id + 1, Source.Length)) as SplitRayTracer;
+                    t.End_Stage("ray trace", RT);
 
                     if (RT != null)
                     {
@@ -889,18 +918,27 @@ namespace Pachyderm_Acoustic
                         Calculate.Enabled = true;
                         break;
                     }
-                    if (images == null) Map[s_id].AddDirect(Direct_Data, Source[s_id]);
+                    if (images == null)
+                    {
+                        t.Segment_Start();
+                        Map[s_id].AddDirect(Direct_Data, Source[s_id]);
+                        t.Segment_Report("assemble direct sound into map");
+                    }
                     else
                     {
                         ProgressBox progress = new ProgressBox("Adding direct sound and image sources to the map...");
                         progress.Show();
+                        t.Segment_Start();
                         try
                         {
                             await Task.Run(() => Map[s_id].AddDirect(Direct_Data, Source[s_id], images));
+                            t.Segment_Report("assemble direct + image sources into map");
                         }
                         catch (Exception error)
                         {
                             Rhino.RhinoApp.WriteLine("Mapping image-source assembly failed: {0}", error);
+                            t.Segment_Report("assemble direct + image sources into map (failed)");
+                            t.Report();
                             Array.Resize(ref Source, s_id);
                             Array.Resize(ref Map, s_id);
                             Calculate.Enabled = true;
@@ -909,6 +947,7 @@ namespace Pachyderm_Acoustic
                         finally { progress.Close(); }
                     }
                     Source[s_id].Lighten();
+                    t.Not_Run("filter (not part of the Mapping main loop)");
 
                     // Capture SEL and Lmax deltas for FHWA traffic line sources (hourly Leq → SEL)
                     try
@@ -936,6 +975,15 @@ namespace Pachyderm_Acoustic
                         Rhino.RhinoApp.WriteLine($"FHWA delta capture error (source {s_id}): {ex.Message}");
                     }
 
+                    t.Report();
+                }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                        Calculate.Enabled = true;
+                        return;
+                    }
                 }
 
                 if (Map == null || Map.Length == 0)
@@ -2494,11 +2542,23 @@ namespace Pachyderm_Acoustic
                         DialogResult DR = MessageBox.Show("Pachyderm will now create the pressure impulse responses for your previously calculated intensity responses. This can take awhile, though, depending on how many receivers you have, and how long a cutoff time you chose. Are you sure you would like to do this?", "Pressure Impulse Response Creation", MessageBoxButtons.YesNo);
                         if (DR == DialogResult.Yes)
                         {
-                            Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
                             ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
-                            VB.Close();
+                            try
+                            {
+                                for (int i = 0; i < this.Map.Length; i++) this.Map[i].Create_Filter(VB); //this.Map[i].Create_Pressure(Map[i].SWL);
+                                Linear_Phase = Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System;
+                            }
+                            catch (Exception error)
+                            {
+                                Rhino.RhinoApp.WriteLine("Creating pressure impulse responses failed: {0}", error);
+                                MessageBox.Show("Creating pressure impulse responses failed:\n" + error.Message, "Pachyderm");
+                                return;
+                            }
+                            finally
+                            {
+                                VB.Close();
+                            }
                         }
                     }
                 }

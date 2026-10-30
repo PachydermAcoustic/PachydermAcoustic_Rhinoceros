@@ -80,6 +80,48 @@ namespace Pachyderm_Acoustic
         }
 
         /// <summary>
+        /// Batch-converts selected points into acoustical receivers. Mirrors Insert_Receiver per object.
+        /// </summary>
+        [System.Runtime.InteropServices.Guid("F16F1A87-660C-4EFD-B089-6B9252D0A5A9")]
+        public class Pach_Receivers_Object : Command
+        {
+            public override string EnglishName => "Insert_Receivers";
+
+            protected override Result RunCommand(RhinoDoc doc, Rhino.Commands.RunMode mode)
+            {
+                Rhino.Input.Custom.GetObject GO = new Rhino.Input.Custom.GetObject();
+                GO.SetCommandPrompt("Select points to convert into receivers...");
+                GO.GeometryFilter = Rhino.DocObjects.ObjectType.Point;
+                GO.SubObjectSelect = false;
+                GO.EnablePreSelect(true, true);
+                GO.DeselectAllBeforePostSelect = false;
+
+                if (GO.GetMultiple(1, 0) != Rhino.Input.GetResult.Object) return Result.Cancel;
+
+                ReceiverConduit conduit = ReceiverConduit.Instance;
+                string swl = Utilities.PachTools.EncodeSourcePower(new double[] { 120, 120, 120, 120, 120, 120, 120, 120 });
+                int assigned = 0;
+
+                for (int i = 0; i < GO.ObjectCount; i++)
+                {
+                    Rhino.DocObjects.RhinoObject rhObj = doc.Objects.Find(GO.Object(i).ObjectId);
+                    if (rhObj == null) continue;
+
+                    rhObj.Attributes.Name = "Acoustical Receiver";
+                    rhObj.Geometry.SetUserString("SWL", swl);
+                    doc.Objects.ModifyAttributes(rhObj, rhObj.Attributes, true);
+
+                    conduit.SetReceiver(rhObj);
+                    assigned++;
+                }
+
+                doc.Views.Redraw();
+                Rhino.RhinoApp.WriteLine("Insert_Receivers: {0} receiver(s) assigned.", assigned);
+                return Result.Success;
+            }
+        }
+
+        /// <summary>
         /// Handles the receiver objects, and displays an icon instead of the point object it is based on.
         /// </summary>
         public class ReceiverConduit : Rhino.Display.DisplayConduit
@@ -219,6 +261,7 @@ namespace Pachyderm_Acoustic
 
             protected override void DrawForeground(DrawEventArgs e)
             {
+                if (!Pach_Preview_State.Show_Receivers) return;
                 int index = 0;
 
                 if (Dir != null)

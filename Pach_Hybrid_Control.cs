@@ -948,6 +948,8 @@ namespace Pachyderm_Acoustic
             {
                 try
                 {
+                    using (AnalysisRun analysis = new AnalysisRun())
+                    {
                 if (!Calculate.Enabled || plugin == null || Rhino.RhinoDoc.ActiveDoc == null) return;
                 SampleRate = 44100;
                 IR_Parts_Analysis.Visible = false;
@@ -1003,6 +1005,7 @@ namespace Pachyderm_Acoustic
                 P.AddRange(RPT);
                 P.AddRange(SPT);
 
+                Stopwatch BatchPrep = Stopwatch.StartNew();
                 Polygon_Scene PScene = RCPachTools.Get_Poly_Scene(MediumProps.RelHumidity, this.BTM_ED.Checked.Value, MediumProps.Temp_Celsius, MediumProps.StaticPressure_hPa, MediumProps.Atten_Method.SelectedIndex, MediumProps.Edge_Frequency);
                 if (PScene == null || !PScene.Complete)
                 {
@@ -1010,6 +1013,7 @@ namespace Pachyderm_Acoustic
                     return;
                 }
                 PScene.partition(P);
+                BatchPrep.Stop();
 
                 ///Needed as long as there are issues with compound reflections...
                 for (int i = 0; i < PScene.ObjectCount; i++)
@@ -1146,6 +1150,7 @@ namespace Pachyderm_Acoustic
                 //}
                 ////////////////////////////////////////////////
                 ///////////////
+                BatchPrep.Start();
                 if (BTM_ED.Checked.Value) PScene.Register_Edges(SPT, RPT);
                 ///////////////
 
@@ -1165,6 +1170,8 @@ namespace Pachyderm_Acoustic
                 {
                     Flex_Scene = PScene;
                 }
+                BatchPrep.Stop();
+                Rhino.RhinoApp.WriteLine(string.Format("Hybrid batch prep (scene construction & partitioning): {0:0.###} s", BatchPrep.Elapsed.TotalSeconds));
 
                 Receiver_Bank.Type T;
 
@@ -1187,18 +1194,24 @@ namespace Pachyderm_Acoustic
 
                 for (int s = 0; s < Source.Length; s++)
                 {
+                    Source_Stage_Timing t = new Source_Stage_Timing(string.Format("Hybrid source {0}/{1}", s, Source.Length - 1));
+                    t.Segment_Start();
                     Receiver_Bank Rec = new Receiver_Bank(RPT.ToArray(), Source[s], PScene, SampleRate, CutoffTime, T, SimulationThirdOctave.Checked);
                     var sourceWaveforms = Source[s] is SourceCluster cluster && cluster.CoherentSpeakers
                         ? await Task.Run(() => new Coherent_Source_Waveforms(cluster, Rec.Third_Oct)) : null;
+                    t.Segment_Report("prepare receiver bank (+ coherent waveforms when used)");
+                    t.Begin_Stage();
                     Direct_Sound DS = new Direct_Sound(Source[s], Rec, PScene, Enumerable.Range(0, Rec.Third_Oct ? 24 : 8).ToArray()) { SourceWaveforms = sourceWaveforms };
-                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
-                    while (!TA.IsCompleted) await Task.Delay(1500);
-                    DS = TA.GetResult() as Direct_Sound;
+                    t.Construct_Done();
+                    DS = await RCPachTools.RunSimulation(DS, true, analysis.Token, string.Format("Hybrid source {0}/{1}: direct sound", s + 1, Source.Length)) as Direct_Sound;
+                    t.End_Stage("direct sound", DS);
 
                     if (DS != null)
                     {
                         Direct_Data[s] = DS;
+                        t.Segment_Start();
                         if (!Direct_Data[s].CoherentSpeakers) Direct_Data[s].Create_Filter();
+                        t.Segment_Stop();
                     }
                     else
                     {
@@ -1208,20 +1221,23 @@ namespace Pachyderm_Acoustic
 
                     if (ISBox.Checked.Value)
                     {
+                        t.Begin_Stage();
                         ImageSourceData IS = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, Rec.Third_Oct ? 23 : 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s) { SourceWaveforms = sourceWaveforms };
-                        TaskAwaiter<Simulation_Type> TISA = RCPachTools.RunSimulation(IS).GetAwaiter();
-                        while (!TISA.IsCompleted) await Task.Delay(1500);
-                        IS = TISA.GetResult() as ImageSourceData;
+                        t.Construct_Done();
+                        IS = await RCPachTools.RunSimulation(IS, true, analysis.Token, string.Format("Hybrid source {0}/{1}: image source", s + 1, Source.Length)) as ImageSourceData;
+                        t.End_Stage("image source", IS);
 
                         if (IS != null)
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for deterinistic reflections...");
                             VB.Show();
+                            t.Segment_Start();
                             if (!await CreateImagePressure(IS, Source[s].SWL(), VB))
                             {
                                 CancelCalc();
                                 return;
                             }
+                            t.Segment_Stop();
                             IS_Data[s] = IS;
                             Populate_Sources();
                         }
@@ -1231,25 +1247,28 @@ namespace Pachyderm_Acoustic
                             return;
                         }
                     }
+                    else t.Not_Run("image source");
 
                     if (ISBox.Checked.Value && Specular_Trace.Checked.Value)
                     {
+                        t.Begin_Stage();
                         IS_Trace IST = new IS_Trace(Source[s], Rec, PScene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)Spec_RayCount.Value, (int)Image_Order.Value, PScene.Sound_speed(0), SampleRate);
-                        TaskAwaiter<Simulation_Type> TISTA = RCPachTools.RunSimulation(IST).GetAwaiter();
-
-                        while (!TISTA.IsCompleted) await Task.Delay(1500);
-                        IST = TISTA.GetResult() as IS_Trace;
+                        t.Construct_Done();
+                        IST = await RCPachTools.RunSimulation(IST, true, analysis.Token, string.Format("Hybrid source {0}/{1}: is-trace", s + 1, Source.Length)) as IS_Trace;
+                        t.End_Stage("is-trace", IST);
 
                         if (IST != null)
                         {
                             ProgressBox VB = new ProgressBox("Creating IR filters for Deterministic Reflections...");
                             VB.Show(Rhino.RhinoDoc.ActiveDoc);
                             IS_Data[s].Lookup_Sequences(IST.IS_Sequences());
+                            t.Segment_Start();
                             if (!await CreateImagePressure(IS_Data[s], Source[s].SWL(), VB))
                             {
                                 CancelCalc();
                                 return;
                             }
+                            t.Segment_Stop();
                         }
                         else
                         {
@@ -1262,7 +1281,9 @@ namespace Pachyderm_Acoustic
                         CancellationTokenSource CTS = new CancellationTokenSource();
                         CancellationToken CT = CTS.Token;
                         ConvergenceProgress CP = new ConvergenceProgress(CTS, 44100);
+                        t.Begin_Stage();
                         SplitRayTracer RT = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, Rec.Third_Oct ? 23 : 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                        t.Construct_Done();
                         if (!Spec_Rays.Checked) CP.Show();
 
                         EventHandler usercancel = (source, args) =>
@@ -1272,31 +1293,48 @@ namespace Pachyderm_Acoustic
                                                 };
                         Rhino.RhinoApp.EscapeKeyPressed += usercancel;
 
-                        TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT).GetAwaiter();
-                        while (!TRTA.IsCompleted) 
-                            await Task.Delay(3000);
-                        RT = TRTA.GetResult() as SplitRayTracer;
-                        Rhino.RhinoApp.EscapeKeyPressed -= usercancel;
+                        try
+                        {
+                            RT = await RCPachTools.RunSimulation(RT, true, analysis.Token, string.Format("Hybrid source {0}/{1}: ray trace", s + 1, Source.Length)) as SplitRayTracer;
+                            t.End_Stage("ray trace", RT);
 
-                        if (RT != null)
-                        {
-                            ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
-                            VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                            await Task.Run(() => { RT.GetReceiver.Create_Filter(VB); });
-                            VB.Close();
-                            Receiver[s] = RT.GetReceiver;
-                            Populate_Sources();
-                            Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
-                            Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
+                            if (RT != null)
+                            {
+                                ProgressBox VB = new ProgressBox("Creating Impulse Responses...");
+                                VB.Show(Rhino.RhinoDoc.ActiveDoc);
+                                t.Segment_Start();
+                                try
+                                {
+                                    await Task.Run(() => { RT.GetReceiver.Create_Filter(VB); });
+                                }
+                                finally
+                                {
+                                    VB.Close();
+                                }
+                                t.Segment_Stop();
+                                Receiver[s] = RT.GetReceiver;
+                                Populate_Sources();
+                                Rhino.RhinoApp.WriteLine(string.Format("{0} Rays ({1} sub-rays) cast in {2} hours, {3} minutes, {4} seconds.", RT._currentRay.Sum(), RT._rayTotal.Sum(), RT._ts.Hours, RT._ts.Minutes, RT._ts.Seconds));
+                                Rhino.RhinoApp.WriteLine("Percentage of energy lost: {0}%", RT.PercentLost);
+                            }
+                            else
+                            {
+                                CancelCalc();
+                                return;
+                            }
+                            IR_Parts_Analysis.Visible = true;
                         }
-                        else
+                        finally
                         {
-                            CancelCalc();
-                            return;
+                            // A failure inside the awaited stage or the filter step must not leave
+                            // the handler attached: it would cancel every later stage and source.
+                            Rhino.RhinoApp.EscapeKeyPressed -= usercancel;
                         }
-                        IR_Parts_Analysis.Visible = true;
                     }
+                    else t.Not_Run("ray trace");
                     Source[s].Lighten();
+                    t.Segment_Report("filter (direct/image/receiver IR construction)");
+                    t.Report();
                 }
 
                 if (Source != null)
@@ -1320,6 +1358,12 @@ namespace Pachyderm_Acoustic
                 double mspl = 20 * Math.Log10(max * (float)(Math.Pow(10, 120 / 20) / Math.Pow(10, (15 / 20)))) - 144;
 
                 Normalization_Choice.Value = Math.Max(0, -mspl);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    Rhino.RhinoApp.SetCommandPrompt("Calculation Cancelled by User...");
+                    CancelCalc();
                 }
                 catch (Exception error)
                 {
@@ -1721,14 +1765,23 @@ namespace Pachyderm_Acoustic
                 this.Linear_Phase = Linear_Phase;
                 if ((Linear_Phase == true && Audio.Pach_SP.Filter is Audio.Pach_SP.Linear_Phase_System) || (Linear_Phase == false && Audio.Pach_SP.Filter is Audio.Pach_SP.Minimum_Phase_System))
                 {
-                    for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
                     ProgressBox VB = new ProgressBox("Creating IR Filters for Deterministic Reflections...");
                     VB.Show(Rhino.RhinoDoc.ActiveDoc);
-                    for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 16384, VB);
-                    VB.change_title("Creating Impulse Responses...");
-                    for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
-                    VB.Close();
-                    this.Linear_Phase = Linear_Phase;
+                    try
+                    {
+                        for (int i = 0; i < Direct_Data.Length; i++) Direct_Data[i].Create_Filter();
+                        for (int i = 0; i < IS_Data.Length; i++) if (IS_Data[i] != null) IS_Data[i].Create_Filter(Direct_Data[i].SWL, 16384, VB);
+                        VB.change_title("Creating Impulse Responses...");
+                        for (int i = 0; i < Receiver.Length; i++) Receiver[i].Create_Filter(VB);
+                    }
+                    catch (Exception error)
+                    {
+                        ReportSimulationError(error, "Rebuilding filters for the new phase regime failed");
+                    }
+                    finally
+                    {
+                        VB.Close();
+                    }
                 }
             }
 
