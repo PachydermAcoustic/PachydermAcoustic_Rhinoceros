@@ -76,7 +76,7 @@ namespace Pachyderm_Acoustic
             private NumericStepper RT_Count;
             private Button Select_Map;
             private Button Calculate;
-            private Medium_Properties_Group Env_Control;
+            internal Medium_Properties_Group Env_Control;
 
             private TabPage tabOutput;
             private SourceListBox SourceList;
@@ -869,7 +869,7 @@ namespace Pachyderm_Acoustic
                     ConvergenceProgress CP = new ConvergenceProgress(new System.Threading.CancellationTokenSource(), 1000);
                     if (!Spec_Rays.Checked) CP.Show(); //Rhino.UI.Panels.OpenPanel(new Guid("79B97A26-CEBC-4FA8-8275-9D961ADF1772"));//new System.Threading.Thread(() => {  }).Start();
 
-                    SplitRayTracer RT = new SplitRayTracer(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                    SplitRayTracer RT = SplitRayTracer.Create(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
                     TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();

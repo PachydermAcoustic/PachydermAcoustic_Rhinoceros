@@ -1262,7 +1262,7 @@ namespace Pachyderm_Acoustic
                         CancellationTokenSource CTS = new CancellationTokenSource();
                         CancellationToken CT = CTS.Token;
                         ConvergenceProgress CP = new ConvergenceProgress(CTS, 44100);
-                        SplitRayTracer RT = new SplitRayTracer(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, Rec.Third_Oct ? 23 : 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
+                        SplitRayTracer RT = SplitRayTracer.Create(Source[s], Rec, Flex_Scene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), new int[2] { 0, Rec.Third_Oct ? 23 : 7 }, Specular_Trace.Checked.Value ? int.MaxValue : ISBox.Checked.Value ? (int)Image_Order.Value : 0, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
                         if (!Spec_Rays.Checked) CP.Show();
 
                         EventHandler usercancel = (source, args) =>

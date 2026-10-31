@@ -24,7 +24,6 @@ using Pachyderm_Acoustic.Utilities;
 using Rhino.UI;
 using System;
 using System.Collections.Generic;
-using System.DirectoryServices.ActiveDirectory;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;

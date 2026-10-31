@@ -4,32 +4,28 @@ Hare
 
 Copyright (C) 2008-2026, Open Research in Acoustical Science and Education, Inc. - a 501(c)3 nonprofit
 
-This software is maintained by Open Reesarch in Acoustical Science and Education, Inc. and is and always will be free and open-source software under the General Public License 3.0 or later.
+This software is maintained by Open Research in Acoustical Science and Education, Inc. and is free and open-source software under the GNU General Public License, version 3 or any later version.
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; if not, see <http://www.gnu.org/licenses>.
+You should have received a copy of the GNU General Public License along with this program; if not, see <https://www.gnu.org/licenses/>.
 
-Additional permission under GNU GPL version 3 section 7:
+Third-party notices and host platform:
 
-This program uses the Math.Net Numerics Library, which is subject to its own licensing conditions.
-Math.Net is subject to copyright by Christoph Rüegg. Please refer to the Math.Net documentation for more information:
+This program uses Math.NET Numerics, which is distributed under the MIT License. Its copyright and license notices remain applicable and must be retained when redistributing the library.
 
-http://mathnet.opensourcedotnet.info
+https://github.com/mathnet/mathnet-numerics/blob/master/LICENSE.md
 
-This program also uses the Rhinoceros RhinoCommon and Grasshopper libraries, which come with/for Rhinoceros 5.0. Pachyderm-Acoustic depends fundamentally on the use of Rhinoceros and Grasshopper, and so Rhinocommon, Grasshopper and all associated libraries are assumed to be "System Libraries" as defined by the GPL, and thus are excluded from this license.
+Rhinoceros is the host platform for Pachyderm-Acoustic. This program uses the RhinoCommon and Grasshopper libraries supplied with Rhinoceros. Pachyderm-Acoustic depends fundamentally on the use of Rhinoceros and Grasshopper, and so RhinoCommon and Grasshopper are assumed to be "System Libraries" as defined by the GPL, and thus are excluded from this license. These platform libraries remain subject to their own licenses; this notice does not grant rights to redistribute them.
 Please contact McNeel & Associates for further information.
 
-http://www.en.na.mcneel.com/
+https://www.rhino3d.com/
 
-This program also uses Zedgraph, a .net library for display of graph results. Zedgraph is subject to the GNU LGPL. Please refer to 
-documentation at the following address:
+This program uses ScottPlot for plotting. ScottPlot is distributed under the MIT License; see misc/ScottPlot-LICENSE.txt for its copyright and license notice.
 
-http://sourceforge.net/projects/zedgraph/files/
-
-This program also uses Hare, a library for raytracing released   under the GNU GPL.
+This program also uses Hare, a library for raytracing released under the GNU GPL, version 3 or any later version.
 
 Finally, A library to read the Common Loudspeaker Format is included, but no source code is included for it. This is in order to protect the fidelity of the Common Loudspeaker Format. The author humbly requests that you respect and refrain from decompiling this library as it is provided with the best of intentions.
 

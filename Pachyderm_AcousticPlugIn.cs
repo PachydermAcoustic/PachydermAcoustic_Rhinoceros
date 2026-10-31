@@ -37,6 +37,7 @@ namespace Pachyderm_Acoustic
         {
             public static Guid Instance_ID = Guid.NewGuid();
             public Pach_Properties_Panel Pach_Props;
+            readonly FoliageConduit foliage = new FoliageConduit();
 
             public PachydermAc_PlugIn()
             {
@@ -99,6 +100,12 @@ namespace Pachyderm_Acoustic
                 };
 
                 return LoadReturnCode.Success;
+            }
+
+            protected override void OnShutdown()
+            {
+                foliage.Dispose();
+                base.OnShutdown();
             }
 
             public UI.Pach_Props_Page m_Doc_Page = new UI.Pach_Props_Page();

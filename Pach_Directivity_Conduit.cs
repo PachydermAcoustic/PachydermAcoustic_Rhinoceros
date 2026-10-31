@@ -27,7 +27,6 @@ using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
-using System.DirectoryServices.ActiveDirectory;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;

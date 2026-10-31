@@ -147,7 +147,8 @@ namespace Pachyderm_Acoustic
                 }
                 if (RC_List.Count != 0)
                 {
-                    return new Environment.RhCommon_Scene(RC_List, AirTempC, RelHumidity, AirPressurePa, AirAttenMethod, EdgeFreq, false);
+                    Environment.Foliage_Field foliage = UI.FoliageConduit.BuildField(RC_List);
+                    return foliage == null ? new Environment.RhCommon_Scene(RC_List, AirTempC, RelHumidity, AirPressurePa, AirAttenMethod, EdgeFreq, false) : new Environment.RhCommon_FoliageScene(RC_List, AirTempC, RelHumidity, AirPressurePa, AirAttenMethod, EdgeFreq, false, foliage);
                 }
                 return null;
             }
@@ -180,7 +181,8 @@ namespace Pachyderm_Acoustic
                 }
                 if (RC_List.Count != 0)
                 {
-                    return new Environment.RhCommon_PolygonScene(RC_List, edges, AirTempC, Rel_Humidity, AirPressurePa, AirAttenMethod, EdgeFreq, false);
+                    Environment.Foliage_Field foliage = UI.FoliageConduit.BuildField(RC_List);
+                    return foliage == null ? new Environment.RhCommon_PolygonScene(RC_List, edges, AirTempC, Rel_Humidity, AirPressurePa, AirAttenMethod, EdgeFreq, false) : new Environment.RhCommon_FoliagePolygonScene(RC_List, edges, AirTempC, Rel_Humidity, AirPressurePa, AirAttenMethod, EdgeFreq, false, foliage);
                 }
                 return null;
             }

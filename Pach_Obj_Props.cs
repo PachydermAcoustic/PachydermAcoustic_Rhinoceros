@@ -32,6 +32,7 @@ namespace Pachyderm_Acoustic
         public partial class Pach_objProps : Panel, IPanel
         {
             bool loadingMaterials;
+            internal readonly FoliageProperties foliage = new FoliageProperties();
             FreqSlider Absorption_Controls;
             FreqSlider Scattering_Controls;
             FreqSlider Transmission_Controls;
@@ -82,10 +83,11 @@ namespace Pachyderm_Acoustic
                 cont.Items.Add(Scattering_Controls);
                 cont.Items.Add(Trans_Label);
                 cont.Items.Add(Transmission_Controls);
+                cont.Items.Add(foliage);
 
                 this.SizeChanged += (sender, e) => { Absorption_Controls.resize(this.Width); Scattering_Controls.resize(this.Width); Transmission_Controls.resize(this.Width); };
 
-                this.Content = cont;
+                this.Content = new Scrollable { Content = cont };
             }
 
             private void User_Materials_CheckedChanged(object sender, System.EventArgs e)
@@ -190,6 +192,7 @@ namespace Pachyderm_Acoustic
                 {
                     this.Enabled = true;
                     Objects = Obj ?? new List<RhinoObject>();
+                    foliage.Load_Doc(Objects);
 
                     //Check to see if all objects have the same key values...
                     if (Objects.Count != 0)
@@ -301,6 +304,7 @@ namespace Pachyderm_Acoustic
 
             public void PanelHidden(uint documentSerialNumber, ShowPanelReason reason)
             {
+                if (foliage.Commit()) foliage.EndPreview();
                 // Called when the panel tab is hidden, in Mac Rhino this will happen
                 // for a document panel when a new document becomes active, the previous
                 // documents panel will get hidden and the new current panel will get shown.
@@ -308,6 +312,7 @@ namespace Pachyderm_Acoustic
 
             public void PanelClosing(uint documentSerialNumber, bool onCloseDocument)
             {
+                if (foliage.Commit()) foliage.EndPreview();
                 // Called when the document or panel container is closed/destroyed
             }
             #endregion IPanel methods
@@ -317,6 +322,16 @@ namespace Pachyderm_Acoustic
         {
             public Pach_Materials_Page()
             {
+            }
+
+            public override bool OnActivate(bool active)
+            {
+                if (!active && obj_Props != null)
+                {
+                    if (!obj_Props.foliage.Commit()) { Rhino.RhinoApp.WriteLine("Foliage changes could not be saved. Check the foliage editor."); return false; }
+                    obj_Props.foliage.EndPreview();
+                }
+                return base.OnActivate(active);
             }
 
             public override string EnglishPageTitle
@@ -354,6 +369,7 @@ namespace Pachyderm_Acoustic
                     obj_Props.Load_Doc(Selected);
                     return true;
                 }
+                if (obj_Props.foliage.Commit()) obj_Props.foliage.EndPreview();
                 return false;
             }
 
