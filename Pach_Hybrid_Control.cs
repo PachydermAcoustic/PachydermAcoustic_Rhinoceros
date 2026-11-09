@@ -1,4 +1,4 @@
-//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
+﻿//'Pachyderm-Acoustic: Geometrical Acoustics for Rhinoceros (GPL)   
 //' 
 //'This file is part of Pachyderm-Acoustic. 
 //' 
@@ -1669,6 +1669,19 @@ namespace Pachyderm_Acoustic
                 List<AbsorptionModels.ABS_Layer> Layers = AD.Material_Layers();
                 foreach (AbsorptionModels.ABS_Layer Layer in Layers) Buildup += Layer.LayerCode();
                 layer.SetUserString("BuildUp", Buildup);
+                bool wasTransmission = layer.GetUserString("BuildUp_Transmission") == "yes";
+                layer.SetUserString("BuildUp_Transmission", AD.Assign_Transmission ? "yes" : null);
+                if (AD.Assign_Transmission)
+                {
+                    layer.SetUserString("BuildUp_X", AD.Sample_X.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    layer.SetUserString("BuildUp_Y", AD.Sample_Y.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    double[] tau = AD.ThirdOctave ? AD.sm.TI_Coef_3rd : AD.sm.TI_Coef;
+                    layer.SetUserString("Transmission", PachTools.EncodeTransmissionLoss(tau.Select(t => -10 * Math.Log10(t)).ToArray()));
+                    double[] a = AD.ThirdOctave ? AD.sm.RI_Coef_3rd : AD.sm.RI_Coef;
+                    layer.SetUserString("Acoustics", RCPachTools.EncodeAcoustics(a.Select(value => (int)(1000 * value)).ToArray(), SCATSlider.Value.Select(value => (int)value).ToArray(), null));
+                }
+                else if (wasTransmission) layer.SetUserString("Transmission", "");
+
 
                 SmartMat_Display.Plot.Clear();
 
@@ -1792,7 +1805,8 @@ namespace Pachyderm_Acoustic
                         List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                         for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                        Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
+                        double[] scatter, transmission;
+                        Environment.Smart_Material sm = (Smart_Material)RCPachTools.Material_From_Layer(layer, 1.2, 343, out scatter, out transmission);
                         double[] AnglesDeg = new double[sm.Angles.Length];
                         ScottPlot.Color[] colors = new ScottPlot.Color[8] { ScottPlot.Colors.DarkRed, ScottPlot.Colors.Red, ScottPlot.Colors.Orange, ScottPlot.Colors.Yellow, ScottPlot.Colors.Green, ScottPlot.Colors.Blue, ScottPlot.Colors.BlueViolet, ScottPlot.Colors.Violet};
 
@@ -1823,7 +1837,8 @@ namespace Pachyderm_Acoustic
                         List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
                         for (int i = 0; i < BU.Length; i++) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(BU[i]));
 
-                        Environment.Smart_Material sm = new Smart_Material(false, Layers, 44100, 1.2, 343);
+                        double[] scatter, transmission;
+                        Environment.Smart_Material sm = (Smart_Material)RCPachTools.Material_From_Layer(layer, 1.2, 343, out scatter, out transmission);
                         double[] AnglesDeg = new double[sm.Angles.Length];
                         for (int i = 0; i < sm.Angles.Length; i++) AnglesDeg[i] = sm.Angles[i].Real;
                         SmartMat_Display.Plot.Add.Scatter(AnglesDeg, sm.Ang_Coef_Oct[0], ScottPlot.Colors.Red);
@@ -1907,7 +1922,13 @@ namespace Pachyderm_Acoustic
                 string buildup = layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup");
                 if ((materialType == "Buildup" || materialType == "Buildup_Finite") && !string.IsNullOrWhiteSpace(buildup))
                 {
-                    try { AD.Load_Buildup(buildup, materialType == "Buildup_Finite"); }
+                    try
+                    {
+                        bool transmission = layer.GetUserString("BuildUp_Transmission") == "yes";
+                        double x = transmission ? double.Parse(layer.GetUserString("BuildUp_X"), System.Globalization.CultureInfo.InvariantCulture) : 0;
+                        double y = transmission ? double.Parse(layer.GetUserString("BuildUp_Y"), System.Globalization.CultureInfo.InvariantCulture) : 0;
+                        AD.Load_Buildup(buildup, materialType == "Buildup_Finite", transmission, x, y);
+                    }
                     catch (Exception error)
                     {
                         AD.Dispose();
@@ -1919,6 +1940,18 @@ namespace Pachyderm_Acoustic
 
                 switch (AD.Result)
                 {
+                    case Pach_Absorption_Designer.AbsorptionModelResult.Random_Incidence_Transmission:
+                        double[] coefficients = AD.RI_Absorption;
+                        double[] transmitted = AD.ThirdOctave ? AD.sm.TI_Coef_3rd : AD.sm.TI_Coef;
+                        string code = RCPachTools.EncodeAcoustics(coefficients.Select(value => (int)(1000 * value)).ToArray(), SCATSlider.Value.Select(value => (int)value).ToArray(), null);
+                        layer.SetUserString("ABSType", "Coefficients");
+                        layer.SetUserString("BuildUp_Transmission", null);
+                        layer.SetUserString("Acoustics", code);
+                        layer.SetUserString("Transmission", PachTools.EncodeTransmissionLoss(transmitted.Select(t => -10 * Math.Log10(t)).ToArray()));
+                        layer.SetUserString("Carbon", AD.Total_Carbon.ToString());
+                        Material_Mode(true);
+                        Retrieve_Layer_Acoustics(null, null);
+                        return;
                     case Pach_Absorption_Designer.AbsorptionModelResult.Random_Incidence:
                         //Assign Random Incidence Absorption Coefficients...
                         Material_Mode(true);
@@ -1932,6 +1965,7 @@ namespace Pachyderm_Acoustic
                         Commit_Layer_Acoustics();
                         Material_Mode(true);
                         return;
+                    case Pach_Absorption_Designer.AbsorptionModelResult.Smart_Material_Transmission:
                     case Pach_Absorption_Designer.AbsorptionModelResult.Smart_Material:
                         //Store and Assign Smart Material.
                         Material_Mode(false);
@@ -2912,6 +2946,7 @@ namespace Pachyderm_Acoustic
 
             private void Receiver_Choice_SelectedIndexChanged(object sender, EventArgs e)
             {
+                if (updatingAnalysis || Receiver_Choice.SelectedIndex < 0) return;
                 OpenAnalysis();
                 Source_Aim_SelectedIndexChanged(null, EventArgs.Empty);
                 if (Receiver_Choice.SelectedIndex >= 0 && Receiver_Choice.Items.Count >= 0)
@@ -4440,65 +4475,61 @@ namespace Pachyderm_Acoustic
                 //}
             }
 
-            private async void Read_File(string path)
+            private void Read_File(string path)
             {
                 ProgressBox VB = new ProgressBox("Calculating Pressure/Filter Responses");
                 VB.Show();
-                if (FileIO.Read_Pac1(path, ref Direct_Data, ref IS_Data, ref Receiver, VB))
+                try
                 {
+                    Direct_Sound[] direct = null;
+                    ImageSourceData[] images = null;
+                    Receiver_Bank[] receivers = null;
+                    if (!FileIO.Read_Pac1(path, ref direct, ref images, ref receivers, VB)) return;
+                    SetSims(direct, images, receivers);
+                    cleanup();
+                }
+                finally { VB.Close(); }
+            }
+
+            /// <summary>Populate this panel from completed simulation data on the Rhino UI thread.</summary>
+            public void SetSims(Direct_Sound[] direct, ImageSourceData[] images, Receiver_Bank[] receivers)
+            {
+                if (direct == null || direct.Length == 0 || direct.Any(d => d == null || d.Src == null))
+                    throw new ArgumentException("Completed direct sound data is required for every source.", nameof(direct));
+                Hare.Geometry.Point[] points = direct[0].Rec_Origin.ToArray();
+                if (points.Length == 0 || direct.Any(d => d.Rec_Origin.Count() != points.Length ||
+                    d.SampleRate != direct[0].SampleRate || d.Cutoff_Time != direct[0].Cutoff_Time || d.ThirdOctave != direct[0].ThirdOctave))
+                    throw new ArgumentException("Sources must use matching receiver counts, sample rates, cutoff times and frequency bands.", nameof(direct));
+                if (images != null && images.Length != direct.Length) throw new ArgumentException("Image source results must align with the direct sound sources.", nameof(images));
+                if (receivers != null && (receivers.Length != direct.Length || receivers.Any(r => r != null && r.Count != points.Length)))
+                    throw new ArgumentException("Ray tracing results must align with the direct sound sources and receivers.", nameof(receivers));
+                if (!Calculate.Enabled) throw new InvalidOperationException("Wait for the active hybrid calculation to finish.");
+
+                bool wasUpdating = updatingAnalysis;
+                updatingAnalysis = true;
+                try
+                {
+                    Direct_Data = direct;
+                    IS_Data = images;
+                    Receiver = receivers;
+                    Source = direct.Select(d => d.Src).ToArray();
+                    Recs = points;
+                    CutoffTime = direct[0].Cutoff_Time;
+                    SampleRate = (int)direct[0].SampleRate;
+                    IR_Parts_Analysis.Visible = false;
                     SourceList.Clear();
                     LockUserScale.Checked = false;
-                    Update_Graph(null, new System.EventArgs());
-                    Receiver_Choice.SelectedIndex = 0;
-                    OpenAnalysis();
-                    cleanup();
-
-                    Source = new Source[Direct_Data.Length];
-                    Recs = new Hare.Geometry.Point[Receiver[0].Count];
-                    CutoffTime = Direct_Data[0].Cutoff_Time;
-
-                    for (int i = 0; i < Recs.Length; i++) Recs[i] = Receiver[0].Rec_List[i].Origin;
-                    SourceList.Populate(Direct_Data, IS_Data, Receiver);
-
-                    for (int DDCT = 0; DDCT < Direct_Data.Length; DDCT++)
-                    {
-                        Source[DDCT] = Direct_Data[DDCT].Src;
-                    }
-
-                    int r = Receiver_Choice.SelectedIndex;
                     Receiver_Choice.Items.Clear();
-
-                    for (int i = 0; i < Direct_Data[0].Rec_Origin.Count(); i++)
-                    {
-                        Receiver_Choice.Items.Add(i.ToString());
-                    }
-                    Receiver_Choice.SelectedIndex = Math.Max(0, r);
-
-
-                    if (IS_Data != null && IS_Data[0] != null && Receiver_Choice.SelectedIndex > -1)
-                    {
-                        this.IS_Path_Box.Populate(IS_Data, SourceList.SelectedSources(), 0);
-                    }
-
-                    SampleRate = (int)Direct_Data[0].SampleRate;
-                    //Task t = new Task(() => { foreach (Receiver_Bank R in Receiver) R.Create_Filter(VB); });
-                    //t.Start();
-                    
-                    //while (! t.IsCompleted) await Task.Delay(1000);
-
-                    //return true;
+                    for (int i = 0; i < Recs.Length; i++) Receiver_Choice.Items.Add(i.ToString());
+                    Receiver_Choice.SelectedIndex = 0;
                 }
-                else
-                {
-                    Eto.Forms.MessageBox.Show("File Read Failed...", "Results file was corrupt or incomplete. We apologize for this inconvenience. Please report this to the software author. It will be much appreciated.");
-                    //return false;
-                }
-                //VB.Close();
+                finally { updatingAnalysis = wasUpdating; }
+                Populate_Sources();
+                Receiver_Choice_SelectedIndexChanged(null, EventArgs.Empty);
 
                 ///Set a recommended minimum auralization ceiling...
-                List<int> s = new List<int>();
+                List<int> s = Enumerable.Range(0, Source.Length).ToList();
                 double max = 0;
-                for (int i = 0; i < Source.Length; i++) s.Add(i);
                 for (int r = 0; r < Recs.Length; r++)
                 {
                     double[] Filter = IR_Construction.PressureTimeCurve(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, r, s, false, true);

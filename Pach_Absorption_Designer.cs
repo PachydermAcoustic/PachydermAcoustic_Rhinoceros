@@ -69,7 +69,9 @@ namespace Pachyderm_Acoustic
             {
                 Random_Incidence,
                 Smart_Material,
-                Cancel
+                Cancel,
+                Random_Incidence_Transmission,
+                Smart_Material_Transmission
             }
 
             public Pach_Absorption_Designer()
@@ -104,6 +106,9 @@ namespace Pachyderm_Acoustic
             }
 
             public void Load_Buildup(string code, bool finiteSample)
+                => Load_Buildup(code, finiteSample, false, 0, 0);
+
+            public void Load_Buildup(string code, bool finiteSample, bool transmission, double xDimension, double yDimension)
             {
                 List<ABS_Layer> restored = code.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(ABS_Layer.LayerFromCode).ToList();
@@ -117,6 +122,9 @@ namespace Pachyderm_Acoustic
                     Inf_Sample.Checked = !finiteSample;
                     Fin_Sample.Checked = finiteSample;
                     Is_Finite = finiteSample;
+                    Air_Term.Checked = transmission;
+                    Rigid_Term.Checked = !transmission;
+                    if (xDimension > 0 && yDimension > 0) { XDim.Value = xDimension; YDim.Value = yDimension; }
                     if (Layers.Count > 0) LayerList.SelectedIndex = 0;
                 }
                 finally { _designerLoading = false; }
@@ -342,7 +350,7 @@ namespace Pachyderm_Acoustic
                 _iirCts?.Cancel();
                 _buildTimer.Stop();
                 _buildReady = false;
-                Smart_Mat.Enabled = Use_RI.Enabled = false;
+                Smart_Mat.Enabled = Use_RI.Enabled = Smart_Mat_Trans.Enabled = Use_RI_Trans.Enabled = false;
                 _buildPending = Layers.Count > 0 && (!Fin_Sample.Checked || (XDim.Value > 0 && YDim.Value > 0));
                 if (Layers.Count == 0)
                 {
@@ -413,6 +421,7 @@ namespace Pachyderm_Acoustic
                         _buildReady = true;
                         Render_Graphs();
                         Smart_Mat.Enabled = Use_RI.Enabled = true;
+                        Smart_Mat_Trans.Enabled = Use_RI_Trans.Enabled = transmission;
                         _ = Fit_IIR_Async(result, myGeneration, token);
                     });
                 }
@@ -1203,12 +1212,17 @@ namespace Pachyderm_Acoustic
                 finally { indexchanged = false; }
             }
 
+            public double Sample_X { get { return XDim.Value; } }
+            public double Sample_Y { get { return YDim.Value; } }
+            public bool Assign_Transmission { get { return Result == AbsorptionModelResult.Random_Incidence_Transmission || Result == AbsorptionModelResult.Smart_Material_Transmission; } }
+
             public double Total_Carbon = 0;
 
             private void Use_RI_Click(object sender, EventArgs e)
             {
                 if (!_buildReady) return;
-                Result = AbsorptionModelResult.Random_Incidence;
+                if (sender == Use_RI_Trans && !Air_Term.Checked) return;
+                Result = sender == Use_RI_Trans ? AbsorptionModelResult.Random_Incidence_Transmission : AbsorptionModelResult.Random_Incidence;
                 Total_Carbon = 0;
                 for (int i = 0; i < Layers.Count; i++)
                 {
@@ -1220,7 +1234,8 @@ namespace Pachyderm_Acoustic
             private void Smart_Mat_Click(object sender, EventArgs e)
             {
                 if (!_buildReady) return;
-                Result = AbsorptionModelResult.Smart_Material;
+                if (sender == Smart_Mat_Trans && !Air_Term.Checked) return;
+                Result = sender == Smart_Mat_Trans ? AbsorptionModelResult.Smart_Material_Transmission : AbsorptionModelResult.Smart_Material;
                 Total_Carbon = 0;
                 for (int i = 0; i < Layers.Count; i++)
                 {

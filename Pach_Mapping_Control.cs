@@ -1939,19 +1939,22 @@ namespace Pachyderm_Acoustic
                 {
                     PachMapReceiver[] RT_IN = new PachMapReceiver[0];
                     if (!Utilities.FileIO.Read_pachm(of.FileName,ref RT_IN)) return;
-                    //foreach (PachMapReceiver p in RT_IN) p.Correction(80000);
-
-                    Map = RT_IN;
-                    SourceList.Clear();
-                    //for (int i = 0; i < Map.Length; i++)
-                    //{
-                    UpdateResultBands();
-                    SourceList.Populate(null, null, Map);
-                    //SourceList.Items.Add(String.Format("S{0}-", i) + Map[i].SrcType);
-                    //}
-
-                    WC = new WaveConduit(color_control.Scale, new double[] { Current_SPLMin, Current_SPLMax });
+                    SetSims(RT_IN);
                 }
+            }
+
+            /// <summary>Populate this panel from completed receiver maps on the Rhino UI thread.</summary>
+            public void SetSims(PachMapReceiver[] maps)
+            {
+                if (maps == null || maps.Length == 0 || maps.Any(map => map == null))
+                    throw new ArgumentException("At least one completed receiver map is required.", nameof(maps));
+                if (!Calculate.Enabled) throw new InvalidOperationException("Wait for the active mapping calculation to finish.");
+
+                Map = maps;
+                SourceList.Clear();
+                UpdateResultBands();
+                SourceList.Populate(null, null, Map);
+                WC = new WaveConduit(color_control.Scale, new double[] { Current_SPLMin, Current_SPLMax });
             }
 
             private void Parameter_Selection_SelectedIndexChanged(object sender, EventArgs e)

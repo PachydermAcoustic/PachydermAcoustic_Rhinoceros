@@ -396,6 +396,11 @@ namespace Pachyderm_Acoustic
 
             private async void EvaluateAll_Click(object sender, EventArgs e)
             {
+                await EvaluateAllAsync();
+            }
+
+            private async Task EvaluateAllAsync()
+            {
                 int myGeneration = ++_runGeneration;
                 _runCts?.Cancel();
                 _runCts = new CancellationTokenSource();
@@ -450,6 +455,12 @@ namespace Pachyderm_Acoustic
                 _runThread.Start();
 
                 while (_runThread.IsAlive) await Task.Delay(50);
+
+                // Drain posted row results before evaluating readiness, including when
+                // the worker finished before the first wait. No fit is accepted stale.
+                var applied = new TaskCompletionSource<bool>();
+                Application.Instance.AsyncInvoke(() => applied.TrySetResult(true));
+                await applied.Task;
 
                 _grid.Enabled = true;
 
@@ -699,10 +710,7 @@ namespace Pachyderm_Acoustic
 
             public async Task<bool> EnsureFitsAsync()
             {
-                EvaluateAll_Click(this, EventArgs.Empty);
-
-                while (_runThread != null && _runThread.IsAlive)
-                    await Task.Delay(50);
+                await EvaluateAllAsync();
 
                 if (_rows.All(r => r.IsCurrent && r.Success && r.Result != null))
                 {

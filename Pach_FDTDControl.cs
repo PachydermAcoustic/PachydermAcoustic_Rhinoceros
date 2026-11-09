@@ -1025,27 +1025,8 @@ namespace Pachyderm_Acoustic
                 Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sinc_Function, f, 1, RCPachTools.GetSource(0));
                 Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec.ToArray());
                 double fs = 62.5 * Utilities.Numerics.rt2 * Math.Pow(2, Eigen_Extent.SelectedIndex);
-                // --- IIR fit gate ---
-                List<Environment.Material> fitMaterials;
-                List<string> fitLayerNames;
-                BuildUniqueSceneMaterials(Rm, out fitMaterials, out fitLayerNames);
-
-                if (fitMaterials.Count > 0)
-                {
-                    Pach_Absorption_Filter_Fitter fitter = new Pach_Absorption_Filter_Fitter(fitMaterials, fitLayerNames);
-                    fitter.SetFitParameters(0, fs);
-
-                    // Always show the fitter so the user has full control over all fits
-                    await fitter.ShowAsync();
-
-                    if (!fitter.Accepted)
-                    {
-                        // User closed without accepting — abort the simulation
-                        MessageBox.Show("IIR filter fitting was not accepted.\nSimulation cancelled.", "Absorption Filter Fitting", MessageBoxButtons.OK);
-                        return;
-                    }
-                    // all fits cached in material instances — fitter can be discarded
-                }
+                // Reuse the same fit gate as scattering and insertion-loss simulations.
+                if (!await FitSceneMaterialsAsync(Rm, fs)) return;
                 // --- end IIR fit gate ---                //int fitOrder = 0;
                 //double fitMaxFreq = fs / 2.0;
                 //PrecomputeMaterialIIRFits(Rm, fs, fitMaxFreq, fitOrder);
@@ -1053,23 +1034,29 @@ namespace Pachyderm_Acoustic
                 FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, fs, (double)CO_TIME.Value, Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, EigenPML.Checked.Value);
                 FDTD.RuntoCompletion();
 
-                samplefrequency = FDTD.SampleFrequency;
-
                 Mic.reset();
+                double[][] recordings = Mic.Recordings()[0];
+                for (int i = 0; i < recordings.Length; i++) recordings[i] = Pach_SP.FIR_AirAttenuation(recordings[i], (int)FDTD.SampleFrequency, 20.0, 50.0, 101.325, 0);
+                SetSims(Rec.ToArray(), recordings, FDTD.SampleFrequency);
+            }
 
-                result_signals = Mic.Recordings()[0];
-                for (int i = 0; i < result_signals.Length; i++) result_signals[i] = Pach_SP.FIR_AirAttenuation(result_signals[i], (int)samplefrequency, 20.0, 50.0, 101.325, 0);
-                //for (int i = 0; i < result_signals.Length; i++) result_signals[i] = Pach_SP.FIR_Lowpass(result_signals[i], Eigen_Extent.SelectedIndex, (int)samplefrequency, 0);
-
-                if (EigenFrequencies.Items.Count > 0) return;
-                EigenFrequencies.Items.Clear();
-                Find_EigenFrequencies(Rec);
+            /// <summary>Display completed receiver pressure recordings on the Rhino UI thread.</summary>
+            public void SetSims(Hare.Geometry.Point[] receivers, double[][] recordings, double sampleRate)
+            {
+                if (sampleRate <= 0 || double.IsNaN(sampleRate) || double.IsInfinity(sampleRate))
+                    throw new ArgumentOutOfRangeException(nameof(sampleRate));
+                if (receivers == null || recordings == null || recordings.Length == 0 || receivers.Length != recordings.Length ||
+                    recordings[0] == null || recordings[0].Length < 2 || recordings.Any(signal => signal == null || signal.Length != recordings[0].Length))
+                    throw new ArgumentException("Supply one equally sized pressure recording per receiver, with at least two samples.", nameof(recordings));
 
                 Receiver_Choice.Items.Clear();
+                result_signals = recordings;
+                samplefrequency = sampleRate;
+                EigenFrequencies.Items.Clear();
+                Find_EigenFrequencies(receivers.ToList());
                 Time = new double[result_signals[0].Length];
                 for (int i = 0; i < Time.Length; i++) Time[i] = (double)i / samplefrequency;
                 for (int i = 0; i < result_signals.Length; i++) Receiver_Choice.Items.Add(i.ToString());
-
                 Receiver_Choice.SelectedIndex = 0;
             }
 
@@ -1122,7 +1109,7 @@ namespace Pachyderm_Acoustic
                 Eigen_Record = new SortedDictionary<string, List<Point>>();
                 double max = double.NegativeInfinity;
                 double min = double.PositiveInfinity;
-                if (Receiver_Choice.Items.Count < 1) return;
+                if (Receiver_Choice.SelectedIndex < 0) return;
                 double[] SPL = Utilities.AcousticalMath.SPL_Pressure_Signal(result_signals[Receiver_Choice.SelectedIndex]);
                 for (int i = 0; i < SPL.Length; i++)
                 {

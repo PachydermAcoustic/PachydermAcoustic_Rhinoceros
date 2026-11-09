@@ -440,6 +440,11 @@ namespace Pachyderm_Acoustic
                 Cancel.Text = "Cancel";
                 Cancel.Click += this.Cancel_Click;
                 CtrlX.AddRow(Smart_Mat, Use_RI, Cancel);
+                Smart_Mat_Trans = new Button { Text = "Smart Material + TL", Enabled = false };
+                Use_RI_Trans = new Button { Text = "Band Coefficients + TL", Enabled = false };
+                Smart_Mat_Trans.Click += Smart_Mat_Click;
+                Use_RI_Trans.Click += Use_RI_Click;
+                CtrlX.AddRow(Smart_Mat_Trans, Use_RI_Trans);
 
                 CtrlRight.AddRow(Ctrl12);
                 CtrlRight.AddRow(Ctrl3);
@@ -612,7 +617,7 @@ namespace Pachyderm_Acoustic
                 // Check if a material is selected in the list
                 if (Material_List.SelectedIndex < 0 || Material_List.SelectedIndex >= EHM.ECC_Abs.Count)
                 {
-                    MessageBox.Show("Please select a material from the list first.");
+                    Utilities.RCPachTools.ShowMessage("Please select a material from the list first.");
                     return;
                 }
 
@@ -939,6 +944,7 @@ namespace Pachyderm_Acoustic
             private ScottPlot.Eto.EtoPlot Impedance_Graph;
             private Eto.Forms.ListBox LayerList;
             private Eto.Forms.Button Use_RI;
+            private Eto.Forms.Button Use_RI_Trans, Smart_Mat_Trans;
             private Eto.Forms.Label Resistivity_Feedback;
             private Eto.Forms.Label Label1;
             private Eto.Forms.NumericStepper Sigma;

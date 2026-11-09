@@ -18,6 +18,55 @@ namespace Pachyderm_Acoustic
     {
         public class RCPachTools : PachTools
         {
+            /// <summary>Read the layer attributes used by both geometrical scene builders.</summary>
+            public static Environment.Material Material_From_Layer(Rhino.DocObjects.Layer layer, double rho, double soundSpeed, out double[] scattering, out double[] transmission)
+            {
+                double[] Abs = new double[8];
+                scattering = new double[8];
+                transmission = new double[8];
+                string AcousticsData = layer.GetUserString("Acoustics");
+                if (!string.IsNullOrEmpty(AcousticsData))
+                    DecodeAcoustics(AcousticsData, ref Abs, ref scattering, ref transmission);
+                string type = layer.GetUserString("ABSType");
+                bool buildup = type == "Buildup" || type == "Buildup_Finite";
+                bool withTransmission = buildup ? layer.GetUserString("BuildUp_Transmission") == "yes" : !string.IsNullOrEmpty(layer.GetUserString("Transmission"));
+                Environment.Material material;
+                if (buildup)
+                {
+                    List<AbsorptionModels.ABS_Layer> layers = (layer.GetUserString("BuildUp") ?? layer.GetUserString("Buildup")).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(AbsorptionModels.ABS_Layer.LayerFromCode).ToList();
+                    if (withTransmission && type == "Buildup_Finite")
+                    {
+                        double x = double.Parse(layer.GetUserString("BuildUp_X"), CultureInfo.InvariantCulture);
+                        double y = double.Parse(layer.GetUserString("BuildUp_Y"), CultureInfo.InvariantCulture);
+                        material = new Smart_Material(true, layers, 44100, rho, soundSpeed, new Smart_Material.Finite_Field_Impedance(x, y, soundSpeed, rho), .1);
+                    }
+                    else material = new Smart_Material(withTransmission, layers, 44100, rho, soundSpeed);
+                    if (withTransmission)
+                    {
+                        Smart_Material smart = (Smart_Material)material;
+                        bool thirdOctave = DecodeTransmissionLoss(layer.GetUserString("Transmission")).Length == 24;
+                        transmission = smart.Transmission_Coefficients(thirdOctave);
+                    }
+                }
+                else
+                {
+                    if (withTransmission)
+                    {
+                        double[] tau = DecodeTransmissionLoss(layer.GetUserString("Transmission")).Select(tl => Math.Pow(10, -tl / 10)).ToArray();
+                        transmission = new double[Abs.Length];
+                        for (int band = 0; band < Abs.Length; band++)
+                        {
+                            double t = tau.Length == Abs.Length ? tau[band] : Abs.Length == 24 ? tau[band / 3] : (tau[3 * band] + tau[3 * band + 1] + tau[3 * band + 2]) / 3;
+                            Abs[band] = Math.Max(0, Abs[band] - t);
+                            double surviving = 1 - Abs[band];
+                            transmission[band] = surviving != 0 ? t / surviving : 0;
+                        }
+                    }
+                    material = new Basic_Material(Abs);
+                }
+                return material;
+            }
+
             ///// <summary>
             ///// Shorthand tool used to run a simulation.
             ///// </summary>

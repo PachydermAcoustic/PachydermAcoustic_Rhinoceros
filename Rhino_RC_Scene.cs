@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using Rhino.Geometry;
 using Hare.Geometry;
 using System.Data.Odbc;
+using System.Linq;
+using Pachyderm_Acoustic.Utilities;
 
 namespace Pachyderm_Acoustic
 {
@@ -68,70 +70,20 @@ namespace Pachyderm_Acoustic
                 {
                     Rhino.DocObjects.Layer Layer = Rhino.RhinoDoc.ActiveDoc.Layers[l];
                     string abstype = Layer.GetUserString("ABSType");
-
-                    if (abstype == "Buildup")
+                    if (abstype != "Buildup" && abstype != "Buildup_Finite" && Layer.GetUserString("Acoustics") == "")
                     {
-                        string BU = Layer.GetUserString("BuildUp");
-                        string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                        List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
-                        foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Mat_Layer.Add(new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
-
-                        double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
-                        Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
-                        ///Other properties are still coefficient based...
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
-                        Trans_Layer.Add(Trans);
+                        Mat_Layer.Add(null); Scat_Layer.Add(null); Trans_Layer.Add(null);
+                        continue;
                     }
-                    else if (abstype == "Buildup_Finite")
-                    {
-                        //Finite_Layers.Add(true);
-                        string BU = Layer.GetUserString("BuildUp");
-                        string[] BU_split = BU.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                        List<AbsorptionModels.ABS_Layer> Buildup = new List<AbsorptionModels.ABS_Layer>();
-                        foreach (string swatch in BU_split) Buildup.Add(AbsorptionModels.ABS_Layer.LayerFromCode(swatch));
-                        Environment.Smart_Material sm = new Environment.Smart_Material(false, Buildup, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0));
-                        Mat_Layer.Add(sm);
-                        double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
-                        Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(Layer.GetUserString("Acoustics"), ref Abs, ref Scat, ref Trans);
-                        ///Other properties are still coefficient based...
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
-                        Trans_Layer.Add(Trans);
-                    }
-                    else
-                    {
-                        string spec = Layer.GetUserString("Acoustics");
-
-                        if (spec == "")
-                        {
-                            ///Layer is not used. As long as there is no geometry for pachyderm on this layer without object set properties, this is ok.
-                            Mat_Layer.Add(null);
-                            Scat_Layer.Add(null);
-                            Trans_Layer.Add(null);
-                            continue;
-                        }
-
-                        double[] Abs = new double[8], Scat = new double[8], Trans = new double[8];
-                        Pachyderm_Acoustic.Utilities.PachTools.DecodeAcoustics(spec, ref Abs, ref Scat, ref Trans);
-                        //New code for transmission loss incorporation...
-                        string trans = Layer.GetUserString("Transmission");
-                        Trans = (trans == "" || trans == null) ? (Trans[3] + Trans[4] + Trans[5] == 0 ? new double[] { 0, 0, 0, 0, 0, 0, 0, 0 } : Trans) : Utilities.PachTools.DecodeTransmissionLoss(trans);
-
-                        //TODO: Test that this works.
-                        string TR = Layer.GetUserString("Transmission");
-                        if (TR != null && TR != "")
-                        {
-                            for (int oct = 0; oct < 8; oct++)
-                            {
-                                double tau = Math.Pow(10, -Trans[oct] / 10);
-                                Abs[oct] = Math.Max(0,Abs[oct] - tau);
-                                Trans[oct] = tau / (1 - Abs[oct]);
-                            }
-                        }
-                        Mat_Layer.Add(new Environment.Basic_Material(Abs));
-                        Scat_Layer.Add(new Environment.Lambert_Scattering(Scat));
-                        Trans_Layer.Add(Trans);
-                    }
+                    double[] scattering, transmission;
+                    Environment.Material material = RCPachTools.Material_From_Layer(Layer, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), out scattering, out transmission);
+                    Mat_Layer.Add(material);
+                    if (string.IsNullOrEmpty(Layer.GetUserString("Transmission")) && abstype != "Buildup" && abstype != "Buildup_Finite" && transmission[3] + transmission[4] + transmission[5] == 0)
+                        transmission = new double[8];
+                    Scat_Layer.Add(material is Smart_Material smart && smart.Transmitting
+                        ? new Smart_Material_Scattering(scattering, smart)
+                        : new Lambert_Scattering(scattering));
+                    Trans_Layer.Add(transmission);
                 }
 
                 for (int q = 0; q <= ObjectList.Count - 1; q++)
@@ -1015,33 +967,21 @@ namespace Pachyderm_Acoustic
                                 return;
                             }
 
-                            if (Method == "Buildup" || Method == "Buildup_Finite")
-                            {
-                                List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                                string[] Buildup = layer.GetUserString("BuildUp").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                                foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                                AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
-                            }
-                            else
-                                AbsorptionData.Add(new Basic_Material(Absorption));
+                            AbsorptionData.Add(RCPachTools.Material_From_Layer(layer, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), out Scat, out Transparency));
                         }
 
                         Area = new double[BrepList.Count];
                         for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
 
-                        ScatteringData.Add(new Lambert_Scattering(Scat));
+                        ScatteringData.Add(AbsorptionData[AbsorptionData.Count - 1] is Smart_Material smart && smart.Transmitting
+                            ? new Smart_Material_Scattering(Scat, smart)
+                            : new Lambert_Scattering(Scat));
+                        double[] transmissionOctave = TransmissionSpectrum(Transparency, false);
+                        double[] transmissionThirdOctave = TransmissionSpectrum(Transparency, true);
                         TransmissionData.Add(Transparency);
-                        TransmissionData_Octave.Add(TransmissionSpectrum(Transparency, false));
-                        TransmissionData_ThirdOctave.Add(TransmissionSpectrum(Transparency, true));
-                        bool Trans = false;
-                        for (int t_oct = 0; t_oct < 8; t_oct++)
-                        {
-                            if (Transparency[t_oct] > 0)
-                            {
-                                Trans = true;
-                                break;
-                            }
-                        }
+                        TransmissionData_Octave.Add(transmissionOctave);
+                        TransmissionData_ThirdOctave.Add(transmissionThirdOctave);
+                        bool Trans = Transparency.Any(coefficient => coefficient > 0);
                         Transmissive.Add(Trans);
                         PlaneBoolean.Add(BObj.Faces[j].IsPlanar());
 
@@ -1106,37 +1046,22 @@ namespace Pachyderm_Acoustic
                             return;
                         }
 
-                        if (Method == "Buildup" || Method == "Buildup_Finite")
-                        {
-                            List<AbsorptionModels.ABS_Layer> Layers = new List<AbsorptionModels.ABS_Layer>();
-                            string[] Buildup = layer.GetUserString("BuildUp").Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string l in Buildup) Layers.Add(AbsorptionModels.ABS_Layer.LayerFromCode(l));
-                            AbsorptionData.Add(new Smart_Material(false, Layers, 44100, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0)));
-                        }
-                        else
-                            AbsorptionData.Add(new Basic_Material(Absorption));
+                        AbsorptionData.Add(RCPachTools.Material_From_Layer(layer, Env_Prop.Rho(0), Env_Prop.Sound_Speed(0), out Scat, out Transparency));
 
                         Area = new double[BrepList.Count];
                         for (int i = 0; i < BrepList.Count; i++) Area[i] = BrepList[i].GetArea();
 
-                        for (int oct = 0; oct < 8; oct++)
-                        {
-                            Transmission[oct] = Transparency[oct];
-                        }
+                        Transmission = Transparency;
 
-                        ScatteringData.Add(new Lambert_Scattering(Scat));
+                        ScatteringData.Add(AbsorptionData[AbsorptionData.Count - 1] is Smart_Material smart && smart.Transmitting
+                            ? new Smart_Material_Scattering(Scat, smart)
+                            : new Lambert_Scattering(Scat));
+                        double[] transmissionOctave = TransmissionSpectrum(Transmission, false);
+                        double[] transmissionThirdOctave = TransmissionSpectrum(Transmission, true);
                         TransmissionData.Add(Transmission);
-                        TransmissionData_Octave.Add(TransmissionSpectrum(Transmission, false));
-                        TransmissionData_ThirdOctave.Add(TransmissionSpectrum(Transmission, true));
-                        bool Trans = false;
-                        for (int t_oct = 0; t_oct < 8; t_oct++)
-                        {
-                            if (Transmission[t_oct] > 0)
-                            {
-                                Trans = true;
-                                break;
-                            }
-                        }
+                        TransmissionData_Octave.Add(transmissionOctave);
+                        TransmissionData_ThirdOctave.Add(transmissionThirdOctave);
+                        bool Trans = Transmission.Any(coefficient => coefficient > 0);
                         Transmissive.Add(Trans);
                         PlaneBoolean.Add(BObj.Faces[j].IsPlanar());
 
