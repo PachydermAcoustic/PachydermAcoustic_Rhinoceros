@@ -1,0 +1,87 @@
+# Pachyderm foliage tree catalogue (UTF-8, tab-separated).
+# Edit or add rows, then reopen the foliage interface. Blank lines and # comments are ignored.
+# Use decimal points, true/false flags, and NaN for unknown leaf lengths.
+# Species keys must be unique and must not contain |, ; or ^ (assignment delimiters).
+# Keep species keys used by existing model assignments; those keys identify saved mixtures.
+# Heights are feet, leaf/leaflet lengths are inches, blade/needle widths are millimetres.
+# Botanical dimensions are editable defaults, not attenuation coefficients.
+# Published landscape ranges, not maximum forest heights or measured site averages.
+# UF/IFAS Extension: Gilman, Watson et al., species fact sheets (accessed 2026-10-25).
+# Blade/needle widths (mm): Native Plant Trust Go Botany; NC State Extension; Scion.
+# Botanical range midpoints are editable defaults, not measured canopy means (accessed 2026-10-26).
+# Additional species: NC State Extension heights; Go Botany blade dimensions (accessed 2026-10-27).
+# Scots pine needles: Flora of Oregon; white fir needles: Oregon State University.
+# Equal width limits represent a single published dimension; missing lengths stay unknown.
+# Connecticut additions (2026-10-27): compound species use individual leaflet dimensions.
+# Boxelder includes larger terminal leaflets; widths remain editable range midpoints.
+# Name	Species	HeightMin_ft	HeightMax_ft	LeafMin_in	LeafMax_in	Evergreen	Source	WidthMin_mm	WidthMax_mm	WidthSource	Leaflet
+Red maple	Acer rubrum	60	75	2	5	false	https://ask.ifas.ufl.edu/publication/ST041	60	150	https://gobotany.nativeplanttrust.org/species/acer/rubrum/	false
+River birch	Betula nigra	40	50	1	4	false	https://ask.ifas.ufl.edu/publication/ST094	30	60	https://gobotany.nativeplanttrust.org/species/betula/nigra/	false
+White oak	Quercus alba	60	100	2	8	false	https://ask.ifas.ufl.edu/publication/ST541	40	165	https://gobotany.nativeplanttrust.org/species/quercus/alba/	false
+Southern live oak	Quercus virginiana	60	80	2	5	true	https://ask.ifas.ufl.edu/publication/ST564	20.32	38.1	https://plants.ces.ncsu.edu/plants/quercus-virginiana/	false
+Eastern white pine	Pinus strobus	50	80	2	4	true	https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/pinstra.pdf	0.7	1	https://nzfri.scionresearch.com/Content/Projects/nzfri/keys/cultivated-pines/key/cultivated_pines/Media/Html/Pinus_strobus.htm	false
+Sugar maple	Acer saccharum	40	120	NaN	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/acer-saccharum/	80	200	https://gobotany.nativeplanttrust.org/species/acer/saccharum/	false
+Silver maple	Acer saccharinum	50	80	NaN	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/acer-saccharinum/	80	140	https://gobotany.nativeplanttrust.org/species/acer/saccharinum/	false
+Norway maple	Acer platanoides	40	50	3.93700787401575	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/acer-platanoides/	100	180	https://gobotany.nativeplanttrust.org/species/acer/platanoides/	false
+Northern red oak	Quercus rubra	50	70	4.7244094488189	7.8740157480315	false	https://plants.ces.ncsu.edu/plants/quercus-rubra/	60	120	https://gobotany.nativeplanttrust.org/species/quercus/rubra/	false
+Pin oak	Quercus palustris	50	70	1.96850393700787	6.2992125984252	false	https://plants.ces.ncsu.edu/plants/quercus-palustris/	50	120	https://gobotany.nativeplanttrust.org/species/quercus/palustris/	false
+Swamp white oak	Quercus bicolor	50	60	3.11023622047244	8.46456692913386	false	https://plants.ces.ncsu.edu/plants/quercus-bicolor/	40	160	https://gobotany.nativeplanttrust.org/species/quercus/bicolor/	false
+American beech	Fagus grandifolia	60	80	2.36220472440945	4.7244094488189	false	https://plants.ces.ncsu.edu/plants/fagus-grandifolia/	30	80	https://gobotany.nativeplanttrust.org/species/fagus/grandifolia/	false
+European beech	Fagus sylvatica	50	60	1.96850393700787	3.93700787401575	false	https://plants.ces.ncsu.edu/plants/fagus-sylvatica/	38.1	63.5	https://gobotany.nativeplanttrust.org/species/fagus/sylvatica/	false
+Paper birch	Betula papyrifera	50	70	0.984251968503937	4.13385826771654	false	https://plants.ces.ncsu.edu/plants/betula-papyrifera/	40	65	https://gobotany.nativeplanttrust.org/species/betula/papyrifera/	false
+Yellow birch	Betula alleghaniensis	70	80	2.36220472440945	3.93700787401575	false	https://plants.ces.ncsu.edu/plants/betula-alleghaniensis/	30	55	https://gobotany.nativeplanttrust.org/species/betula/alleghaniensis/	false
+Black / sweet birch	Betula lenta	60	70	1.96850393700787	3.93700787401575	false	https://plants.ces.ncsu.edu/plants/betula-lenta/	30	60	https://gobotany.nativeplanttrust.org/species/betula/lenta/	false
+American sycamore	Platanus occidentalis	75	100	1.96850393700787	7.8740157480315	false	https://plants.ces.ncsu.edu/plants/platanus-occidentalis/	50	250	https://gobotany.nativeplanttrust.org/species/platanus/occidentalis/	false
+Tulip tree	Liriodendron tulipifera	80	120	2.95275590551181	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/liriodendron-tulipifera/	80	185	https://gobotany.nativeplanttrust.org/species/liriodendron/tulipifera/	false
+Sweetgum	Liquidambar styraciflua	60	100	2.75590551181102	9.84251968503937	false	https://plants.ces.ncsu.edu/plants/liquidambar-styraciflua/	44	160	https://gobotany.nativeplanttrust.org/species/liquidambar/styraciflua/	false
+Blackgum	Nyssa sylvatica	40	70	1.18110236220472	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/nyssa-sylvatica/	20	60	https://gobotany.nativeplanttrust.org/species/nyssa/sylvatica/	false
+Eastern cottonwood	Populus deltoides	75	100	3.93700787401575	7.08661417322835	false	https://plants.ces.ncsu.edu/plants/populus-deltoides/	60	120	https://gobotany.nativeplanttrust.org/species/populus/deltoides/	false
+Quaking aspen	Populus tremuloides	20	50	0.78740157480315	3.93700787401575	false	https://plants.ces.ncsu.edu/plants/populus-tremuloides/	18	70	https://gobotany.nativeplanttrust.org/species/populus/tremuloides/	false
+American elm	Ulmus americana	60	80	2.75590551181102	5.51181102362205	false	https://plants.ces.ncsu.edu/plants/ulmus-americana/	30	70	https://gobotany.nativeplanttrust.org/species/ulmus/americana/	false
+Black cherry	Prunus serotina	60	80	1.37795275590551	5.90551181102362	false	https://plants.ces.ncsu.edu/plants/prunus-serotina/	20	55	https://gobotany.nativeplanttrust.org/species/prunus/serotina/	false
+White willow	Salix alba	50	70	1.5748031496063	4.7244094488189	false	https://plants.ces.ncsu.edu/plants/salix-alba/	10	30	https://gobotany.nativeplanttrust.org/species/salix/alba/	false
+Scarlet oak	Quercus coccinea	50	80	2.7559055118110236	6.299212598425197	false	https://plants.ces.ncsu.edu/plants/quercus-coccinea/	80	130	https://gobotany.nativeplanttrust.org/species/quercus/coccinea/	false
+Black oak	Quercus velutina	50	100	3.1496062992125986	11.811023622047244	false	https://plants.ces.ncsu.edu/plants/quercus-velutina/	80	150	https://gobotany.nativeplanttrust.org/species/quercus/velutina/	false
+Bur oak	Quercus macrocarpa	70	80	1.968503937007874	12.20472440944882	false	https://plants.ces.ncsu.edu/plants/quercus-macrocarpa/	40	160	https://gobotany.nativeplanttrust.org/species/quercus/macrocarpa/	false
+English oak	Quercus robur	40	70	1.968503937007874	7.874015748031496	false	https://plants.ces.ncsu.edu/plants/quercus-robur/	20	100	https://gobotany.nativeplanttrust.org/species/quercus/robur/	false
+Willow oak	Quercus phellos	40	75	1.968503937007874	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/quercus-phellos/	10	25	https://gobotany.nativeplanttrust.org/species/quercus/phellos/	false
+Shingle oak	Quercus imbricaria	50	70	3.1496062992125986	7.874015748031496	false	https://plants.ces.ncsu.edu/plants/quercus-imbricaria/	15	75	https://gobotany.nativeplanttrust.org/species/quercus/imbricaria/	false
+Chestnut oak	Quercus montana	50	75	3.937007874015748	8.661417322834646	false	https://plants.ces.ncsu.edu/plants/quercus-montana/	60	120	https://gobotany.nativeplanttrust.org/species/quercus/montana/	false
+Hedge maple	Acer campestre	25	35	1.5748031496062993	2.7559055118110236	false	https://plants.ces.ncsu.edu/plants/acer-campestre/	50	100	https://gobotany.nativeplanttrust.org/species/acer/campestre/	false
+Sycamore maple	Acer pseudoplatanus	40	60	NaN	NaN	false	https://plants.ces.ncsu.edu/plants/acer-pseudoplatanus/	80	160	https://gobotany.nativeplanttrust.org/species/acer/pseudoplatanus/	false
+American hornbeam	Carpinus caroliniana	20	30	0.984251968503937	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/carpinus-caroliniana/	10	50	https://gobotany.nativeplanttrust.org/species/carpinus/caroliniana/	false
+Eastern hophornbeam	Ostrya virginiana	20	40	3.1496062992125986	3.937007874015748	false	https://plants.ces.ncsu.edu/plants/ostrya-virginiana/	40	50	https://gobotany.nativeplanttrust.org/species/ostrya/virginiana/	false
+Cucumber magnolia	Magnolia acuminata	50	80	3.1496062992125986	9.84251968503937	false	https://plants.ces.ncsu.edu/plants/magnolia-acuminata/	40	100	https://gobotany.nativeplanttrust.org/species/magnolia/acuminata/	false
+Sweetbay magnolia	Magnolia virginiana	10	35	2.362204724409449	8.661417322834646	false	https://plants.ces.ncsu.edu/plants/magnolia-virginiana/	26	70	https://gobotany.nativeplanttrust.org/species/magnolia/virginiana/	false
+Common hackberry	Celtis occidentalis	40	100	1.5748031496062993	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/celtis-occidentalis/	12	90	https://gobotany.nativeplanttrust.org/species/celtis/occidentalis/	false
+Sassafras	Sassafras albidum	30	60	2.7559055118110236	5.905511811023622	false	https://plants.ces.ncsu.edu/plants/sassafras-albidum/	50	150	https://gobotany.nativeplanttrust.org/species/sassafras/albidum/	false
+Eastern redbud	Cercis canadensis	20	30	2.7559055118110236	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/cercis-canadensis/	60	150	https://gobotany.nativeplanttrust.org/species/cercis/canadensis/	false
+White mulberry	Morus alba	30	60	1.5748031496062993	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/morus-alba/	30	90	https://gobotany.nativeplanttrust.org/species/morus/alba/	false
+Red mulberry	Morus rubra	25	60	2.7559055118110236	14.173228346456694	false	https://plants.ces.ncsu.edu/plants/morus-rubra/	30	155	https://gobotany.nativeplanttrust.org/species/morus/rubra/	false
+Japanese flowering cherry	Prunus serrulata	15	25	2.362204724409449	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/prunus-serrulata/	25	50	https://gobotany.nativeplanttrust.org/species/prunus/serrulata/	false
+Downy serviceberry	Amelanchier arborea	15	25	1.5748031496062993	3.937007874015748	false	https://plants.ces.ncsu.edu/plants/amelanchier-arborea/	22	50	https://gobotany.nativeplanttrust.org/species/amelanchier/arborea/	false
+White poplar	Populus alba	50	75	1.968503937007874	3.346456692913386	false	https://plants.ces.ncsu.edu/plants/populus-alba/	40	80	https://gobotany.nativeplanttrust.org/species/populus/alba/	false
+Black poplar	Populus nigra	40	70	1.968503937007874	3.937007874015748	false	https://plants.ces.ncsu.edu/plants/populus-nigra/	40	80	https://gobotany.nativeplanttrust.org/species/populus/nigra/	false
+Silver birch	Betula pendula	30	50	1.1811023622047245	2.7559055118110236	false	https://plants.ces.ncsu.edu/plants/betula-pendula/	25	50	https://gobotany.nativeplanttrust.org/species/betula/pendula/	false
+Scots pine	Pinus sylvestris	30	60	1.1811023622047245	2.362204724409449	true	https://plants.ces.ncsu.edu/plants/pinus-sylvestris/	1.5	2	https://oregonflora.org/taxa/index.php?tid=7313	false
+White fir	Abies concolor	30	70	1.5748031496062993	2.362204724409449	true	https://plants.ces.ncsu.edu/plants/abies-concolor/	2	2	https://landscapeplants.oregonstate.edu/plants/abies-concolor	false
+Amur maple	Acer ginnala	15	20	1.5748031496062993	3.1496062992125986	false	https://plants.ces.ncsu.edu/plants/acer-ginnala/	30	60	https://gobotany.nativeplanttrust.org/species/acer/ginnala/	false
+Princess tree	Paulownia tomentosa	30	50	2.362204724409449	19.68503937007874	false	https://plants.ces.ncsu.edu/plants/paulownia-tomentosa/	40	560	https://gobotany.nativeplanttrust.org/species/paulownia/tomentosa/	false
+Slippery elm	Ulmus rubra	40	70	3.1496062992125986	6.299212598425197	false	https://plants.ces.ncsu.edu/plants/ulmus-rubra/	50	75	https://gobotany.nativeplanttrust.org/species/ulmus/rubra/	false
+Chokecherry	Prunus virginiana	20	30	1.968503937007874	4.724409448818898	false	https://plants.ces.ncsu.edu/plants/prunus-virginiana/	25	55	https://gobotany.nativeplanttrust.org/species/prunus/virginiana/	false
+Gray birch	Betula populifolia	20	30	1.1811023622047245	3.937007874015748	false	https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/betpopa.pdf	30	80	https://gobotany.nativeplanttrust.org/species/betula/populifolia/	false
+Black locust	Robinia pseudoacacia	30	50	0.7874015748031497	1.968503937007874	false	https://plants.ces.ncsu.edu/plants/robinia-pseudoacacia/	10	25	https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Robinia~pseudoacacia&page=nswfl	true
+Tree of heaven	Ailanthus altissima	40	60	1.5748031496062993	5.118110236220473	false	https://plants.ces.ncsu.edu/plants/ailanthus-altissima/	25	50	https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Ailanthus~altissima&page=nswfl	true
+White ash	Fraxinus americana	60	120	3.0000000000000004	5	false	https://plants.ces.ncsu.edu/plants/fraxinus-americana/	38.1	76.2	https://mdc.mo.gov/discover-nature/field-guide/white-ash	true
+Green ash	Fraxinus pennsylvanica	50	70	2.5	5	false	https://plants.ces.ncsu.edu/plants/fraxinus-pennsylvanica/	25.4	44.45	https://plants.ces.ncsu.edu/plants/fraxinus-pennsylvanica/	true
+Shagbark hickory	Carya ovata	70	90	3.0000000000000004	7.000000000000001	false	https://plants.ces.ncsu.edu/plants/carya-ovata/	25.4	76.2	https://plants.ces.ncsu.edu/plants/carya-ovata/	true
+Pignut hickory	Carya glabra	60	80	3.0000000000000004	6.000000000000001	false	https://plants.ces.ncsu.edu/plants/carya-glabra/	25.4	50.8	https://plants.ces.ncsu.edu/plants/carya-glabra/	true
+Mockernut hickory	Carya tomentosa	60	80	3.0000000000000004	6.000000000000001	false	https://plants.ces.ncsu.edu/plants/carya-tomentosa/	25.4	50.8	https://plants.ces.ncsu.edu/plants/carya-tomentosa/	true
+Bitternut hickory	Carya cordiformis	50	100	1.1811023622047245	7.480314960629921	false	https://plants.ces.ncsu.edu/plants/carya-cordiformis/	10	70	https://vplants.org/portal/taxa/index.php?clid=3503&taxauthid=1&taxon=76890	true
+Black walnut	Juglans nigra	50	75	1.968503937007874	5.118110236220473	false	https://plants.ces.ncsu.edu/plants/juglans-nigra/	20	50	https://landscapeplants.oregonstate.edu/plants/juglans-nigra	true
+Butternut	Juglans cinerea	40	60	2	5	false	https://plants.ces.ncsu.edu/plants/juglans-cinerea/	19.05	57.15	https://plants.ces.ncsu.edu/plants/juglans-cinerea/	true
+Honey locust	Gleditsia triacanthos	60	80	0.3937007874015748	1.3779527559055118	false	https://plants.ces.ncsu.edu/plants/gleditsia-triacanthos/	5	12	https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Gleditsia~triacanthos&page=nswfl	true
+Boxelder	Acer negundo	30	50	1.1811023622047245	5.905511811023622	false	https://plants.ces.ncsu.edu/plants/acer-negundo/	20	80	https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Acer~negundo&page=nswfl	true
+American basswood	Tilia americana	60	80	5	6.000000000000001	false	https://plants.ces.ncsu.edu/plants/tilia-americana/	76.2	127	https://mdc.mo.gov/discover-nature/field-guide/american-basswood-american-linden	false
+Flowering dogwood	Cornus florida	15	25	2.362204724409449	3.937007874015748	false	https://plants.ces.ncsu.edu/plants/cornus-florida/	30	50	https://gobotany.nativeplanttrust.org/species/benthamidia/florida/	false
+Eastern hemlock	Tsuga canadensis	40	70	0.2755905511811024	0.5118110236220472	true	https://plants.ces.ncsu.edu/plants/tsuga-canadensis/	1.5	2	https://www.dnr.state.mn.us/rsg/species-detail.html?id=10686	false

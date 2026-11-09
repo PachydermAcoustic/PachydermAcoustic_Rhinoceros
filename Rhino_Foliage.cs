@@ -32,87 +32,46 @@ namespace Pachyderm_Acoustic.UI
             }
         }
 
-        // Published landscape ranges, not maximum forest heights or measured site averages.
-        // UF/IFAS Extension: Gilman, Watson et al., species fact sheets (accessed 2026-10-25).
-        // Blade/needle widths (mm): Native Plant Trust Go Botany; NC State Extension; Scion.
-        // Botanical range midpoints are editable defaults, not measured canopy means (accessed 2026-10-26).
-        // Additional species: NC State Extension heights; Go Botany blade dimensions (accessed 2026-10-27).
-        // Scots pine needles: Flora of Oregon; white fir needles: Oregon State University.
-        // Equal width limits represent a single published dimension; missing lengths stay unknown.
-        // Connecticut additions (2026-10-27): compound species use individual leaflet dimensions.
-        // Boxelder includes larger terminal leaflets; widths remain editable range midpoints.
-        internal static readonly Tree[] Trees = {
-            new Tree("Red maple", "Acer rubrum", 60, 75, 2, 5, false, "https://ask.ifas.ufl.edu/publication/ST041", 60, 150, "https://gobotany.nativeplanttrust.org/species/acer/rubrum/"),
-            new Tree("River birch", "Betula nigra", 40, 50, 1, 4, false, "https://ask.ifas.ufl.edu/publication/ST094", 30, 60, "https://gobotany.nativeplanttrust.org/species/betula/nigra/"),
-            new Tree("White oak", "Quercus alba", 60, 100, 2, 8, false, "https://ask.ifas.ufl.edu/publication/ST541", 40, 165, "https://gobotany.nativeplanttrust.org/species/quercus/alba/"),
-            new Tree("Southern live oak", "Quercus virginiana", 60, 80, 2, 5, true, "https://ask.ifas.ufl.edu/publication/ST564", 20.32, 38.1, "https://plants.ces.ncsu.edu/plants/quercus-virginiana/"),
-            new Tree("Eastern white pine", "Pinus strobus", 50, 80, 2, 4, true, "https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/pinstra.pdf", 0.7, 1, "https://nzfri.scionresearch.com/Content/Projects/nzfri/keys/cultivated-pines/key/cultivated_pines/Media/Html/Pinus_strobus.htm"),
-            new Tree("Sugar maple", "Acer saccharum", 40, 120, double.NaN, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/acer-saccharum/", 80, 200, "https://gobotany.nativeplanttrust.org/species/acer/saccharum/"),
-            new Tree("Silver maple", "Acer saccharinum", 50, 80, double.NaN, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/acer-saccharinum/", 80, 140, "https://gobotany.nativeplanttrust.org/species/acer/saccharinum/"),
-            new Tree("Norway maple", "Acer platanoides", 40, 50, 3.93700787401575, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/acer-platanoides/", 100, 180, "https://gobotany.nativeplanttrust.org/species/acer/platanoides/"),
-            new Tree("Northern red oak", "Quercus rubra", 50, 70, 4.7244094488189, 7.8740157480315, false, "https://plants.ces.ncsu.edu/plants/quercus-rubra/", 60, 120, "https://gobotany.nativeplanttrust.org/species/quercus/rubra/"),
-            new Tree("Pin oak", "Quercus palustris", 50, 70, 1.96850393700787, 6.2992125984252, false, "https://plants.ces.ncsu.edu/plants/quercus-palustris/", 50, 120, "https://gobotany.nativeplanttrust.org/species/quercus/palustris/"),
-            new Tree("Swamp white oak", "Quercus bicolor", 50, 60, 3.11023622047244, 8.46456692913386, false, "https://plants.ces.ncsu.edu/plants/quercus-bicolor/", 40, 160, "https://gobotany.nativeplanttrust.org/species/quercus/bicolor/"),
-            new Tree("American beech", "Fagus grandifolia", 60, 80, 2.36220472440945, 4.7244094488189, false, "https://plants.ces.ncsu.edu/plants/fagus-grandifolia/", 30, 80, "https://gobotany.nativeplanttrust.org/species/fagus/grandifolia/"),
-            new Tree("European beech", "Fagus sylvatica", 50, 60, 1.96850393700787, 3.93700787401575, false, "https://plants.ces.ncsu.edu/plants/fagus-sylvatica/", 38.1, 63.5, "https://gobotany.nativeplanttrust.org/species/fagus/sylvatica/"),
-            new Tree("Paper birch", "Betula papyrifera", 50, 70, 0.984251968503937, 4.13385826771654, false, "https://plants.ces.ncsu.edu/plants/betula-papyrifera/", 40, 65, "https://gobotany.nativeplanttrust.org/species/betula/papyrifera/"),
-            new Tree("Yellow birch", "Betula alleghaniensis", 70, 80, 2.36220472440945, 3.93700787401575, false, "https://plants.ces.ncsu.edu/plants/betula-alleghaniensis/", 30, 55, "https://gobotany.nativeplanttrust.org/species/betula/alleghaniensis/"),
-            new Tree("Black / sweet birch", "Betula lenta", 60, 70, 1.96850393700787, 3.93700787401575, false, "https://plants.ces.ncsu.edu/plants/betula-lenta/", 30, 60, "https://gobotany.nativeplanttrust.org/species/betula/lenta/"),
-            new Tree("American sycamore", "Platanus occidentalis", 75, 100, 1.96850393700787, 7.8740157480315, false, "https://plants.ces.ncsu.edu/plants/platanus-occidentalis/", 50, 250, "https://gobotany.nativeplanttrust.org/species/platanus/occidentalis/"),
-            new Tree("Tulip tree", "Liriodendron tulipifera", 80, 120, 2.95275590551181, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/liriodendron-tulipifera/", 80, 185, "https://gobotany.nativeplanttrust.org/species/liriodendron/tulipifera/"),
-            new Tree("Sweetgum", "Liquidambar styraciflua", 60, 100, 2.75590551181102, 9.84251968503937, false, "https://plants.ces.ncsu.edu/plants/liquidambar-styraciflua/", 44, 160, "https://gobotany.nativeplanttrust.org/species/liquidambar/styraciflua/"),
-            new Tree("Blackgum", "Nyssa sylvatica", 40, 70, 1.18110236220472, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/nyssa-sylvatica/", 20, 60, "https://gobotany.nativeplanttrust.org/species/nyssa/sylvatica/"),
-            new Tree("Eastern cottonwood", "Populus deltoides", 75, 100, 3.93700787401575, 7.08661417322835, false, "https://plants.ces.ncsu.edu/plants/populus-deltoides/", 60, 120, "https://gobotany.nativeplanttrust.org/species/populus/deltoides/"),
-            new Tree("Quaking aspen", "Populus tremuloides", 20, 50, 0.78740157480315, 3.93700787401575, false, "https://plants.ces.ncsu.edu/plants/populus-tremuloides/", 18, 70, "https://gobotany.nativeplanttrust.org/species/populus/tremuloides/"),
-            new Tree("American elm", "Ulmus americana", 60, 80, 2.75590551181102, 5.51181102362205, false, "https://plants.ces.ncsu.edu/plants/ulmus-americana/", 30, 70, "https://gobotany.nativeplanttrust.org/species/ulmus/americana/"),
-            new Tree("Black cherry", "Prunus serotina", 60, 80, 1.37795275590551, 5.90551181102362, false, "https://plants.ces.ncsu.edu/plants/prunus-serotina/", 20, 55, "https://gobotany.nativeplanttrust.org/species/prunus/serotina/"),
-            new Tree("White willow", "Salix alba", 50, 70, 1.5748031496063, 4.7244094488189, false, "https://plants.ces.ncsu.edu/plants/salix-alba/", 10, 30, "https://gobotany.nativeplanttrust.org/species/salix/alba/"),
-            new Tree("Scarlet oak", "Quercus coccinea", 50, 80, 70 / 25.4, 160 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-coccinea/", 80, 130, "https://gobotany.nativeplanttrust.org/species/quercus/coccinea/"),
-            new Tree("Black oak", "Quercus velutina", 50, 100, 80 / 25.4, 300 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-velutina/", 80, 150, "https://gobotany.nativeplanttrust.org/species/quercus/velutina/"),
-            new Tree("Bur oak", "Quercus macrocarpa", 70, 80, 50 / 25.4, 310 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-macrocarpa/", 40, 160, "https://gobotany.nativeplanttrust.org/species/quercus/macrocarpa/"),
-            new Tree("English oak", "Quercus robur", 40, 70, 50 / 25.4, 200 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-robur/", 20, 100, "https://gobotany.nativeplanttrust.org/species/quercus/robur/"),
-            new Tree("Willow oak", "Quercus phellos", 40, 75, 50 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-phellos/", 10, 25, "https://gobotany.nativeplanttrust.org/species/quercus/phellos/"),
-            new Tree("Shingle oak", "Quercus imbricaria", 50, 70, 80 / 25.4, 200 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-imbricaria/", 15, 75, "https://gobotany.nativeplanttrust.org/species/quercus/imbricaria/"),
-            new Tree("Chestnut oak", "Quercus montana", 50, 75, 100 / 25.4, 220 / 25.4, false, "https://plants.ces.ncsu.edu/plants/quercus-montana/", 60, 120, "https://gobotany.nativeplanttrust.org/species/quercus/montana/"),
-            new Tree("Hedge maple", "Acer campestre", 25, 35, 40 / 25.4, 70 / 25.4, false, "https://plants.ces.ncsu.edu/plants/acer-campestre/", 50, 100, "https://gobotany.nativeplanttrust.org/species/acer/campestre/"),
-            new Tree("Sycamore maple", "Acer pseudoplatanus", 40, 60, double.NaN, double.NaN, false, "https://plants.ces.ncsu.edu/plants/acer-pseudoplatanus/", 80, 160, "https://gobotany.nativeplanttrust.org/species/acer/pseudoplatanus/"),
-            new Tree("American hornbeam", "Carpinus caroliniana", 20, 30, 25 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/carpinus-caroliniana/", 10, 50, "https://gobotany.nativeplanttrust.org/species/carpinus/caroliniana/"),
-            new Tree("Eastern hophornbeam", "Ostrya virginiana", 20, 40, 80 / 25.4, 100 / 25.4, false, "https://plants.ces.ncsu.edu/plants/ostrya-virginiana/", 40, 50, "https://gobotany.nativeplanttrust.org/species/ostrya/virginiana/"),
-            new Tree("Cucumber magnolia", "Magnolia acuminata", 50, 80, 80 / 25.4, 250 / 25.4, false, "https://plants.ces.ncsu.edu/plants/magnolia-acuminata/", 40, 100, "https://gobotany.nativeplanttrust.org/species/magnolia/acuminata/"),
-            new Tree("Sweetbay magnolia", "Magnolia virginiana", 10, 35, 60 / 25.4, 220 / 25.4, false, "https://plants.ces.ncsu.edu/plants/magnolia-virginiana/", 26, 70, "https://gobotany.nativeplanttrust.org/species/magnolia/virginiana/"),
-            new Tree("Common hackberry", "Celtis occidentalis", 40, 100, 40 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/celtis-occidentalis/", 12, 90, "https://gobotany.nativeplanttrust.org/species/celtis/occidentalis/"),
-            new Tree("Sassafras", "Sassafras albidum", 30, 60, 70 / 25.4, 150 / 25.4, false, "https://plants.ces.ncsu.edu/plants/sassafras-albidum/", 50, 150, "https://gobotany.nativeplanttrust.org/species/sassafras/albidum/"),
-            new Tree("Eastern redbud", "Cercis canadensis", 20, 30, 70 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/cercis-canadensis/", 60, 150, "https://gobotany.nativeplanttrust.org/species/cercis/canadensis/"),
-            new Tree("White mulberry", "Morus alba", 30, 60, 40 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/morus-alba/", 30, 90, "https://gobotany.nativeplanttrust.org/species/morus/alba/"),
-            new Tree("Red mulberry", "Morus rubra", 25, 60, 70 / 25.4, 360 / 25.4, false, "https://plants.ces.ncsu.edu/plants/morus-rubra/", 30, 155, "https://gobotany.nativeplanttrust.org/species/morus/rubra/"),
-            new Tree("Japanese flowering cherry", "Prunus serrulata", 15, 25, 60 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/prunus-serrulata/", 25, 50, "https://gobotany.nativeplanttrust.org/species/prunus/serrulata/"),
-            new Tree("Downy serviceberry", "Amelanchier arborea", 15, 25, 40 / 25.4, 100 / 25.4, false, "https://plants.ces.ncsu.edu/plants/amelanchier-arborea/", 22, 50, "https://gobotany.nativeplanttrust.org/species/amelanchier/arborea/"),
-            new Tree("White poplar", "Populus alba", 50, 75, 50 / 25.4, 85 / 25.4, false, "https://plants.ces.ncsu.edu/plants/populus-alba/", 40, 80, "https://gobotany.nativeplanttrust.org/species/populus/alba/"),
-            new Tree("Black poplar", "Populus nigra", 40, 70, 50 / 25.4, 100 / 25.4, false, "https://plants.ces.ncsu.edu/plants/populus-nigra/", 40, 80, "https://gobotany.nativeplanttrust.org/species/populus/nigra/"),
-            new Tree("Silver birch", "Betula pendula", 30, 50, 30 / 25.4, 70 / 25.4, false, "https://plants.ces.ncsu.edu/plants/betula-pendula/", 25, 50, "https://gobotany.nativeplanttrust.org/species/betula/pendula/"),
-            new Tree("Scots pine", "Pinus sylvestris", 30, 60, 30 / 25.4, 60 / 25.4, true, "https://plants.ces.ncsu.edu/plants/pinus-sylvestris/", 1.5, 2, "https://oregonflora.org/taxa/index.php?tid=7313"),
-            new Tree("White fir", "Abies concolor", 30, 70, 40 / 25.4, 60 / 25.4, true, "https://plants.ces.ncsu.edu/plants/abies-concolor/", 2, 2, "https://landscapeplants.oregonstate.edu/plants/abies-concolor"),
-            new Tree("Amur maple", "Acer ginnala", 15, 20, 40 / 25.4, 80 / 25.4, false, "https://plants.ces.ncsu.edu/plants/acer-ginnala/", 30, 60, "https://gobotany.nativeplanttrust.org/species/acer/ginnala/"),
-            new Tree("Princess tree", "Paulownia tomentosa", 30, 50, 60 / 25.4, 500 / 25.4, false, "https://plants.ces.ncsu.edu/plants/paulownia-tomentosa/", 40, 560, "https://gobotany.nativeplanttrust.org/species/paulownia/tomentosa/"),
-            new Tree("Slippery elm", "Ulmus rubra", 40, 70, 80 / 25.4, 160 / 25.4, false, "https://plants.ces.ncsu.edu/plants/ulmus-rubra/", 50, 75, "https://gobotany.nativeplanttrust.org/species/ulmus/rubra/"),
-            new Tree("Chokecherry", "Prunus virginiana", 20, 30, 50 / 25.4, 120 / 25.4, false, "https://plants.ces.ncsu.edu/plants/prunus-virginiana/", 25, 55, "https://gobotany.nativeplanttrust.org/species/prunus/virginiana/"),
-            new Tree("Gray birch", "Betula populifolia", 20, 30, 30 / 25.4, 100 / 25.4, false, "https://hort.ifas.ufl.edu/database/documents/pdf/tree_fact_sheets/betpopa.pdf", 30, 80, "https://gobotany.nativeplanttrust.org/species/betula/populifolia/"),
-            new Tree("Black locust", "Robinia pseudoacacia", 30, 50, 20 / 25.4, 50 / 25.4, false, "https://plants.ces.ncsu.edu/plants/robinia-pseudoacacia/", 10, 25, "https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Robinia~pseudoacacia&page=nswfl", true),
-            new Tree("Tree of heaven", "Ailanthus altissima", 40, 60, 40 / 25.4, 130 / 25.4, false, "https://plants.ces.ncsu.edu/plants/ailanthus-altissima/", 25, 50, "https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Ailanthus~altissima&page=nswfl", true),
-            new Tree("White ash", "Fraxinus americana", 60, 120, 76.2 / 25.4, 127 / 25.4, false, "https://plants.ces.ncsu.edu/plants/fraxinus-americana/", 38.1, 76.2, "https://mdc.mo.gov/discover-nature/field-guide/white-ash", true),
-            new Tree("Green ash", "Fraxinus pennsylvanica", 50, 70, 63.5 / 25.4, 127 / 25.4, false, "https://plants.ces.ncsu.edu/plants/fraxinus-pennsylvanica/", 25.4, 44.45, "https://plants.ces.ncsu.edu/plants/fraxinus-pennsylvanica/", true),
-            new Tree("Shagbark hickory", "Carya ovata", 70, 90, 76.2 / 25.4, 177.8 / 25.4, false, "https://plants.ces.ncsu.edu/plants/carya-ovata/", 25.4, 76.2, "https://plants.ces.ncsu.edu/plants/carya-ovata/", true),
-            new Tree("Pignut hickory", "Carya glabra", 60, 80, 76.2 / 25.4, 152.4 / 25.4, false, "https://plants.ces.ncsu.edu/plants/carya-glabra/", 25.4, 50.8, "https://plants.ces.ncsu.edu/plants/carya-glabra/", true),
-            new Tree("Mockernut hickory", "Carya tomentosa", 60, 80, 76.2 / 25.4, 152.4 / 25.4, false, "https://plants.ces.ncsu.edu/plants/carya-tomentosa/", 25.4, 50.8, "https://plants.ces.ncsu.edu/plants/carya-tomentosa/", true),
-            new Tree("Bitternut hickory", "Carya cordiformis", 50, 100, 30 / 25.4, 190 / 25.4, false, "https://plants.ces.ncsu.edu/plants/carya-cordiformis/", 10, 70, "https://vplants.org/portal/taxa/index.php?clid=3503&taxauthid=1&taxon=76890", true),
-            new Tree("Black walnut", "Juglans nigra", 50, 75, 50 / 25.4, 130 / 25.4, false, "https://plants.ces.ncsu.edu/plants/juglans-nigra/", 20, 50, "https://landscapeplants.oregonstate.edu/plants/juglans-nigra", true),
-            new Tree("Butternut", "Juglans cinerea", 40, 60, 50.8 / 25.4, 127 / 25.4, false, "https://plants.ces.ncsu.edu/plants/juglans-cinerea/", 19.05, 57.15, "https://plants.ces.ncsu.edu/plants/juglans-cinerea/", true),
-            new Tree("Honey locust", "Gleditsia triacanthos", 60, 80, 10 / 25.4, 35 / 25.4, false, "https://plants.ces.ncsu.edu/plants/gleditsia-triacanthos/", 5, 12, "https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Gleditsia~triacanthos&page=nswfl", true),
-            new Tree("Boxelder", "Acer negundo", 30, 50, 30 / 25.4, 150 / 25.4, false, "https://plants.ces.ncsu.edu/plants/acer-negundo/", 20, 80, "https://plantnet.rbgsyd.nsw.gov.au/cgi-bin/NSWfl.pl?lvl=sp&name=Acer~negundo&page=nswfl", true),
-            new Tree("American basswood", "Tilia americana", 60, 80, 127 / 25.4, 152.4 / 25.4, false, "https://plants.ces.ncsu.edu/plants/tilia-americana/", 76.2, 127, "https://mdc.mo.gov/discover-nature/field-guide/american-basswood-american-linden"),
-            new Tree("Flowering dogwood", "Cornus florida", 15, 25, 60 / 25.4, 100 / 25.4, false, "https://plants.ces.ncsu.edu/plants/cornus-florida/", 30, 50, "https://gobotany.nativeplanttrust.org/species/benthamidia/florida/"),
-            new Tree("Eastern hemlock", "Tsuga canadensis", 40, 70, 7 / 25.4, 13 / 25.4, true, "https://plants.ces.ncsu.edu/plants/tsuga-canadensis/", 1.5, 2, "https://www.dnr.state.mn.us/rsg/species-detail.html?id=10686")
-        };
+        internal static Tree[] Trees = LoadTrees();
+
+        static Tree[] LoadTrees()
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(FoliageProperties).Assembly.Location), "misc", "Pach_Trees.txt");
+            try
+            {
+                var trees = new List<Tree>();
+                var names = new HashSet<string>();
+                int lineNumber = 0;
+                foreach (string line in System.IO.File.ReadLines(path))
+                {
+                    lineNumber++;
+                    if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith("#")) continue;
+                    string[] fields = line.Split('\t').Select(value => value.Trim()).ToArray();
+                    if (fields.Length != 12) throw new FormatException("Line " + lineNumber + ": expected 12 tab-separated fields.");
+                    double[] numbers = new double[6];
+                    int[] columns = { 2, 3, 4, 5, 8, 9 };
+                    for (int i = 0; i < columns.Length; i++)
+                    {
+                        if (!double.TryParse(fields[columns[i]], NumberStyles.Float, CultureInfo.InvariantCulture, out numbers[i]) ||
+                            double.IsInfinity(numbers[i]) || (double.IsNaN(numbers[i]) ? i != 2 && i != 3 : numbers[i] <= 0))
+                            throw new FormatException("Line " + lineNumber + ": invalid dimension in column " + (columns[i] + 1) + ".");
+                    }
+                    if (numbers[0] > numbers[1] || numbers[2] > numbers[3] || numbers[4] > numbers[5] ||
+                        string.IsNullOrWhiteSpace(fields[0]) || string.IsNullOrWhiteSpace(fields[1]) || fields[1] == "Custom" ||
+                        fields[1].IndexOfAny(new[] { '|', ';', '^' }) >= 0 || !names.Add(fields[1]) ||
+                        !bool.TryParse(fields[6], out bool evergreen) || !bool.TryParse(fields[11], out bool leaflet))
+                        throw new FormatException("Line " + lineNumber + ": invalid range, name, species key or flag.");
+                    trees.Add(new Tree(fields[0], fields[1], numbers[0], numbers[1], numbers[2], numbers[3], evergreen, fields[7], numbers[4], numbers[5], fields[10], leaflet));
+                }
+                if (trees.Count == 0) throw new FormatException("The tree catalogue contains no trees.");
+                return trees.ToArray();
+            }
+            catch (Exception error) when (error is System.IO.IOException || error is UnauthorizedAccessException || error is FormatException)
+            {
+                RhinoApp.WriteLine("Could not load foliage trees from " + path + ": " + error.Message + " Custom remains available.");
+                return Array.Empty<Tree>();
+            }
+        }
 
         internal sealed class Settings
         {
@@ -257,7 +216,7 @@ namespace Pachyderm_Acoustic.UI
             int[] order = Enumerable.Range(0, Trees.Length).OrderBy(i => Trees[i].Name).ToArray();
             foreach (int i in order) species.Items.Add(new ListItem { Key = Trees[i].Species, Text = Trees[i].Name });
             species.Items.Add(new ListItem { Key = "Custom", Text = "Custom" });
-            species.SelectedKey = Trees[0].Species;
+            species.SelectedKey = Trees.FirstOrDefault()?.Species ?? "Custom";
             var add = new Button { Text = "Add" };
             var removeTree = new Button { Text = "Remove" };
             add.Click += (sender, e) =>
@@ -285,8 +244,8 @@ namespace Pachyderm_Acoustic.UI
                 dimensions.Text = tree == null ? "Enter a representative leaf width." : string.Format(CultureInfo.CurrentCulture, "{0}: height {1:F1}–{2:F1} m; {3} width {4} mm.", tree.Species, tree.HeightMin, tree.HeightMax, tree.Leaflet ? "leaflet" : "leaf", width);
                 dimensions.ToolTip = tree == null ? "" : tree.Source + (tree.Leaflet ? "\nLeaflet width: " : "\nLeaf width: ") + tree.WidthSource + "\nWidth defaults to the published range midpoint, not a measured stand average.";
             };
-            species.SelectedIndex = -1; species.SelectedKey = Trees[0].Species;
-            rows.Add(new MixtureRow { Species = Trees[0].Species, Name = Trees[0].Name, Share = "100", Width = "105" });
+            species.SelectedIndex = -1; species.SelectedKey = Trees.FirstOrDefault()?.Species ?? "Custom";
+            rows.Add(new MixtureRow { Species = Trees.FirstOrDefault()?.Species ?? "Custom", Name = Trees.FirstOrDefault()?.Name ?? "Custom", Share = "100", Width = "105" });
             mixture.DataStore = rows;
             mixture.CellEdited += (sender, e) => Changed(sender, e);
             layout.Items.Add(new StackLayout { Orientation = Orientation.Horizontal, Spacing = 5, Items = { species, add, removeTree } });
@@ -323,6 +282,15 @@ namespace Pachyderm_Acoustic.UI
             canopyBase.ValueChanged += Changed; density.ValueChanged += Changed; leafOn.CheckedChanged += Changed; preview.CheckedChanged += Changed;
             remove.CheckedChanged += Changed;
             distance.ValueChanged += (sender, e) => UpdateReadout(); medium.SelectedIndexChanged += (sender, e) => UpdateReadout();
+            Load += (sender, e) =>
+            {
+                Trees = LoadTrees();
+                string selected = species.SelectedKey;
+                species.Items.Clear();
+                foreach (Tree tree in Trees.OrderBy(value => value.Name)) species.Items.Add(new ListItem { Key = tree.Species, Text = tree.Name });
+                species.Items.Add(new ListItem { Key = "Custom", Text = "Custom" });
+                species.SelectedKey = Trees.Any(tree => tree.Species == selected) ? selected : "Custom";
+            };
             UnLoad += (sender, e) => EndPreview();
             Changed(null, EventArgs.Empty);
         }
@@ -401,7 +369,7 @@ namespace Pachyderm_Acoustic.UI
                 string code = objects[0].Geometry.GetUserString(Key);
                 bool mixed = objects.Any(obj => obj.Geometry.GetUserString(Key) != code);
                 bool recognized = Settings.TryRead(code, out Settings settings);
-                settings = settings ?? new Settings { Species = Trees[0].Species, Height = 20.574, LeafLength = 88.9, LeafWidth = 105, LeafOn = true, Preview = true, FromTreeCount = true, CrownLeafAreaIndex = 5 };
+                settings = settings ?? new Settings { Species = Trees.FirstOrDefault()?.Species ?? "Custom", Height = 20.574, LeafLength = 88.9, LeafWidth = 105, LeafOn = true, Preview = true, FromTreeCount = true, CrownLeafAreaIndex = 5 };
                 rows.Clear();
                 string[] names = settings.MixtureSpecies ?? new[] { Trees.Any(tree => tree.Species == settings.Species) ? settings.Species : "Custom" };
                 for (int i = 0; i < names.Length; i++)
