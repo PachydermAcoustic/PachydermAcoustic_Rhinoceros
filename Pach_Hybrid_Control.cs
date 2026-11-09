@@ -460,6 +460,10 @@ namespace Pachyderm_Acoustic
                 this.Parameter_Choice.Items.Add("Definition (D-50)");
                 this.Parameter_Choice.Items.Add("Strength/Loudness (G)");
                 this.Parameter_Choice.Items.Add("Sound Pressure Level (SPL)");
+                this.Parameter_Choice.Items.Add("Maximum SPL (Lmax)");
+                this.Parameter_Choice.Items.Add("Sound Pressure Level (A-weighted)");
+                this.Parameter_Choice.Items.Add("Maximum SPL (A-weighted)");
+                this.Parameter_Choice.Items.Add("Sound Pressure Level (C-weighted)");
                 this.Parameter_Choice.Items.Add("Initial Time Delay Gap (ITDG)");
                 this.Parameter_Choice.Items.Add("Speech Transmission Index (Explicit)");
                 this.Parameter_Choice.Items.Add("Modulation Transfer Index (MTI - root STI)");
@@ -2112,6 +2116,16 @@ namespace Pachyderm_Acoustic
                         ParameterResults.SetResults(parameter, selection, results);
                         return;
                     }
+                    if (parameter == "Sound Pressure Level (A-weighted)" || parameter == "Maximum SPL (A-weighted)" || parameter == "Sound Pressure Level (C-weighted)")
+                    {
+                        bool lmaxA = parameter == "Maximum SPL (A-weighted)";
+                        double[] factors = parameter == "Sound Pressure Level (C-weighted)" ? AcousticalMath.C_Weighting_Factors(third) : AcousticalMath.A_Weighting_Factors(third);
+                        double[] bandSPL = centers.Select((c, band) => AcousticalMath.SPL_Intensity(lmaxA ? energy[band].Max() : energy[band].Sum())).ToArray();
+                        double overall = 10 * Math.Log10(bandSPL.Select((spl, band) => Math.Pow(10, spl / 10) * factors[band]).Sum() / 1E-12);
+                        results.Add(new ParameterResult(lmaxA ? "Overall Lmax (dBA)" : parameter == "Sound Pressure Level (C-weighted)" ? "Overall (dBC)" : "Overall (dBA)", null, overall));
+                        ParameterResults.SetResults(parameter, selection, results);
+                        return;
+                    }
                     bool lateral = parameter == "Lateral Fraction (LF)" || parameter == "Lateral Efficiency (LE)";
                     double[] lateralPressure = lateral && pressure ? IR_Construction.PTC_Fig8_3Axis(Direct_Data, IS_Data, Receiver, CutoffTime, SampleRate, receiver, sources, false, (double)Alt_Choice.Value, (double)Azi_Choice.Value, true, true)[1] : null;
                     bool echo = parameter.StartsWith("Echo Criterion", StringComparison.Ordinal);
@@ -2330,7 +2344,7 @@ namespace Pachyderm_Acoustic
                 if (parameter == "Early Decay Time" || parameter.StartsWith("T-", StringComparison.Ordinal)) return "s";
                 if (parameter == "Center Time (TS)" || parameter == "Initial Time Delay Gap (ITDG)") return "ms";
                 if (parameter == "Definition (D-50)") return "%";
-                if (parameter.StartsWith("Clarity", StringComparison.Ordinal) || parameter == "Strength/Loudness (G)" || parameter == "Sound Pressure Level (SPL)") return "dB";
+                if (parameter.StartsWith("Clarity", StringComparison.Ordinal) || parameter == "Strength/Loudness (G)" || parameter == "Sound Pressure Level (SPL)" || parameter == "Maximum SPL (Lmax)" || parameter == "Sound Pressure Level (A-weighted)" || parameter == "Maximum SPL (A-weighted)" || parameter == "Sound Pressure Level (C-weighted)") return "dB";
                 return "";
             }
 
@@ -2349,6 +2363,7 @@ namespace Pachyderm_Acoustic
                     case "Definition (D-50)": return AcousticalMath.Definition(energy, rate, .05, directTime, pressure);
                     case "Strength/Loudness (G)": return AcousticalMath.Strength(energy, sourcePower, pressure);
                     case "Sound Pressure Level (SPL)": return AcousticalMath.SPL_Intensity(energy.Sum());
+                    case "Maximum SPL (Lmax)": return AcousticalMath.SPL_Intensity(energy.Max());
                     default: return double.NaN;
                 }
             }
