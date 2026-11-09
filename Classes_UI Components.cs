@@ -666,6 +666,24 @@ namespace Pachyderm_Acoustic
                 On_Output_Changed(this, new System.EventArgs());
             }
 
+            // Keep existing constructors and their defaults unchanged. Visualizations
+            // with their own frequency selector can still use the shared discrete scale.
+            public Color_Output_Control(DynamicLayout add_ctrls, bool discretize_option) : this(add_ctrls)
+            {
+                if (discretize_option)
+                {
+                    Discretize.CheckedChanged += Color_Selection_SelectedIndexChanged;
+                    ControlCluster.Items.Insert(2, Discretize);
+                }
+            }
+
+            // Relative quantities need negative editable scale limits as well as SPL.
+            public void SetValueRange(double minimum, double maximum)
+            {
+                if (maximum <= minimum) throw new ArgumentException("Maximum must exceed minimum.");
+                Param_Min.MinValue = minimum; Param_Min.MaxValue = maximum;
+                Param_Max.MinValue = minimum; Param_Max.MaxValue = maximum;
+            }
             //protected override void OnSizeChanged(System.EventArgs e)
             //{
             //    base.OnSizeChanged(e);
