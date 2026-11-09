@@ -617,7 +617,7 @@ namespace Pachyderm_Acoustic
                 // Check if a material is selected in the list
                 if (Material_List.SelectedIndex < 0 || Material_List.SelectedIndex >= EHM.ECC_Abs.Count)
                 {
-                    Utilities.RCPachTools.ShowMessage("Please select a material from the list first.");
+                    Eto.Forms.MessageBox.Show("Please select a material from the list first.");
                     return;
                 }
 
