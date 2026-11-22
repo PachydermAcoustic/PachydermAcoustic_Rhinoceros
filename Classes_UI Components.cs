@@ -1129,125 +1129,15 @@ namespace Pachyderm_Acoustic
 
         public class HelpMenu : MenuSegmentedItem
         {
-            
             public HelpMenu()
             {
-                ButtonMenuItem AboutPToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem AboutOToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem LearnToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem SOFAToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem AnechoicToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem CLFToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem AskToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem ContributeToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem DonateToolStripMenuItem = new ButtonMenuItem();
-                ButtonMenuItem ContactToolStripMenuItem = new ButtonMenuItem();
-
-                this.Menu = new ContextMenu();
-
-                Menu.Items.Add(AboutPToolStripMenuItem);
-                Menu.Items.Add(AboutOToolStripMenuItem);
-                Menu.Items.Add(LearnToolStripMenuItem);
-                Menu.Items.Add(AnechoicToolStripMenuItem);
-                Menu.Items.Add(CLFToolStripMenuItem);
-                Menu.Items.Add(SOFAToolStripMenuItem);
-                Menu.Items.Add(AskToolStripMenuItem);
-                Menu.Items.Add(ContributeToolStripMenuItem);
-                Menu.Items.Add(DonateToolStripMenuItem);
-                Menu.Items.Add(ContactToolStripMenuItem);
-                this.Text = "Help";
-
-                //
-                // about pachyderm
-                //
-                AboutPToolStripMenuItem.Text = "About Pachyderm...";
-                AboutPToolStripMenuItem.Click += this.AboutToolStripMenuItem_Click;
-                //
-                // about orase
-                //
-                AboutOToolStripMenuItem.Text = "About ORASE...";
-                AboutOToolStripMenuItem.Click += this.AboutOToolStripMenuItem_Click;
-                //
-                // Learn pachyderm
-                //
-                LearnToolStripMenuItem.Text = "Learn Pachyderm...";
-                LearnToolStripMenuItem.Click += this.LearnToolStripMenuItem_Click;
-                //
-                // AnechoicToolStripMenuItem
-                //
-                AnechoicToolStripMenuItem.Text = "Find Anechoic Audio...";
-                AnechoicToolStripMenuItem.Click += this.AnechoicToolStripMenuItem_Click;
-                //
-                // CLFToolStripMenuItem
-                //
-                CLFToolStripMenuItem.Text = "Find CLF Files...";
-                CLFToolStripMenuItem.Click += this.CLFToolStripMenuItem_Click;
-                //
-                // SOFAToolStripMenuItem
-                //
-                SOFAToolStripMenuItem.Text = "Find HRTF Files...";
-                SOFAToolStripMenuItem.Click += this.SOFAToolStripMenuItem_Click;
-                //
-                // AskToolStripMenuItem
-                //
-                AskToolStripMenuItem.Text = "Ask...";
-                AskToolStripMenuItem.Click += this.AskToolStripMenuItem_Click;
-                //
-                // ContributeToolStripMenuItem
-                //
-                ContributeToolStripMenuItem.Text = "Contribute...";
-                ContributeToolStripMenuItem.Click += this.ContributeToolStripMenuItem_Click;
-                //
-                // DonateToolStripMenuItem
-                //
-                DonateToolStripMenuItem.Text = "Donate...";
-                DonateToolStripMenuItem.Click += this.DonateToolStripMenuItem_Click;
-                //
-                // ContactToolStripMenuItem
-                //
-                ContactToolStripMenuItem.Text = "Contact...";
-                ContactToolStripMenuItem.Click += this.ContactToolStripMenuItem_Click;
-                }
-
-                private void AboutToolStripMenuItem_Click(object sneder, EventArgs e)
-                {
-                    PachSplash PS = new PachSplash(0);
-                    PS.ShowModal();
-                }
-
-            private void AboutOToolStripMenuItem_Click(object sneder, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    System.Diagnostics.Process.Start("https://www.orase.org/");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://www.orase.org/",
-                        UseShellExecute = true
-                    });
-                }
-            }
-                private void LearnToolStripMenuItem_Click(object sender, EventArgs e)
-                {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    System.Diagnostics.Process.Start("https://www.orase.org/documentation");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://www.orase.org/documentation",
-                        UseShellExecute = true
-                    });
-                }
+                Text = "Help";
+                Menu = new ContextMenu();
+                foreach (var item in Pachyderm_Acoustic.Utilities.PachydermHelp.CreateItems(
+                    () => new PachSplash(0).ShowModal(),
+                    () => AskToolStripMenuItem_Click(this, EventArgs.Empty),
+                    () => SOFAToolStripMenuItem_Click(this, EventArgs.Empty)))
+                    Menu.Items.Add(item);
             }
 
             private void AskToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1265,78 +1155,6 @@ namespace Pachyderm_Acoustic
                     System.Diagnostics.Process.Start(new ProcessStartInfo
                     {
                         FileName = "https://discourse.mcneel.com/",
-                        UseShellExecute = true
-                    });
-                }
-            }
-
-            private void ContributeToolStripMenuItem_Click(object sender, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    System.Diagnostics.Process.Start("https://github.com/PachydermAcoustic");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://github.com/PachydermAcoustic",
-                        UseShellExecute = true
-                    });
-                }
-            }
-
-            private void DonateToolStripMenuItem_Click(object sender, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    System.Diagnostics.Process.Start("https://www.orase.org/donate-1");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://www.orase.org/donate-1",
-                        UseShellExecute = true
-                    });
-                }
-            }
-
-            private void AnechoicToolStripMenuItem_Click(object sender, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    Process.Start("https://www.orase.org/anechoic-audio");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://www.orase.org/anechoic-audio",
-                        UseShellExecute = true
-                    });
-                }
-            }
-
-            private void CLFToolStripMenuItem_Click(object sender, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    Process.Start("http://www.clfgroup.org/clfdocuments.htm");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "http://www.clfgroup.org/clfdocuments.htm",
                         UseShellExecute = true
                     });
                 }
@@ -1388,23 +1206,6 @@ namespace Pachyderm_Acoustic
                 }
             }
 
-            private void ContactToolStripMenuItem_Click(object sender, EventArgs e)
-            {
-                string frameworkDescription = RuntimeInformation.FrameworkDescription;
-
-                if (frameworkDescription.Contains(".NET Framework"))
-                {
-                    Process.Start("mailto:info@orase.org");
-                }
-                else if (frameworkDescription.Contains(".NET"))
-                {
-                    System.Diagnostics.Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "mailto:info@orase.org",
-                        UseShellExecute = true
-                    });
-                }
-            }
         }
 
         public class Oct_Slider : TableRow
