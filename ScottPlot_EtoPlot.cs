@@ -100,14 +100,16 @@ public class EtoPlot : Drawable, IPlotControl
         SKPixmap pixels = img.ToRasterImage().PeekPixels();
         byte[] bytes = pixels.GetPixelSpan().ToArray();
 
-        var bmp = new Bitmap((int)Bounds.Width, (int)Bounds.Height, global::Eto.Drawing.PixelFormat.Format32bppRgba);
+        using var bmp = new Bitmap((int)Bounds.Width, (int)Bounds.Height, global::Eto.Drawing.PixelFormat.Format32bppRgba);
 
         using (var data = bmp.Lock())
         {
             Marshal.Copy(bytes, 0, data.Data, bytes.Length);
         }
 
-        args.Graphics.DrawImage(bmp, 0, 0);
+        args.Graphics.SetClip(new RectangleF(0, 0, Bounds.Width, Bounds.Height));
+        args.Graphics.DrawImage(bmp, 0, 0, Bounds.Width, Bounds.Height);
+        args.Graphics.ResetClip();
     }
 
     private void OnMouseDown(object? sender, MouseEventArgs e)
