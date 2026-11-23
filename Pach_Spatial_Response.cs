@@ -99,7 +99,11 @@ namespace Pachyderm_Acoustic.UI
         readonly ImageSourceData[] images;
         readonly Receiver_Bank[] rays;
         readonly DropDown receiver = new DropDown(), source = new DropDown(), band = new DropDown();
-        readonly NumericStepper start = Number(0, 0, 10000000, 1), width = Number(20, .01, 10000000, 1);
+        const int TimeTicksPerMillisecond = 100;
+        readonly Slider endpointA = new Slider { MinValue = 0, MaxValue = 100, Width = 230 };
+        readonly Slider endpointB = new Slider { MinValue = 0, MaxValue = 100, Width = 230 };
+        readonly Label endpointATime = new Label { Width = 90 }, endpointBTime = new Label { Width = 90 };
+        readonly NumericStepper timeStep = Number(20, .01, int.MaxValue / (double)TimeTicksPerMillisecond, 1);
         readonly NumericStepper smoothing = Number(15, 2, 90, 1), opacity = Number(60, 0, 100, 5);
         readonly NumericStepper fieldOfView = Number(120, 10, 150, 5), heading = Number(90, 0, 360, 5), elevation = Number(0, -89.9, 89.9, 5);
         readonly Color_Output_Control colorControl;
@@ -109,13 +113,12 @@ namespace Pachyderm_Acoustic.UI
         uint cameraChange;
         System.Drawing.Size cameraSize;
         bool viewportDestroyed;
-        readonly Slider scrub = new Slider { MinValue = 0, MaxValue = 1000, Width = 360 };
         readonly Label status = new Label { Wrap = WrapMode.Word, Width = 360 };
         readonly Label scaleStatus = new Label { Wrap = WrapMode.Word, Width = 420 };
         readonly SpatialResponseConduit overlay;
         readonly RhinoView view;
         List<SpatialResponseEstimate.Arrival> arrivals = new List<SpatialResponseEstimate.Arrival>();
-        double duration = 1, reference;
+        double reference;
         SpatialResponseEstimate.Arrival[] directReference = Array.Empty<SpatialResponseEstimate.Arrival>();
         bool estimatedDirectReference;
         bool updating, cleaned, recentering, initialWindow = true;
@@ -134,7 +137,7 @@ namespace Pachyderm_Acoustic.UI
             int bands = thirds ? 24 : 8;
             for (int i = 0; i < bands; i++) band.Items.Add((62.5 * Math.Pow(2, i / (thirds ? 3.0 : 1))).ToString("0.#") + " Hz");
             receiver.SelectedIndex = 0; source.SelectedIndex = 0; band.SelectedIndex = 0;
-            var previous = new Button { Text = "Previous window" }; var next = new Button { Text = "Next window" };
+            var reverse = new Button { Text = "Reverse" }; var advance = new Button { Text = "Advance" };
             var reset = new Button { Text = "Reset receiver view" };
             ClientSize = new Eto.Drawing.Size(960, 700);
             MinimumSize = new Eto.Drawing.Size(650, 450);
@@ -144,10 +147,10 @@ namespace Pachyderm_Acoustic.UI
             results.AddRow(new Label { Text = "Frequency band" }, band);
 
             var time = new DynamicLayout { Padding = 10, Spacing = new Eto.Drawing.Size(8, 8) };
-            time.AddRow(new Label { Text = "Start (ms)" }, start);
-            time.AddRow(new Label { Text = "Window width (ms)" }, width);
-            time.AddRow(scrub);
-            time.AddRow(previous, next);
+            time.AddRow(new Label { Text = "A" }, endpointA, endpointATime);
+            time.AddRow(new Label { Text = "B" }, endpointB, endpointBTime);
+            time.AddSeparateRow(new Label { Text = "Step (ms)" }, timeStep, reverse, advance);
+            time.AddRow(new Label { Text = "The earlier slider value starts the window.", Wrap = WrapMode.Word, Width = 340 });
             time.AddRow(new Label { Text = "Time from source emission, including source delay.", Wrap = WrapMode.Word, Width = 340 });
 
             var camera = new DynamicLayout { Padding = 10, Spacing = new Eto.Drawing.Size(8, 8) };
@@ -195,14 +198,13 @@ namespace Pachyderm_Acoustic.UI
             heading.ValueChanged += (s, e) => ApplyView(); elevation.ValueChanged += (s, e) => ApplyView();
             receiver.SelectedIndexChanged += (s, e) => { ResetView(); Rebuild(); };
             source.SelectedIndexChanged += (s, e) => { ConfigureBands(); Rebuild(); }; band.SelectedIndexChanged += (s, e) => Rebuild();
-            start.ValueChanged += (s, e) => RefreshOverlay(); width.ValueChanged += (s, e) => RefreshOverlay();
+            endpointA.ValueChanged += (s, e) => RefreshOverlay(); endpointB.ValueChanged += (s, e) => RefreshOverlay();
             smoothing.ValueChanged += (s, e) => RefreshOverlay();
             colorControl.Update += (s, e) => RefreshAppearance();
             opacity.ValueChanged += (s, e) => RefreshAppearance();
             relativeToWindow.CheckedChanged += (s, e) => RefreshAppearance();
-            scrub.ValueChanged += (s, e) => { if (!updating) start.Value = duration * scrub.Value / 1000; };
-            previous.Click += (s, e) => start.Value = Math.Max(0, start.Value - width.Value);
-            next.Click += (s, e) => start.Value = Math.Min(duration, start.Value + width.Value);
+            reverse.Click += (s, e) => ShiftWindow(-1);
+            advance.Click += (s, e) => ShiftWindow(1);
             reset.Click += (s, e) => ResetView();
             Closed += (s, e) => Cleanup(); RhinoDoc.CloseDocument += DocumentClosed; RhinoView.Destroy += ViewDestroyed; RhinoView.Modified += ViewModified; RhinoApp.Idle += ViewIdle;
             ResetView(); Rebuild();
@@ -378,18 +380,45 @@ namespace Pachyderm_Acoustic.UI
                     }
                 }
                 directReference = directArrivals.ToArray();
-                duration = Math.Max(1, arrivals.Count == 0 ? 1 : arrivals.Max(a => a.Time) + 1);
+                double duration = Math.Max(1, arrivals.Count == 0 ? 1 : arrivals.Max(a => a.Time) + 1);
+                int limit = (int)Math.Min(int.MaxValue, Math.Ceiling(duration * TimeTicksPerMillisecond));
                 // A stable upper bound for every window and smoothing setting, never auto-scaled per frame.
                 reference = arrivals.Sum(a => a.Energy);
-                if (initialWindow && arrivals.Count > 0)
+                updating = true;
+                try
                 {
-                    initialWindow = false; updating = true;
-                    start.Value = Math.Max(0, Math.Floor(arrivals.Min(a => a.Time)));
-                    updating = false;
+                    endpointA.Value = Math.Min(endpointA.Value, limit);
+                    endpointB.Value = Math.Min(endpointB.Value, limit);
+                    endpointA.MaxValue = endpointB.MaxValue = limit;
+                    if (initialWindow && arrivals.Count > 0)
+                    {
+                        initialWindow = false;
+                        double first = Math.Max(0, Math.Floor(arrivals.Min(a => a.Time)));
+                        endpointA.Value = (int)Math.Min(limit, first * TimeTicksPerMillisecond);
+                        endpointB.Value = (int)Math.Min(limit, (first + 20) * TimeTicksPerMillisecond);
+                    }
                 }
+                finally { updating = false; }
                 RefreshOverlay();
             }
             catch (Exception ex) { arrivals.Clear(); status.Text = ex.Message; view.Redraw(); }
+        }
+        void ShiftWindow(int direction)
+        {
+            int step = (int)Math.Round(timeStep.Value * TimeTicksPerMillisecond);
+            int first = Math.Min(endpointA.Value, endpointB.Value);
+            int last = Math.Max(endpointA.Value, endpointB.Value);
+            int offset = Math.Max(-first, Math.Min(endpointA.MaxValue - last, direction * step));
+            if (offset == 0) return;
+
+            updating = true;
+            try
+            {
+                endpointA.Value += offset;
+                endpointB.Value += offset;
+            }
+            finally { updating = false; }
+            RefreshOverlay();
         }
         void RefreshOverlay()
         {
@@ -397,10 +426,14 @@ namespace Pachyderm_Acoustic.UI
             updating = true;
             try
             {
-                scrub.Value = (int)Math.Min(1000, start.Value / duration * 1000);
-                var window = arrivals.Where(a => a.Time >= start.Value && a.Time < start.Value + width.Value).ToArray();
+                double aTime = endpointA.Value / (double)TimeTicksPerMillisecond;
+                double bTime = endpointB.Value / (double)TimeTicksPerMillisecond;
+                endpointATime.Text = string.Format("{0:0.##} ms", aTime);
+                endpointBTime.Text = string.Format("{0:0.##} ms", bTime);
+                double first = Math.Min(aTime, bTime), last = Math.Max(aTime, bTime);
+                var window = arrivals.Where(a => a.Time >= first && a.Time < last).ToArray();
                 overlay.Set(window, directReference, smoothing.Value,
-                    string.Format("R{0} | {1:0.##}–{2:0.##} ms", receiver.SelectedIndex + 1, start.Value, start.Value + width.Value));
+                    string.Format("R{0} | {1:0.##}–{2:0.##} ms", receiver.SelectedIndex + 1, first, last));
                 RefreshAppearance();
                 status.Text = window.Length == 0 ? "No directional energy in this window." : string.Format("{0:0.###}% of stored directional response energy in this window.", reference > 0 ? window.Sum(a => a.Energy) / reference * 100 : 0);
                 overlay.Enabled = true; view.Redraw();
