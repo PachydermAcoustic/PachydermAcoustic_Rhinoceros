@@ -763,11 +763,7 @@ namespace Pachyderm_Acoustic
                         double delayMs = 0.0;
                         string delayText = src.Geometry.GetUserString("Delay");
 
-                        if (!double.TryParse(
-                            delayText,
-                            NumberStyles.Float,
-                            CultureInfo.InvariantCulture,
-                            out delayMs))
+                        if (!double.TryParse(delayText, NumberStyles.Float, CultureInfo.InvariantCulture, out delayMs))
                         {
                             double.TryParse(delayText, out delayMs);
                         }
