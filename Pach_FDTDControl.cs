@@ -66,6 +66,16 @@ namespace Pachyderm_Acoustic
             private Eto.Forms.ListBox EigenFrequencies;
             internal Eto.Forms.TextBox Folder_Status;
             private Eto.Forms.Button SetFolder;
+            private readonly MovieCapture movie = new MovieCapture();
+            private readonly NumericStepper frameRate = new NumericStepper
+            {
+                MinValue = 1,
+                MaxValue = 120,
+                Value = 30,
+                DecimalPlaces = 0,
+                Increment = 1,
+                Width = 70
+            };
             private Eto.Forms.TabPage VisTab;
             private Eto.Forms.Button CalculateScattering;
             private Eto.Forms.Button ScatExport;
@@ -557,6 +567,7 @@ namespace Pachyderm_Acoustic
                 playlyt.AddRow(TimeContainer, PlayContinuous, ForwVis);
                 vislyt.AddRow(playlyt);
                 vislyt.AddRow(Preview);
+                vislyt.AddRow(movie.Button, new Label { Text = "Frame rate (fps)" }, frameRate);
 
                 this.AxisSelect.Items.Add("X");
                 this.AxisSelect.Items.Add("Y");
@@ -591,6 +602,33 @@ namespace Pachyderm_Acoustic
                 DynamicLayout OutFldr = new DynamicLayout();
                 OutFldr.Spacing = new Eto.Drawing.Size(8, 8);
                 OutFldr.AddRow(SetFolder, Folder_Status);
+                movie.Button.Click += async (sender, args) =>
+                {
+                    if (Running) Loop_Click(null, EventArgs.Empty);
+                    await playbackTask;
+                    if (!movie.IsRecording &&
+                        (FDTD == null || M == null || !ReferenceEquals(M[0], FDTD.m_templateX)) &&
+                        !await PrepareVisualizationAsync(false)) return;
+                    frameRate.Enabled = false;
+                    try
+                    {
+                        await movie.ToggleAsync(frameRate.Value);
+                        if (movie.IsRecording && !Running)
+                        {
+                            await Eto.Forms.Application.Instance.InvokeAsync(() =>
+                            {
+                                if (FDTD.n > 0) FDTD.reset(FDTD.SD.frequency, visualizationSignalType);
+                                P.Enabled = true;
+                                Time_Preview.Text = "0";
+                                StartContinuous();
+                            });
+                        }
+                    }
+                    finally
+                    {
+                        frameRate.Enabled = !movie.IsRecording;
+                    }
+                };
                 vislyt.AddRow(OutFldr);
 
                 Medium = new Medium_Properties_Group();
@@ -608,6 +646,7 @@ namespace Pachyderm_Acoustic
 
             protected override void Dispose(bool disposing)
             {
+                movie.Dispose();
                 base.Dispose(disposing);
                 FileLocation.Dispose();
                 scatcolorlayout.Dispose();
@@ -617,6 +656,7 @@ namespace Pachyderm_Acoustic
                 ScatTab.Dispose();
                 EdgeFreq.Dispose();
                 Preview.Dispose();
+                frameRate.Dispose();
                 TimeContainer.Dispose();
                 PlayContinuous.Dispose();
                 ForwVis.Dispose();
@@ -694,6 +734,7 @@ namespace Pachyderm_Acoustic
             WaveConduit P;
             HemisphereConduit SP;
             Rhino.Geometry.Mesh[][] M;
+            private Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type visualizationSignalType;
             List<List<double>> Pressure;
             CellConduit c = CellConduit.Instance;
 
@@ -708,57 +749,74 @@ namespace Pachyderm_Acoustic
 
             private async void Calculate_Click(object sender, System.EventArgs e)
             {
-                Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
-                if (Rm == null || !Rm.Complete) return;
+                await PrepareVisualizationAsync(true);
+            }
 
-                if (P == null) P = new WaveConduit(viscolor.scale, new double[2] { viscolor.Min, viscolor.Max });
-                Hare.Geometry.Point[] Src = RCPachTools.GetSource();
-                Hare.Geometry.Point[] Rec = RCPachTools.GetReceivers().ToArray();
-                if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
-
-                Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
-
-                switch (SourceSelect.SelectedKey)
+            private async Task<bool> PrepareVisualizationAsync(bool startPlayback)
+            {
+                if (!Preview.Enabled) return false;
+                Preview.Enabled = false;
+                try
                 {
-                    case "Dirac Pulse":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
-                        break;
-                    case "Sine Wave":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
-                        break;
-                    case "Sine Pulse":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse;
-                        break;
-                    case "Noise Spectrum":
-                        s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Spectrum;
-                        break;
+                    Polygon_Scene Rm = RCPachTools.Get_Poly_Scene(Medium.RelHumidity, false, Medium.Temp_Celsius, Medium.StaticPressure_hPa, Medium.Atten_Method.SelectedIndex, Medium.Edge_Frequency);
+                    if (Rm == null || !Rm.Complete) return false;
+
+                    if (P == null) P = new WaveConduit(viscolor.scale, new double[2] { viscolor.Min, viscolor.Max });
+                    Hare.Geometry.Point[] Src = RCPachTools.GetSource();
+                    Hare.Geometry.Point[] Rec = RCPachTools.GetReceivers().ToArray();
+                    if (Src.Length < 1 || Rm == null) Rhino.RhinoApp.WriteLine("Model geometry not specified... Exiting calculation...");
+
+                    Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
+
+                    switch (SourceSelect.SelectedKey)
+                    {
+                        case "Dirac Pulse":
+                            s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Dirac_Pulse;
+                            break;
+                        case "Sine Wave":
+                            s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Tone;
+                            break;
+                        case "Sine Pulse":
+                            s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Sine_Pulse;
+                            break;
+                        case "Noise Spectrum":
+                            s_type = Numeric.TimeDomain.Signal_Driver_Compact.Signal_Type.Spectrum;
+                            break;
+                    }
+
+                    Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RCPachTools.GetSource(0));
+                    Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
+
+                    if (!await FitSceneMaterialsAsync(Rm, (double)Freq_Max.Value)) return false;
+
+                    FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked.Value ? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked.Value);
+                    M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
+                    visualizationSignalType = s_type;
+
+                    P.SetColorScale(viscolor.Scale, new double[] { viscolor.Min, viscolor.Max });
+                    P.Enabled = true;
+
+                    this.Load += Toggle_Conduits_On;
+                    this.UnLoad += Toggle_Conduits_Off;
+
+                    if (AxisSelect.SelectedIndex == 0) Pos_Select.MaxValue = FDTD.xDim - 1;
+                    else if (AxisSelect.SelectedIndex == 1) Pos_Select.MaxValue = FDTD.yDim - 1;
+                    else if (AxisSelect.SelectedIndex == 2) Pos_Select.MaxValue = FDTD.zDim - 1;
+
+                    if (Map_Planes.Items.Count == 0)
+                    {
+                        Pos_Select.Value = Pos_Select.MaxValue / 2;
+                        AddPlane_Click(new object(), new EventArgs());
+                    }
+
+                    if (startPlayback) Loop_Click(new object(), new EventArgs());
+
+                    return true;
                 }
-
-                Numeric.TimeDomain.Signal_Driver_Compact SD = new Numeric.TimeDomain.Signal_Driver_Compact(s_type, (double)Frequency_Selection.Value, 1, RCPachTools.GetSource(0));
-                Numeric.TimeDomain.Microphone_Compact Mic = new Numeric.TimeDomain.Microphone_Compact(Rec);
-
-                if (!await FitSceneMaterialsAsync(Rm, (double)Freq_Max.Value)) return;
-
-                FDTD = new Numeric.TimeDomain.Acoustic_Compact_FDTD_RC(Rm, ref SD, ref Mic, (double)Freq_Max.Value, 3000, GroundPlane.Checked.Value ? Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Terrain : Numeric.TimeDomain.Acoustic_Compact_FDTD.GridType.Freefield, null, 0, 0, 0, VisualPML.Checked.Value);
-                M = new Rhino.Geometry.Mesh[3][] { FDTD.m_templateX, FDTD.m_templateY, FDTD.m_templateZ };
-
-                P.SetColorScale(viscolor.Scale, new double[] { viscolor.Min, viscolor.Max });
-                P.Enabled = true;
-
-                this.Load += Toggle_Conduits_On;
-                this.UnLoad += Toggle_Conduits_Off;
-
-                if (AxisSelect.SelectedIndex == 0) Pos_Select.MaxValue = FDTD.xDim - 1;
-                else if (AxisSelect.SelectedIndex == 1) Pos_Select.MaxValue = FDTD.yDim - 1;
-                else if (AxisSelect.SelectedIndex == 2) Pos_Select.MaxValue = FDTD.zDim - 1;
-
-                if (Map_Planes.Items.Count == 0)
+                finally
                 {
-                    Pos_Select.Value = Pos_Select.MaxValue / 2;
-                    AddPlane_Click(new object(), new EventArgs());
+                    Preview.Enabled = true;
                 }
-
-                Loop_Click(new object(), new EventArgs());
             }
 
             private double CutOffLength()
@@ -771,14 +829,14 @@ namespace Pachyderm_Acoustic
                 return AcousticalMath.SoundSpeed(Medium.Temp_Celsius);
             }
 
-            private async void LoopStart()
+            private async Task LoopStart()
             {
                 do
                 {
                     if (Running)
                     {
                         await Task.Run(() => Forw_proc());
-                        await Task.Delay(100);
+                        await Task.Delay(Math.Max(1, (int)(1000 / frameRate.Value)));
                     }
                     else
                     {
@@ -854,7 +912,9 @@ namespace Pachyderm_Acoustic
                     Rhino.RhinoDoc.ActiveDoc.Views.Redraw();
 
                     ////////////////////////
-                    if (Folder_Status.Text.Length > 0)
+                    if (movie.IsRecording)
+                        movie.Capture(Rhino.RhinoDoc.ActiveDoc.Views.ActiveView);
+                    else if (Folder_Status.Text.Length > 0)
                     {
                         int j = (int)Math.Round(t / FDTD.dt);
                         string number;
@@ -881,15 +941,13 @@ namespace Pachyderm_Acoustic
             public event EventHandler Incremented;
 
             bool Running = false;
+            private Task playbackTask = Task.CompletedTask;
 
             private void Loop_Click(object sender, EventArgs e)
             {
                 if (PlayContinuous.Text == "Play Continuous")
                 {
-                    Running = true;
-                    Time_Preview.Enabled = false;
-                    PlayContinuous.Text = "Pause";
-                    LoopStart();
+                    StartContinuous();
                 }
                 else
                 {
@@ -897,6 +955,14 @@ namespace Pachyderm_Acoustic
                     Time_Preview.Enabled = true;
                     PlayContinuous.Text = "Play Continuous";
                 }
+            }
+
+            private void StartContinuous()
+            {
+                Running = true;
+                Time_Preview.Enabled = false;
+                PlayContinuous.Text = "Pause";
+                playbackTask = LoopStart();
             }
 
             private void Param_Max_ValueChanged(object sender, EventArgs e)

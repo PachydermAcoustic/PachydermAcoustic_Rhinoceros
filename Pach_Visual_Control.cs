@@ -47,6 +47,7 @@ namespace Pachyderm_Acoustic
             internal DropDown VisualizationSelect;
             internal Label VisLabel;
             internal NumericStepper Frame_Rate;
+            private readonly MovieCapture movie = new MovieCapture();
             internal Label SecLabel;
             internal NumericStepper Seconds;
             internal Label COTimeLabel;
@@ -190,6 +191,7 @@ namespace Pachyderm_Acoustic
                 DynamicLayout DL = new DynamicLayout();
                 DL.AddRow(timecontrol);
                 DL.AddRow(Preview);
+                DL.AddRow(movie.Button);
                 DL.DefaultSpacing = new Size(0, 8);
                 TimeBox.Content = DL;
 
@@ -208,6 +210,28 @@ namespace Pachyderm_Acoustic
                 Folder_Ctrl.Items.Add(OpenFolder);
                 Folder_Ctrl.Items.Add(Clear_Folder);
                 output.AddRow(Folder_Ctrl, Folder_Status);
+                movie.Button.Click += async (sender, args) =>
+                {
+                    if (!movie.IsRecording &&
+                        (PreviewDisplay == null || max <= 0 || Rhino.RhinoDoc.ActiveDoc != previewDocument) &&
+                        !await PreparePreviewAsync(false)) return;
+                    playbackCancellation?.Cancel();
+                    await playbackTask;
+                    await movie.ToggleAsync(Frame_Rate.Value);
+                    if (movie.IsRecording)
+                    {
+                        playbackCancellation?.Cancel();
+                        await playbackTask;
+                        await Eto.Forms.Application.Instance.InvokeAsync(() =>
+                        {
+                            if (disposed || previewBuilding || PreviewDisplay == null || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
+                            j = -1;
+                            previewVisible = true;
+                            PreviewDisplay.Enabled = true;
+                            StartPlayback();
+                        });
+                    }
+                };
                 OutputFolder.Content = output;
 
                 //Final Control Assembly
@@ -267,7 +291,12 @@ namespace Pachyderm_Acoustic
 
             private async void onPreview_Click(object sender, EventArgs e)
             {
-                if (previewBuilding || disposed) return;
+                await PreparePreviewAsync(true);
+            }
+
+            private async Task<bool> PreparePreviewAsync(bool startPlayback)
+            {
+                if (previewBuilding || disposed) return false;
                 previewBuilding = true;
                 Preview.Enabled = false;
                 Toggle_Conduits_Off(this, EventArgs.Empty);
@@ -279,17 +308,17 @@ namespace Pachyderm_Acoustic
                 try
                 {
                     await playbackTask;
-                    if (disposed) return;
+                    if (disposed) return false;
                     PreviewDisplay = null;
                     previewDocument = Rhino.RhinoDoc.ActiveDoc;
                     PachydermAc_PlugIn plugin = PachydermAc_PlugIn.Instance;
-                    if (plugin == null || previewDocument == null) return;
+                    if (plugin == null || previewDocument == null) return false;
 
                     max = (int)(Frame_Rate.Value * Seconds.Value);
-                    if (max <= 0 || !plugin.Source(out Source) || Source == null || Source.Length == 0) return;
+                    if (max <= 0 || !plugin.Source(out Source) || Source == null || Source.Length == 0) return false;
 
                     Pach_GetModel_Command Model = Pach_GetModel_Command.Instance;
-                    if (Model == null) return;
+                    if (Model == null) return false;
                     Model.Rel_Humidity = 50;
                     Model.Air_Temp = (double)Air_Temp.Value;
                     Model.Atm_pressure = 1000;
@@ -297,9 +326,9 @@ namespace Pachyderm_Acoustic
                     // A failed command must not reuse geometry from the previous preview.
                     Model.Ret_NURBS_Scene = null;
                     Model.Ret_Mesh_Scene = null;
-                    if (!Rhino.RhinoApp.RunScript("GetModel", false)) return;
+                    if (!Rhino.RhinoApp.RunScript("GetModel", false)) return false;
                     Scene scene = plugin.Geometry_Spec == 0 ? (Scene)Model.Ret_NURBS_Scene : Model.Ret_Mesh_Scene;
-                    if (scene == null || !scene.Complete || Rhino.RhinoDoc.ActiveDoc != previewDocument) return;
+                    if (scene == null || !scene.Complete || Rhino.RhinoDoc.ActiveDoc != previewDocument) return false;
 
                     ParticleRays[] RTParticles = new ParticleRays[Source.Length];
                     List<Hare.Geometry.Point> L = new List<Hare.Geometry.Point>();
@@ -329,7 +358,8 @@ namespace Pachyderm_Acoustic
                         StartOver.Enabled = ForwButton.Enabled = BackButton.Enabled = Loop.Enabled = PreviewDisplay != null;
                     }
                 }
-                if (!disposed && previewVisible && PreviewDisplay != null) Loop_Click(null, null);
+                if (startPlayback && !disposed && previewVisible && PreviewDisplay != null) Loop_Click(null, null);
+                return !disposed && PreviewDisplay != null && Rhino.RhinoDoc.ActiveDoc == previewDocument;
             }
 
             WaveConduit PreviewDisplay = null;
@@ -406,6 +436,11 @@ namespace Pachyderm_Acoustic
                 if (j >= max)
                 {
                     j = 0;
+                    if (movie.IsRecording)
+                    {
+                        playbackCancellation?.Cancel();
+                        await movie.ToggleAsync(Frame_Rate.Value);
+                    }
                     return;
                 }
 
@@ -422,7 +457,9 @@ namespace Pachyderm_Acoustic
                     }
 
                     /////////////////////////
-                    if (Folder_Status.Text.Length > 0)
+                    if (movie.IsRecording)
+                        movie.Capture(previewDocument.Views.ActiveView);
+                    else if (Folder_Status.Text.Length > 0)
                     {
                         string number;
                         if (j < 100)
@@ -451,6 +488,11 @@ namespace Pachyderm_Acoustic
                     await playbackTask;
                     return;
                 }
+                StartPlayback();
+            }
+
+            private void StartPlayback()
+            {
                 playbackCancellation?.Dispose();
                 playbackCancellation = new System.Threading.CancellationTokenSource();
                 Time_Preview.Enabled = false;
@@ -474,6 +516,7 @@ namespace Pachyderm_Acoustic
 
             protected override void Dispose(bool disposing)
             {
+                movie.Dispose();
                 disposed = true;
                 playbackCancellation?.Cancel();
                 if (PreviewDisplay != null) PreviewDisplay.Enabled = false;
