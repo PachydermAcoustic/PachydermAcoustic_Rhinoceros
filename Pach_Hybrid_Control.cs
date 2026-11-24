@@ -1191,7 +1191,7 @@ namespace Pachyderm_Acoustic
                     var sourceWaveforms = Source[s] is SourceCluster cluster && cluster.CoherentSpeakers
                         ? await Task.Run(() => new Coherent_Source_Waveforms(cluster, Rec.Third_Oct)) : null;
                     Direct_Sound DS = new Direct_Sound(Source[s], Rec, PScene, Enumerable.Range(0, Rec.Third_Oct ? 24 : 8).ToArray()) { SourceWaveforms = sourceWaveforms };
-                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
+                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS, true, string.Format("Hybrid source {0}/{1}: direct sound", s + 1, Source.Length)).GetAwaiter();
                     while (!TA.IsCompleted) await Task.Delay(1500);
                     DS = TA.GetResult() as Direct_Sound;
 
@@ -1209,7 +1209,7 @@ namespace Pachyderm_Acoustic
                     if (ISBox.Checked.Value)
                     {
                         ImageSourceData IS = new ImageSourceData(Source[s], Rec, Direct_Data[s], PScene, new int[] { 0, Rec.Third_Oct ? 23 : 7 }, (int)Image_Order.Value, BTM_ED.Checked.Value, s) { SourceWaveforms = sourceWaveforms };
-                        TaskAwaiter<Simulation_Type> TISA = RCPachTools.RunSimulation(IS).GetAwaiter();
+                        TaskAwaiter<Simulation_Type> TISA = RCPachTools.RunSimulation(IS, true, string.Format("Hybrid source {0}/{1}: image source", s + 1, Source.Length)).GetAwaiter();
                         while (!TISA.IsCompleted) await Task.Delay(1500);
                         IS = TISA.GetResult() as ImageSourceData;
 
@@ -1235,7 +1235,7 @@ namespace Pachyderm_Acoustic
                     if (ISBox.Checked.Value && Specular_Trace.Checked.Value)
                     {
                         IS_Trace IST = new IS_Trace(Source[s], Rec, PScene, ((double)(CO_TIME.Value / 1000) * PScene.Sound_speed(0)), (int)Spec_RayCount.Value, (int)Image_Order.Value, PScene.Sound_speed(0), SampleRate);
-                        TaskAwaiter<Simulation_Type> TISTA = RCPachTools.RunSimulation(IST).GetAwaiter();
+                        TaskAwaiter<Simulation_Type> TISTA = RCPachTools.RunSimulation(IST, true, string.Format("Hybrid source {0}/{1}: is-trace", s + 1, Source.Length)).GetAwaiter();
 
                         while (!TISTA.IsCompleted) await Task.Delay(1500);
                         IST = TISTA.GetResult() as IS_Trace;
@@ -1272,7 +1272,7 @@ namespace Pachyderm_Acoustic
                                                 };
                         Rhino.RhinoApp.EscapeKeyPressed += usercancel;
 
-                        TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT).GetAwaiter();
+                        TaskAwaiter<Simulation_Type> TRTA = RCPachTools.RunSimulation(RT, true, string.Format("Hybrid source {0}/{1}: ray trace", s + 1, Source.Length)).GetAwaiter();
                         while (!TRTA.IsCompleted) 
                             await Task.Delay(3000);
                         RT = TRTA.GetResult() as SplitRayTracer;

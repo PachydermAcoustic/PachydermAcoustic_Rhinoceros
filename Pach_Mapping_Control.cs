@@ -822,7 +822,7 @@ namespace Pachyderm_Acoustic
                     }
                     var sourceWaveformLifetime = sourceWaveforms;
                     Direct_Sound DS = new Direct_Sound(Source[s_id], Map[s_id], PScene, Enumerable.Range(0, Map[s_id].Third_Oct ? 24 : 8).ToArray(), this.Screen_Attenuation.Checked.Value, this.Sum_Time.Checked.Value) { SourceWaveforms = sourceWaveforms };
-                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS).GetAwaiter();
+                    TaskAwaiter<Simulation_Type> TA = RCPachTools.RunSimulation(DS, true, string.Format("Mapping grid {0}/{1}: direct sound", s_id + 1, Source.Length)).GetAwaiter();
                     while (!TA.IsCompleted) await Task.Delay(1500);
                     DS = TA.GetResult() as Direct_Sound;
 
@@ -845,7 +845,7 @@ namespace Pachyderm_Acoustic
                         try
                         {
                             images = new ImageSourceData(Source[s_id], Map[s_id], Direct_Data, PScene, new int[] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, false, s_id) { SourceWaveforms = sourceWaveforms };
-                            images = await RCPachTools.RunSimulation(images) as ImageSourceData;
+                            images = await RCPachTools.RunSimulation(images, true, string.Format("Mapping grid {0}/{1}: image source", s_id + 1, Source.Length)) as ImageSourceData;
                         }
                         catch (Exception error)
                         {
@@ -872,7 +872,7 @@ namespace Pachyderm_Acoustic
                     SplitRayTracer RT = SplitRayTracer.Create(Source[s_id], Map[s_id], Flex_Scene, CutOffLength(), new int[2] { 0, Map[s_id].Third_Oct ? 23 : 7 }, imageOrder, Minimum_Convergence.Checked ? -1 : DetailedConvergence.Checked ? 0 : (int)RT_Count.Value, CP);
 
                     if (!Spec_Rays.Checked) foreach (SplitRayTracer.Convergence_Check c in RT.Convergence_Report) if (c != null) c.On_Convergence_Check += CP.Fill;
-                    TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT).GetAwaiter();
+                    TaskAwaiter<Simulation_Type> RTA = RCPachTools.RunSimulation(RT, true, string.Format("Mapping grid {0}/{1}: ray trace", s_id + 1, Source.Length)).GetAwaiter();
                     while (!RTA.IsCompleted) await Task.Delay(1500);
                     RT = RTA.GetResult() as SplitRayTracer;
 

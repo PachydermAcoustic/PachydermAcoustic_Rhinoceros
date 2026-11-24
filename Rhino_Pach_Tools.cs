@@ -83,8 +83,9 @@ namespace Pachyderm_Acoustic
             //    return command.Sim;
             //}
 
-            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim, bool needfeedback = true)
+            public static async Task<Simulation_Type> RunSimulation(Simulation_Type Sim, bool needfeedback = true, string context = null)
             {
+                string Prefix = string.IsNullOrEmpty(context) ? "" : context + " | ";
                 System.Diagnostics.Process P = System.Diagnostics.Process.GetCurrentProcess();
 
                 switch (PachydermAc_PlugIn.Instance.TaskPriority)
@@ -118,7 +119,7 @@ namespace Pachyderm_Acoustic
                     if (Sim != null)
                     {
                         Sim.Begin();
-                        Rhino.RhinoApp.SetCommandPrompt(string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
+                        Rhino.RhinoApp.SetCommandPrompt(Prefix + string.Format("Initiating {0} Calculation...", Sim.Sim_Type()));
                         do
                         {
                             //if (CancelCalc)
@@ -132,7 +133,7 @@ namespace Pachyderm_Acoustic
                             else
                             {
                                 await Task.Delay(3000);
-                                Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                                Rhino.RhinoApp.SetCommandPrompt(Prefix + Sim.ProgressMsg());
                             }
                         } while (Sim.ThreadState() != System.Threading.ThreadState.Stopped);
 
@@ -144,7 +145,7 @@ namespace Pachyderm_Acoustic
                             {
                                 break;
                             }
-                            if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Sim.ProgressMsg());
+                            if (needfeedback) Rhino.RhinoApp.SetCommandPrompt(Prefix + Sim.ProgressMsg());
                         } while (true);
                     }
 
